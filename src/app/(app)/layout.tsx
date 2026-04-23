@@ -1,0 +1,4 @@
+// AppShell layout - TODO
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return <div>{children}</div>
+}
