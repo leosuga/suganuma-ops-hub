@@ -1,54 +1,145 @@
+"use client"
+
+import { useState } from "react"
+import { useAccounts, useTransactions, useDeleteTransaction } from "@/lib/queries/finance"
+import { FinanceKPIs } from "@/components/finance/FinanceKPIs"
+import { TransactionTable } from "@/components/finance/TransactionTable"
+import { AddTransactionDialog } from "@/components/finance/AddTransactionDialog"
+import { CSVImportDialog } from "@/components/finance/CSVImportDialog"
+import { RevenueChart } from "@/components/finance/RevenueChart"
+
+function currentMonth() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
+}
+
 export default function FinancePage() {
+  const [addOpen, setAddOpen] = useState(false)
+  const [csvOpen, setCsvOpen] = useState(false)
+  const [month, setMonth] = useState(currentMonth())
+  const [kindFilter, setKindFilter] = useState<string>("")
+
+  const { data: accounts = [] } = useAccounts()
+  const { data: transactions = [], isLoading } = useTransactions({
+    month,
+    kind: kindFilter || undefined,
+  })
+  const deleteTransaction = useDeleteTransaction()
+
+  const monthLabel = new Date(month + "-15").toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  })
+
+  function prevMonth() {
+    const [y, m] = month.split("-").map(Number)
+    const d = new Date(y, m - 2, 1)
+    setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`)
+  }
+
+  function nextMonth() {
+    const [y, m] = month.split("-").map(Number)
+    const d = new Date(y, m, 1)
+    setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`)
+  }
+
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 space-y-5">
       {/* Header */}
-      <div>
-        <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
-          FINANCE HUB
-        </h1>
-        <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
-          Gestão financeira pessoal
-        </p>
-      </div>
-
-      {/* Coming soon card */}
-      <div className="border border-border bg-surface rounded-sm p-8 flex flex-col items-center gap-4 text-center">
-        <div className="w-3 h-3 rounded-full bg-amber/30 border border-amber/40" />
+      <div className="flex items-start justify-between">
         <div>
-          <p className="text-[12px] font-mono text-on-surface/60">
-            Finance Hub — Fase 2
-          </p>
-          <p className="text-[10px] font-mono text-on-surface/30 mt-1">
-            Transações manuais, import CSV e relatórios
+          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
+            FINANCE HUB
+          </h1>
+          <p className="text-[10px] font-mono text-on-surface/30 mt-0.5 capitalize">
+            {monthLabel}
           </p>
         </div>
-        <span className="text-[8px] font-mono text-amber/60 border border-amber/20 px-2 py-1 rounded-sm tracking-widest">
-          EM DESENVOLVIMENTO
-        </span>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setCsvOpen(true)}
+            className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/40 hover:border-on-surface/40 hover:text-on-surface/70 rounded-sm transition-colors"
+          >
+            IMPORTAR CSV
+          </button>
+          <button
+            onClick={() => setAddOpen(true)}
+            className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-teal text-teal hover:bg-teal/10 rounded-sm transition-colors"
+          >
+            + NOVA TRANSAÇÃO
+          </button>
+        </div>
       </div>
 
-      {/* Roadmap */}
-      <div className="border border-border bg-surface rounded-sm">
-        <div className="px-4 py-3 border-b border-border">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-            ROADMAP
-          </span>
-        </div>
-        <div className="divide-y divide-border">
-          {[
-            "Schema de contas e transações (Supabase)",
-            "Lançamento manual de receitas e despesas",
-            "Import CSV de extratos bancários",
-            "Dashboard com saldo e categorias",
-            "Gráficos de fluxo de caixa (recharts)",
-          ].map((item, i) => (
-            <div key={i} className="px-4 py-2.5 flex items-center gap-3">
-              <div className="w-1 h-1 rounded-full bg-on-surface/20 flex-none" />
-              <span className="text-[11px] font-mono text-on-surface/40">{item}</span>
-            </div>
-          ))}
-        </div>
+      {/* Month nav */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={prevMonth}
+          className="w-6 h-6 flex items-center justify-center text-on-surface/30 hover:text-on-surface/70 font-mono transition-colors"
+        >
+          ‹
+        </button>
+        <span className="text-[11px] font-mono text-on-surface/60 capitalize min-w-[120px] text-center">
+          {monthLabel}
+        </span>
+        <button
+          onClick={nextMonth}
+          className="w-6 h-6 flex items-center justify-center text-on-surface/30 hover:text-on-surface/70 font-mono transition-colors"
+        >
+          ›
+        </button>
       </div>
+
+      {/* KPIs */}
+      <FinanceKPIs transactions={transactions} isLoading={isLoading} />
+
+      {/* Chart */}
+      <RevenueChart transactions={transactions} isLoading={isLoading} />
+
+      {/* Filter bar */}
+      <div className="flex items-center gap-2">
+        <span className="text-[9px] font-mono text-on-surface/30 uppercase tracking-widest">
+          FILTRAR:
+        </span>
+        {[
+          { value: "", label: "TODOS" },
+          { value: "income", label: "RECEITA" },
+          { value: "expense", label: "DESPESA" },
+          { value: "transfer", label: "TRANSF." },
+          { value: "tax", label: "IMPOSTO" },
+        ].map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => setKindFilter(opt.value)}
+            className={`h-6 px-2 text-[8px] font-mono font-semibold tracking-wider rounded-sm border transition-colors ${
+              kindFilter === opt.value
+                ? "border-teal bg-teal/10 text-teal"
+                : "border-border text-on-surface/30 hover:border-on-surface/40"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Transaction table */}
+      <TransactionTable
+        transactions={transactions}
+        isLoading={isLoading}
+        onDelete={(id) => deleteTransaction.mutate(id)}
+      />
+
+      {/* Dialogs */}
+      <AddTransactionDialog
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        accounts={accounts}
+      />
+      <CSVImportDialog
+        open={csvOpen}
+        onOpenChange={setCsvOpen}
+      />
     </div>
   )
 }
