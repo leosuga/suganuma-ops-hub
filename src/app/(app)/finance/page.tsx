@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { useAccounts, useTransactions, useDeleteTransaction } from "@/lib/queries/finance"
 import { FinanceKPIs } from "@/components/finance/FinanceKPIs"
 import { TransactionTable } from "@/components/finance/TransactionTable"
 import { AddTransactionDialog } from "@/components/finance/AddTransactionDialog"
-import { CSVImportDialog } from "@/components/finance/CSVImportDialog"
-import { RevenueChart } from "@/components/finance/RevenueChart"
+
+const RevenueChart = dynamic(() => import("@/components/finance/RevenueChart").then(m => ({ default: m.RevenueChart })), { ssr: false })
+const CSVImportDialog = dynamic(() => import("@/components/finance/CSVImportDialog").then(m => ({ default: m.CSVImportDialog })), { ssr: false })
 
 function currentMonth() {
   const d = new Date()

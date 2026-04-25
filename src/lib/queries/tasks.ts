@@ -1,18 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { Task } from "@/lib/schemas/task"
+import type { Database } from "@/lib/database.types"
 
-export type TaskRow = Task & {
-  id: string
-  owner_id: string
-  created_at: string
-  updated_at: string
-  completed_at: string | null
-}
+export type TaskRow = Database["public"]["Tables"]["task"]["Row"]
 
 export const taskKeys = {
   all: ["tasks"] as const,
 }
+
 
 export function useTasks() {
   return useQuery({

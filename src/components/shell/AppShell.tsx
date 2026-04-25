@@ -1,11 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import dynamic from "next/dynamic"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Sidebar } from "./Sidebar"
 import { BottomNav } from "./BottomNav"
 import { TopBar } from "./TopBar"
-import { CommandPalette } from "./CommandPalette"
+import { logger } from "@/lib/logger"
+
+const CommandPalette = dynamic(() => import("./CommandPalette").then(m => ({ default: m.CommandPalette })), { ssr: false })
 
 interface AppShellProps {
   children: React.ReactNode
@@ -20,6 +23,11 @@ export function AppShell({ children, user }: AppShellProps) {
           queries: {
             staleTime: 30_000,
             retry: 1,
+          },
+          mutations: {
+            onError: (error) => {
+              logger.error("mutation", "mutation failed", { error: String(error) })
+            },
           },
         },
       })

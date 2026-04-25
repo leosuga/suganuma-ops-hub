@@ -3,9 +3,10 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useHealthLogs, useCreateHealthLog } from "@/lib/queries/health"
+import type { HealthLogKind } from "@/lib/schemas/health"
 import { cn } from "@/lib/utils"
 
-const KINDS = [
+const KINDS: Array<{ value: HealthLogKind; label: string; unit: string; fields: Array<{ key: string; placeholder: string }> }> = [
   { value: "weight", label: "PESO", unit: "kg", fields: [{ key: "kg", placeholder: "Ex: 68.5" }] },
   { value: "blood_pressure", label: "PRESSÃO", unit: "mmHg", fields: [{ key: "systolic", placeholder: "Sistólica" }, { key: "diastolic", placeholder: "Diastólica" }] },
   { value: "glucose", label: "GLICEMIA", unit: "mg/dL", fields: [{ key: "mgdl", placeholder: "Ex: 95" }] },
@@ -26,7 +27,7 @@ interface BiometricLogProps {
 }
 
 export function BiometricLogDialog({ open, onOpenChange }: BiometricLogProps) {
-  const [kind, setKind] = useState("weight")
+  const [kind, setKind] = useState<HealthLogKind>("weight")
   const [fields, setFields] = useState<Record<string, string>>({})
   const create = useCreateHealthLog()
 

@@ -1,23 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { Account, Transaction } from "@/lib/schemas/finance"
+import type { Database } from "@/lib/database.types"
+import { logger } from "@/lib/logger"
 
-export type AccountRow = Account & {
-  id: string
-  owner_id: string
-  created_at: string
-}
-
-export type TransactionRow = Transaction & {
-  id: string
-  owner_id: string
-  created_at: string
-}
+export type AccountRow = Database["public"]["Tables"]["account"]["Row"]
+export type TransactionRow = Database["public"]["Tables"]["transaction"]["Row"]
 
 export const financeKeys = {
-  accounts: ["accounts"] as const,
+  all: ["finance"] as const,
+  accounts: ["finance", "accounts"] as const,
   transactions: (filters?: TransactionFilters) =>
-    filters ? ["transactions", filters] : ["transactions"],
+    filters ? (["finance", "transactions", filters] as const) : (["finance", "transactions"] as const),
 }
 
 export interface TransactionFilters {
@@ -109,7 +103,7 @@ export function useCreateTransaction() {
       return data as TransactionRow
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      queryClient.invalidateQueries({ queryKey: financeKeys.all })
     },
   })
 }
@@ -132,7 +126,7 @@ export function useUpdateTransaction() {
       return data as TransactionRow
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      queryClient.invalidateQueries({ queryKey: financeKeys.all })
     },
   })
 }
@@ -146,7 +140,7 @@ export function useDeleteTransaction() {
       if (error) throw error
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      queryClient.invalidateQueries({ queryKey: financeKeys.all })
     },
   })
 }
@@ -169,17 +163,23 @@ export function useImportCSV() {
 
       const withOwner = rows.map((r) => ({ ...r, owner_id: user.id }))
       const { error: txnError } = await supabase.from("transaction").insert(withOwner)
-      if (txnError) throw txnError
+      if (txnError) {
+        logger.error("useImportCSV", "batch insert failed", { filename, rows: rows.length, error: txnError.message })
+        throw txnError
+      }
 
       const { error: importError } = await supabase
         .from("csv_import")
         .insert({ owner_id: user.id, filename, rows_imported: rows.length })
-      if (importError) throw importError
+      if (importError) {
+        logger.warn("useImportCSV", "csv_import log failed", { error: importError.message })
+      }
 
-      return rows.length
+      logger.info("useImportCSV", "import complete", { filename, inserted: rows.length })
+      return { inserted: rows.length, skipped: 0 }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] })
+      queryClient.invalidateQueries({ queryKey: financeKeys.all })
     },
   })
 }

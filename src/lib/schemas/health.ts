@@ -3,10 +3,30 @@ import { z } from "zod"
 export const healthLogKindSchema = z.enum(["weight", "blood_pressure", "glucose", "temperature", "heart_rate", "other"])
 export type HealthLogKind = z.infer<typeof healthLogKindSchema>
 
+const weightValueSchema = z.object({ kg: z.number().positive() })
+const bloodPressureValueSchema = z.object({
+  systolic: z.number().int().positive(),
+  diastolic: z.number().int().positive(),
+  pulse: z.number().int().positive().optional(),
+})
+const glucoseValueSchema = z.object({ mg_dl: z.number().positive(), fasting: z.boolean() })
+const temperatureValueSchema = z.object({ celsius: z.number() })
+const heartRateValueSchema = z.object({ bpm: z.number().int().positive() })
+const otherValueSchema = z.record(z.string(), z.unknown())
+
+export const healthLogValueSchema = z.union([
+  weightValueSchema,
+  bloodPressureValueSchema,
+  glucoseValueSchema,
+  temperatureValueSchema,
+  heartRateValueSchema,
+  otherValueSchema,
+])
+
 export const healthLogSchema = z.object({
   id: z.string().uuid().optional(),
-  kind: z.string().min(1),
-  value: z.record(z.string(), z.unknown()),
+  kind: healthLogKindSchema,
+  value: healthLogValueSchema,
   logged_at: z.string().optional(),
 })
 export type HealthLog = z.infer<typeof healthLogSchema>
