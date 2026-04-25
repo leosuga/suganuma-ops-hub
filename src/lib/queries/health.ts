@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { HealthLog, Pregnancy, Appointment, Protocol, ProtocolEntry } from "@/lib/schemas/health"
 import type { Database } from "@/lib/database.types"
+import { useRealtimeTable } from "@/lib/realtime"
 
 export type HealthLogRow = Database["public"]["Tables"]["health_log"]["Row"]
 export type PregnancyRow = Database["public"]["Tables"]["pregnancy"]["Row"]
@@ -22,6 +23,7 @@ export const healthKeys = {
 // ── Health Logs (biometrics) ──────────────────────────────
 
 export function useHealthLogs(kind?: string) {
+  useRealtimeTable("health_log", healthKeys.logs())
   return useQuery({
     queryKey: healthKeys.logs(kind),
     queryFn: async (): Promise<HealthLogRow[]> => {

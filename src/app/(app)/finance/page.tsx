@@ -6,6 +6,8 @@ import { useAccounts, useTransactions, useDeleteTransaction } from "@/lib/querie
 import { FinanceKPIs } from "@/components/finance/FinanceKPIs"
 import { TransactionTable } from "@/components/finance/TransactionTable"
 import { AddTransactionDialog } from "@/components/finance/AddTransactionDialog"
+import { EditTransactionDialog } from "@/components/finance/EditTransactionDialog"
+import type { TransactionRow } from "@/lib/queries/finance"
 
 const RevenueChart = dynamic(() => import("@/components/finance/RevenueChart").then(m => ({ default: m.RevenueChart })), { ssr: false })
 const CSVImportDialog = dynamic(() => import("@/components/finance/CSVImportDialog").then(m => ({ default: m.CSVImportDialog })), { ssr: false })
@@ -18,6 +20,7 @@ function currentMonth() {
 export default function FinancePage() {
   const [addOpen, setAddOpen] = useState(false)
   const [csvOpen, setCsvOpen] = useState(false)
+  const [editingTxn, setEditingTxn] = useState<TransactionRow | null>(null)
   const [month, setMonth] = useState(currentMonth())
   const [kindFilter, setKindFilter] = useState<string>("")
 
@@ -82,7 +85,7 @@ export default function FinancePage() {
         >
           ‹
         </button>
-        <span className="text-[11px] font-mono text-on-surface/60 capitalize min-w-[120px] text-center">
+        <span className="text-[11px] font-mono text-on-surface/60 capitalize min-w-30 text-center">
           {monthLabel}
         </span>
         <button
@@ -130,6 +133,7 @@ export default function FinancePage() {
         transactions={transactions}
         isLoading={isLoading}
         onDelete={(id) => deleteTransaction.mutate(id)}
+        onEdit={(txn) => setEditingTxn(txn)}
       />
 
       {/* Dialogs */}
@@ -141,6 +145,12 @@ export default function FinancePage() {
       <CSVImportDialog
         open={csvOpen}
         onOpenChange={setCsvOpen}
+      />
+      <EditTransactionDialog
+        open={!!editingTxn}
+        onOpenChange={(v) => { if (!v) setEditingTxn(null) }}
+        transaction={editingTxn}
+        accounts={accounts}
       />
     </div>
   )

@@ -141,4 +141,13 @@
     background: #0A0A0A;
     color: #DEE3E5;
   }
+  html.light {
+    color-scheme: light;
+    --color-bg: #F2F4F5;
+    --color-surface: #FFFFFF;
+    --color-surface-hover: #E8EAEB;
+    --color-on-surface: #1C2025;
+    background: #F2F4F5;
+    color: #1C2025;
+  }
 }

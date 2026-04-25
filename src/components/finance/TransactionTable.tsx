@@ -22,6 +22,7 @@ interface TransactionTableProps {
   transactions: TransactionRow[]
   isLoading: boolean
   onDelete?: (id: string) => void
+  onEdit?: (txn: TransactionRow) => void
 }
 
 function fmt(n: number, kind: TxnKind) {
@@ -29,10 +30,10 @@ function fmt(n: number, kind: TxnKind) {
   return sign + n.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
 }
 
-export function TransactionTable({ transactions, isLoading, onDelete }: TransactionTableProps) {
+export function TransactionTable({ transactions, isLoading, onDelete, onEdit }: TransactionTableProps) {
   if (isLoading) {
     return (
-      <div className="border border-border bg-surface rounded-sm">
+      <div className="border border-border bg-surface rounded-sm" role="status" aria-label="Carregando transações">
         {[0, 1, 2, 3, 4].map((i) => (
           <div key={i} className="h-10 border-b border-border animate-pulse" />
         ))}
@@ -51,25 +52,17 @@ export function TransactionTable({ transactions, isLoading, onDelete }: Transact
   }
 
   return (
-    <div className="border border-border bg-surface rounded-sm overflow-hidden">
+    <div className="border border-border bg-surface rounded-sm overflow-hidden" role="table" aria-label="Transações">
       {/* Header */}
-      <div className="h-8 px-4 flex items-center gap-3 border-b border-border bg-bg">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase w-8">
-          TIPO
-        </span>
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase flex-1">
-          DESCRIÇÃO / CATEGORIA
-        </span>
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase w-20 text-right">
-          DATA
-        </span>
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase w-24 text-right">
-          VALOR
-        </span>
-        {onDelete && <span className="w-6" />}
+      <div className="h-8 px-4 flex items-center gap-3 border-b border-border bg-bg" role="row">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase w-8" role="columnheader">TIPO</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase flex-1" role="columnheader">DESCRIÇÃO / CATEGORIA</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase w-20 text-right" role="columnheader">DATA</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase w-24 text-right" role="columnheader">VALOR</span>
+        {(onDelete || onEdit) && <span className="w-12" role="columnheader" aria-label="Ações" />}
       </div>
 
-      <div className="divide-y divide-border">
+      <div className="divide-y divide-border" role="rowgroup">
         {transactions.map((txn) => {
           const dateStr = new Date(txn.occurred_on + "T12:00:00").toLocaleDateString("pt-BR", {
             day: "2-digit",
@@ -77,51 +70,59 @@ export function TransactionTable({ transactions, isLoading, onDelete }: Transact
           })
 
           return (
-            <div
-              key={txn.id}
-              className="flex items-center gap-3 h-10 px-4 hover:bg-surface-hover transition-colors"
-            >
+            <div key={txn.id} className="flex items-center gap-3 h-10 px-4 hover:bg-surface-hover transition-colors" role="row">
               <span
-                className={cn(
-                  "flex-none w-8 text-[8px] font-mono font-semibold tracking-wider",
-                  KIND_COLORS[txn.kind]
-                )}
+                className={cn("flex-none w-8 text-[8px] font-mono font-semibold tracking-wider", KIND_COLORS[txn.kind])}
+                role="cell"
+                aria-label={`Tipo: ${txn.kind}`}
               >
                 {KIND_LABELS[txn.kind]}
               </span>
 
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0" role="cell">
                 <span className="text-[12px] font-mono text-on-surface truncate block">
                   {txn.description || txn.category || "—"}
                 </span>
                 {txn.category && txn.description && (
-                  <span className="text-[10px] font-mono text-on-surface/30 truncate block leading-none">
+                  <span className="text-[10px] font-mono text-on-surface/40 truncate block leading-none">
                     {txn.category}
                   </span>
                 )}
               </div>
 
-              <span className="flex-none w-20 text-right text-[10px] font-mono text-on-surface/40">
+              <span className="flex-none w-20 text-right text-[10px] font-mono text-on-surface/40" role="cell">
                 {dateStr}
               </span>
 
               <span
-                className={cn(
-                  "flex-none w-24 text-right text-[12px] font-mono font-semibold tabular-nums",
-                  KIND_COLORS[txn.kind]
-                )}
+                className={cn("flex-none w-24 text-right text-[12px] font-mono font-semibold tabular-nums", KIND_COLORS[txn.kind])}
+                role="cell"
+                aria-label={`Valor: ${fmt(Number(txn.amount), txn.kind)}`}
               >
                 {fmt(Number(txn.amount), txn.kind)}
               </span>
 
-              {onDelete && (
-                <button
-                  onClick={() => onDelete(txn.id)}
-                  className="flex-none w-6 h-6 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors rounded-sm"
-                  aria-label="Excluir transação"
-                >
-                  ×
-                </button>
+              {(onDelete || onEdit) && (
+                <div className="flex-none w-12 flex items-center justify-end gap-1" role="cell">
+                  {onEdit && (
+                    <button
+                      onClick={() => onEdit(txn)}
+                      className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-teal transition-colors rounded-sm text-[11px]"
+                      aria-label={`Editar transação: ${txn.description || txn.category}`}
+                    >
+                      ✎
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={() => onDelete(txn.id)}
+                      className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors rounded-sm"
+                      aria-label={`Excluir transação: ${txn.description || txn.category}`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )

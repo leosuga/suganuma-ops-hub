@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/client"
 import type { Account, Transaction } from "@/lib/schemas/finance"
 import type { Database } from "@/lib/database.types"
 import { logger } from "@/lib/logger"
+import { useRealtimeTable } from "@/lib/realtime"
 
 export type AccountRow = Database["public"]["Tables"]["account"]["Row"]
 export type TransactionRow = Database["public"]["Tables"]["transaction"]["Row"]
@@ -63,6 +64,7 @@ export function useCreateAccount() {
 // ── Transactions ──────────────────────────────────────────
 
 export function useTransactions(filters?: TransactionFilters) {
+  useRealtimeTable("transaction", financeKeys.all)
   return useQuery({
     queryKey: financeKeys.transactions(filters),
     queryFn: async (): Promise<TransactionRow[]> => {

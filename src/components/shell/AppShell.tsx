@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { Sidebar } from "./Sidebar"
@@ -16,6 +16,12 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, user }: AppShellProps) {
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {})
+    }
+  }, [])
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
