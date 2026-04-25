@@ -283,6 +283,35 @@ export type Database = {
           created_at?: string
         }
       }
+      agent_token: {
+        Row: {
+          id: string
+          owner_id: string
+          name: string
+          token_hash: string
+          created_at: string
+          last_used_at: string | null
+          revoked_at: string | null
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          name: string
+          token_hash: string
+          created_at?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          name?: string
+          token_hash?: string
+          created_at?: string
+          last_used_at?: string | null
+          revoked_at?: string | null
+        }
+      }
     }
     Enums: {
       task_category: "finance" | "logistics" | "personal" | "health"
