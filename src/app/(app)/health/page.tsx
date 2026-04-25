@@ -1,54 +1,73 @@
-export default function HealthPage() {
-  return (
-    <div className="p-4 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
-          HEALTH HUB
-        </h1>
-        <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
-          Saúde, gravidez e protocolos familiares
-        </p>
-      </div>
+"use client"
 
-      {/* Coming soon card */}
-      <div className="border border-border bg-surface rounded-sm p-8 flex flex-col items-center gap-4 text-center">
-        <div className="w-3 h-3 rounded-full bg-[#A8D8B0]/30 border border-[#A8D8B0]/40" />
+import { useState } from "react"
+import { PregnancyCard } from "@/components/health/PregnancyCard"
+import { BiometricList, BiometricLogDialog } from "@/components/health/BiometricLog"
+import { AppointmentList, AddAppointmentDialog } from "@/components/health/AppointmentList"
+import { ProtocolList, AddProtocolDialog } from "@/components/health/ProtocolList"
+
+export default function HealthPage() {
+  const [bioOpen, setBioOpen] = useState(false)
+  const [apptOpen, setApptOpen] = useState(false)
+  const [protocolOpen, setProtocolOpen] = useState(false)
+
+  return (
+    <div className="p-4 space-y-5">
+      {/* Header */}
+      <div className="flex items-start justify-between">
         <div>
-          <p className="text-[12px] font-mono text-on-surface/60">
-            Health Hub — Fase 3
-          </p>
-          <p className="text-[10px] font-mono text-on-surface/30 mt-1">
-            Gestão completa de saúde e bem-estar familiar
+          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-[#A8D8B0] uppercase">
+            HEALTH HUB
+          </h1>
+          <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
+            Saúde, gravidez e protocolos familiares
           </p>
         </div>
-        <span className="text-[8px] font-mono text-[#A8D8B0]/60 border border-[#A8D8B0]/20 px-2 py-1 rounded-sm tracking-widest">
-          EM DESENVOLVIMENTO
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setProtocolOpen(true)}
+            className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/40 hover:border-on-surface/40 hover:text-on-surface/70 rounded-sm transition-colors"
+          >
+            + PROTOCOLO
+          </button>
+          <button
+            onClick={() => setApptOpen(true)}
+            className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/40 hover:border-on-surface/40 hover:text-on-surface/70 rounded-sm transition-colors"
+          >
+            + CONSULTA
+          </button>
+          <button
+            onClick={() => setBioOpen(true)}
+            className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-[#A8D8B0] text-[#A8D8B0] hover:bg-[#A8D8B0]/10 rounded-sm transition-colors"
+          >
+            + BIOMETRIA
+          </button>
+        </div>
       </div>
 
-      {/* Roadmap */}
-      <div className="border border-border bg-surface rounded-sm">
-        <div className="px-4 py-3 border-b border-border">
+      {/* Pregnancy tracker */}
+      <PregnancyCard />
+
+      {/* Protocols */}
+      <ProtocolList />
+
+      {/* Appointments */}
+      <AppointmentList />
+
+      {/* Biometric log */}
+      <section>
+        <div className="flex items-center justify-between mb-2">
           <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-            ROADMAP
+            BIOMETRIA RECENTE
           </span>
         </div>
-        <div className="divide-y divide-border">
-          {[
-            "Gravidez tracker com semanas e marcos",
-            "Biometria (peso, pressão, glicemia)",
-            "Protocolos diários (medicamentos, suplementos)",
-            "Agendamentos médicos e consultas",
-            "Histórico e relatórios de saúde",
-          ].map((item, i) => (
-            <div key={i} className="px-4 py-2.5 flex items-center gap-3">
-              <div className="w-1 h-1 rounded-full bg-on-surface/20 flex-none" />
-              <span className="text-[11px] font-mono text-on-surface/40">{item}</span>
-            </div>
-          ))}
-        </div>
-      </div>
+        <BiometricList />
+      </section>
+
+      {/* Dialogs */}
+      <BiometricLogDialog open={bioOpen} onOpenChange={setBioOpen} />
+      <AddAppointmentDialog open={apptOpen} onOpenChange={setApptOpen} />
+      <AddProtocolDialog open={protocolOpen} onOpenChange={setProtocolOpen} />
     </div>
   )
 }
