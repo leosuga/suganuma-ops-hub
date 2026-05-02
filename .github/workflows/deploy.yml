@@ -16,9 +16,10 @@ jobs:
             -H "Content-Type: application/json" \
             "https://coolify.suganuma.com.br/api/v1/applications/sw2ag8vuujt87zk04wwbxsvg/start")
           echo "Resposta: $RESP"
-          UUID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('deployment_uuid',''))")
+          UUID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('deployment_uuid',''))" 2>/dev/null) || true
           if [ -z "$UUID" ]; then
-            echo "ERRO: deployment_uuid não retornado"; exit 1
+            echo "ERRO: deployment_uuid não retornado — verifique se o secret COOLIFY_TOKEN está configurado"
+            exit 1
           fi
           echo "deployment_uuid=$UUID" >> "$GITHUB_OUTPUT"
           echo "Deploy enfileirado: $UUID"
@@ -31,7 +32,7 @@ jobs:
             STATUS=$(curl -s \
               -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
               "https://coolify.suganuma.com.br/api/v1/deployments/$UUID" \
-              | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null)
+              | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null) || true
             echo "[$i/60] status=$STATUS"
             case "$STATUS" in
               finished)         echo "Deployment finalizada com sucesso"; exit 0 ;;
