@@ -47,7 +47,7 @@ async function api<T>(method: string, path: string, body?: unknown, params?: Rec
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }))
-    throw new Error(`API error ${res.status}: ${err.error ?? "unknown"}`)
+    throw new Error(`API error ${res.status}: ${(err as { error?: string }).error ?? "unknown"}`)
   }
   if (res.status === 204) return undefined as T
   return res.json() as Promise<T>

@@ -15,8 +15,17 @@ jobs:
             -H "Content-Type: application/json" \
             "https://coolify.suganuma.com.br/api/v1/applications/sw2ag8vuujt87zk04wwbxsvg/start"
 
-      - name: Wait for container to start
-        run: sleep 45
+      - name: Wait for app to be healthy
+        run: |
+          echo "Aguardando app ficar saudável (timeout 5 min)..."
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              https://ops.suganuma.com.br/api/health)
+            echo "Tentativa $i: HTTP $STATUS"
+            [ "$STATUS" = "200" ] && echo "App saudável!" && exit 0
+            sleep 10
+          done
+          echo "Timeout: app não ficou saudável em 5 minutos" && exit 1
 
       - name: Update Caddy proxy
         uses: appleboy/ssh-action@v1

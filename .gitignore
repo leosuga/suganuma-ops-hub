@@ -43,3 +43,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# mcp-server build artifacts
+mcp-server/dist/
+mcp-server/node_modules/
+
+# logs de tools locais
+excalidraw.log
