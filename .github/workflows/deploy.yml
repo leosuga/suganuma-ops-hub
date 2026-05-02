@@ -8,47 +8,46 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Coolify deploy
-        id: trigger
-        run: |
-          RESP=$(curl -sS -X POST \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            "https://coolify.suganuma.com.br/api/v1/applications/sw2ag8vuujt87zk04wwbxsvg/start")
-          echo "Resposta: $RESP"
-          UUID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('deployment_uuid',''))" 2>/dev/null) || true
-          if [ -z "$UUID" ]; then
-            echo "ERRO: deployment_uuid não retornado — verifique se o secret COOLIFY_TOKEN está configurado"
-            exit 1
-          fi
-          echo "deployment_uuid=$UUID" >> "$GITHUB_OUTPUT"
-          echo "Deploy enfileirado: $UUID"
-
-      - name: Wait for deployment to finish
-        run: |
-          UUID="${{ steps.trigger.outputs.deployment_uuid }}"
-          echo "Aguardando deployment $UUID (timeout 10 min)..."
-          for i in $(seq 1 60); do
-            STATUS=$(curl -s \
-              -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-              "https://coolify.suganuma.com.br/api/v1/deployments/$UUID" \
-              | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null) || true
-            echo "[$i/60] status=$STATUS"
-            case "$STATUS" in
-              finished)         echo "Deployment finalizada com sucesso"; exit 0 ;;
-              failed|cancelled) echo "Deployment falhou: $STATUS"; exit 1 ;;
-            esac
-            sleep 10
-          done
-          echo "Timeout aguardando deployment"; exit 1
-
-      - name: Update Caddy proxy
+      - name: Deploy and update proxy via VPS
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          script: ~/update-ops-proxy.sh
+          script: |
+            set -e
+            TOKEN="${{ secrets.COOLIFY_TOKEN }}"
+            APP_UUID="sw2ag8vuujt87zk04wwbxsvg"
+            COOLIFY="http://localhost:9000"
+
+            # Trigger deploy (localhost bypasses Cloudflare)
+            RESP=$(curl -sS -X POST \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              "$COOLIFY/api/v1/applications/$APP_UUID/start")
+            echo "Resposta: $RESP"
+            UUID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('deployment_uuid',''))" 2>/dev/null) || true
+            if [ -z "$UUID" ]; then
+              echo "ERRO: deployment_uuid não retornado"; exit 1
+            fi
+            echo "Deploy enfileirado: $UUID"
+
+            # Aguardar deployment terminar (timeout 10 min)
+            for i in $(seq 1 60); do
+              STATUS=$(curl -s \
+                -H "Authorization: Bearer $TOKEN" \
+                "$COOLIFY/api/v1/deployments/$UUID" \
+                | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null) || true
+              echo "[$i/60] status=$STATUS"
+              [ "$STATUS" = "finished" ]  && echo "Deployment finalizada!" && break
+              [ "$STATUS" = "failed" ]    && echo "Deployment falhou!"    && exit 1
+              [ "$STATUS" = "cancelled" ] && echo "Deployment cancelada!" && exit 1
+              sleep 10
+            done
+            [ "$STATUS" != "finished" ] && echo "Timeout aguardando deployment" && exit 1
+
+            # Atualizar proxy Caddy para o novo container
+            ~/update-ops-proxy.sh
 
       - name: Verify production health
         run: |
