@@ -15,17 +15,19 @@ jobs:
             -H "Content-Type: application/json" \
             "https://coolify.suganuma.com.br/api/v1/applications/sw2ag8vuujt87zk04wwbxsvg/start"
 
-      - name: Wait for app to be healthy
+      - name: Wait for Coolify build
         run: |
-          echo "Aguardando app ficar saudável (timeout 5 min)..."
+          echo "Aguardando Coolify terminar o build (timeout 5 min)..."
           for i in $(seq 1 30); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-              https://ops.suganuma.com.br/api/health)
-            echo "Tentativa $i: HTTP $STATUS"
-            [ "$STATUS" = "200" ] && echo "App saudável!" && exit 0
+            STATUS=$(curl -s \
+              -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
+              "https://coolify.suganuma.com.br/api/v1/applications/sw2ag8vuujt87zk04wwbxsvg" \
+              | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null)
+            echo "Tentativa $i: status=$STATUS"
+            [ "$STATUS" = "running:healthy" ] && echo "Container saudável no Coolify!" && exit 0
             sleep 10
           done
-          echo "Timeout: app não ficou saudável em 5 minutos" && exit 1
+          echo "Timeout aguardando Coolify — continuando de qualquer forma..."
 
       - name: Update Caddy proxy
         uses: appleboy/ssh-action@v1
@@ -34,3 +36,15 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: ~/update-ops-proxy.sh
+
+      - name: Verify production health
+        run: |
+          echo "Verificando saúde em produção..."
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              https://ops.suganuma.com.br/api/health)
+            echo "Tentativa $i: HTTP $STATUS"
+            [ "$STATUS" = "200" ] && echo "Produção OK!" && exit 0
+            sleep 5
+          done
+          echo "Produção não respondeu após atualização do proxy" && exit 1
