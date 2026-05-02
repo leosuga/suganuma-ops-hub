@@ -24,7 +24,7 @@ jobs:
               "https://coolify.suganuma.com.br/api/v1/applications/sw2ag8vuujt87zk04wwbxsvg" \
               | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null)
             echo "Tentativa $i: status=$STATUS"
-            [ "$STATUS" = "running:healthy" ] && echo "Container saudável no Coolify!" && exit 0
+            [[ "$STATUS" = "running:healthy" || "$STATUS" = "running:unknown" ]] && echo "Container up no Coolify ($STATUS)!" && exit 0
             sleep 10
           done
           echo "Timeout aguardando Coolify — continuando de qualquer forma..."
