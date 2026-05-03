@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useMemo } from "react"
+import dynamic from "next/dynamic"
 import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from "@/lib/queries/notes"
 import type { NoteRow } from "@/lib/queries/notes"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
+
+const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
 
 function NoteRow({ note, onDelete }: { note: NoteRow; onDelete: (id: string) => void }) {
   const updateNote = useUpdateNote()
@@ -26,10 +28,12 @@ function NoteRow({ note, onDelete }: { note: NoteRow; onDelete: (id: string) => 
 
   async function handleSave() {
     if (!title.trim()) return
+    const tagsFromContent = content.match(/#[\w-]+/g)?.map((t) => t.slice(1)) ?? (note.tags ?? [])
     await updateNote.mutateAsync({
       id: note.id,
       title: title.trim(),
       content: content.trim() || null,
+      tags: tagsFromContent,
     })
     setEditing(false)
   }
@@ -86,12 +90,12 @@ function NoteRow({ note, onDelete }: { note: NoteRow; onDelete: (id: string) => 
             )}
           </div>
           {note.content && (
-            <p className={cn(
-              "text-[11px] font-mono text-on-surface/40 mt-1",
+            <div className={cn(
+              "prose prose-invert max-w-none text-[11px] font-mono text-on-surface/40 mt-1",
               expanded ? "" : "line-clamp-2"
             )}>
-              {note.content}
-            </p>
+              <ReactMarkdown>{note.content}</ReactMarkdown>
+            </div>
           )}
           {note.content && note.content.length > 120 && !expanded && (
             <button onClick={(e) => { e.stopPropagation(); setExpanded(true) }} className="text-[9px] font-mono text-teal/60 hover:text-teal mt-0.5">
@@ -168,9 +172,28 @@ function QuickAddNote({ onCreated }: { onCreated: () => void }) {
 export default function NotesPage() {
   const { data: notes = [], isLoading } = useNotes()
   const deleteNote = useDeleteNote()
+  const [filterTag, setFilterTag] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
 
-  const pinned = notes.filter((n) => n.pinned)
-  const unpinned = notes.filter((n) => !n.pinned)
+  const allTags = useMemo(() => {
+    const set = new Set<string>()
+    for (const n of notes) {
+      if (n.tags) for (const t of n.tags) set.add(t)
+    }
+    return Array.from(set).sort()
+  }, [notes])
+
+  const filtered = notes.filter((n) => {
+    if (filterTag && (!n.tags || !n.tags.includes(filterTag))) return false
+    if (search.trim()) {
+      const q = search.toLowerCase().trim()
+      if (!n.title.toLowerCase().includes(q) && !(n.content?.toLowerCase().includes(q))) return false
+    }
+    return true
+  })
+
+  const pinned = filtered.filter((n) => n.pinned)
+  const unpinned = filtered.filter((n) => !n.pinned)
 
   return (
     <SectionErrorBoundary label="NOTES">
@@ -185,6 +208,46 @@ export default function NotesPage() {
         </div>
 
         <QuickAddNote onCreated={() => {}} />
+
+        {allTags.length > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setFilterTag(null)}
+              className={cn(
+                "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                filterTag === null
+                  ? "bg-teal/15 text-teal border border-teal/40"
+                  : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+              )}
+            >
+              ALL
+            </button>
+            {allTags.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => setFilterTag(filterTag === tag ? null : tag)}
+                className={cn(
+                  "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                  filterTag === tag
+                    ? "bg-teal/15 text-teal border border-teal/40"
+                    : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                )}
+              >
+                #{tag}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {notes.length > 5 && (
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar notas..."
+            className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+          />
+        )}
 
         {isLoading && (
           <div className="space-y-3">

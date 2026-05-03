@@ -1,5 +1,5 @@
-const CACHE = "ops-hub-v1"
-const PRECACHE = ["/", "/dashboard", "/tasks", "/finance", "/health"]
+const CACHE = "ops-hub-v2"
+const PRECACHE = ["/", "/dashboard", "/tasks", "/finance", "/health", "/notes", "/settings"]
 
 self.addEventListener("install", (e) => {
   e.waitUntil(

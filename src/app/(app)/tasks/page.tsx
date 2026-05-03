@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useTasks, useUpdateTask } from "@/lib/queries/tasks"
+import { useTasks, useUpdateTask, useDeleteTask } from "@/lib/queries/tasks"
 import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
 import { CategoryChips } from "@/components/tasks/CategoryChips"
 import { TaskRow } from "@/components/tasks/TaskRow"
@@ -20,6 +20,7 @@ export default function TasksPage() {
 
   const { data: tasks = [], isLoading, isError } = useTasks()
   const updateTask = useUpdateTask()
+  const deleteTask = useDeleteTask()
 
   const filtered = tasks.filter((t) => {
     if (!showDone && t.status === "done") return false
@@ -133,6 +134,7 @@ export default function TasksPage() {
                 task={task}
                 onToggle={() => handleToggle(task.id, task.status)}
                 onEdit={() => setEditingTask(task)}
+                onDelete={() => deleteTask.mutate(task.id)}
               />
           ))}
       </div>
