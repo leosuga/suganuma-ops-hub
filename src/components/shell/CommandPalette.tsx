@@ -25,6 +25,7 @@ const NAV_COMMANDS = [
   { label: "Finance Hub", href: "/finance", shortcut: "F" },
   { label: "Health Hub", href: "/health", shortcut: "H" },
   { label: "Notes", href: "/notes", shortcut: "N" },
+  { label: "Meal Planning", href: "/meals", shortcut: "M" },
   { label: "Settings", href: "/settings", shortcut: "S" },
 ]
 

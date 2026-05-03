@@ -56,6 +56,18 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    href: "/meals",
+    label: "MEALS",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M5 1v14M11 1v14M3 5h10M3 11h10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <rect x="5" y="2" width="2" height="2" rx="0.3" fill="currentColor" opacity="0.3" />
+        <rect x="5" y="7" width="2" height="2" rx="0.3" fill="currentColor" opacity="0.3" />
+        <rect x="5" y="12" width="2" height="2" rx="0.3" fill="currentColor" opacity="0.3" />
+      </svg>
+    ),
+  },
 ]
 
 export function Sidebar() {

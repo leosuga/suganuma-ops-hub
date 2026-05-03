@@ -56,6 +56,18 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    href: "/meals",
+    label: "FD",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+        <path d="M5 1v14M11 1v14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <rect x="5" y="2" width="2" height="2" rx="0.3" fill="currentColor" opacity="0.3" />
+        <rect x="5" y="7" width="2" height="2" rx="0.3" fill="currentColor" opacity="0.3" />
+        <rect x="5" y="12" width="2" height="2" rx="0.3" fill="currentColor" opacity="0.3" />
+      </svg>
+    ),
+  },
 ]
 
 export function BottomNav() {
