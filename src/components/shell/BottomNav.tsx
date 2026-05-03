@@ -18,6 +18,16 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: "/calendar",
+    label: "CAL",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+        <rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M1.5 6h13M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/tasks",
     label: "TASKS",
     icon: (
@@ -42,29 +52,6 @@ const NAV_ITEMS = [
     icon: (
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
         <path d="M8 13.5S2 10 2 5.5a3.5 3.5 0 0 1 6-2.449A3.5 3.5 0 0 1 14 5.5C14 10 8 13.5 8 13.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    href: "/notes",
-    label: "NT",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-        <path d="M3 2h6l4 4v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.2" />
-        <path d="M9 2v4h4" stroke="currentColor" strokeWidth="1.2" />
-        <path d="M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    href: "/meals",
-    label: "FD",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-        <path d="M5 1v14M11 1v14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-        <rect x="5" y="2" width="2" height="2" rx="0.3" fill="currentColor" opacity="0.3" />
-        <rect x="5" y="7" width="2" height="2" rx="0.3" fill="currentColor" opacity="0.3" />
-        <rect x="5" y="12" width="2" height="2" rx="0.3" fill="currentColor" opacity="0.3" />
       </svg>
     ),
   },

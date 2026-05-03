@@ -18,6 +18,16 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: "/calendar",
+    label: "CAL",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M1.5 6h13M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/tasks",
     label: "TASKS",
     icon: (

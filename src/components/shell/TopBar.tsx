@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 
 const PAGE_LABELS: Record<string, string> = {
   "/dashboard": "DASHBOARD",
+  "/calendar": "CALENDAR",
   "/tasks": "TASK ENGINE",
   "/finance": "FINANCE HUB",
   "/health": "HEALTH HUB",
