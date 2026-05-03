@@ -6,6 +6,7 @@ import { useTasks, useCreateTask } from "@/lib/queries/tasks"
 import { useTransactions, useCreateTransaction } from "@/lib/queries/finance"
 import { useAppointments, useProtocols, useProtocolEntries, usePregnancy, useCreateHealthLog } from "@/lib/queries/health"
 import { cn } from "@/lib/utils"
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import type { TaskRow } from "@/lib/queries/tasks"
 
 function StatCard({
@@ -225,208 +226,210 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="p-4 space-y-5">
-      {/* Header */}
-      <div>
-        <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
-          SUGANUMA OPS HUB
-        </h1>
-        <p className="text-[10px] font-mono text-on-surface/30 mt-0.5 capitalize">
-          {today}
-        </p>
-      </div>
-
-      {/* Quick-add section */}
-      <QuickAddTask onCreated={() => {}} />
-      <QuickAddExpense onCreated={() => {}} />
-
-      {/* Weight quick-log */}
-      <form onSubmit={handleQuickWeight} className="border border-border bg-surface rounded-sm overflow-hidden">
-        <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
-            PESO HOJE
-          </span>
-          <Link href="/health" className="ml-auto text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">
-            HEALTH →
-          </Link>
+    <SectionErrorBoundary label="DASHBOARD">
+      <div className="p-4 space-y-5">
+        {/* Header */}
+        <div>
+          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
+            SUGANUMA OPS HUB
+          </h1>
+          <p className="text-[10px] font-mono text-on-surface/30 mt-0.5 capitalize">
+            {today}
+          </p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2">
-          <input
-            type="text"
-            inputMode="decimal"
-            value={weightInput}
-            onChange={(e) => setWeightInput(e.target.value)}
-            placeholder="68.5 kg"
-            className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-health transition-colors"
+
+        {/* Quick-add section */}
+        <QuickAddTask onCreated={() => {}} />
+        <QuickAddExpense onCreated={() => {}} />
+
+        {/* Weight quick-log */}
+        <form onSubmit={handleQuickWeight} className="border border-border bg-surface rounded-sm overflow-hidden">
+          <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
+              PESO HOJE
+            </span>
+            <Link href="/health" className="ml-auto text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">
+              HEALTH →
+            </Link>
+          </div>
+          <div className="flex items-center gap-2 px-4 py-2">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={weightInput}
+              onChange={(e) => setWeightInput(e.target.value)}
+              placeholder="68.5 kg"
+              className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-health transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={!weightInput || createHealthLog.isPending}
+              className="h-8 px-3 bg-health/10 border border-health text-health font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-health/20 disabled:opacity-30 transition-colors flex-none"
+            >
+              {createHealthLog.isPending ? "..." : "SALVAR"}
+            </button>
+          </div>
+        </form>
+
+        {/* Precisa de atenção */}
+        {needsAttention.length > 0 && (
+          <div className="border border-border bg-surface rounded-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+                {urgent.length > 0 ? "PRECISA DE ATENÇÃO" : "PRÓXIMAS TASKS"}
+              </span>
+              <Link href="/tasks" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
+                VER TASKS →
+              </Link>
+            </div>
+            <div className="divide-y divide-border">
+              {needsAttention.map((task: TaskRow) => {
+                const isOverdue = task.due_at && task.status !== "done" && new Date(task.due_at) < new Date()
+                const dueText = task.due_at
+                  ? new Date(task.due_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+                  : null
+                return (
+                  <div key={task.id} className="flex items-center gap-3 h-10 px-4">
+                    <span className={cn(
+                      "flex-1 text-[12px] font-mono truncate",
+                      task.priority === "urgent" ? "text-danger" : "text-on-surface"
+                    )}>
+                      {task.title}
+                    </span>
+                    {dueText && (
+                      <span className={cn(
+                        "flex-none text-[10px] font-mono",
+                        isOverdue ? "text-danger" : "text-on-surface/30"
+                      )}>
+                        {dueText}
+                      </span>
+                    )}
+                    <span className={cn(
+                      "flex-none text-[9px] font-mono font-semibold tracking-wider uppercase",
+                      task.priority === "urgent" ? "text-danger" : "text-on-surface/40"
+                    )}>
+                      {task.priority === "urgent" ? "URG" : task.priority.toUpperCase()}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Alertas */}
+        {urgent.length > 0 && (
+          <div className="border border-danger/40 bg-danger/5 rounded-sm px-4 py-2.5 flex items-center gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse flex-none" />
+            <span className="text-[11px] font-mono text-danger">
+              {urgent.length} {urgent.length === 1 ? "task urgente" : "tasks urgentes"} pendente{urgent.length > 1 ? "s" : ""}
+            </span>
+          </div>
+        )}
+        {overdue.length > 0 && (
+          <div className="border border-amber/40 bg-amber/5 rounded-sm px-4 py-2.5 flex items-center gap-3">
+            <div className="w-1.5 h-1.5 rounded-full bg-amber animate-pulse flex-none" />
+            <span className="text-[11px] font-mono text-amber">
+              {overdue.length} {overdue.length === 1 ? "task atrasada" : "tasks atrasadas"}
+            </span>
+          </div>
+        )}
+
+        {/* KPIs tasks */}
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="border border-border bg-surface rounded-sm p-4 h-20 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <StatCard label="Pendentes" value={pending.length} sub="tasks abertas" color={pending.length > 10 ? "text-amber" : "text-on-surface"} />
+            <StatCard label="Concluídas" value={done.length} sub="tasks hoje" color="text-teal" />
+            <StatCard label="Urgentes" value={urgent.length} sub="requerem atenção" color={urgent.length > 0 ? "text-danger" : "text-on-surface"} />
+            <StatCard label="Atrasadas" value={overdue.length} sub="fora do prazo" color={overdue.length > 0 ? "text-amber" : "text-on-surface"} />
+          </div>
+        )}
+
+        {/* Finance + Health KPIs */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatCard
+            label="Saldo mês"
+            value={fmt(balance)}
+            sub={financeLoading ? "..." : `${transactions.length} transações`}
+            color={balance >= 0 ? "text-teal" : "text-danger"}
           />
-          <button
-            type="submit"
-            disabled={!weightInput || createHealthLog.isPending}
-            className="h-8 px-3 bg-health/10 border border-health text-health font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-health/20 disabled:opacity-30 transition-colors flex-none"
-          >
-            {createHealthLog.isPending ? "..." : "SALVAR"}
-          </button>
+          <StatCard
+            label="Despesas"
+            value={fmt(expense)}
+            sub="mês atual"
+            color={expense > 0 ? "text-danger" : "text-on-surface"}
+          />
+          {pregnancy?.due_date && (
+            <StatCard
+              label="Semana"
+              value={pregnancy.week ?? "—"}
+              sub="de gestação"
+              color="text-health"
+            />
+          )}
+          <ProtocolsSummary />
         </div>
-      </form>
 
-      {/* Precisa de atenção */}
-      {needsAttention.length > 0 && (
-        <div className="border border-border bg-surface rounded-sm overflow-hidden">
+        {/* Próximas consultas */}
+        {upcomingAppts.length > 0 && (
+          <div className="border border-border bg-surface rounded-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+                PRÓXIMAS CONSULTAS
+              </span>
+              <Link href="/health" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
+                VER TODAS →
+              </Link>
+            </div>
+            <div className="divide-y divide-border">
+              {upcomingAppts.map((a) => {
+                const date = new Date(a.starts_at)
+                const dateStr = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+                const timeStr = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+                return (
+                  <div key={a.id} className="flex items-center gap-3 h-10 px-4">
+                    <span className="text-[10px] font-mono text-health w-16 flex-none">{dateStr} {timeStr}</span>
+                    <span className="flex-1 text-[12px] font-mono text-on-surface truncate">{a.title}</span>
+                    {a.location && <span className="text-[10px] font-mono text-on-surface/30 truncate max-w-[100px]">{a.location}</span>}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Tasks por categoria */}
+        <div className="border border-border bg-surface rounded-sm">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-              {urgent.length > 0 ? "PRECISA DE ATENÇÃO" : "PRÓXIMAS TASKS"}
+              TASKS POR CATEGORIA
             </span>
             <Link href="/tasks" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
               VER TASKS →
             </Link>
           </div>
           <div className="divide-y divide-border">
-            {needsAttention.map((task: TaskRow) => {
-              const isOverdue = task.due_at && task.status !== "done" && new Date(task.due_at) < new Date()
-              const dueText = task.due_at
-                ? new Date(task.due_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
-                : null
+            {(["finance", "logistics", "personal", "health"] as const).map((cat) => {
+              const count = pending.filter((t) => t.category === cat).length
               return (
-                <div key={task.id} className="flex items-center gap-3 h-10 px-4">
-                  <span className={cn(
-                    "flex-1 text-[12px] font-mono truncate",
-                    task.priority === "urgent" ? "text-danger" : "text-on-surface"
-                  )}>
-                    {task.title}
-                  </span>
-                  {dueText && (
-                    <span className={cn(
-                      "flex-none text-[10px] font-mono",
-                      isOverdue ? "text-danger" : "text-on-surface/30"
-                    )}>
-                      {dueText}
-                    </span>
-                  )}
-                  <span className={cn(
-                    "flex-none text-[9px] font-mono font-semibold tracking-wider uppercase",
-                    task.priority === "urgent" ? "text-danger" : "text-on-surface/40"
-                  )}>
-                    {task.priority === "urgent" ? "URG" : task.priority.toUpperCase()}
-                  </span>
+                <div key={cat} className="px-4 py-2.5 flex items-center justify-between">
+                  <span className="text-[11px] font-mono text-on-surface/60 uppercase tracking-wider">{cat}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="h-1.5 bg-teal/30 rounded-full" style={{ width: `${Math.max(4, count * 12)}px` }} />
+                    <span className="text-[12px] font-mono text-on-surface w-5 text-right">{count}</span>
+                  </div>
                 </div>
               )
             })}
           </div>
         </div>
-      )}
-
-      {/* Alertas */}
-      {urgent.length > 0 && (
-        <div className="border border-danger/40 bg-danger/5 rounded-sm px-4 py-2.5 flex items-center gap-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse flex-none" />
-          <span className="text-[11px] font-mono text-danger">
-            {urgent.length} {urgent.length === 1 ? "task urgente" : "tasks urgentes"} pendente{urgent.length > 1 ? "s" : ""}
-          </span>
-        </div>
-      )}
-      {overdue.length > 0 && (
-        <div className="border border-amber/40 bg-amber/5 rounded-sm px-4 py-2.5 flex items-center gap-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-amber animate-pulse flex-none" />
-          <span className="text-[11px] font-mono text-amber">
-            {overdue.length} {overdue.length === 1 ? "task atrasada" : "tasks atrasadas"}
-          </span>
-        </div>
-      )}
-
-      {/* KPIs tasks */}
-      {isLoading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="border border-border bg-surface rounded-sm p-4 h-20 animate-pulse" />
-          ))}
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label="Pendentes" value={pending.length} sub="tasks abertas" color={pending.length > 10 ? "text-amber" : "text-on-surface"} />
-          <StatCard label="Concluídas" value={done.length} sub="tasks hoje" color="text-teal" />
-          <StatCard label="Urgentes" value={urgent.length} sub="requerem atenção" color={urgent.length > 0 ? "text-danger" : "text-on-surface"} />
-          <StatCard label="Atrasadas" value={overdue.length} sub="fora do prazo" color={overdue.length > 0 ? "text-amber" : "text-on-surface"} />
-        </div>
-      )}
-
-      {/* Finance + Health KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatCard
-          label="Saldo mês"
-          value={fmt(balance)}
-          sub={financeLoading ? "..." : `${transactions.length} transações`}
-          color={balance >= 0 ? "text-teal" : "text-danger"}
-        />
-        <StatCard
-          label="Despesas"
-          value={fmt(expense)}
-          sub="mês atual"
-          color={expense > 0 ? "text-danger" : "text-on-surface"}
-        />
-        {pregnancy?.due_date && (
-          <StatCard
-            label="Semana"
-            value={pregnancy.week ?? "—"}
-            sub="de gestação"
-            color="text-health"
-          />
-        )}
-        <ProtocolsSummary />
       </div>
-
-      {/* Próximas consultas */}
-      {upcomingAppts.length > 0 && (
-        <div className="border border-border bg-surface rounded-sm overflow-hidden">
-          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-              PRÓXIMAS CONSULTAS
-            </span>
-            <Link href="/health" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
-              VER TODAS →
-            </Link>
-          </div>
-          <div className="divide-y divide-border">
-            {upcomingAppts.map((a) => {
-              const date = new Date(a.starts_at)
-              const dateStr = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
-              const timeStr = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-              return (
-                <div key={a.id} className="flex items-center gap-3 h-10 px-4">
-                  <span className="text-[10px] font-mono text-health w-16 flex-none">{dateStr} {timeStr}</span>
-                  <span className="flex-1 text-[12px] font-mono text-on-surface truncate">{a.title}</span>
-                  {a.location && <span className="text-[10px] font-mono text-on-surface/30 truncate max-w-[100px]">{a.location}</span>}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Tasks por categoria */}
-      <div className="border border-border bg-surface rounded-sm">
-        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-            TASKS POR CATEGORIA
-          </span>
-          <Link href="/tasks" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
-            VER TASKS →
-          </Link>
-        </div>
-        <div className="divide-y divide-border">
-          {(["finance", "logistics", "personal", "health"] as const).map((cat) => {
-            const count = pending.filter((t) => t.category === cat).length
-            return (
-              <div key={cat} className="px-4 py-2.5 flex items-center justify-between">
-                <span className="text-[11px] font-mono text-on-surface/60 uppercase tracking-wider">{cat}</span>
-                <div className="flex items-center gap-3">
-                  <div className="h-1.5 bg-teal/30 rounded-full" style={{ width: `${Math.max(4, count * 12)}px` }} />
-                  <span className="text-[12px] font-mono text-on-surface w-5 text-right">{count}</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-    </div>
+    </SectionErrorBoundary>
   )
 }

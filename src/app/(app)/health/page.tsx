@@ -7,6 +7,7 @@ import { BiometricList, BiometricLogDialog } from "@/components/health/Biometric
 import { AppointmentList, AddAppointmentDialog } from "@/components/health/AppointmentList"
 import { ProtocolList, AddProtocolDialog } from "@/components/health/ProtocolList"
 import { WeightChart, BloodPressureChart } from "@/components/health/HealthTrends"
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 
 function HealthCharts() {
   const { data: logs = [] } = useHealthLogs()
@@ -35,6 +36,7 @@ export default function HealthPage() {
   const [protocolOpen, setProtocolOpen] = useState(false)
 
   return (
+    <SectionErrorBoundary label="HEALTH HUB">
     <div className="p-4 space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between">
@@ -95,5 +97,6 @@ export default function HealthPage() {
       <AddAppointmentDialog open={apptOpen} onOpenChange={setApptOpen} />
       <AddProtocolDialog open={protocolOpen} onOpenChange={setProtocolOpen} />
     </div>
+    </SectionErrorBoundary>
   )
 }

@@ -7,6 +7,7 @@ import { CategoryChips } from "@/components/tasks/CategoryChips"
 import { TaskRow } from "@/components/tasks/TaskRow"
 import { QuickAddDialog } from "@/components/tasks/QuickAddDialog"
 import { EditTaskDialog } from "@/components/tasks/EditTaskDialog"
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 
 type Category = "finance" | "logistics" | "personal" | "health"
 
@@ -52,6 +53,7 @@ export default function TasksPage() {
   }
 
   return (
+    <SectionErrorBoundary label="TASK ENGINE">
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-none">
@@ -142,5 +144,6 @@ export default function TasksPage() {
         task={editingTask}
       />
     </div>
+    </SectionErrorBoundary>
   )
 }

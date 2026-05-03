@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { cn } from "@/lib/utils"
 
 interface AgentToken {
@@ -80,6 +81,7 @@ export default function SettingsPage() {
   const revoked = tokens.filter((t) => t.revoked_at)
 
   return (
+    <SectionErrorBoundary label="SETTINGS">
     <div className="p-4 space-y-6 max-w-2xl">
       {/* Header */}
       <div>
@@ -233,5 +235,6 @@ export default function SettingsPage() {
         SUGANUMA OPS HUB — ACESSO RESTRITO
       </p>
     </div>
+    </SectionErrorBoundary>
   )
 }

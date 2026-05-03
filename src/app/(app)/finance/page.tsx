@@ -8,6 +8,7 @@ import { TransactionTable } from "@/components/finance/TransactionTable"
 import { AccountManager } from "@/components/finance/AccountManager"
 import { AddTransactionDialog } from "@/components/finance/AddTransactionDialog"
 import { EditTransactionDialog } from "@/components/finance/EditTransactionDialog"
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import type { TransactionRow } from "@/lib/queries/finance"
 
 const RevenueChart = dynamic(() => import("@/components/finance/RevenueChart").then(m => ({ default: m.RevenueChart })), { ssr: false })
@@ -50,6 +51,7 @@ export default function FinancePage() {
   }
 
   return (
+    <SectionErrorBoundary label="FINANCE HUB">
     <div className="p-4 space-y-5">
       {/* Header */}
       <div className="flex items-start justify-between">
@@ -157,5 +159,6 @@ export default function FinancePage() {
         accounts={accounts}
       />
     </div>
+    </SectionErrorBoundary>
   )
 }
