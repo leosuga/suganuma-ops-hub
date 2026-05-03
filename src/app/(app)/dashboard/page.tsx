@@ -5,6 +5,8 @@ import Link from "next/link"
 import { useTasks, useCreateTask } from "@/lib/queries/tasks"
 import { useTransactions, useCreateTransaction } from "@/lib/queries/finance"
 import { useAppointments, useProtocols, useProtocolEntries, usePregnancy, useCreateHealthLog } from "@/lib/queries/health"
+import { useMealPlans } from "@/lib/queries/meals"
+import { useNotes } from "@/lib/queries/notes"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import type { TaskRow } from "@/lib/queries/tasks"
@@ -188,6 +190,8 @@ export default function DashboardPage() {
   const { data: appointments = [] } = useAppointments()
   const { data: pregnancy } = usePregnancy()
   const createHealthLog = useCreateHealthLog()
+  const { data: notes = [] } = useNotes()
+  const { data: mealPlans = [] } = useMealPlans(currentMonth())
 
   const [weightInput, setWeightInput] = useState("")
 
@@ -206,11 +210,10 @@ export default function DashboardPage() {
     .filter((a) => new Date(a.starts_at) >= now)
     .slice(0, 3)
 
-  const today = new Date().toLocaleDateString("pt-BR", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  })
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayMeals = mealPlans.filter((mp) => mp.date === todayStr)
+  const todayNotes = notes.filter((n) => n.pinned).slice(0, 2)
+  const todayAppts = appointments.filter((a) => a.starts_at.slice(0, 10) === todayStr)
 
   const isLoading = tasksLoading || financeLoading
 
@@ -234,13 +237,53 @@ export default function DashboardPage() {
             SUGANUMA OPS HUB
           </h1>
           <p className="text-[10px] font-mono text-on-surface/30 mt-0.5 capitalize">
-            {today}
+            {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
           </p>
         </div>
 
         {/* Quick-add section */}
         <QuickAddTask onCreated={() => {}} />
         <QuickAddExpense onCreated={() => {}} />
+
+        {/* Daily briefing */}
+        <div className="border border-border bg-surface rounded-sm overflow-hidden">
+          <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
+              HOJE
+            </span>
+          </div>
+          <div className="p-3 space-y-1">
+            <span className="text-[10px] font-mono text-on-surface/50">
+              {pending.length} tasks · {done.length} concluídas · {urgent.length} urgentes
+            </span>
+            {todayAppts.length > 0 && (
+              <span className="text-[10px] font-mono text-health block">
+                {todayAppts.map(a => {
+                  const t = new Date(a.starts_at)
+                  return t.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) + " " + a.title
+                }).join(" · ")}
+              </span>
+            )}
+            {todayMeals.length > 0 && (
+              <span className="text-[10px] font-mono text-amber block">
+                Refeições: {todayMeals.map(m => m.meal_type === "breakfast" ? "café" : m.meal_type === "lunch" ? "almoço" : m.meal_type === "dinner" ? "janta" : "lanche").join(", ")}
+              </span>
+            )}
+            {todayNotes.length > 0 && (
+              <span className="text-[10px] font-mono text-on-surface/40 block">
+                Notas fixadas: {todayNotes.map(n => n.title).join(", ")}
+              </span>
+            )}
+            {pending.length === 0 && todayAppts.length === 0 && todayMeals.length === 0 && (
+              <span className="text-[10px] font-mono text-on-surface/20">Nada agendado para hoje</span>
+            )}
+            <div className="flex gap-2 pt-1">
+              <Link href="/calendar" className="text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">CALENDÁRIO →</Link>
+              <Link href="/meals" className="text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">REFEIÇÕES →</Link>
+              <Link href="/notes" className="text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">NOTAS →</Link>
+            </div>
+          </div>
+        </div>
 
         {/* Weight quick-log */}
         <form onSubmit={handleQuickWeight} className="border border-border bg-surface rounded-sm overflow-hidden">

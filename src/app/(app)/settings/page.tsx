@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { cn } from "@/lib/utils"
+import { getAccent, setAccent, type Accent } from "@/lib/theme"
+import { exportAllData, importAllData } from "@/lib/export-import"
 
 interface AgentToken {
   id: string
@@ -19,6 +21,14 @@ function fmtDate(iso: string | null) {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" })
 }
 
+const ACCENTS: { value: Accent; label: string; color: string }[] = [
+  { value: "teal", label: "TEAL", color: "bg-[#55D7ED]" },
+  { value: "blue", label: "BLUE", color: "bg-[#60A5FA]" },
+  { value: "green", label: "GREEN", color: "bg-[#4ADE80]" },
+  { value: "purple", label: "PURPLE", color: "bg-[#C084FC]" },
+  { value: "orange", label: "ORANGE", color: "bg-[#FB923C]" },
+]
+
 export default function SettingsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -28,6 +38,9 @@ export default function SettingsPage() {
   const [creating, setCreating] = useState(false)
   const [revoking, setRevoking] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [accent, setAccentState] = useState<Accent>("teal")
+  const [exporting, setExporting] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   const loadTokens = useCallback(async () => {
     const res = await fetch("/api/agent/tokens")
@@ -37,7 +50,7 @@ export default function SettingsPage() {
     }
   }, [])
 
-  useEffect(() => { loadTokens() }, [loadTokens])
+  useEffect(() => { loadTokens(); setAccentState(getAccent()) }, [loadTokens])
 
   async function handleLogout() {
     setLoading(true)
@@ -77,13 +90,54 @@ export default function SettingsPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
+  function handleAccentChange(a: Accent) {
+    setAccentState(a)
+    setAccent(a)
+  }
+
+  async function handleExport() {
+    setExporting(true)
+    try {
+      const json = await exportAllData()
+      const blob = new Blob([json], { type: "application/json" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `ops-hub-backup-${new Date().toISOString().slice(0, 10)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      // silent fail
+    }
+    setExporting(false)
+  }
+
+  async function handleImport() {
+    const input = document.createElement("input")
+    input.type = "file"
+    input.accept = ".json"
+    input.onchange = async () => {
+      const file = input.files?.[0]
+      if (!file) return
+      setImporting(true)
+      try {
+        const text = await file.text()
+        const count = await importAllData(text)
+        alert(`${count} registros importados com sucesso`)
+      } catch {
+        alert("Erro ao importar. Verifique o arquivo.")
+      }
+      setImporting(false)
+    }
+    input.click()
+  }
+
   const active = tokens.filter((t) => !t.revoked_at)
   const revoked = tokens.filter((t) => t.revoked_at)
 
   return (
     <SectionErrorBoundary label="SETTINGS">
     <div className="p-4 space-y-6 max-w-2xl">
-      {/* Header */}
       <div>
         <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
           SETTINGS
@@ -91,6 +145,30 @@ export default function SettingsPage() {
         <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
           Configurações do sistema
         </p>
+      </div>
+
+      {/* Theme */}
+      <div className="border border-border bg-surface rounded-sm">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">TEMA</span>
+        </div>
+        <div className="p-4 flex items-center gap-2">
+          {ACCENTS.map((a) => (
+            <button
+              key={a.value}
+              onClick={() => handleAccentChange(a.value)}
+              className={cn(
+                "flex items-center gap-2 h-7 px-3 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
+                accent === a.value
+                  ? "border-teal bg-teal/10 text-teal"
+                  : "border-border text-on-surface/30 hover:border-on-surface/40"
+              )}
+            >
+              <span className={cn("w-2.5 h-2.5 rounded-full", a.color)} />
+              {a.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Agent tokens */}
@@ -103,8 +181,6 @@ export default function SettingsPage() {
             {active.length} ativo{active.length !== 1 ? "s" : ""}
           </span>
         </div>
-
-        {/* New token form */}
         <div className="px-4 py-3 border-b border-border flex items-center gap-2">
           <input
             type="text"
@@ -122,8 +198,6 @@ export default function SettingsPage() {
             {creating ? "..." : "+ GERAR"}
           </button>
         </div>
-
-        {/* Newly created token — shown once */}
         {createdToken && (
           <div className="px-4 py-3 border-b border-border bg-teal/5">
             <p className="text-[9px] font-mono text-teal mb-2 uppercase tracking-wider">
@@ -133,23 +207,13 @@ export default function SettingsPage() {
               <code className="flex-1 text-[10px] font-mono text-on-surface bg-bg border border-border rounded-sm px-2 py-1.5 truncate select-all">
                 {createdToken}
               </code>
-              <button
-                onClick={handleCopy}
-                className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/50 hover:border-teal hover:text-teal rounded-sm transition-colors"
-              >
+              <button onClick={handleCopy} className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/50 hover:border-teal hover:text-teal rounded-sm transition-colors">
                 {copied ? "✓ COPIADO" : "COPIAR"}
               </button>
-              <button
-                onClick={() => setCreatedToken(null)}
-                className="h-7 w-7 flex items-center justify-center text-on-surface/30 hover:text-on-surface/60 transition-colors"
-              >
-                ×
-              </button>
+              <button onClick={() => setCreatedToken(null)} className="h-7 w-7 flex items-center justify-center text-on-surface/30 hover:text-on-surface/60 transition-colors">×</button>
             </div>
           </div>
         )}
-
-        {/* Token list */}
         {active.length === 0 && !createdToken ? (
           <div className="px-4 py-6 text-center">
             <span className="text-[11px] font-mono text-on-surface/20">Nenhum token ativo</span>
@@ -165,36 +229,41 @@ export default function SettingsPage() {
                     {t.last_used_at ? ` · Usado ${fmtDate(t.last_used_at)}` : " · Nunca usado"}
                   </p>
                 </div>
-                <button
-                  onClick={() => handleRevoke(t.id)}
-                  disabled={revoking === t.id}
-                  className={cn(
-                    "h-6 px-2 text-[8px] font-mono font-semibold tracking-wider border rounded-sm transition-colors",
-                    "border-danger/30 text-danger/50 hover:border-danger hover:text-danger disabled:opacity-30"
-                  )}
-                >
+                <button onClick={() => handleRevoke(t.id)} disabled={revoking === t.id} className={cn("h-6 px-2 text-[8px] font-mono font-semibold tracking-wider border rounded-sm transition-colors", "border-danger/30 text-danger/50 hover:border-danger hover:text-danger disabled:opacity-30")}>
                   {revoking === t.id ? "..." : "REVOGAR"}
                 </button>
               </div>
             ))}
           </div>
         )}
-
         {revoked.length > 0 && (
           <div className="px-4 py-2.5 border-t border-border">
             <p className="text-[9px] font-mono text-on-surface/20">
-              {revoked.length} token{revoked.length !== 1 ? "s" : ""} revogado{revoked.length !== 1 ? "s" : ""} não listado{revoked.length !== 1 ? "s" : ""}
+              {revoked.length} token{revoked.length !== 1 ? "s" : ""} revogado{revoked.length !== 1 ? "s" : ""}
             </p>
           </div>
         )}
       </div>
 
+      {/* Data export/import */}
+      <div className="border border-border bg-surface rounded-sm">
+        <div className="px-4 py-3 border-b border-border">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">DADOS</span>
+        </div>
+        <div className="p-4 flex items-center gap-3">
+          <button onClick={handleExport} disabled={exporting} className="h-8 px-4 text-[9px] font-mono font-semibold tracking-wider border border-teal text-teal rounded-sm hover:bg-teal/10 disabled:opacity-30 transition-colors">
+            {exporting ? "EXPORTANDO..." : "EXPORTAR BACKUP ↓"}
+          </button>
+          <button onClick={handleImport} disabled={importing} className="h-8 px-4 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/40 rounded-sm hover:border-on-surface/40 hover:text-on-surface/70 disabled:opacity-30 transition-colors">
+            {importing ? "IMPORTANDO..." : "IMPORTAR JSON ↑"}
+          </button>
+        </div>
+      </div>
+
       {/* System info */}
       <div className="border border-border bg-surface rounded-sm">
         <div className="px-4 py-3 border-b border-border">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-            SISTEMA
-          </span>
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">SISTEMA</span>
         </div>
         <div className="divide-y divide-border">
           {[
@@ -204,9 +273,7 @@ export default function SettingsPage() {
             { label: "Deploy", value: "Oracle VPS + Coolify" },
           ].map(({ label, value }) => (
             <div key={label} className="px-4 py-2.5 flex items-center justify-between">
-              <span className="text-[10px] font-mono text-on-surface/40 uppercase tracking-wider">
-                {label}
-              </span>
+              <span className="text-[10px] font-mono text-on-surface/40 uppercase tracking-wider">{label}</span>
               <span className="text-[11px] font-mono text-on-surface/60">{value}</span>
             </div>
           ))}
@@ -216,16 +283,10 @@ export default function SettingsPage() {
       {/* Session */}
       <div className="border border-border bg-surface rounded-sm">
         <div className="px-4 py-3 border-b border-border">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-            SESSÃO
-          </span>
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">SESSÃO</span>
         </div>
         <div className="p-4">
-          <button
-            onClick={handleLogout}
-            disabled={loading}
-            className="w-full h-9 border border-danger/40 text-danger font-mono text-[10px] font-semibold tracking-widest rounded-sm hover:bg-danger/5 disabled:opacity-30 transition-colors"
-          >
+          <button onClick={handleLogout} disabled={loading} className="w-full h-9 border border-danger/40 text-danger font-mono text-[10px] font-semibold tracking-widest rounded-sm hover:bg-danger/5 disabled:opacity-30 transition-colors">
             {loading ? "SAINDO..." : "ENCERRAR SESSÃO →"}
           </button>
         </div>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect } from "react"
 
-type Accent = "teal" | "blue" | "green" | "purple" | "orange"
+export type Accent = "teal" | "blue" | "green" | "purple" | "orange"
 
 const ACCENTS: Record<Accent, { main: string; hi: string }> = {
   teal: { main: "#55D7ED", hi: "#9EEFFF" },
