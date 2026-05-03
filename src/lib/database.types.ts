@@ -312,6 +312,38 @@ export type Database = {
           revoked_at?: string | null
         }
       }
+      note: {
+        Row: {
+          id: string
+          owner_id: string
+          title: string
+          content: string | null
+          tags: string[] | null
+          pinned: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          title: string
+          content?: string | null
+          tags?: string[] | null
+          pinned?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          title?: string
+          content?: string | null
+          tags?: string[] | null
+          pinned?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Enums: {
       task_category: "finance" | "logistics" | "personal" | "health"

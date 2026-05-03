@@ -9,6 +9,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/tasks": "TASK ENGINE",
   "/finance": "FINANCE HUB",
   "/health": "HEALTH HUB",
+  "/notes": "NOTES",
   "/settings": "SETTINGS",
 }
 

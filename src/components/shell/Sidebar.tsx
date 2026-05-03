@@ -45,6 +45,17 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    href: "/notes",
+    label: "NOTES",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M3 2h6l4 4v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M9 2v4h4" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M5 8h6M5 11h4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
 ]
 
 export function Sidebar() {
