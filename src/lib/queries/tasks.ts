@@ -58,7 +58,7 @@ export function useUpdateTask() {
     mutationFn: async ({
       id,
       ...updates
-    }: { id: string; completed_at?: string | null } & Partial<Omit<Task, "id">>) => {
+    }: { id: string; completed_at?: string | null } & Partial<Omit<Task, "id">> & { notes?: string | null; due_at?: string | null }) => {
       const supabase = createClient()
       const { data, error } = await supabase
         .from("task")
@@ -69,7 +69,7 @@ export function useUpdateTask() {
       if (error) throw error
       return data as TaskRow
     },
-    onMutate: async (vars: { id: string; completed_at?: string | null } & Partial<Omit<Task, "id">>) => {
+    onMutate: async (vars: { id: string; completed_at?: string | null } & Partial<Omit<Task, "id">> & { notes?: string | null; due_at?: string | null }) => {
       await queryClient.cancelQueries({ queryKey: taskKeys.all })
       const prev = queryClient.getQueryData<TaskRow[]>(taskKeys.all)
       queryClient.setQueryData<TaskRow[]>(taskKeys.all, (old) =>

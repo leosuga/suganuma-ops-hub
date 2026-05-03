@@ -14,15 +14,16 @@ const CATEGORY_COLORS: Record<string, string> = {
   finance: "text-teal",
   logistics: "text-amber",
   personal: "text-on-surface/50",
-  health: "text-[#A8D8B0]",
+  health: "text-health",
 }
 
 interface TaskRowProps {
   task: TaskRowType
   onToggle: () => void
+  onEdit?: () => void
 }
 
-export function TaskRow({ task, onToggle }: TaskRowProps) {
+export function TaskRow({ task, onToggle, onEdit }: TaskRowProps) {
   const isDone = task.status === "done"
 
   const dueText = task.due_at
@@ -114,6 +115,16 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
       >
         {task.priority === "urgent" ? "URG" : task.priority.toUpperCase()}
       </span>
+
+      {onEdit && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onEdit() }}
+          className="flex-none w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-teal transition-colors rounded-sm text-[11px]"
+          aria-label={`Editar task: ${task.title}`}
+        >
+          ✎
+        </button>
+      )}
     </div>
   )
 }

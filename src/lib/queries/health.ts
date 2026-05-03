@@ -174,6 +174,41 @@ export function useCreateProtocol() {
   })
 }
 
+export function useUpdateProtocol() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...updates
+    }: { id: string } & Partial<Omit<Protocol, "id">>) => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("protocol")
+        .update(updates)
+        .eq("id", id)
+        .select().single()
+      if (error) throw error
+      return data as ProtocolRow
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: healthKeys.protocols }),
+  })
+}
+
+export function useDeleteProtocol() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const supabase = createClient()
+      const { error } = await supabase.from("protocol").delete().eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: healthKeys.protocols })
+      queryClient.invalidateQueries({ queryKey: healthKeys.protocolEntries() })
+    },
+  })
+}
+
 export function useProtocolEntries(protocolId?: string) {
   return useQuery({
     queryKey: healthKeys.protocolEntries(protocolId),

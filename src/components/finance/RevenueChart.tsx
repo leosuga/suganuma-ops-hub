@@ -20,7 +20,7 @@ function groupByDay(transactions: TransactionRow[]) {
   const map = new Map<string, { income: number; expense: number }>()
 
   for (const txn of transactions) {
-    const day = txn.occurred_on.slice(8, 10) // DD
+    const day = String(new Date(txn.occurred_on + "T12:00:00").getUTCDate()).padStart(2, "0")
     const prev = map.get(day) ?? { income: 0, expense: 0 }
     if (txn.kind === "income") {
       map.set(day, { ...prev, income: prev.income + Number(txn.amount) })

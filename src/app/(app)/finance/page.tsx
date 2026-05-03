@@ -5,6 +5,7 @@ import dynamic from "next/dynamic"
 import { useAccounts, useTransactions, useDeleteTransaction } from "@/lib/queries/finance"
 import { FinanceKPIs } from "@/components/finance/FinanceKPIs"
 import { TransactionTable } from "@/components/finance/TransactionTable"
+import { AccountManager } from "@/components/finance/AccountManager"
 import { AddTransactionDialog } from "@/components/finance/AddTransactionDialog"
 import { EditTransactionDialog } from "@/components/finance/EditTransactionDialog"
 import type { TransactionRow } from "@/lib/queries/finance"
@@ -135,6 +136,9 @@ export default function FinancePage() {
         onDelete={(id) => deleteTransaction.mutate(id)}
         onEdit={(txn) => setEditingTxn(txn)}
       />
+
+      {/* Account manager */}
+      <AccountManager />
 
       {/* Dialogs */}
       <AddTransactionDialog

@@ -54,6 +54,7 @@
   --color-teal-hi: #9EEFFF;
   --color-amber: #FFBB52;
   --color-danger: #FFB4AB;
+  --color-health: #A8D8B0;
   --color-on-surface: #DEE3E5;
   --font-sans: "Inter", ui-sans-serif, system-ui;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -147,6 +148,7 @@
     --color-surface: #FFFFFF;
     --color-surface-hover: #E8EAEB;
     --color-on-surface: #1C2025;
+    --color-health: #2E8B57;
     background: #F2F4F5;
     color: #1C2025;
   }

@@ -1,9 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
-import { useTasks } from "@/lib/queries/tasks"
-import { useTransactions } from "@/lib/queries/finance"
-import { useAppointments, useProtocols, useProtocolEntries, usePregnancy } from "@/lib/queries/health"
+import { useTasks, useCreateTask } from "@/lib/queries/tasks"
+import { useTransactions, useCreateTransaction } from "@/lib/queries/finance"
+import { useAppointments, useProtocols, useProtocolEntries, usePregnancy, useCreateHealthLog } from "@/lib/queries/health"
+import { cn } from "@/lib/utils"
+import type { TaskRow } from "@/lib/queries/tasks"
 
 function StatCard({
   label,
@@ -61,11 +64,120 @@ function ProtocolsSummary() {
       <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
         PROTOCOLOS
       </span>
-      <span className={`text-[28px] font-mono font-bold leading-none ${doneCount === total ? "text-[#A8D8B0]" : "text-on-surface"}`}>
+      <span className={`text-[28px] font-mono font-bold leading-none ${doneCount === total ? "text-health" : "text-on-surface"}`}>
         {doneCount}/{total}
       </span>
       <span className="text-[10px] font-mono text-on-surface/30">feitos hoje</span>
     </div>
+  )
+}
+
+function QuickAddTask({ onCreated }: { onCreated: () => void }) {
+  const [input, setInput] = useState("")
+  const createTask = useCreateTask()
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!input.trim()) return
+    await createTask.mutateAsync({
+      title: input.trim(),
+      category: "personal",
+      priority: "med",
+      status: "todo",
+      due_at: null,
+    })
+    setInput("")
+    onCreated()
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="border border-border bg-surface rounded-sm overflow-hidden">
+      <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
+          QUICK-ADD
+        </span>
+        <Link href="/tasks" className="ml-auto text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">
+          +DETALHES →
+        </Link>
+      </div>
+      <div className="flex items-center gap-2 px-4 py-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Nova task rápida..."
+          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+        />
+        <button
+          type="submit"
+          disabled={!input.trim() || createTask.isPending}
+          className="h-8 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors flex-none"
+        >
+          {createTask.isPending ? "..." : "+ ADD"}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+function QuickAddExpense({ onCreated }: { onCreated: () => void }) {
+  const [amount, setAmount] = useState("")
+  const [desc, setDesc] = useState("")
+  const createTxn = useCreateTransaction()
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const value = parseFloat(amount.replace(",", "."))
+    if (!value || !desc.trim()) return
+    await createTxn.mutateAsync({
+      kind: "expense",
+      amount: value,
+      currency: "BRL",
+      description: desc.trim(),
+      occurred_on: new Date().toISOString().slice(0, 10),
+      category: null,
+      account_id: null,
+    })
+    setAmount("")
+    setDesc("")
+    onCreated()
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="border border-border bg-surface rounded-sm overflow-hidden">
+      <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
+          DESPESA RÁPIDA
+        </span>
+        <Link href="/finance" className="ml-auto text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">
+          +DETALHES →
+        </Link>
+      </div>
+      <div className="flex items-center gap-2 px-4 py-2">
+        <input
+          type="text"
+          inputMode="decimal"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder="R$ 0,00"
+          className="w-24 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors flex-none"
+        />
+        <input
+          type="text"
+          value={desc}
+          onChange={(e) => setDesc(e.target.value)}
+          placeholder="Descrição da despesa..."
+          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+        />
+        <button
+          type="submit"
+          disabled={!amount || !desc.trim() || createTxn.isPending}
+          className="h-8 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors flex-none"
+        >
+          {createTxn.isPending ? "..." : "+ ADD"}
+        </button>
+      </div>
+    </form>
   )
 }
 
@@ -74,11 +186,15 @@ export default function DashboardPage() {
   const { data: transactions = [], isLoading: financeLoading } = useTransactions({ month: currentMonth() })
   const { data: appointments = [] } = useAppointments()
   const { data: pregnancy } = usePregnancy()
+  const createHealthLog = useCreateHealthLog()
+
+  const [weightInput, setWeightInput] = useState("")
 
   const pending = tasks.filter((t) => t.status === "todo" || t.status === "doing")
   const done = tasks.filter((t) => t.status === "done")
   const urgent = pending.filter((t) => t.priority === "urgent")
   const overdue = pending.filter((t) => t.due_at && new Date(t.due_at) < new Date())
+  const needsAttention = urgent.length > 0 ? urgent : overdue.length > 0 ? overdue : pending.slice(0, 3)
 
   const income = transactions.filter((t) => t.kind === "income").reduce((s, t) => s + Number(t.amount), 0)
   const expense = transactions.filter((t) => t.kind === "expense" || t.kind === "tax").reduce((s, t) => s + Number(t.amount), 0)
@@ -97,6 +213,17 @@ export default function DashboardPage() {
 
   const isLoading = tasksLoading || financeLoading
 
+  async function handleQuickWeight(e: React.FormEvent) {
+    e.preventDefault()
+    const kg = parseFloat(weightInput.replace(",", "."))
+    if (!kg) return
+    await createHealthLog.mutateAsync({
+      kind: "weight",
+      value: { kg },
+    })
+    setWeightInput("")
+  }
+
   return (
     <div className="p-4 space-y-5">
       {/* Header */}
@@ -108,6 +235,85 @@ export default function DashboardPage() {
           {today}
         </p>
       </div>
+
+      {/* Quick-add section */}
+      <QuickAddTask onCreated={() => {}} />
+      <QuickAddExpense onCreated={() => {}} />
+
+      {/* Weight quick-log */}
+      <form onSubmit={handleQuickWeight} className="border border-border bg-surface rounded-sm overflow-hidden">
+        <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
+            PESO HOJE
+          </span>
+          <Link href="/health" className="ml-auto text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">
+            HEALTH →
+          </Link>
+        </div>
+        <div className="flex items-center gap-2 px-4 py-2">
+          <input
+            type="text"
+            inputMode="decimal"
+            value={weightInput}
+            onChange={(e) => setWeightInput(e.target.value)}
+            placeholder="68.5 kg"
+            className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-health transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={!weightInput || createHealthLog.isPending}
+            className="h-8 px-3 bg-health/10 border border-health text-health font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-health/20 disabled:opacity-30 transition-colors flex-none"
+          >
+            {createHealthLog.isPending ? "..." : "SALVAR"}
+          </button>
+        </div>
+      </form>
+
+      {/* Precisa de atenção */}
+      {needsAttention.length > 0 && (
+        <div className="border border-border bg-surface rounded-sm overflow-hidden">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+              {urgent.length > 0 ? "PRECISA DE ATENÇÃO" : "PRÓXIMAS TASKS"}
+            </span>
+            <Link href="/tasks" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
+              VER TASKS →
+            </Link>
+          </div>
+          <div className="divide-y divide-border">
+            {needsAttention.map((task: TaskRow) => {
+              const isOverdue = task.due_at && task.status !== "done" && new Date(task.due_at) < new Date()
+              const dueText = task.due_at
+                ? new Date(task.due_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
+                : null
+              return (
+                <div key={task.id} className="flex items-center gap-3 h-10 px-4">
+                  <span className={cn(
+                    "flex-1 text-[12px] font-mono truncate",
+                    task.priority === "urgent" ? "text-danger" : "text-on-surface"
+                  )}>
+                    {task.title}
+                  </span>
+                  {dueText && (
+                    <span className={cn(
+                      "flex-none text-[10px] font-mono",
+                      isOverdue ? "text-danger" : "text-on-surface/30"
+                    )}>
+                      {dueText}
+                    </span>
+                  )}
+                  <span className={cn(
+                    "flex-none text-[9px] font-mono font-semibold tracking-wider uppercase",
+                    task.priority === "urgent" ? "text-danger" : "text-on-surface/40"
+                  )}>
+                    {task.priority === "urgent" ? "URG" : task.priority.toUpperCase()}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Alertas */}
       {urgent.length > 0 && (
@@ -162,7 +368,7 @@ export default function DashboardPage() {
             label="Semana"
             value={pregnancy.week ?? "—"}
             sub="de gestação"
-            color="text-[#A8D8B0]"
+            color="text-health"
           />
         )}
         <ProtocolsSummary />
@@ -186,7 +392,7 @@ export default function DashboardPage() {
               const timeStr = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
               return (
                 <div key={a.id} className="flex items-center gap-3 h-10 px-4">
-                  <span className="text-[10px] font-mono text-[#A8D8B0] w-16 flex-none">{dateStr} {timeStr}</span>
+                  <span className="text-[10px] font-mono text-health w-16 flex-none">{dateStr} {timeStr}</span>
                   <span className="flex-1 text-[12px] font-mono text-on-surface truncate">{a.title}</span>
                   {a.location && <span className="text-[10px] font-mono text-on-surface/30 truncate max-w-[100px]">{a.location}</span>}
                 </div>

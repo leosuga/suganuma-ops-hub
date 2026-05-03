@@ -4,9 +4,9 @@ import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { usePregnancy, useUpsertPregnancy } from "@/lib/queries/health"
 
-const HEALTH_COLOR = "text-[#A8D8B0]"
-const HEALTH_BORDER = "border-[#A8D8B0]/40"
-const HEALTH_BG = "bg-[#A8D8B0]/10"
+const HEALTH_COLOR = "text-health"
+const HEALTH_BORDER = "border-health/40"
+const HEALTH_BG = "bg-health/10"
 
 function weeksFromDueDate(dueDate: string): number {
   const due = new Date(dueDate)
@@ -44,7 +44,7 @@ export function PregnancyCard() {
     ? weeksFromDueDate(pregnancy.due_date)
     : pregnancy?.week ?? null
 
-  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-[#A8D8B0] transition-colors"
+  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-health transition-colors"
 
   return (
     <div className="border border-border bg-surface rounded-sm overflow-hidden">
@@ -90,7 +90,7 @@ export function PregnancyCard() {
           <button
             onClick={handleSave}
             disabled={upsert.isPending}
-            className={cn("h-8 px-4 border rounded-sm text-[10px] font-mono font-semibold tracking-wider transition-colors self-end", HEALTH_BORDER, HEALTH_COLOR, HEALTH_BG, "hover:bg-[#A8D8B0]/20 disabled:opacity-30")}
+            className={cn("h-8 px-4 border rounded-sm text-[10px] font-mono font-semibold tracking-wider transition-colors self-end", HEALTH_BORDER, HEALTH_COLOR, HEALTH_BG, "hover:bg-health/20 disabled:opacity-30")}
           >
             {upsert.isPending ? "SALVANDO..." : "SALVAR →"}
           </button>
@@ -122,7 +122,7 @@ export function PregnancyCard() {
             {currentWeek !== null && (
               <div className="mt-2 h-1.5 bg-bg rounded-full overflow-hidden w-full">
                 <div
-                  className="h-full bg-[#A8D8B0] rounded-full transition-all"
+                  className="h-full bg-health rounded-full transition-all"
                   style={{ width: `${Math.min(100, (currentWeek / 40) * 100)}%` }}
                 />
               </div>

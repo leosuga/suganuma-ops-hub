@@ -61,6 +61,43 @@ export function useCreateAccount() {
   })
 }
 
+export function useUpdateAccount() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({
+      id,
+      ...updates
+    }: { id: string } & Partial<Omit<Account, "id">>) => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("account")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single()
+      if (error) throw error
+      return data as AccountRow
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: financeKeys.accounts })
+    },
+  })
+}
+
+export function useDeleteAccount() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const supabase = createClient()
+      const { error } = await supabase.from("account").delete().eq("id", id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: financeKeys.all })
+    },
+  })
+}
+
 // ── Transactions ──────────────────────────────────────────
 
 export function useTransactions(filters?: TransactionFilters) {
@@ -141,7 +178,24 @@ export function useDeleteTransaction() {
       const { error } = await supabase.from("transaction").delete().eq("id", id)
       if (error) throw error
     },
-    onSuccess: () => {
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: financeKeys.all })
+      const prev = queryClient.getQueriesData<TransactionRow[]>({ queryKey: ["finance", "transactions"] })
+      for (const [key] of prev) {
+        queryClient.setQueryData<TransactionRow[]>(key, (old) =>
+          (old ?? []).filter((t) => t.id !== id)
+        )
+      }
+      return { prev }
+    },
+    onError: (_err, _id, ctx) => {
+      if (ctx?.prev) {
+        for (const [key, data] of ctx.prev) {
+          queryClient.setQueryData(key, data)
+        }
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: financeKeys.all })
     },
   })

@@ -2,9 +2,11 @@
 
 import { useState } from "react"
 import { useTasks, useUpdateTask } from "@/lib/queries/tasks"
+import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
 import { CategoryChips } from "@/components/tasks/CategoryChips"
 import { TaskRow } from "@/components/tasks/TaskRow"
 import { QuickAddDialog } from "@/components/tasks/QuickAddDialog"
+import { EditTaskDialog } from "@/components/tasks/EditTaskDialog"
 
 type Category = "finance" | "logistics" | "personal" | "health"
 
@@ -12,6 +14,8 @@ export default function TasksPage() {
   const [category, setCategory] = useState<Category | null>(null)
   const [showDone, setShowDone] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const [editingTask, setEditingTask] = useState<TaskRowType | null>(null)
+  const [search, setSearch] = useState("")
 
   const { data: tasks = [], isLoading, isError } = useTasks()
   const updateTask = useUpdateTask()
@@ -19,6 +23,12 @@ export default function TasksPage() {
   const filtered = tasks.filter((t) => {
     if (!showDone && t.status === "done") return false
     if (category && t.category !== category) return false
+    if (search.trim()) {
+      const q = search.toLowerCase().trim()
+      const titleMatch = t.title.toLowerCase().includes(q)
+      const notesMatch = t.notes?.toLowerCase().includes(q)
+      if (!titleMatch && !notesMatch) return false
+    }
     return true
   })
 
@@ -73,6 +83,17 @@ export default function TasksPage() {
       {/* Category filter */}
       <CategoryChips value={category} onChange={setCategory} counts={counts} />
 
+      {/* Search bar */}
+      <div className="px-4 py-2 border-b border-border">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar tasks..."
+          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+        />
+      </div>
+
       {/* Task list */}
       <div className="flex-1 overflow-auto">
         {isLoading && (
@@ -105,15 +126,21 @@ export default function TasksPage() {
 
         {!isLoading &&
           filtered.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              onToggle={() => handleToggle(task.id, task.status)}
-            />
+              <TaskRow
+                key={task.id}
+                task={task}
+                onToggle={() => handleToggle(task.id, task.status)}
+                onEdit={() => setEditingTask(task)}
+              />
           ))}
       </div>
 
       <QuickAddDialog open={addOpen} onOpenChange={setAddOpen} />
+      <EditTaskDialog
+        open={!!editingTask}
+        onOpenChange={(v) => { if (!v) setEditingTask(null) }}
+        task={editingTask}
+      />
     </div>
   )
 }

@@ -30,7 +30,7 @@ export function AddAppointmentDialog({ open, onOpenChange }: AddAppointmentDialo
     onOpenChange(false)
   }
 
-  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-[#A8D8B0] transition-colors"
+  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-health transition-colors"
 
   return (
     <Dialog open={open} onOpenChange={(v) => onOpenChange(v)}>
@@ -47,7 +47,7 @@ export function AddAppointmentDialog({ open, onOpenChange }: AddAppointmentDialo
           <input type="text" value={kind} onChange={(e) => setKind(e.target.value)} placeholder="Tipo (ex: consulta, exame, ultrassom)" className={inputClass} />
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={() => onOpenChange(false)} className="h-8 px-4 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 transition-colors">CANCELAR</button>
-            <button type="submit" disabled={create.isPending} className="h-8 px-4 border border-[#A8D8B0] text-[#A8D8B0] font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-[#A8D8B0]/20 disabled:opacity-30 transition-colors">
+            <button type="submit" disabled={create.isPending} className="h-8 px-4 border border-health text-health font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-health/20 disabled:opacity-30 transition-colors">
               {create.isPending ? "SALVANDO..." : "SALVAR →"}
             </button>
           </div>

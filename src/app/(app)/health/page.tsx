@@ -16,7 +16,7 @@ export default function HealthPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-[#A8D8B0] uppercase">
+          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-health uppercase">
             HEALTH HUB
           </h1>
           <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
@@ -38,7 +38,7 @@ export default function HealthPage() {
           </button>
           <button
             onClick={() => setBioOpen(true)}
-            className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-[#A8D8B0] text-[#A8D8B0] hover:bg-[#A8D8B0]/10 rounded-sm transition-colors"
+            className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-health text-health hover:bg-health/10 rounded-sm transition-colors"
           >
             + BIOMETRIA
           </button>
