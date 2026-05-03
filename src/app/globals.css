@@ -50,8 +50,10 @@
   --color-bg: #0A0A0A;
   --color-surface: #121212;
   --color-surface-hover: #1A1A1A;
-  --color-teal: #55D7ED;
-  --color-teal-hi: #9EEFFF;
+  --color-accent: #55D7ED;
+  --color-accent-hi: #9EEFFF;
+  --color-teal: var(--color-accent);
+  --color-teal-hi: var(--color-accent-hi);
   --color-amber: #FFBB52;
   --color-danger: #FFB4AB;
   --color-health: #A8D8B0;

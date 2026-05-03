@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useTasks, useUpdateTask, useDeleteTask } from "@/lib/queries/tasks"
 import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
 import { CategoryChips } from "@/components/tasks/CategoryChips"
@@ -8,6 +8,7 @@ import { TaskRow } from "@/components/tasks/TaskRow"
 import { QuickAddDialog } from "@/components/tasks/QuickAddDialog"
 import { EditTaskDialog } from "@/components/tasks/EditTaskDialog"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
+import { VirtualizedList } from "@/components/VirtualizedList"
 
 type Category = "finance" | "logistics" | "personal" | "health"
 
@@ -52,6 +53,20 @@ export default function TasksPage() {
       completed_at: isDone ? null : new Date().toISOString(),
     })
   }
+
+  const renderTaskRow = useCallback((index: number) => {
+    const task = filtered[index]
+    return (
+      <TaskRow
+        task={task}
+        onToggle={() => handleToggle(task.id, task.status)}
+        onEdit={() => setEditingTask(task)}
+        onDelete={() => deleteTask.mutate(task.id)}
+      />
+    )
+  }, [filtered, handleToggle, deleteTask])
+
+  const useVirtual = filtered.length > 50
 
   return (
     <SectionErrorBoundary label="TASK ENGINE">
@@ -98,7 +113,7 @@ export default function TasksPage() {
       </div>
 
       {/* Task list */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-hidden">
         {isLoading && (
           <div className="flex items-center justify-center h-32">
             <div className="w-1.5 h-1.5 rounded-full bg-teal animate-pulse" />
@@ -127,16 +142,27 @@ export default function TasksPage() {
           </div>
         )}
 
-        {!isLoading &&
-          filtered.map((task) => (
-              <TaskRow
-                key={task.id}
-                task={task}
-                onToggle={() => handleToggle(task.id, task.status)}
-                onEdit={() => setEditingTask(task)}
-                onDelete={() => deleteTask.mutate(task.id)}
-              />
-          ))}
+        {!isLoading && filtered.length > 0 && (
+          useVirtual ? (
+            <VirtualizedList
+              items={filtered}
+              rowHeight={40}
+              renderRow={renderTaskRow}
+            />
+          ) : (
+            <div className="overflow-auto h-full">
+              {filtered.map((task) => (
+                <TaskRow
+                  key={task.id}
+                  task={task}
+                  onToggle={() => handleToggle(task.id, task.status)}
+                  onEdit={() => setEditingTask(task)}
+                  onDelete={() => deleteTask.mutate(task.id)}
+                />
+              ))}
+            </div>
+          )
+        )}
       </div>
 
       <QuickAddDialog open={addOpen} onOpenChange={setAddOpen} />

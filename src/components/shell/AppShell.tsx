@@ -8,6 +8,7 @@ import { BottomNav } from "./BottomNav"
 import { TopBar } from "./TopBar"
 import { logger } from "@/lib/logger"
 import { useTaskNotifications } from "@/lib/notifications"
+import { useInitAccent } from "@/lib/theme"
 
 const CommandPalette = dynamic(() => import("./CommandPalette").then(m => ({ default: m.CommandPalette })), { ssr: false })
 
@@ -24,6 +25,7 @@ export function AppShell({ children, user }: AppShellProps) {
   }, [])
 
   useTaskNotifications()
+  useInitAccent()
 
   const [queryClient] = useState(
     () =>
