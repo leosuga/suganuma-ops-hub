@@ -7,6 +7,7 @@ import { Sidebar } from "./Sidebar"
 import { BottomNav } from "./BottomNav"
 import { TopBar } from "./TopBar"
 import { logger } from "@/lib/logger"
+import { useTaskNotifications } from "@/lib/notifications"
 
 const CommandPalette = dynamic(() => import("./CommandPalette").then(m => ({ default: m.CommandPalette })), { ssr: false })
 
@@ -21,6 +22,8 @@ export function AppShell({ children, user }: AppShellProps) {
       navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {})
     }
   }, [])
+
+  useTaskNotifications()
 
   const [queryClient] = useState(
     () =>
