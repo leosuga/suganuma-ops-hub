@@ -21,34 +21,65 @@ async function checkAndNotify() {
 
   if (now.getTime() - lastTs < 10_000) return
 
-  const { data: overdue } = await supabase
-    .from("task")
-    .select("id, title, due_at")
-    .eq("owner_id", user.id)
-    .in("status", ["todo", "doing"])
-    .lt("due_at", now.toISOString())
-    .order("due_at", { ascending: true })
-    .limit(5)
+  const [overdueRes, upcomingRes] = await Promise.all([
+    supabase
+      .from("task")
+      .select("id, title, due_at")
+      .eq("owner_id", user.id)
+      .in("status", ["todo", "doing"])
+      .lt("due_at", now.toISOString())
+      .order("due_at", { ascending: true })
+      .limit(5),
+    supabase
+      .from("appointment")
+      .select("id, title, starts_at")
+      .eq("owner_id", user.id)
+      .gte("starts_at", now.toISOString())
+      .lt("starts_at", new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString())
+      .order("starts_at", { ascending: true })
+      .limit(3),
+  ])
 
-  if (!overdue || overdue.length === 0) {
-    localStorage.setItem(NOTIFIED_KEY, now.toISOString())
-    return
+  const overdue = overdueRes.data
+  const upcoming = upcomingRes.data
+
+  let notified = false
+
+  if (overdue && overdue.length > 0) {
+    const first = overdue[0]
+    const msg = overdue.length === 1
+      ? `"${first.title.slice(0, 80)}"`
+      : `"${first.title.slice(0, 50)}" e +${overdue.length - 1} task(s)`
+    try {
+      new Notification("Task atrasada", {
+        body: msg,
+        icon: "/icon-192.png",
+        tag: "overdue-tasks",
+        requireInteraction: true,
+      })
+      notified = true
+    } catch { /* browser blocks */ }
   }
 
-  const first = overdue[0]
-  const msg = overdue.length === 1
-    ? `"${first.title.slice(0, 80)}"`
-    : `"${first.title.slice(0, 50)}" e +${overdue.length - 1} task(s)`
+  if (upcoming && upcoming.length > 0) {
+    const names = upcoming.map((a) => {
+      const t = new Date(a.starts_at)
+      return `${t.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} ${a.title}`
+    }).join(", ")
+    try {
+      new Notification("Consulta hoje ou amanhã", {
+        body: names,
+        icon: "/icon-192.png",
+        tag: "upcoming-appts",
+        requireInteraction: true,
+      })
+      notified = true
+    } catch { /* browser blocks */ }
+  }
 
-  try {
-    new Notification("Task atrasada", {
-      body: msg,
-      icon: "/icon-192.png",
-      tag: "overdue-tasks",
-      requireInteraction: true,
-    })
-  } catch {
-    // browser blocks notification
+  if (!notified) {
+    localStorage.setItem(NOTIFIED_KEY, now.toISOString())
+    return
   }
 
   localStorage.setItem(NOTIFIED_KEY, now.toISOString())

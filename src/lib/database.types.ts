@@ -411,6 +411,52 @@ export type Database = {
           created_at?: string
         }
       }
+      habit_track: {
+        Row: {
+          id: string
+          owner_id: string
+          name: string
+          active: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          name: string
+          active?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          name?: string
+          active?: boolean
+          created_at?: string
+        }
+      }
+      habit_entry: {
+        Row: {
+          id: string
+          habit_id: string
+          done_on: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          habit_id: string
+          done_on: string
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          habit_id?: string
+          done_on?: string
+          notes?: string | null
+          created_at?: string
+        }
+      }
     }
     Enums: {
       task_category: "finance" | "logistics" | "personal" | "health"

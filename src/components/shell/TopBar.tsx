@@ -12,6 +12,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/health": "HEALTH HUB",
   "/notes": "NOTES",
   "/meals": "MEAL PLANNING",
+  "/habits": "HABITS TRACKER",
   "/settings": "SETTINGS",
 }
 

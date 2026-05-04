@@ -27,6 +27,7 @@ const NAV_COMMANDS = [
   { label: "Health Hub", href: "/health", shortcut: "H" },
   { label: "Notes", href: "/notes", shortcut: "N" },
   { label: "Meal Planning", href: "/meals", shortcut: "M" },
+  { label: "Habits Tracker", href: "/habits", shortcut: "B" },
   { label: "Settings", href: "/settings", shortcut: "S" },
 ]
 

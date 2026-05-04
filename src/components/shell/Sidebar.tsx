@@ -78,6 +78,15 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+  {
+    href: "/habits",
+    label: "HBT",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M2 8l3 3 5-5M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
 ]
 
 export function Sidebar() {
