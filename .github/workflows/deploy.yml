@@ -17,14 +17,14 @@ jobs:
           script: |
             set -e
             DIR=~/ops-hub
-            mkdir -p $DIR
-            cd $DIR
-
-            if [ -d .git ]; then
+            if [ -d "$DIR/.git" ]; then
+              cd $DIR
               git fetch origin main
               git reset --hard origin/main
             else
-              git clone https://github.com/leosuga/suganuma-ops-hub.git .
+              rm -rf $DIR
+              git clone https://github.com/leosuga/suganuma-ops-hub.git $DIR
+              cd $DIR
             fi
 
             cat > .env.prod << EOF
