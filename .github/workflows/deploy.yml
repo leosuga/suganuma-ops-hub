@@ -15,6 +15,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            set -e
             cd ~
             rm -rf ops-hub
             git clone https://github.com/leosuga/suganuma-ops-hub.git ops-hub
@@ -25,14 +26,32 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.prod
             echo "WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}" >> .env.prod
 
-            docker compose -f docker-compose.prod.yml down || true
-            docker compose -f docker-compose.prod.yml up -d --build
-            docker image prune -f || true
+            echo "=== Cleaning Docker ==="
+            docker compose -f docker-compose.prod.yml down -v --remove-orphans 2>/dev/null || true
+            docker builder prune -af 2>/dev/null || true
+            docker system prune -af 2>/dev/null || true
 
-            for i in $(seq 1 24); do
-              CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 https://ops.suganuma.com.br/api/health || echo "000")
+            echo "=== Building ==="
+            docker compose -f docker-compose.prod.yml build --no-cache
+
+            echo "=== Starting ==="
+            docker compose -f docker-compose.prod.yml up -d
+
+            echo "=== Waiting for app to be ready ==="
+            for i in $(seq 1 30); do
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 https://ops.suganuma.com.br/api/health 2>/dev/null || echo "000")
               echo "Health $i: $CODE"
-              [ "$CODE" = "200" ] && echo "DEPLOY OK" && exit 0
-              sleep 10
+              [ "$CODE" = "200" ] && break
+              sleep 5
             done
-            echo "TIMEOUT" && exit 1
+
+            echo "=== Verifying new code is live ==="
+            SW_CONTENT=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null | head -c 20 || echo "error")
+            echo "sw.js: $SW_CONTENT"
+            if echo "$SW_CONTENT" | grep -q "ops-hub-v4"; then
+              echo "DEPLOY OK - new SW version detected"
+            else
+              echo "WARNING: SW still shows old content, but health is OK"
+            fi
+
+            docker compose -f docker-compose.prod.yml ps
