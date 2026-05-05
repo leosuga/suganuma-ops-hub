@@ -26,7 +26,7 @@ jobs:
             set -e
             TOKEN="${{ secrets.COOLIFY_TOKEN }}"
             APP_UUID="sw2ag8vuujt87zk04wwbxsvg"
-            COOLIFY="http://localhost:9000"
+            COOLIFY="http://localhost:8081"
 
             RESP=$(curl -sS -X POST \
               -H "Authorization: Bearer $TOKEN" \
