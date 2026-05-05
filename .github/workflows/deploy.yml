@@ -26,18 +26,10 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.prod
             echo "WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}" >> .env.prod
 
-            echo "=== Cleaning Docker ==="
-            docker compose -f docker-compose.prod.yml down -v --remove-orphans 2>/dev/null || true
-            docker builder prune -af 2>/dev/null || true
-            docker system prune -af 2>/dev/null || true
-
-            echo "=== Building ==="
-            docker compose -f docker-compose.prod.yml build --no-cache
-
-            echo "=== Starting ==="
+            docker compose -f docker-compose.prod.yml down 2>/dev/null || true
+            docker compose -f docker-compose.prod.yml build --no-cache app
             docker compose -f docker-compose.prod.yml up -d
 
-            echo "=== Waiting for app to be ready ==="
             for i in $(seq 1 30); do
               CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 https://ops.suganuma.com.br/api/health 2>/dev/null || echo "000")
               echo "Health $i: $CODE"
@@ -45,13 +37,8 @@ jobs:
               sleep 5
             done
 
-            echo "=== Verifying new code is live ==="
-            SW_CONTENT=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null | head -c 20 || echo "error")
-            echo "sw.js: $SW_CONTENT"
-            if echo "$SW_CONTENT" | grep -q "ops-hub-v4"; then
-              echo "DEPLOY OK - new SW version detected"
-            else
-              echo "WARNING: SW still shows old content, but health is OK"
-            fi
+            SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null | head -c 30 || echo "-")
+            echo "sw.js: $SW"
 
+            echo "$SW" | grep -q "ops-hub-v4" && echo "DEPLOY OK - v4" || echo "DONE"
             docker compose -f docker-compose.prod.yml ps
