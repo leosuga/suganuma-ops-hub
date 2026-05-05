@@ -8,73 +8,25 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup and Deploy via Coolify
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy deploy script to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "deploy-script.sh"
+          target: "/tmp/deploy-script.sh"
+          rm: true
+
+      - name: Run deploy script on VPS
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            set -e
-            TOKEN="${{ secrets.COOLIFY_TOKEN }}"
-            BASE="http://localhost:8081/api/v1"
-            SERVER="vpqzuhhaptcp8dpnl2y0y478"
-
-            echo "=== Step 1: Gerando par de chaves SSH para Coolify ==="
-            ssh-keygen -t ed25519 -f /tmp/coolify_key -N "" -C "coolify-localhost" -q 2>/dev/null || true
-            if [ ! -f /tmp/coolify_key ]; then
-              echo "ERRO: falha ao gerar chave SSH"
-              exit 1
-            fi
-            echo "OK: chave gerada"
-
-            echo "=== Step 2: Autorizando chave para root ==="
-            sudo mkdir -p /root/.ssh
-            sudo chmod 700 /root/.ssh
-            sudo cp /tmp/coolify_key.pub /root/.ssh/authorized_keys
-            sudo chmod 600 /root/.ssh/authorized_keys
-            echo "OK: chave autorizada para root"
-
-            echo "=== Step 3: Registrando chave no Coolify ==="
-            python3 -c "
-import json, subprocess
-
-with open('/tmp/coolify_key') as f:
-    key = f.read()
-
-payload = json.dumps({'name': 'localhost-root', 'description': 'root@localhost ed25519', 'private_key': key})
-with open('/tmp/payload.json', 'w') as f:
-    f.write(payload)
-
-resp = subprocess.run(
-    ['curl', '-sS', '-X', 'POST',
-     '-H', 'Authorization: Bearer $TOKEN',
-     '-H', 'Content-Type: application/json',
-     '-d', '@/tmp/payload.json',
-     '$BASE/security/keys'],
-    capture_output=True, text=True, shell=False
-)
-print(resp.stdout[:800])
-if resp.stderr:
-    print('STDERR:', resp.stderr[:200])
-
-try:
-    data = json.loads(resp.stdout)
-    print('KEY_UUID=' + data.get('uuid', 'NONE'))
-except:
-    print('(nao foi possivel parsear resposta como JSON)')
-" 2>&1
-
-            echo ""
-            echo "=== Step 4: Validando servidor ==="
-            curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER/validate" 2>&1 || true
-
-            echo ""
-            echo "=== Step 5: Status do servidor ==="
-            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER" 2>&1 | python3 -c "
-import sys, json
-s = json.load(sys.stdin)
-print('reachable=' + str(s.get('is_reachable')))
-print('usable=' + str(s.get('is_usable')))
-print('validation_logs=' + str(s.get('validation_logs', ''))[:200])
-" 2>/dev/null || echo "ERRO: nao conseguiu parsear status do servidor"
+            export COOLIFY_TOKEN="${{ secrets.COOLIFY_TOKEN }}"
+            bash /tmp/deploy-script.sh
