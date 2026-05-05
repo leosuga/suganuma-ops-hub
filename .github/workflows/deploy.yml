@@ -8,24 +8,62 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Copy deploy script to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "deploy-script.sh"
-          target: "/tmp"
-
-      - name: Run deploy script on VPS
+      - name: Setup and Deploy via Coolify
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            set -e
             export COOLIFY_TOKEN="${{ secrets.COOLIFY_TOKEN }}"
-            bash /tmp/deploy-script.sh
+
+            echo "=== Gerando chave SSH ==="
+            ssh-keygen -t ed25519 -f /tmp/cfkey -N "" -C "coolify" -q 2>/dev/null || true
+
+            echo "=== Autorizando root ==="
+            sudo mkdir -p /root/.ssh
+            sudo chmod 700 /root/.ssh
+            sudo cp /tmp/cfkey.pub /root/.ssh/authorized_keys
+            sudo chmod 600 /root/.ssh/authorized_keys
+
+            echo "=== Registrando no Coolify ==="
+            cat > /tmp/register.py << 'ENDPY'
+            import json, os, subprocess
+            with open("/tmp/cfkey") as f:
+                k = f.read()
+            payload = json.dumps({"name":"localhost-key","description":"root@localhost","private_key":k})
+            with open("/tmp/payload.json","w") as f:
+                f.write(payload)
+            r = subprocess.run(["curl","-sS","-X","POST",
+                "-H","Authorization: Bearer "+os.environ["COOLIFY_TOKEN"],
+                "-H","Content-Type: application/json",
+                "-d","@/tmp/payload.json",
+                "http://localhost:8081/api/v1/security/keys"],
+                capture_output=True,text=True)
+            print(r.stdout[:500])
+            try:
+                d = json.loads(r.stdout)
+                print("KEY_UUID="+d.get("uuid","NONE"))
+            except:
+                print("(nao-JSON)")
+            ENDPY
+            python3 /tmp/register.py
+
+            echo ""
+            echo "=== Keys listadas ==="
+            curl -sS -H "Authorization: Bearer $COOLIFY_TOKEN" http://localhost:8081/api/v1/security/keys | python3 -m json.tool 2>/dev/null || true
+
+            echo ""
+            echo "=== Validando servidor ==="
+            curl -sS -X POST -H "Authorization: Bearer $COOLIFY_TOKEN" http://localhost:8081/api/v1/servers/vpqzuhhaptcp8dpnl2y0y478/validate 2>&1 || true
+
+            sleep 5
+
+            echo ""
+            echo "=== Status servidor ==="
+            curl -sS -H "Authorization: Bearer $COOLIFY_TOKEN" http://localhost:8081/api/v1/servers/vpqzuhhaptcp8dpnl2y0y478 | python3 -c '
+            import sys, json
+            s = json.load(sys.stdin)
+            print("reachable="+str(s.get("is_reachable"))+" usable="+str(s.get("is_usable")))
+            ' 2>/dev/null || true
