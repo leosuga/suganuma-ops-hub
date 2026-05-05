@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Diagnosticar e Configurar Coolify
+      - name: Configurar Coolify e Deploy
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -18,42 +18,107 @@ jobs:
             set -e
             TOKEN="${{ secrets.COOLIFY_TOKEN }}"
             B="http://localhost:8081/api/v1"
-            
-            echo "================================================"
-            echo "=== DIAGNÓSTICO COMPLETO DO COOLIFY          ==="
-            echo "================================================"
-            
+            SERVER="vpqzuhhaptcp8dpnl2y0y478"
+            PROJECT="dg2ica8qgpfh489e2359f0z3"
+            KEY="lzlrlujsu7psm82vojtgv5dq"
+
+            echo "=== 1. Verificando chave SSH no servidor ==="
+            curl -sS -X POST \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"private_key_uuid\":\"$KEY\"}" \
+              "$B/servers/$SERVER" 2>&1 | python3 -m json.tool 2>/dev/null || true
+
             echo ""
-            echo "--- Health Check ---"
-            curl -sS "$B/health"
-            
+            echo "=== 2. Validando servidor ==="
+            curl -sS -X POST \
+              -H "Authorization: Bearer $TOKEN" \
+              "$B/servers/$SERVER/validate" 2>&1 || true
+
+            sleep 5
+
             echo ""
-            echo "--- Servers ---"
-            curl -sS -H "Authorization: Bearer $TOKEN" "$B/servers" | python3 -m json.tool
-            
+            echo "=== 3. Status servidor ==="
+            S=$(curl -sS -H "Authorization: Bearer $TOKEN" "$B/servers/$SERVER")
+            echo "$S" | python3 -c "
+            import sys, json
+            s = json.load(sys.stdin)
+            print('reachable=' + str(s.get('is_reachable')))
+            print('usable=' + str(s.get('is_usable')))
+            " 2>/dev/null || echo "parse error: $S"
+
             echo ""
-            echo "--- Projects ---"
-            curl -sS -H "Authorization: Bearer $TOKEN" "$B/projects" | python3 -m json.tool
-            
+            echo "=== 4. Environments do projeto ==="
+            curl -sS -H "Authorization: Bearer $TOKEN" "$B/projects/$PROJECT" 2>&1 | python3 -c "
+            import sys, json
+            p = json.load(sys.stdin)
+            for e in p.get('environments', []):
+                print(f'env: {e.get(\"uuid\")} {e.get(\"name\")}')
+            "
+
             echo ""
-            echo "--- Applications ---"
-            curl -sS -H "Authorization: Bearer $TOKEN" "$B/applications" | python3 -m json.tool
-            
+            echo "=== 5. Obtendo environment UUID ==="
+            ENV=$(curl -sS -H "Authorization: Bearer $TOKEN" "$B/projects/$PROJECT" 2>&1 | python3 -c "
+            import sys, json
+            p = json.load(sys.stdin)
+            envs = p.get('environments', [])
+            if envs:
+                print(envs[0].get('uuid',''))
+            " 2>/dev/null || echo "")
+            echo "Env UUID: $ENV"
+
+            if [ -z "$ENV" ]; then
+              echo "ERRO: sem environments no projeto"
+              exit 1
+            fi
+
             echo ""
-            echo "--- Security Keys ---"
-            curl -sS -H "Authorization: Bearer $TOKEN" "$B/security/keys" | python3 -m json.tool
-            
+            echo "=== 6. Criando application ==="
+            APP=$(curl -sS -X POST \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"name\":\"suganuma-ops-hub\",\"description\":\"Personal command center\",\"project_uuid\":\"$PROJECT\",\"environment_uuid\":\"$ENV\",\"server_uuid\":\"$SERVER\",\"docker_compose_domains\":\"ops.suganuma.com.br\"}" \
+              "$B/applications" 2>&1)
+            echo "$APP" | python3 -m json.tool 2>/dev/null || echo "$APP"
+
+            APP_UUID=$(echo "$APP" | python3 -c "
+            import sys, json
+            a = json.load(sys.stdin)
+            print(a.get('uuid',''))
+            " 2>/dev/null || echo "")
+            echo "App UUID: $APP_UUID"
+
+            if [ -z "$APP_UUID" ]; then
+              echo "ERRO: nao criou application. Response:"
+              echo "$APP"
+              exit 1
+            fi
+
             echo ""
-            echo "--- Teams ---"
-            curl -sS -H "Authorization: Bearer $TOKEN" "$B/teams" | python3 -m json.tool
-            
-            echo ""
-            echo "--- Docker containers rodando ---"
-            docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' 2>/dev/null || echo "(sem docker)"
-            
-            echo ""
-            echo "--- Containers Coolify ---"
-            docker ps -a --filter "name=coolify" --format '{{.Names}} {{.Image}} {{.Status}}' 2>/dev/null || echo "(sem)"
-            
-            echo ""
-            echo "=== FIM DIAGNÓSTICO ==="
+            echo "=== 7. Deploy ==="
+            DEPLOY=$(curl -sS -X POST \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              "$B/applications/$APP_UUID/start" 2>&1)
+            echo "$DEPLOY" | python3 -m json.tool 2>/dev/null || echo "$DEPLOY"
+
+            DEPLOY_UUID=$(echo "$DEPLOY" | python3 -c "
+            import sys, json
+            print(json.load(sys.stdin).get('deployment_uuid',''))
+            " 2>/dev/null || echo "")
+
+            if [ -n "$DEPLOY_UUID" ]; then
+              echo "Aguardando deploy: $DEPLOY_UUID"
+              for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90; do
+                ST=$(curl -sS -H "Authorization: Bearer $TOKEN" "$B/deployments/$DEPLOY_UUID" 2>&1 | python3 -c "
+                import sys, json
+                print(json.load(sys.stdin).get('status',''))
+                " 2>/dev/null || echo "")
+                echo "[$i/90] $ST"
+                [ "$ST" = "finished" ] && echo "DEPLOY OK!" && exit 0
+                [ "$ST" = "failed" ] && echo "DEPLOY FAILED!" && exit 1
+                sleep 10
+              done
+            else
+              echo "Sem deployment_uuid"
+            fi
