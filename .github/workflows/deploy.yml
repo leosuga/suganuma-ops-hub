@@ -8,28 +8,137 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via Coolify
+      - name: Setup and Deploy via Coolify
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
+            set -e
             TOKEN="${{ secrets.COOLIFY_TOKEN }}"
             BASE="http://localhost:8081/api/v1"
+            SERVER="vpqzuhhaptcp8dpnl2y0y478"
+            SSH_KEY="${{ secrets.VPS_SSH_KEY }}"
 
-            echo "=== APPS ==="
-            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/applications" | python3 -m json.tool
+            echo "=== 1. Criando Private Key no Coolify ==="
+            KEY_RESP=$(curl -sS -X POST \
+              -H "Authorization: Bearer $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d "{\"name\":\"vps-deploy-key\",\"private_key\":\"$SSH_KEY\",\"description\":\"VPS SSH key for Coolify deploy\"}" \
+              "$BASE/security/keys" 2>&1)
+            echo "$KEY_RESP" | python3 -m json.tool 2>/dev/null || echo "$KEY_RESP"
+            KEY_UUID=$(echo "$KEY_RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("uuid",""))' 2>/dev/null || echo "")
+            echo "Key UUID: $KEY_UUID"
 
             echo ""
-            echo "=== PROJECTS ==="
-            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/projects" | python3 -m json.tool
+            echo "=== 2. Listando keys e servers ==="
+            echo "Keys:"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/security/keys" | python3 -c '
+import sys, json
+keys = json.load(sys.stdin)
+for k in keys:
+    print(f"  uuid={k.get(\"uuid\")} name={k.get(\"name\")} fingerprint={k.get(\"fingerprint\",\"?\")}")
+' 2>/dev/null || true
 
-            echo ""
-            echo "=== SERVERS ==="
+            echo "Servers:"
             curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/servers" | python3 -c '
 import sys, json
 servers = json.load(sys.stdin)
 for s in servers:
-    print(f"uuid={s[\"uuid\"]} name={s[\"name\"]} ip={s[\"ip\"]} reachable={s[\"is_reachable\"]} usable={s[\"is_usable\"]}")
-'
+    print(f"  uuid={s.get(\"uuid\")} name={s.get(\"name\")} ip={s.get(\"ip\")} port={s.get(\"port\")} reachable={s.get(\"is_reachable\")} usable={s.get(\"is_usable\")} user={s.get(\"user\")}")
+    print(f"    proxy_type={s.get(\"proxy\",{}).get(\"type\",\"?\")}")
+' 2>/dev/null || true
+
+            echo ""
+            echo "=== 3. Validando servidor ==="
+            VALIDATE=$(curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER/validate" 2>&1)
+            echo "$VALIDATE"
+
+            echo ""
+            echo "=== 4. Criando/obtendo Project ==="
+            PROJS=$(curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/projects" 2>&1)
+            PROJ_UUID=$(echo "$PROJS" | python3 -c '
+import sys, json
+projects = json.load(sys.stdin)
+if projects:
+    print(projects[0].get("uuid",""))
+' 2>/dev/null || echo "")
+
+            if [ -z "$PROJ_UUID" ]; then
+              PROJ_RESP=$(curl -sS -X POST \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "Content-Type: application/json" \
+                -d '{"name":"Ops Hub","description":"Personal command center"}' \
+                "$BASE/projects" 2>&1)
+              PROJ_UUID=$(echo "$PROJ_RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("uuid",""))' 2>/dev/null || echo "")
+            fi
+            echo "Project UUID: $PROJ_UUID"
+
+            echo ""
+            echo "=== 5. Obtendo Environment ==="
+            ENV_RESP=$(curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/projects/$PROJ_UUID" 2>&1)
+            ENV_UUID=$(echo "$ENV_RESP" | python3 -c '
+import sys, json
+p = json.load(sys.stdin)
+envs = p.get("environments", [])
+for e in envs:
+    if e.get("name") == "production":
+        print(e.get("uuid"))
+        break
+if not envs:
+    pass
+' 2>/dev/null || echo "")
+            if [ -z "$ENV_UUID" ]; then
+              ENV_UUID=$(echo "$ENV_RESP" | python3 -c 'import sys,json; p=json.load(sys.stdin); print(p["environments"][0]["uuid"])' 2>/dev/null || echo "")
+            fi
+            echo "Env UUID: $ENV_UUID"
+
+            echo ""
+            echo "=== 6. Criando Application ==="
+            APPS=$(curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/applications" 2>&1)
+            APP_UUID=$(echo "$APPS" | python3 -c '
+import sys, json
+apps = json.load(sys.stdin)
+for a in apps:
+    if a.get("name") == "suganuma-ops-hub":
+        print(a.get("uuid"))
+        break
+' 2>/dev/null || echo "")
+
+            if [ -z "$APP_UUID" ]; then
+              APP_RESP=$(curl -sS -X POST \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"name\":\"suganuma-ops-hub\",\"description\":\"Suganuma Ops Hub app\",\"project_uuid\":\"$PROJ_UUID\",\"environment_uuid\":\"$ENV_UUID\",\"server_uuid\":\"$SERVER\",\"docker_compose_domains\":\"ops.suganuma.com.br\"}" \
+                "$BASE/applications" 2>&1)
+              echo "$APP_RESP" | python3 -m json.tool 2>/dev/null || echo "$APP_RESP"
+              APP_UUID=$(echo "$APP_RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("uuid",""))' 2>/dev/null || echo "")
+            fi
+            echo "App UUID: $APP_UUID"
+
+            echo ""
+            echo "=== 7. Deploy ==="
+            if [ -n "$APP_UUID" ]; then
+              DEPLOY_RESP=$(curl -sS -X POST \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "Content-Type: application/json" \
+                "$BASE/applications/$APP_UUID/start" 2>&1)
+              echo "$DEPLOY_RESP" | python3 -m json.tool 2>/dev/null || echo "$DEPLOY_RESP"
+
+              DEPLOY_UUID=$(echo "$DEPLOY_RESP" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("deployment_uuid",""))' 2>/dev/null || echo "")
+
+              if [ -n "$DEPLOY_UUID" ]; then
+                echo "Aguardando deployment $DEPLOY_UUID..."
+                for i in $(seq 1 60); do
+                  STATUS=$(curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/deployments/$DEPLOY_UUID" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("status",""))' 2>/dev/null || echo "")
+                  echo "[$i/60] status=$STATUS"
+                  [ "$STATUS" = "finished" ] && echo "DEPLOY OK!" && break
+                  [ "$STATUS" = "failed" ] && echo "DEPLOY FAILED" && exit 1
+                  sleep 10
+                done
+              fi
+            else
+              echo "ERRO: nao conseguiu criar/obter application"
+              exit 1
+            fi
