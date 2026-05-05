@@ -8,15 +8,22 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify start
-        run: |
-          curl -s -X POST https://ops.suganuma.com.br/api/webhooks/deploy-status \
-            -H "Content-Type: application/json" \
-            -H "x-hub-signature-256: sha256=$(echo -n '{"status":"started","sha":"${{ github.sha }}"}' | openssl dgst -sha256 -hmac '${{ secrets.WEBHOOK_SECRET }}' | cut -d' ' -f2)" \
-            -d '{"status":"started","sha":"${{ github.sha }}"}' || true
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Deploy and update proxy via VPS
-        id: deploy
+      - name: Copy repo to VPS via SCP
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: "."
+          target: "~/suganuma-ops-hub"
+          rm: true
+          # Não copia node_modules e .git para acelerar
+          exclude: "node_modules,.git,.next"
+
+      - name: Build and restart on VPS via SSH
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -24,63 +31,43 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-            TOKEN="${{ secrets.COOLIFY_TOKEN }}"
-            APP_UUID="${{ secrets.COOLIFY_APP_UUID }}"
-            COOLIFY="http://localhost:8081"
+            cd ~/suganuma-ops-hub
 
-            echo "DEBUG: APP_UUID='$APP_UUID'"
-            echo "DEBUG: COOLIFY='$COOLIFY'"
+            # Gerar .env.prod a partir de secrets (nunca commite .env.prod)
+            cat > .env.prod <<EOF
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}
+            EOF
 
-            RESP=$(curl -sS -X POST \
-              -H "Authorization: Bearer $TOKEN" \
-              -H "Content-Type: application/json" \
-              "$COOLIFY/api/v1/applications/$APP_UUID/start")
-            echo "Resposta: $RESP"
-            UUID=$(echo "$RESP" | python3 -c "import sys,json; print(json.load(sys.stdin).get('deployment_uuid',''))" 2>/dev/null) || true
-            if [ -z "$UUID" ]; then
-              echo "ERRO: deployment_uuid não retornado"; exit 1
-            fi
-            echo "Deploy enfileirado: $UUID"
+            echo "=== Verificando Docker ==="
+            docker -v
+            docker compose version
 
-            for i in $(seq 1 60); do
-              STATUS=$(curl -s \
-                -H "Authorization: Bearer $TOKEN" \
-                "$COOLIFY/api/v1/deployments/$UUID" \
-                | python3 -c "import sys,json; print(json.load(sys.stdin).get('status',''))" 2>/dev/null) || true
-              echo "[$i/60] status=$STATUS"
-              [ "$STATUS" = "finished" ]  && echo "Deployment finalizada!" && break
-              [ "$STATUS" = "failed" ]    && echo "Deployment falhou!"    && exit 1
-              [ "$STATUS" = "cancelled" ] && echo "Deployment cancelada!" && exit 1
-              sleep 10
-            done
-            [ "$STATUS" != "finished" ] && echo "Timeout aguardando deployment" && exit 1
+            echo "=== Build e restart ==="
+            docker compose -f docker-compose.prod.yml down || true
+            docker compose -f docker-compose.prod.yml up -d --build
 
-            ~/update-ops-proxy.sh
+            echo "=== Cleanup ==="
+            docker image prune -f || true
+            docker builder prune -f || true
+
+            echo "=== Status ==="
+            docker compose -f docker-compose.prod.yml ps
+            echo "Deploy concluído!"
 
       - name: Verify production health
         run: |
           echo "Verificando saúde em produção..."
-          for i in $(seq 1 12); do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-              https://ops.suganuma.com.br/api/health)
+          for i in $(seq 1 24); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 \
+              https://ops.suganuma.com.br/api/health || echo "000")
             echo "Tentativa $i: HTTP $STATUS"
-            [ "$STATUS" = "200" ] && echo "Produção OK!" && exit 0
-            sleep 5
+            if [ "$STATUS" = "200" ]; then
+              echo "Produção OK!"
+              exit 0
+            fi
+            sleep 10
           done
-          echo "Produção não respondeu após atualização do proxy" && exit 1
-
-      - name: Notify success
-        if: success()
-        run: |
-          curl -s -X POST https://ops.suganuma.com.br/api/webhooks/deploy-status \
-            -H "Content-Type: application/json" \
-            -H "x-hub-signature-256: sha256=$(echo -n '{"status":"success","sha":"${{ github.sha }}"}' | openssl dgst -sha256 -hmac '${{ secrets.WEBHOOK_SECRET }}' | cut -d' ' -f2)" \
-            -d '{"status":"success","sha":"${{ github.sha }}"}' || true
-
-      - name: Notify failure
-        if: failure()
-        run: |
-          curl -s -X POST https://ops.suganuma.com.br/api/webhooks/deploy-status \
-            -H "Content-Type: application/json" \
-            -H "x-hub-signature-256: sha256=$(echo -n '{"status":"failure","sha":"${{ github.sha }}","message":"deploy failed"}' | openssl dgst -sha256 -hmac '${{ secrets.WEBHOOK_SECRET }}' | cut -d' ' -f2)" \
-            -d '{"status":"failure","sha":"${{ github.sha }}","message":"deploy failed"}' || true
+          echo "Produção não respondeu após 4 minutos" && exit 1
