@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup and Deploy via Coolify
+      - name: Create SSH key and validate server
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -20,83 +20,52 @@ jobs:
             BASE="http://localhost:8081/api/v1"
             SERVER="vpqzuhhaptcp8dpnl2y0y478"
 
-            echo "=== 1. Verificando keys existentes ==="
-            EXISTING=$(curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/security/keys" | python3 -c '
-import sys, json
-keys = json.load(sys.stdin)
-for k in keys:
-    print(k.get("uuid"))
-    break
-' 2>/dev/null || echo "")
-            echo "Keys existentes: $EXISTING"
+            echo "=== Step 1: Write SSH key to temp file ==="
+            cat > /tmp/key.pem << 'EOFKEY'
+${{ secrets.VPS_SSH_KEY }}
+EOFKEY
 
-            if [ -z "$EXISTING" ]; then
-              echo "=== 1b. Criando chave SSH no Coolify ==="
-              echo '${{ secrets.VPS_SSH_KEY }}' > /tmp/coolify_key.pem
+            echo "Key file size: $(wc -c < /tmp/key.pem) bytes"
 
-              python3 << 'PYEOF'
+            echo "=== Step 2: Build JSON payload and create key via API ==="
+
+            python3 << 'PYEOF'
 import json, subprocess, os
 
-with open("/tmp/coolify_key.pem") as f:
-    raw = f.read()
+with open("/tmp/key.pem") as f:
+    key_content = f.read()
 
-payload = json.dumps({
+payload = {
     "name": "vps-key",
-    "description": "SSH key for VPS deploy",
-    "private_key": raw
-})
+    "description": "VPS deploy SSH key",
+    "private_key": key_content
+}
 
 with open("/tmp/payload.json", "w") as f:
-    f.write(payload)
+    json.dump(payload, f)
+
+print("Payload JSON size:", os.path.getsize("/tmp/payload.json"), "bytes")
 
 resp = subprocess.check_output([
     "curl", "-sS", "-X", "POST",
-    "-H", f"Authorization: Bearer {os.environ['TOKEN']}",
+    "-H", "Authorization: Bearer " + os.environ["TOKEN"],
     "-H", "Content-Type: application/json",
-    "-d", "@" + "/tmp/payload.json",
+    "-d", "@/tmp/payload.json",
     "http://localhost:8081/api/v1/security/keys"
-]).decode()
-print(resp)
-try:
-    data = json.loads(resp)
-    if data.get("uuid"):
-        print("KEY OK: uuid=" + data["uuid"])
-    else:
-        print("WARNING: key criada mas sem uuid")
-except:
-    print("ERROR: resposta nao e JSON valido:")
-    print(resp[:500])
+], stderr=subprocess.STDOUT).decode()
+
+print("API response:", resp[:500])
 PYEOF
-              rm -f /tmp/coolify_key.pem /tmp/payload.json
-            fi
 
-            echo ""
-            echo "=== 2. Listando keys apos criacao ==="
-            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/security/keys" 2>&1 | python3 -c '
-import sys, json
-keys = json.load(sys.stdin)
-print(f"Total keys: {len(keys)}")
-for k in keys:
-    print(f"  uuid={k.get(\"uuid\")} name={k.get(\"name\")}")
-' || echo "(vazio/erro)"
+            echo "=== Step 3: List all private keys ==="
+            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/security/keys" 2>&1 | python3 -m json.tool 2>/dev/null || echo "(vazio)"
 
-            echo ""
-            echo "=== 3. Validando servidor ==="
-            VAL=$(curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER/validate" 2>&1)
-            echo "Validate: $VAL"
+            echo "=== Step 4: Validate server ==="
+            curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER/validate" 2>&1 || echo "(validate falhou)"
 
-            echo ""
-            echo "=== 4. Status do servidor ==="
+            echo "=== Step 5: Server status ==="
             curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER" 2>&1 | python3 -c '
 import sys, json
 s = json.load(sys.stdin)
-print(f"name={s.get(\"name\")} reachable={s.get(\"is_reachable\")} usable={s.get(\"is_usable\")}")
-print(f"ip={s.get(\"ip\")} port={s.get(\"port\")} user={s.get(\"user\")}")
-p = s.get("proxy", {})
-print(f"proxy_type={p.get(\"type\",\"?\")} redirect={p.get(\"redirect_enabled\",\"?\")}")
-' || true
-
-            echo ""
-            echo "=== 5. Verificando Docker no VPS ==="
-            docker info 2>&1 | head -5 || echo "(docker nao acessivel)"
-            docker ps --format "table {{.Names}}" 2>&1 || true
+print(f"reachable={s.get(\"is_reachable\")} usable={s.get(\"is_usable\")}")
+' || echo "(status parse falhou)"
