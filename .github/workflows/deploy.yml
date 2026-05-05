@@ -15,37 +15,24 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            set -e
-            DIR=~/ops-hub
-            if [ -d "$DIR/.git" ]; then
-              cd $DIR
-              git fetch origin main
-              git reset --hard origin/main
-            else
-              rm -rf $DIR
-              git clone https://github.com/leosuga/suganuma-ops-hub.git $DIR
-              cd $DIR
-            fi
+            cd ~
+            rm -rf ops-hub
+            git clone https://github.com/leosuga/suganuma-ops-hub.git ops-hub
+            cd ops-hub
 
-            cat > .env.prod << EOF
-            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-            WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}
-            EOF
+            echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" > .env.prod
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.prod
+            echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.prod
+            echo "WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}" >> .env.prod
 
             docker compose -f docker-compose.prod.yml down || true
             docker compose -f docker-compose.prod.yml up -d --build
-
             docker image prune -f || true
 
-            sleep 10
-
-            for i in $(seq 1 12); do
+            for i in $(seq 1 24); do
               CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 https://ops.suganuma.com.br/api/health || echo "000")
-              echo "Health check $i: HTTP $CODE"
+              echo "Health $i: $CODE"
               [ "$CODE" = "200" ] && echo "DEPLOY OK" && exit 0
-              sleep 5
+              sleep 10
             done
-            echo "DEPLOY FAILED - health check never returned 200"
-            exit 1
+            echo "TIMEOUT" && exit 1
