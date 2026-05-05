@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup and Deploy via Coolify
+      - name: Deploy
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -16,86 +16,31 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-            TOKEN="${{ secrets.COOLIFY_TOKEN }}"
-            B="http://localhost:8081/api/v1"
-            S="vpqzuhhaptcp8dpnl2y0y478"
-            K="lzlrlujsu7psm82vojtgv5dq"
-            P="dg2ica8qgpfh489e2359f0z3"
+            cd ~/ops-hub 2>/dev/null && git fetch origin main && git reset --hard origin/main || { rm -rf ~/ops-hub && git clone https://github.com/leosuga/suganuma-ops-hub.git ~/ops-hub && cd ~/ops-hub; }
 
-            echo "=== 1. Associando chave SSH ao servidor ==="
-            curl -sS -X PATCH \
-              -H "Authorization: Bearer $TOKEN" \
-              -H "Content-Type: application/json" \
-              -d "{\"private_key_uuid\":\"$K\",\"ip\":\"host.docker.internal\",\"port\":22,\"user\":\"root\"}" \
-              "$B/servers/$S" 2>&1 | python3 -m json.tool 2>/dev/null || true
+            echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" > .env.prod
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.prod
+            echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.prod
+            echo "WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}" >> .env.prod
 
-            echo "=== 2. Validando servidor ==="
-            curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$B/servers/$S/validate" 2>&1 || true
-            sleep 5
+            docker build --no-cache -t suganuma-ops-hub:latest .
 
-            echo "=== 3. Status servidor ==="
-            curl -sS -H "Authorization: Bearer $TOKEN" "$B/servers/$S" 2>&1 | python3 -c "
-            import sys, json
-            s = json.load(sys.stdin)
-            print('reachable=' + str(s.get('is_reachable')))
-            print('usable=' + str(s.get('is_usable')))
-            " 2>/dev/null || echo "(status)"
+            OLD=$(docker ps -q --filter "name=sw2ag8vuujt87zk04wwbxsvg" 2>/dev/null || echo "")
+            [ -n "$OLD" ] && docker stop "$OLD" 2>/dev/null && docker rm "$OLD" 2>/dev/null
 
-            echo "=== 4. Environment ==="
-            ENV=$(curl -sS -H "Authorization: Bearer $TOKEN" "$B/projects/$P" 2>&1 | python3 -c "
-            import sys, json
-            p = json.load(sys.stdin)
-            envs = p.get('environments', [])
-            print(envs[0]['uuid'] if envs else '')
-            " 2>/dev/null || echo "")
+            docker run -d \
+              --name suganuma-ops-hub \
+              --network caddy_default \
+              --env-file .env.prod \
+              --restart unless-stopped \
+              suganuma-ops-hub:latest
 
-            if [ -z "$ENV" ]; then
-              echo "ERRO: sem environment"
-              exit 1
-            fi
-            echo "Env: $ENV"
+            [ -f ~/update-ops-proxy.sh ] && ~/update-ops-proxy.sh || true
 
-            echo "=== 5. Criando/obtendo application ==="
-            EXISTING=$(curl -sS -H "Authorization: Bearer $TOKEN" "$B/applications" 2>&1 | python3 -c "
-            import sys, json
-            for a in json.load(sys.stdin):
-                if a.get('name') == 'suganuma-ops-hub':
-                    print(a['uuid'])
-                    break
-            " 2>/dev/null || echo "")
-
-            if [ -n "$EXISTING" ]; then
-              APP="$EXISTING"
-              echo "App existe: $APP"
-            else
-              APP=$(curl -sS -X POST \
-                -H "Authorization: Bearer $TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "{\"name\":\"suganuma-ops-hub\",\"description\":\"\",\"project_uuid\":\"$P\",\"environment_uuid\":\"$ENV\",\"server_uuid\":\"$S\",\"docker_compose_domains\":\"ops.suganuma.com.br\"}" \
-                "$B/applications" 2>&1 | python3 -c "
-              import sys, json
-              print(json.load(sys.stdin)['uuid'])
-              " 2>/dev/null || echo "")
-              echo "App criada: $APP"
-            fi
-
-            if [ -z "$APP" ]; then
-              echo "FATAL: sem app uuid"
-              exit 1
-            fi
-
-            echo "=== 6. Deploy ==="
-            DEP=$(curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$B/applications/$APP/start")
-            echo "$DEP"
-            DU=$(echo "$DEP" | python3 -c "import sys,json;print(json.load(sys.stdin).get('deployment_uuid',''))" 2>/dev/null || echo "")
-
-            if [ -n "$DU" ]; then
-              for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90; do
-                ST=$(curl -sS -H "Authorization: Bearer $TOKEN" "$B/deployments/$DU" 2>&1 | python3 -c "import sys,json;print(json.load(sys.stdin).get('status',''))" 2>/dev/null || echo "")
-                echo "[$i/90] $ST"
-                [ "$ST" = "finished" ]  && echo "DEPLOY OK" && exit 0
-                [ "$ST" = "failed" ]    && echo "DEPLOY FAILED" && exit 1
-                [ "$ST" = "cancelled" ] && echo "DEPLOY CANCELLED" && exit 1
-                sleep 10
-              done
-            fi
+            for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 https://ops.suganuma.com.br/api/health 2>/dev/null || echo "000")
+              echo "Health $i: $CODE"
+              [ "$CODE" = "200" ] && echo "OK" && exit 0
+              sleep 5
+            done
+            exit 1
