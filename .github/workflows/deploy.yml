@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Coolify — validar servidor + criar project + app
+      - name: Setup Coolify
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -21,41 +21,37 @@ jobs:
             SERVER="vpqzuhhaptcp8dpnl2y0y478"
 
             echo "=== 1. Validando servidor localhost ==="
-            curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER/validate" 2>&1 | python3 -m json.tool 2>/dev/null || true
+            curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER/validate" 2>&1 || true
             sleep 5
-            echo "=== Status do servidor ==="
-            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER" 2>&1 | python3 -c "
+            echo "Status:"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER" 2>&1 | python3 -c '
 import sys, json
 s = json.load(sys.stdin)
-print(f'name={s.get(\"name\")} reachable={s.get(\"is_reachable\")} usable={s.get(\"is_usable\")}')" 2>/dev/null || true
+print(f"reachable={s.get(\"is_reachable\")} usable={s.get(\"is_usable\")}")
+' || true
 
             echo ""
-            echo "=== 2. Criando Private Key (para GitHub) ==="
-            curl -sS -X POST \
-              -H "Authorization: Bearer $TOKEN" \
-              -H "Content-Type: application/json" \
-              -d '{"name":"github-deploy","private_key":"'"${{ secrets.VPS_SSH_KEY }}"'","description":"GitHub deploy key"}' \
-              "$BASE/security/keys" 2>&1 | python3 -m json.tool 2>/dev/null || echo "(erro ao criar key — pode já existir)"
-
-            echo ""
-            echo "=== 3. Criando Project ==="
+            echo "=== 2. Criando Project ==="
             PROJ=$(curl -sS -X POST \
               -H "Authorization: Bearer $TOKEN" \
               -H "Content-Type: application/json" \
               -d '{"name":"Suganuma Ops Hub","description":"Personal command center"}' \
               "$BASE/projects" 2>&1)
-            echo "$PROJ" | python3 -m json.tool 2>/dev/null
-            PROJ_UUID=$(echo "$PROJ" | python3 -c "import sys,json; print(json.load(sys.stdin).get('uuid',''))" 2>/dev/null || echo "")
+            echo "$PROJ"
+            PROJ_UUID=$(echo "$PROJ" | python3 -c '
+import sys, json
+print(json.load(sys.stdin).get("uuid",""))
+' 2>/dev/null || echo "")
             echo "Project UUID: $PROJ_UUID"
 
             echo ""
-            echo "=== 4. Listando environments do project ==="
+            echo "=== 3. Listando environments do project ==="
             if [ -n "$PROJ_UUID" ]; then
-              curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/projects/$PROJ_UUID" 2>&1 | python3 -c "
+              curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/projects/$PROJ_UUID" 2>&1 | python3 -c '
 import sys, json
 p = json.load(sys.stdin)
-envs = p.get('environments', [])
+envs = p.get("environments", [])
 for e in envs:
-    print(f'  env uuid={e.get(\"uuid\")} name={e.get(\"name\")}')
-" 2>/dev/null || true
+    print("env uuid=" + e.get("uuid","?") + " name=" + e.get("name","?"))
+' || true
             fi
