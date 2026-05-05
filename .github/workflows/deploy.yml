@@ -8,42 +8,44 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy
+      - name: Deploy to VPS
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cat > /tmp/deploy.sh << 'ENDOFSCRIPT'
-            #!/bin/bash
             set -e
-            cd "$HOME/ops-hub" 2>/dev/null || { mkdir -p "$HOME/ops-hub" && cd "$HOME/ops-hub"; }
+            DIR=~/ops-hub
+            mkdir -p $DIR
+            cd $DIR
 
-            echo "=== Salvando .env.prod do container atual ==="
-            CID=$(docker ps -q --filter "name=app" 2>/dev/null | head -1 || echo "")
-            if [ -n "$CID" ]; then
-              docker inspect "$CID" --format '{{range .Config.Env}}{{println .}}{{end}}' | grep -E '^(NEXT_PUBLIC_|SUPABASE_|WEBHOOK_)' > .env.prod
-              echo "Extraido de container $CID ($(wc -l < .env.prod) vars)"
-            elif [ ! -f .env.prod ]; then
-              echo "ERRO: sem container rodando e sem .env.prod"; exit 1
-            else
-              echo "Usando .env.prod existente"
-            fi
-
-            echo "=== Git pull ==="
             if [ -d .git ]; then
-              git fetch origin main 2>&1 && git reset --hard origin/main 2>&1
+              git fetch origin main
+              git reset --hard origin/main
             else
-              git clone https://github.com/leosuga/suganuma-ops-hub.git . 2>&1
+              git clone https://github.com/leosuga/suganuma-ops-hub.git .
             fi
 
-            echo "=== Docker compose ==="
-            docker compose -f docker-compose.prod.yml down 2>&1 || true
-            docker compose -f docker-compose.prod.yml up -d --build 2>&1
-            docker image prune -f 2>&1 || true
+            cat > .env.prod << EOF
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}
+            EOF
 
-            echo "=== Status ==="
-            docker compose -f docker-compose.prod.yml ps
-            ENDOFSCRIPT
-            bash /tmp/deploy.sh
+            docker compose -f docker-compose.prod.yml down || true
+            docker compose -f docker-compose.prod.yml up -d --build
+
+            docker image prune -f || true
+
+            sleep 10
+
+            for i in $(seq 1 12); do
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 https://ops.suganuma.com.br/api/health || echo "000")
+              echo "Health check $i: HTTP $CODE"
+              [ "$CODE" = "200" ] && echo "DEPLOY OK" && exit 0
+              sleep 5
+            done
+            echo "DEPLOY FAILED - health check never returned 200"
+            exit 1
