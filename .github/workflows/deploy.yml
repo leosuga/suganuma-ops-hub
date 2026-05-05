@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy
+      - name: Deploy to VPS
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -16,31 +16,45 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-            cd ~/ops-hub 2>/dev/null && git fetch origin main && git reset --hard origin/main || { rm -rf ~/ops-hub && git clone https://github.com/leosuga/suganuma-ops-hub.git ~/ops-hub && cd ~/ops-hub; }
+            rm -rf ~/ops-hub
+            git clone https://github.com/leosuga/suganuma-ops-hub.git ~/ops-hub
+            cd ~/ops-hub
 
-            echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" > .env.prod
-            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.prod
-            echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.prod
-            echo "WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}" >> .env.prod
+            cat > .env.prod << ENDENV
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}
+            ENDENV
 
             docker build --no-cache -t suganuma-ops-hub:latest .
 
             OLD=$(docker ps -q --filter "name=sw2ag8vuujt87zk04wwbxsvg" 2>/dev/null || echo "")
-            [ -n "$OLD" ] && docker stop "$OLD" 2>/dev/null && docker rm "$OLD" 2>/dev/null
+            if [ -n "$OLD" ]; then
+              NET=$(docker inspect "$OLD" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || echo "")
+              docker stop "$OLD" 2>/dev/null || true
+              docker rm "$OLD" 2>/dev/null || true
+            else
+              NET=$(docker inspect caddy_proxy --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || echo "caddy_default")
+            fi
+            echo "Network: $NET"
 
             docker run -d \
               --name suganuma-ops-hub \
-              --network caddy_default \
+              --network "$NET" \
               --env-file .env.prod \
               --restart unless-stopped \
               suganuma-ops-hub:latest
 
             [ -f ~/update-ops-proxy.sh ] && ~/update-ops-proxy.sh || true
 
-            for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+            for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
               CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 https://ops.suganuma.com.br/api/health 2>/dev/null || echo "000")
               echo "Health $i: $CODE"
-              [ "$CODE" = "200" ] && echo "OK" && exit 0
+              [ "$CODE" = "200" ] && break
               sleep 5
             done
-            exit 1
+
+            SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null | head -c 30 || echo "-")
+            echo "sw.js: $SW"
+            docker ps --filter "name=suganuma-ops-hub" --format '{{.Status}}'
