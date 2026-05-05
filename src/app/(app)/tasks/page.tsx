@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
-import { useTasks, useUpdateTask, useDeleteTask } from "@/lib/queries/tasks"
+import { useTasks, useUpdateTask, useDeleteTask, useCreateTask } from "@/lib/queries/tasks"
 import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
 import { CategoryChips } from "@/components/tasks/CategoryChips"
 import { TaskRow } from "@/components/tasks/TaskRow"
@@ -9,6 +9,7 @@ import { QuickAddDialog } from "@/components/tasks/QuickAddDialog"
 import { EditTaskDialog } from "@/components/tasks/EditTaskDialog"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { VirtualizedList } from "@/components/VirtualizedList"
+import { useUndoToast } from "@/components/UndoToast"
 
 type Category = "finance" | "logistics" | "personal" | "health"
 
@@ -22,6 +23,8 @@ export default function TasksPage() {
   const { data: tasks = [], isLoading, isError } = useTasks()
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
+  const createTask = useCreateTask()
+  const toast = useUndoToast()
 
   const filtered = tasks.filter((t) => {
     if (!showDone && t.status === "done") return false
@@ -54,6 +57,28 @@ export default function TasksPage() {
     })
   }
 
+  function handleDelete(id: string) {
+    const task = tasks.find((t) => t.id === id)
+    if (!task) return
+    deleteTask.mutate(id, {
+      onSuccess: () => {
+        toast.show({
+          label: `"${task.title.slice(0, 40)}" excluída`,
+          onUndo: () => {
+            createTask.mutate({
+              title: task.title,
+              notes: task.notes ?? undefined,
+              category: task.category,
+              priority: task.priority,
+              status: task.status,
+              due_at: task.due_at ?? undefined,
+            })
+          },
+        })
+      },
+    })
+  }
+
   const renderTaskRow = useCallback((index: number) => {
     const task = filtered[index]
     return (
@@ -61,10 +86,10 @@ export default function TasksPage() {
         task={task}
         onToggle={() => handleToggle(task.id, task.status)}
         onEdit={() => setEditingTask(task)}
-        onDelete={() => deleteTask.mutate(task.id)}
+        onDelete={() => handleDelete(task.id)}
       />
     )
-  }, [filtered, handleToggle, deleteTask])
+  }, [filtered, handleToggle])
 
   const useVirtual = filtered.length > 50
 
@@ -157,7 +182,7 @@ export default function TasksPage() {
                   task={task}
                   onToggle={() => handleToggle(task.id, task.status)}
                   onEdit={() => setEditingTask(task)}
-                  onDelete={() => deleteTask.mutate(task.id)}
+                  onDelete={() => handleDelete(task.id)}
                 />
               ))}
             </div>

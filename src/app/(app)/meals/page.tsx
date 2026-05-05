@@ -5,6 +5,7 @@ import { useMeals, useCreateMeal, useDeleteMeal, useMealPlans, useSetMealPlan } 
 import type { MealRow } from "@/lib/queries/meals"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
+import { useUndoToast } from "@/components/UndoToast"
 
 const DAY_LABELS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"]
 const MEAL_TYPES = [
@@ -247,7 +248,30 @@ export default function MealsPage() {
 
 function MealRow({ meal }: { meal: MealRow }) {
   const deleteMeal = useDeleteMeal()
+  const createMeal = useCreateMeal()
+  const toast = useUndoToast()
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  function handleDelete() {
+    const snap = { ...meal }
+    deleteMeal.mutate(meal.id, {
+      onSuccess: () => {
+        toast.show({
+          label: `"${snap.name.slice(0, 40)}" excluída`,
+          onUndo: () => {
+            createMeal.mutate({
+              name: snap.name,
+              kind: snap.kind,
+              tags: snap.tags ?? [],
+              ingredients: snap.ingredients ?? [],
+              prep_time: snap.prep_time,
+              notes: snap.notes,
+            })
+          },
+        })
+      },
+    })
+  }
 
   return (
     <div className="flex items-center gap-3 h-10 px-4 hover:bg-surface-hover transition-colors">
@@ -260,7 +284,7 @@ function MealRow({ meal }: { meal: MealRow }) {
       )}
       {confirmDelete ? (
         <div className="flex items-center gap-1">
-          <button onClick={() => deleteMeal.mutate(meal.id)} className="text-[8px] font-mono text-danger tracking-wider">DEL</button>
+          <button onClick={handleDelete} className="text-[8px] font-mono text-danger tracking-wider">DEL</button>
           <button onClick={() => setConfirmDelete(false)} className="text-on-surface/30 text-[14px]">×</button>
         </div>
       ) : (

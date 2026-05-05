@@ -9,6 +9,7 @@ import { TopBar } from "./TopBar"
 import { logger } from "@/lib/logger"
 import { useTaskNotifications } from "@/lib/notifications"
 import { useInitAccent } from "@/lib/theme"
+import { UndoToastProvider } from "@/components/UndoToast"
 
 const CommandPalette = dynamic(() => import("./CommandPalette").then(m => ({ default: m.CommandPalette })), { ssr: false })
 
@@ -47,6 +48,7 @@ export function AppShell({ children, user }: AppShellProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
+    <UndoToastProvider>
       <div className="flex h-screen overflow-hidden bg-bg">
         {/* Desktop sidebar */}
         <div className="hidden md:flex flex-none">
@@ -70,6 +72,7 @@ export function AppShell({ children, user }: AppShellProps) {
       </div>
 
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
+    </UndoToastProvider>
     </QueryClientProvider>
   )
 }

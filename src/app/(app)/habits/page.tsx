@@ -5,6 +5,7 @@ import { useHabits, useCreateHabit, useUpdateHabit, useDeleteHabit, useHabitEntr
 import type { HabitTrackRow } from "@/lib/queries/habits"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
+import { useUndoToast } from "@/components/UndoToast"
 
 function getLast7Days() {
   const days: string[] = []
@@ -23,6 +24,8 @@ function HabitRow({ habit, weekDays }: { habit: HabitTrackRow; weekDays: string[
   const deleteEntry = useDeleteHabitEntry()
   const updateHabit = useUpdateHabit()
   const deleteHabit = useDeleteHabit()
+  const createHabit = useCreateHabit()
+  const toast = useUndoToast()
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState(habit.name)
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -110,7 +113,19 @@ function HabitRow({ habit, weekDays }: { habit: HabitTrackRow; weekDays: string[
         <button onClick={handleToggleActive} className={cn("text-[8px] font-mono tracking-wider", habit.active ? "text-on-surface/20 hover:text-on-surface/50" : "text-teal")}>{habit.active ? "⊘" : "⊕"}</button>
         {confirmDelete ? (
           <>
-            <button onClick={() => deleteHabit.mutate(habit.id)} className="text-[8px] font-mono text-danger tracking-wider">DEL</button>
+            <button onClick={() => {
+              const snap = { ...habit }
+              deleteHabit.mutate(habit.id, {
+                onSuccess: () => {
+                  toast.show({
+                    label: `"${snap.name.slice(0, 40)}" excluído`,
+                    onUndo: () => {
+                      createHabit.mutate({ name: snap.name, active: snap.active })
+                    },
+                  })
+                },
+              })
+            }} className="text-[8px] font-mono text-danger tracking-wider">DEL</button>
             <button onClick={() => setConfirmDelete(false)} className="text-on-surface/30 text-[14px]">×</button>
           </>
         ) : (

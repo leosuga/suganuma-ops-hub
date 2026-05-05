@@ -6,6 +6,7 @@ import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from "@/lib/que
 import type { NoteRow } from "@/lib/queries/notes"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
+import { useUndoToast } from "@/components/UndoToast"
 
 const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
 
@@ -172,6 +173,8 @@ function QuickAddNote({ onCreated }: { onCreated: () => void }) {
 export default function NotesPage() {
   const { data: notes = [], isLoading } = useNotes()
   const deleteNote = useDeleteNote()
+  const createNote = useCreateNote()
+  const toast = useUndoToast()
   const [filterTag, setFilterTag] = useState<string | null>(null)
   const [search, setSearch] = useState("")
 
@@ -191,6 +194,27 @@ export default function NotesPage() {
     }
     return true
   })
+
+  function handleDelete(id: string) {
+    const note = notes.find((n) => n.id === id)
+    if (!note) return
+    const snap = { ...note }
+    deleteNote.mutate(id, {
+      onSuccess: () => {
+        toast.show({
+          label: `"${snap.title.slice(0, 40)}" excluída`,
+          onUndo: () => {
+            createNote.mutate({
+              title: snap.title,
+              content: snap.content ?? null,
+              tags: snap.tags ?? [],
+              pinned: snap.pinned,
+            })
+          },
+        })
+      },
+    })
+  }
 
   const pinned = filtered.filter((n) => n.pinned)
   const unpinned = filtered.filter((n) => !n.pinned)
@@ -266,7 +290,7 @@ export default function NotesPage() {
         {!isLoading && pinned.length > 0 && (
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">FIXADAS</span>
-            {pinned.map((n) => <NoteRow key={n.id} note={n} onDelete={(id) => deleteNote.mutate(id)} />)}
+            {pinned.map((n) => <NoteRow key={n.id} note={n} onDelete={handleDelete} />)}
           </div>
         )}
 
@@ -275,7 +299,7 @@ export default function NotesPage() {
             {pinned.length > 0 && (
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOTAS</span>
             )}
-            {unpinned.map((n) => <NoteRow key={n.id} note={n} onDelete={(id) => deleteNote.mutate(id)} />)}
+            {unpinned.map((n) => <NoteRow key={n.id} note={n} onDelete={handleDelete} />)}
           </div>
         )}
       </div>
