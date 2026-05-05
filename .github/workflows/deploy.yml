@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Create SSH key and validate server
+      - name: Setup Coolify and Deploy
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -20,52 +20,140 @@ jobs:
             BASE="http://localhost:8081/api/v1"
             SERVER="vpqzuhhaptcp8dpnl2y0y478"
 
-            echo "=== Step 1: Write SSH key to temp file ==="
-            cat > /tmp/key.pem << 'EOFKEY'
-${{ secrets.VPS_SSH_KEY }}
-EOFKEY
+            echo "========================================="
+            echo "=== CONFIGURANDO COOLIFY + DEPLOY     ==="
+            echo "========================================="
 
-            echo "Key file size: $(wc -c < /tmp/key.pem) bytes"
+            # --- Step 1: Generate SSH key pair for Coolify ---
+            echo ""
+            echo "=== Step 1: Gerando par de chaves SSH para Coolify ==="
+            if [ ! -f ~/.ssh/coolify_local_ed25519 ]; then
+              ssh-keygen -t ed25519 -f ~/.ssh/coolify_local_ed25519 -N "" -C "coolify-localhost" -q
+              echo "Chave gerada: ~/.ssh/coolify_local_ed25519"
+            else
+              echo "Chave ja existe"
+            fi
 
-            echo "=== Step 2: Build JSON payload and create key via API ==="
+            # Authorize the key for root
+            sudo mkdir -p /root/.ssh
+            sudo chmod 700 /root/.ssh
+            sudo cp ~/.ssh/coolify_local_ed25519.pub /tmp/coolify_pub
+            if ! sudo grep -q "$(cat /tmp/coolify_pub)" /root/.ssh/authorized_keys 2>/dev/null; then
+              sudo bash -c 'cat /tmp/coolify_pub >> /root/.ssh/authorized_keys'
+              echo "Chave publica adicionada ao authorized_keys do root"
+            else
+              echo "Chave ja autorizada para root"
+            fi
+            sudo chmod 600 /root/.ssh/authorized_keys
+            rm -f /tmp/coolify_pub
 
+            # --- Step 2: Register key in Coolify via API ---
+            echo ""
+            echo "=== Step 2: Registrando chave no Coolify ==="
             python3 << 'PYEOF'
 import json, subprocess, os
 
-with open("/tmp/key.pem") as f:
-    key_content = f.read()
+with open(os.path.expanduser("~/.ssh/coolify_local_ed25519")) as f:
+    key = f.read()
 
-payload = {
-    "name": "vps-key",
-    "description": "VPS deploy SSH key",
-    "private_key": key_content
-}
-
-with open("/tmp/payload.json", "w") as f:
+payload = {"name": "localhost-root", "description": "root@localhost ed25519", "private_key": key}
+with open("/tmp/cf-key.json", "w") as f:
     json.dump(payload, f)
-
-print("Payload JSON size:", os.path.getsize("/tmp/payload.json"), "bytes")
 
 resp = subprocess.check_output([
     "curl", "-sS", "-X", "POST",
     "-H", "Authorization: Bearer " + os.environ["TOKEN"],
     "-H", "Content-Type: application/json",
-    "-d", "@/tmp/payload.json",
+    "-d", "@/tmp/cf-key.json",
     "http://localhost:8081/api/v1/security/keys"
-], stderr=subprocess.STDOUT).decode()
+]).decode()
 
-print("API response:", resp[:500])
+print(resp[:600])
 PYEOF
 
-            echo "=== Step 3: List all private keys ==="
-            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/security/keys" 2>&1 | python3 -m json.tool 2>/dev/null || echo "(vazio)"
+            # --- Step 3: Validate server ---
+            echo ""
+            echo "=== Step 3: Validando servidor ==="
+            curl -sS -X POST -H "Authorization: Bearer $TOKEN" \
+              "$BASE/servers/$SERVER/validate" 2>&1 || true
 
-            echo "=== Step 4: Validate server ==="
-            curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER/validate" 2>&1 || echo "(validate falhou)"
+            sleep 3
 
-            echo "=== Step 5: Server status ==="
-            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER" 2>&1 | python3 -c '
+            echo "Status:"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/servers/$SERVER" 2>&1 | \
+              python3 -c 'import sys,json; s=json.load(sys.stdin); print(f"reachable={s[\"is_reachable\"]} usable={s[\"is_usable\"]}")' || true
+
+            # --- Step 4: Create/get project ---
+            echo ""
+            echo "=== Step 4: Criando projeto ==="
+            PROJS=$(curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/projects" 2>&1)
+            PROJ_UUID=$(echo "$PROJS" | python3 -c '
 import sys, json
-s = json.load(sys.stdin)
-print(f"reachable={s.get(\"is_reachable\")} usable={s.get(\"is_usable\")}")
-' || echo "(status parse falhou)"
+for p in json.load(sys.stdin):
+    if p.get("name") == "Ops Hub":
+        print(p["uuid"]); break
+' 2>/dev/null || echo "")
+
+            if [ -z "$PROJ_UUID" ]; then
+              PROJ_UUID=$(curl -sS -X POST \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "Content-Type: application/json" \
+                -d '{"name":"Ops Hub","description":""}' \
+                "$BASE/projects" 2>&1 | python3 -c 'import sys,json;print(json.load(sys.stdin)["uuid"])')
+            fi
+            echo "Project: $PROJ_UUID"
+
+            # --- Step 5: Get environment ---
+            echo ""
+            echo "=== Step 5: Obtendo environment ==="
+            ENV_UUID=$(curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/projects/$PROJ_UUID" 2>&1 | \
+              python3 -c 'import sys,json;print(json.load(sys.stdin)["environments"][0]["uuid"])')
+            echo "Environment: $ENV_UUID"
+
+            # --- Step 6: Create/get application ---
+            echo ""
+            echo "=== Step 6: Criando application ==="
+            APPS=$(curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/applications" 2>&1)
+            APP_UUID=$(echo "$APPS" | python3 -c '
+import sys, json
+for a in json.load(sys.stdin):
+    if a.get("name") == "suganuma-ops-hub":
+        print(a["uuid"]); break
+' 2>/dev/null || echo "")
+
+            if [ -z "$APP_UUID" ]; then
+              APP_UUID=$(curl -sS -X POST \
+                -H "Authorization: Bearer $TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"name\":\"suganuma-ops-hub\",\"description\":\"\",\"project_uuid\":\"$PROJ_UUID\",\"environment_uuid\":\"$ENV_UUID\",\"server_uuid\":\"$SERVER\",\"docker_compose_domains\":\"ops.suganuma.com.br\"}" \
+                "$BASE/applications" 2>&1 | python3 -c 'import sys,json;print(json.load(sys.stdin)["uuid"])' 2>/dev/null || echo "")
+            fi
+            echo "Application: $APP_UUID"
+
+            if [ -z "$APP_UUID" ]; then
+              echo "ERRO: falha ao criar application"
+              exit 1
+            fi
+
+            # --- Step 7: Deploy ---
+            echo ""
+            echo "=== Step 7: Iniciando deploy ==="
+            DEPLOY=$(curl -sS -X POST -H "Authorization: Bearer $TOKEN" "$BASE/applications/$APP_UUID/start" 2>&1)
+            echo "$DEPLOY"
+            DEPLOY_UUID=$(echo "$DEPLOY" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("deployment_uuid",""))' 2>/dev/null || echo "")
+
+            if [ -n "$DEPLOY_UUID" ]; then
+              echo "Aguardando deployment $DEPLOY_UUID..."
+              for i in $(seq 1 90); do
+                S=$(curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/deployments/$DEPLOY_UUID" 2>&1 | \
+                  python3 -c 'import sys,json;print(json.load(sys.stdin).get("status",""))' 2>/dev/null || echo "")
+                echo "[$i/90] $S"
+                [ "$S" = "finished" ]  && echo "DEPLOY OK" && exit 0
+                [ "$S" = "failed" ]    && echo "DEPLOY FAILED" && exit 1
+                [ "$S" = "cancelled" ] && echo "DEPLOY CANCELLED" && exit 1
+                sleep 10
+              done
+              echo "Timeout (15 min)"
+            else
+              echo "Sem deployment_uuid — deploy pode estar em andamento silenciosamente"
+            fi
