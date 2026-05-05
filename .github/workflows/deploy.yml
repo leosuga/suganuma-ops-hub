@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via Coolify
+      - name: Diagnóstico completo Coolify + Setup
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -19,19 +19,34 @@ jobs:
             TOKEN="${{ secrets.COOLIFY_TOKEN }}"
             BASE="http://localhost:8081/api/v1"
 
-            echo "=== DIAGNÓSTICO COOLIFY ==="
-
-            echo "--- Health ---"
-            curl -sS "$BASE/health" 2>&1 || echo "(sem health)"
-
-            echo ""
-            echo "--- Listando aplicações ---"
-            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/applications" 2>&1 | python3 -m json.tool 2>/dev/null || true
+            echo "====================================="
+            echo "=== DIAGNÓSTICO COOLIFY COMPLETO ==="
+            echo "====================================="
 
             echo ""
-            echo "--- Listando projects ---"
-            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/projects" 2>&1 | python3 -m json.tool 2>/dev/null || true
+            echo "--- Teams ---"
+            TEAMS=$(curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/teams" 2>&1 || echo "[]")
+            echo "$TEAMS" | python3 -m json.tool 2>/dev/null || echo "$TEAMS"
 
             echo ""
-            echo "--- Listando services ---"
-            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/services" 2>&1 | python3 -m json.tool 2>/dev/null || true
+            echo "--- Servers ---"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/servers" 2>&1 | python3 -m json.tool 2>/dev/null || echo "(vazio)"
+
+            echo ""
+            echo "--- Private Keys ---"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/security/keys" 2>&1 | python3 -m json.tool 2>/dev/null || echo "(vazio)"
+
+            echo ""
+            echo "--- Destinations ---"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/destinations" 2>&1 | python3 -m json.tool 2>/dev/null || echo "(vazio)"
+
+            echo ""
+            echo "--- Applications ---"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/applications" 2>&1 | python3 -m json.tool 2>/dev/null || echo "(vazio)"
+
+            echo ""
+            echo "--- Projects ---"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$BASE/projects" 2>&1 | python3 -m json.tool 2>/dev/null || echo "(vazio)"
+
+            echo ""
+            echo "=== DIAGNÓSTICO COMPLETO ==="
