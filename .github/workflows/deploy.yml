@@ -8,7 +8,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to VPS
+      - name: Diagnosticar e Configurar Coolify
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
@@ -16,29 +16,44 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-            cd ~
-            rm -rf ops-hub
-            git clone https://github.com/leosuga/suganuma-ops-hub.git ops-hub
-            cd ops-hub
-
-            echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" > .env.prod
-            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.prod
-            echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.prod
-            echo "WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}" >> .env.prod
-
-            docker compose -f docker-compose.prod.yml down 2>/dev/null || true
-            docker compose -f docker-compose.prod.yml build --no-cache app
-            docker compose -f docker-compose.prod.yml up -d
-
-            for i in $(seq 1 30); do
-              CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 https://ops.suganuma.com.br/api/health 2>/dev/null || echo "000")
-              echo "Health $i: $CODE"
-              [ "$CODE" = "200" ] && break
-              sleep 5
-            done
-
-            SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null | head -c 30 || echo "-")
-            echo "sw.js: $SW"
-
-            echo "$SW" | grep -q "ops-hub-v4" && echo "DEPLOY OK - v4" || echo "DONE"
-            docker compose -f docker-compose.prod.yml ps
+            TOKEN="${{ secrets.COOLIFY_TOKEN }}"
+            B="http://localhost:8081/api/v1"
+            
+            echo "================================================"
+            echo "=== DIAGNÓSTICO COMPLETO DO COOLIFY          ==="
+            echo "================================================"
+            
+            echo ""
+            echo "--- Health Check ---"
+            curl -sS "$B/health"
+            
+            echo ""
+            echo "--- Servers ---"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$B/servers" | python3 -m json.tool
+            
+            echo ""
+            echo "--- Projects ---"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$B/projects" | python3 -m json.tool
+            
+            echo ""
+            echo "--- Applications ---"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$B/applications" | python3 -m json.tool
+            
+            echo ""
+            echo "--- Security Keys ---"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$B/security/keys" | python3 -m json.tool
+            
+            echo ""
+            echo "--- Teams ---"
+            curl -sS -H "Authorization: Bearer $TOKEN" "$B/teams" | python3 -m json.tool
+            
+            echo ""
+            echo "--- Docker containers rodando ---"
+            docker ps -a --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' 2>/dev/null || echo "(sem docker)"
+            
+            echo ""
+            echo "--- Containers Coolify ---"
+            docker ps -a --filter "name=coolify" --format '{{.Names}} {{.Image}} {{.Status}}' 2>/dev/null || echo "(sem)"
+            
+            echo ""
+            echo "=== FIM DIAGNÓSTICO ==="
