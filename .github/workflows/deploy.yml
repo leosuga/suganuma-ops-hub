@@ -16,49 +16,27 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             rm -rf ~/ops-hub
-            git clone https://github.com/leosuga/suganuma-ops-hub.git ~/ops-hub || { echo "CLONE FAILED"; exit 1; }
-            cd ~/ops-hub || { echo "CD FAILED"; exit 1; }
+            git clone https://github.com/leosuga/suganuma-ops-hub.git ~/ops-hub
+            cd ~/ops-hub
 
-            echo "=== Creating .env.prod ==="
-            echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" > .env.prod
-            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.prod
-            echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.prod
-            echo "WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}" >> .env.prod
-            echo ".env.prod created ($(wc -l < .env.prod) lines)"
+            echo NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }} > .env.prod
+            echo NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }} >> .env.prod
+            echo SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} >> .env.prod
+            echo WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }} >> .env.prod
 
-            echo "=== Stopping old container ==="
-            docker stop sw2ag8vuujt87zk04wwbxsvg 2>/dev/null || echo "(no old container)"
-            docker rm sw2ag8vuujt87zk04wwbxsvg 2>/dev/null || echo "(no old container to remove)"
+            NET=$(docker inspect caddy_proxy --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || echo caddy_default)
 
-            echo "=== Stopping any previous ops-hub ==="
-            docker stop suganuma-ops-hub 2>/dev/null || echo "(no previous)"
-            docker rm suganuma-ops-hub 2>/dev/null || echo "(no previous to remove)"
+            docker build --no-cache -t ops-hub:latest .
 
-            echo "=== Building ==="
-            docker build --no-cache -t suganuma-ops-hub:latest . || { echo "BUILD FAILED"; exit 1; }
+            docker stop sw2ag8vuujt87zk04wwbxsvg-1777950677 2>/dev/null || true
+            docker rm sw2ag8vuujt87zk04wwbxsvg-1777950677 2>/dev/null || true
 
-            echo "=== Detecting network ==="
-            NET=$(docker inspect caddy_proxy --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || echo "caddy_default")
-            echo "Network: $NET"
+            docker run -d --name suganuma-ops-hub --network "$NET" --env-file .env.prod --restart unless-stopped ops-hub:latest
 
-            echo "=== Starting ==="
-            docker run -d \
-              --name suganuma-ops-hub \
-              --network "$NET" \
-              --env-file .env.prod \
-              --restart unless-stopped \
-              suganuma-ops-hub:latest || { echo "RUN FAILED"; docker logs suganuma-ops-hub 2>/dev/null || true; exit 1; }
+            [ -f ~/update-ops-proxy.sh ] && ~/update-ops-proxy.sh || true
 
-            echo "=== Container status ==="
-            docker ps --filter "name=suganuma-ops-hub" --format '{{.Status}}'
-
-            echo "=== Waiting for app ==="
-            for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
-              CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 https://ops.suganuma.com.br/api/health 2>/dev/null || echo "000")
-              echo "Health $i: $CODE"
-              [ "$CODE" = "200" ] && break
+            for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+              curl -sf --max-time 5 https://ops.suganuma.com.br/api/health && echo "" && exit 0
               sleep 5
             done
-
-            echo "=== Verifying ==="
-            curl -s --max-time 10 https://ops.suganuma.com.br/sw.js | head -c 50 || echo "(fetch failed)"
+            exit 1
