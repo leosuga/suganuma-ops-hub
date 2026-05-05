@@ -7,3 +7,9 @@ services:
     env_file: .env.prod
     expose:
       - "3000"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true

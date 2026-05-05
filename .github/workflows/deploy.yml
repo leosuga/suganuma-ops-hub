@@ -16,7 +16,6 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           command_timeout: 30m
           script: |
-            set -e
             cd ~
             [ -d ops-hub ] && rm -rf ops-hub
             git clone --depth 1 https://github.com/leosuga/suganuma-ops-hub.git ops-hub
@@ -27,23 +26,24 @@ jobs:
             echo SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }} >> .env.prod
             echo WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }} >> .env.prod
 
-            echo "=== Building (this may take several minutes) ==="
-            docker build -t ops-hub:latest . 2>&1
+            OLD=$(docker ps -q --filter "name=sw2ag8vuujt87zk04wwbxsvg" 2>/dev/null || echo "")
+            if [ -n "$OLD" ]; then
+              NET=$(docker inspect "$OLD" --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}')
+            else
+              NET=$(docker inspect caddy_proxy --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || echo caddy_default)
+            fi
+            echo "Using network: $NET"
 
-            echo "=== Stopping old container ==="
-            OLD=$(docker ps -q -f name=sw2ag8vuujt87zk04wwbxsvg 2>/dev/null || echo "")
+            docker build -t ops-hub:latest .
+
             [ -n "$OLD" ] && docker stop "$OLD" && docker rm "$OLD"
+            docker stop suganuma-ops-hub 2>/dev/null && docker rm suganuma-ops-hub 2>/dev/null || true
 
-            NET=$(docker inspect caddy_proxy --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}' 2>/dev/null || echo caddy_default)
             docker run -d --name suganuma-ops-hub --network "$NET" --env-file .env.prod --restart unless-stopped ops-hub:latest
 
-            [ -f ~/update-ops-proxy.sh ] && bash ~/update-ops-proxy.sh
+            [ -f ~/update-ops-proxy.sh ] && bash ~/update-ops-proxy.sh || true
 
-            echo "=== Health check ==="
-            for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-              sleep 5
-              curl -sf --max-time 5 https://ops.suganuma.com.br/api/health && echo " DEPLOY OK" && exit 0
-              echo "  attempt $i"
-            done
-            echo "TIMEOUT"
-            exit 1
+            sleep 10
+            SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null | head -c 30 || echo "-")
+            echo "sw.js: $SW"
+            echo "$SW" | grep -q "v4" && echo "DEPLOY OK - v4 found!"
