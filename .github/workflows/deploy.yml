@@ -18,8 +18,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           source: "deploy-script.sh"
-          target: "/tmp/deploy-script.sh"
-          rm: true
+          target: "/tmp"
 
       - name: Run deploy script on VPS
         uses: appleboy/ssh-action@v1
