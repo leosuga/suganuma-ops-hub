@@ -17,6 +17,8 @@ jobs:
           script: |
             set -e
             export COOLIFY_TOKEN="${{ secrets.COOLIFY_TOKEN }}"
+            B="http://localhost:8081/api/v1"
+            S="vpqzuhhaptcp8dpnl2y0y478"
 
             echo "=== Gerando chave SSH ==="
             ssh-keygen -t ed25519 -f /tmp/cfkey -N "" -C "coolify" -q 2>/dev/null || true
@@ -27,43 +29,92 @@ jobs:
             sudo cp /tmp/cfkey.pub /root/.ssh/authorized_keys
             sudo chmod 600 /root/.ssh/authorized_keys
 
-            echo "=== Registrando no Coolify ==="
-            cat > /tmp/register.py << 'ENDPY'
-            import json, os, subprocess
-            with open("/tmp/cfkey") as f:
-                k = f.read()
-            payload = json.dumps({"name":"localhost-key","description":"root@localhost","private_key":k})
-            with open("/tmp/payload.json","w") as f:
-                f.write(payload)
-            r = subprocess.run(["curl","-sS","-X","POST",
-                "-H","Authorization: Bearer "+os.environ["COOLIFY_TOKEN"],
-                "-H","Content-Type: application/json",
-                "-d","@/tmp/payload.json",
-                "http://localhost:8081/api/v1/security/keys"],
-                capture_output=True,text=True)
-            print(r.stdout[:500])
-            try:
-                d = json.loads(r.stdout)
-                print("KEY_UUID="+d.get("uuid","NONE"))
-            except:
-                print("(nao-JSON)")
-            ENDPY
-            python3 /tmp/register.py
+            echo "=== Registrando chave no Coolify ==="
+            cat > /tmp/reg.py << 'ENDPY'
+import json, os, subprocess
+with open("/tmp/cfkey") as f:
+    k = f.read()
+payload = json.dumps({"name":"localhost-key","description":"root@localhost","private_key":k})
+with open("/tmp/pl.json","w") as f:
+    f.write(payload)
+r = subprocess.run(["curl","-sS","-X","POST",
+    "-H","Authorization: Bearer "+os.environ["COOLIFY_TOKEN"],
+    "-H","Content-Type: application/json",
+    "-d","@/tmp/pl.json",
+    "http://localhost:8081/api/v1/security/keys"],
+    capture_output=True,text=True)
+print(r.stdout[:300])
+ENDPY
+            python3 /tmp/reg.py
 
-            echo ""
-            echo "=== Keys listadas ==="
-            curl -sS -H "Authorization: Bearer $COOLIFY_TOKEN" http://localhost:8081/api/v1/security/keys | python3 -m json.tool 2>/dev/null || true
-
-            echo ""
             echo "=== Validando servidor ==="
-            curl -sS -X POST -H "Authorization: Bearer $COOLIFY_TOKEN" http://localhost:8081/api/v1/servers/vpqzuhhaptcp8dpnl2y0y478/validate 2>&1 || true
-
+            curl -sS -X POST -H "Authorization: Bearer $COOLIFY_TOKEN" "$B/servers/$S/validate" 2>&1 || true
             sleep 5
 
             echo ""
-            echo "=== Status servidor ==="
-            curl -sS -H "Authorization: Bearer $COOLIFY_TOKEN" http://localhost:8081/api/v1/servers/vpqzuhhaptcp8dpnl2y0y478 | python3 -c '
-            import sys, json
-            s = json.load(sys.stdin)
-            print("reachable="+str(s.get("is_reachable"))+" usable="+str(s.get("is_usable")))
-            ' 2>/dev/null || true
+            echo "=== Criando/obtendo projeto ==="
+            PJ=$(curl -sS -H "Authorization: Bearer $COOLIFY_TOKEN" "$B/projects" | python3 -c '
+import sys,json
+for p in json.load(sys.stdin):
+    if p.get("name")=="Ops Hub":
+        print(p["uuid"]); break
+' 2>/dev/null || echo "")
+            if [ -z "$PJ" ]; then
+              PJ=$(curl -sS -X POST -H "Authorization: Bearer $COOLIFY_TOKEN" -H "Content-Type: application/json" -d '{"name":"Ops Hub","description":""}' "$B/projects" | python3 -c 'import sys,json;print(json.load(sys.stdin)["uuid"])')
+            fi
+            echo "Project: $PJ"
+
+            echo ""
+            echo "=== Obtendo environment ==="
+            ENV=$(curl -sS -H "Authorization: Bearer $COOLIFY_TOKEN" "$B/projects/$PJ" | python3 -c 'import sys,json;print(json.load(sys.stdin)["environments"][0]["uuid"])')
+            echo "Environment: $ENV"
+
+            echo ""
+            echo "=== Criando/obtendo application ==="
+            APP=$(curl -sS -H "Authorization: Bearer $COOLIFY_TOKEN" "$B/applications" | python3 -c '
+import sys,json
+for a in json.load(sys.stdin):
+    if a.get("name")=="suganuma-ops-hub":
+        print(a["uuid"]); break
+' 2>/dev/null || echo "")
+            if [ -z "$APP" ]; then
+              APP=$(curl -sS -X POST \
+                -H "Authorization: Bearer $COOLIFY_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "{\"name\":\"suganuma-ops-hub\",\"description\":\"\",\"project_uuid\":\"$PJ\",\"environment_uuid\":\"$ENV\",\"server_uuid\":\"$S\",\"docker_compose_domains\":\"ops.suganuma.com.br\"}" \
+                "$B/applications" | python3 -c 'import sys,json;print(json.load(sys.stdin)["uuid"])' 2>/dev/null || echo "")
+            fi
+            echo "Application: $APP"
+
+            if [ -z "$APP" ]; then
+              echo "ERRO: falha ao criar application"
+              exit 1
+            fi
+
+            echo ""
+            echo "=== Deploy ==="
+            DEP=$(curl -sS -X POST -H "Authorization: Bearer $COOLIFY_TOKEN" "$B/applications/$APP/start")
+            echo "$DEP"
+            DU=$(echo "$DEP" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("deployment_uuid",""))' 2>/dev/null || echo "")
+
+            if [ -n "$DU" ]; then
+              for i in $(seq 1 90); do
+                ST=$(curl -sS -H "Authorization: Bearer $COOLIFY_TOKEN" "$B/deployments/$DU" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("status",""))' 2>/dev/null || echo "")
+                echo "[$i/90] $ST"
+                [ "$ST" = "finished" ]  && echo "DEPLOY OK" && exit 0
+                [ "$ST" = "failed" ]    && echo "DEPLOY FAILED" && exit 1
+                sleep 10
+              done
+            else
+              echo "Sem deployment_uuid — aguardando 2 min para health check"
+              sleep 120
+            fi
+
+            echo ""
+            echo "=== Health check ==="
+            for i in $(seq 1 12); do
+              ST=$(curl -s -o /dev/null -w "%{http_code}" https://ops.suganuma.com.br/api/health 2>/dev/null || echo "000")
+              echo "Health $i: $ST"
+              [ "$ST" = "200" ] && echo "PROD OK" && exit 0
+              sleep 5
+            done
