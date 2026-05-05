@@ -8,167 +8,40 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup and Deploy via Coolify
+      - name: Deploy via Docker Compose
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            export COOLIFY_TOKEN="${{ secrets.COOLIFY_TOKEN }}"
-            export COOLIFY_APP_UUID="${{ secrets.COOLIFY_APP_UUID }}"
-            python3 << 'PYEOF'
-            import json, os, subprocess, sys, time
+            set -e
+            DIR="$HOME/ops-hub"
+            mkdir -p "$DIR"
+            cd "$DIR"
 
-            TOKEN = os.environ["COOLIFY_TOKEN"]
-            EXISTING_APP = os.environ.get("COOLIFY_APP_UUID", "")
-            BASE = "http://localhost:8081/api/v1"
-            SERVER = "vpqzuhhaptcp8dpnl2y0y478"
+            echo "=== Gerando .env.prod ==="
+            cat > .env.prod << ENDENV
+            NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+            WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}
+            ENDENV
 
-            def api(method, path, data=None):
-                args = ["curl", "-sS", "-X", method,
-                        "-H", f"Authorization: Bearer {TOKEN}",
-                        "-H", "Content-Type: application/json"]
-                if data:
-                    fpath = "/tmp/_cu"
-                    with open(fpath, "w") as f:
-                        json.dump(data, f)
-                    args += ["-d", f"@{fpath}"]
-                args.append(f"{BASE}{path}")
-                r = subprocess.run(args, capture_output=True, text=True)
-                try:
-                    return json.loads(r.stdout)
-                except:
-                    print(f"API ERROR [{method} {path}]:", r.stdout[:500], file=sys.stderr)
-                    return {}
+            echo "=== Atualizando codigo ==="
+            if [ -d .git ]; then
+              git fetch origin main
+              git reset --hard origin/main
+            else
+              git clone https://github.com/leosuga/suganuma-ops-hub.git .
+            fi
 
-            def ensure_key():
-                ssh_keygen = subprocess.run(
-                    ["ssh-keygen", "-t", "ed25519", "-f", "/tmp/cfkey", "-N", "", "-C", "coolify", "-q"],
-                    capture_output=True)
-                subprocess.run(["sudo", "mkdir", "-p", "/root/.ssh"], capture_output=True)
-                subprocess.run(["sudo", "chmod", "700", "/root/.ssh"], capture_output=True)
-                subprocess.run(["sudo", "cp", "/tmp/cfkey.pub", "/root/.ssh/authorized_keys"], capture_output=True)
-                subprocess.run(["sudo", "chmod", "600", "/root/.ssh/authorized_keys"], capture_output=True)
-                with open("/tmp/cfkey") as f:
-                    key = f.read()
-                existing = api("GET", "/security/keys")
-                for k in (existing if isinstance(existing, list) else []):
-                    if k.get("name") == "localhost-key":
-                        print(f"Key exists: {k['uuid']}")
-                        return
-                resp = api("POST", "/security/keys", {"name":"localhost-key","description":"root@localhost","private_key":key})
-                print(f"Key created: {resp.get('uuid','?')}")
+            echo "=== Build e restart ==="
+            docker compose -f docker-compose.prod.yml down || true
+            docker compose -f docker-compose.prod.yml up -d --build
 
-            def ensure_server_validated():
-                api("POST", f"/servers/{SERVER}/validate")
-                time.sleep(5)
-                s = api("GET", f"/servers/{SERVER}")
-                print(f"Server: reachable={s.get('is_reachable')} usable={s.get('is_usable')}")
+            echo "=== Cleanup ==="
+            docker image prune -f || true
 
-            def get_or_create_project():
-                projects = api("GET", "/projects")
-                for p in (projects if isinstance(projects, list) else []):
-                    if p.get("name") == "Ops Hub":
-                        print(f"Project exists: {p['uuid']}")
-                        return p["uuid"]
-                p = api("POST", "/projects", {"name":"Ops Hub","description":""})
-                print(f"Project created: {p.get('uuid')}")
-                return p.get("uuid", "")
-
-            def get_environment(proj_uuid):
-                p = api("GET", f"/projects/{proj_uuid}")
-                envs = p.get("environments", [])
-                for e in envs:
-                    if e.get("name") == "production":
-                        return e["uuid"]
-                return envs[0]["uuid"] if envs else ""
-
-            def get_or_create_app(proj_uuid, env_uuid):
-                apps = api("GET", "/applications")
-                for a in (apps if isinstance(apps, list) else []):
-                    if a.get("name") == "suganuma-ops-hub":
-                        print(f"App exists: {a['uuid']}")
-                        return a["uuid"]
-                a = api("POST", "/applications", {
-                    "name": "suganuma-ops-hub",
-                    "description": "",
-                    "project_uuid": proj_uuid,
-                    "environment_uuid": env_uuid,
-                    "server_uuid": SERVER,
-                    "docker_compose_domains": "ops.suganuma.com.br"
-                })
-                print(f"App created: {a.get('uuid')}")
-                return a.get("uuid", "")
-
-            def wait_deploy(deploy_uuid, iterations=90):
-                for i in range(1, iterations+1):
-                    d = api("GET", f"/deployments/{deploy_uuid}")
-                    status = d.get("status", "")
-                    print(f"[{i}/{iterations}] {status}")
-                    if status == "finished":
-                        print("DEPLOY OK")
-                        return True
-                    if status in ("failed", "cancelled"):
-                        print(f"DEPLOY {status.upper()}")
-                        return False
-                    time.sleep(10)
-                print("TIMEOUT")
-                return False
-
-            def health_check(attempts=12):
-                for i in range(1, attempts+1):
-                    r = subprocess.run(
-                        ["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "--max-time", "5",
-                         "https://ops.suganuma.com.br/api/health"],
-                        capture_output=True, text=True)
-                    print(f"Health {i}: {r.stdout.strip()}")
-                    if r.stdout.strip() == "200":
-                        print("PROD OK")
-                        return True
-                    time.sleep(5)
-                return False
-
-            # === MAIN ===
-            print("=== 1. SSH Key ===")
-            ensure_key()
-
-            print("\n=== 2. Server ===")
-            ensure_server_validated()
-
-            print("\n=== 3. Project ===")
-            PJ = get_or_create_project()
-
-            print("\n=== 4. Environment ===")
-            ENV = get_environment(PJ)
-            print(f"Env: {ENV}")
-
-            if EXISTING_APP:
-                APP = EXISTING_APP
-                print(f"\n=== 5. Using existing app: {APP} ===")
-            else:
-                print("\n=== 5. Application ===")
-                APP = get_or_create_app(PJ, ENV)
-                if not APP:
-                    print("FATAL: could not create application")
-                    sys.exit(1)
-
-            print("\n=== 6. Deploy ===")
-            deploy_resp = api("POST", f"/applications/{APP}/start")
-            DU = deploy_resp.get("deployment_uuid", "")
-            print(f"Deploy UUID: {DU or 'none'}")
-
-            if DU:
-                ok = wait_deploy(DU)
-                if not ok:
-                    sys.exit(1)
-            else:
-                print("No deployment_uuid, waiting 120s...")
-                time.sleep(120)
-
-            print("\n=== 7. Health Check ===")
-            if not health_check():
-                sys.exit(1)
-
-            print("\n=== COMPLETE ===")
-            PYEOF
+            echo "=== Status ==="
+            docker compose -f docker-compose.prod.yml ps
