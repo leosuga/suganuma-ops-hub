@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useTasks, useCreateTask } from "@/lib/queries/tasks"
 import { useTransactions, useCreateTransaction } from "@/lib/queries/finance"
+import { useTitle } from "@/lib/useTitle"
 import { useAppointments, useProtocols, useProtocolEntries, usePregnancy, useCreateHealthLog } from "@/lib/queries/health"
 import { useMealPlans } from "@/lib/queries/meals"
 import { useNotes } from "@/lib/queries/notes"
@@ -185,6 +186,7 @@ function QuickAddExpense({ onCreated }: { onCreated: () => void }) {
 }
 
 export default function DashboardPage() {
+  useTitle("Dashboard · Suganuma Ops Hub")
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
   const { data: transactions = [], isLoading: financeLoading } = useTransactions({ month: currentMonth() })
   const { data: appointments = [] } = useAppointments()

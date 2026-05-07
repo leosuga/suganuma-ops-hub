@@ -111,10 +111,10 @@ export function WeightChart({ logs }: HealthTrendsProps) {
           <Line
             type="monotone"
             dataKey="kg"
-            stroke="#A8D8B0"
+            stroke="var(--color-health)"
             strokeWidth={1.5}
-            dot={{ r: 2, fill: "#A8D8B0" }}
-            activeDot={{ r: 4, fill: "#A8D8B0" }}
+            dot={{ r: 2, fill: "var(--color-health)" }}
+            activeDot={{ r: 4, fill: "var(--color-health)" }}
           />
         </LineChart>
       </ResponsiveContainer>

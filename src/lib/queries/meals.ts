@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeTable } from "@/lib/realtime"
 import type { Meal, MealPlan } from "@/lib/schemas/meal"
 import type { Database } from "@/lib/database.types"
 
@@ -12,6 +13,7 @@ export const mealKeys = {
 }
 
 export function useMeals() {
+  useRealtimeTable("meal", mealKeys.all)
   return useQuery({
     queryKey: mealKeys.all,
     queryFn: async (): Promise<MealRow[]> => {
@@ -57,6 +59,7 @@ export function useDeleteMeal() {
 }
 
 export function useMealPlans(weekStart: string) {
+  useRealtimeTable("meal_plan", mealKeys.plans(weekStart))
   return useQuery({
     queryKey: mealKeys.plans(weekStart),
     queryFn: async (): Promise<MealPlanRow[]> => {

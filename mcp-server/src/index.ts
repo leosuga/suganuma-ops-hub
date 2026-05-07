@@ -182,6 +182,140 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         properties: { month: { type: "string", description: "YYYY-MM" } },
       },
     },
+    {
+      name: "notes_list",
+      description: "Lista notas do usuário.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          limit: { type: "number", default: 50 },
+        },
+      },
+    },
+    {
+      name: "notes_create",
+      description: "Cria uma nova nota.",
+      inputSchema: {
+        type: "object",
+        required: ["title"],
+        properties: {
+          title: { type: "string" },
+          content: { type: "string" },
+          tags: { type: "array", items: { type: "string" } },
+          pinned: { type: "boolean" },
+        },
+      },
+    },
+    {
+      name: "notes_update",
+      description: "Atualiza uma nota pelo ID.",
+      inputSchema: {
+        type: "object",
+        required: ["id"],
+        properties: {
+          id: { type: "string" },
+          title: { type: "string" },
+          content: { type: "string" },
+          tags: { type: "array", items: { type: "string" } },
+          pinned: { type: "boolean" },
+        },
+      },
+    },
+    {
+      name: "notes_delete",
+      description: "Remove uma nota pelo ID.",
+      inputSchema: {
+        type: "object",
+        required: ["id"],
+        properties: { id: { type: "string" } },
+      },
+    },
+    {
+      name: "meals_list",
+      description: "Lista refeições/meals.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          limit: { type: "number", default: 50 },
+        },
+      },
+    },
+    {
+      name: "meals_create",
+      description: "Cadastra uma refeição.",
+      inputSchema: {
+        type: "object",
+        required: ["name"],
+        properties: {
+          name: { type: "string" },
+          kind: { type: "string" },
+          tags: { type: "array", items: { type: "string" } },
+          ingredients: { type: "array", items: { type: "string" } },
+          prep_time: { type: "number" },
+          notes: { type: "string" },
+        },
+      },
+    },
+    {
+      name: "meals_set_plan",
+      description: "Define o plano de refeição para uma data/tipo.",
+      inputSchema: {
+        type: "object",
+        required: ["date", "meal_type"],
+        properties: {
+          date: { type: "string", description: "YYYY-MM-DD" },
+          meal_type: { type: "string", enum: ["breakfast", "lunch", "dinner", "snack"] },
+          meal_id: { type: "string", description: "UUID da refeição ou null" },
+          notes: { type: "string" },
+        },
+      },
+    },
+    {
+      name: "habits_list",
+      description: "Lista hábitos do usuário.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          limit: { type: "number", default: 50 },
+        },
+      },
+    },
+    {
+      name: "habits_create",
+      description: "Cria um novo hábito.",
+      inputSchema: {
+        type: "object",
+        required: ["name"],
+        properties: {
+          name: { type: "string" },
+          active: { type: "boolean" },
+        },
+      },
+    },
+    {
+      name: "habits_log_entry",
+      description: "Registra entrada de hábito.",
+      inputSchema: {
+        type: "object",
+        required: ["habit_id", "done_on"],
+        properties: {
+          habit_id: { type: "string" },
+          done_on: { type: "string", description: "YYYY-MM-DD" },
+          notes: { type: "string" },
+        },
+      },
+    },
+    {
+      name: "health_list_appointments",
+      description: "Lista consultas médicas.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          since: { type: "string", description: "ISO 8601 datetime" },
+          limit: { type: "number", default: 50 },
+        },
+      },
+    },
   ],
 }))
 
@@ -222,6 +356,40 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
     } else if (name === "dashboard_get") {
       const params = args?.month ? { month: String(args.month) } : undefined
       result = await api("GET", "/api/agent/dashboard", undefined, params)
+    } else if (name === "notes_list") {
+      const params: Record<string, string> = {}
+      if (args?.limit) params.limit = String(args.limit)
+      result = await api("GET", "/api/agent/notes", undefined, params)
+    } else if (name === "notes_create") {
+      result = await api("POST", "/api/agent/notes", args)
+    } else if (name === "notes_update") {
+      const { id, ...rest } = args as { id: string; [k: string]: unknown }
+      result = await api("PATCH", `/api/agent/notes/${id}`, rest)
+    } else if (name === "notes_delete") {
+      const { id } = args as { id: string }
+      result = await api("DELETE", `/api/agent/notes/${id}`)
+    } else if (name === "meals_list") {
+      const params: Record<string, string> = {}
+      if (args?.limit) params.limit = String(args.limit)
+      result = await api("GET", "/api/agent/meals", undefined, params)
+    } else if (name === "meals_create") {
+      result = await api("POST", "/api/agent/meals", args)
+    } else if (name === "meals_set_plan") {
+      result = await api("POST", "/api/agent/meals/plans", args)
+    } else if (name === "habits_list") {
+      const params: Record<string, string> = {}
+      if (args?.limit) params.limit = String(args.limit)
+      result = await api("GET", "/api/agent/habits", undefined, params)
+    } else if (name === "habits_create") {
+      result = await api("POST", "/api/agent/habits", args)
+    } else if (name === "habits_log_entry") {
+      const { habit_id, ...rest } = args as { habit_id: string; [k: string]: unknown }
+      result = await api("POST", `/api/agent/habits/${habit_id}/entries`, rest)
+    } else if (name === "health_list_appointments") {
+      const params: Record<string, string> = {}
+      if (args?.since) params.since = String(args.since)
+      if (args?.limit) params.limit = String(args.limit)
+      result = await api("GET", "/api/agent/health/appointments", undefined, params)
     } else {
       throw new Error(`Tool desconhecida: ${name}`)
     }

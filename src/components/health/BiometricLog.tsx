@@ -29,20 +29,25 @@ interface BiometricLogProps {
 export function BiometricLogDialog({ open, onOpenChange }: BiometricLogProps) {
   const [kind, setKind] = useState<HealthLogKind>("weight")
   const [fields, setFields] = useState<Record<string, string>>({})
+  const [fasting, setFasting] = useState(false)
   const create = useCreateHealthLog()
 
   const selectedKind = KINDS.find((k) => k.value === kind)!
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const value: Record<string, number> = {}
+    const value: Record<string, number | boolean> = {}
     for (const f of selectedKind.fields) {
       const v = parseFloat(fields[f.key]?.replace(",", ".") ?? "")
       if (!v) return
       value[f.key] = v
     }
+    if (kind === "glucose") {
+      value.fasting = fasting
+    }
     await create.mutateAsync({ kind, value })
     setFields({})
+    setFasting(false)
     onOpenChange(false)
   }
 
@@ -62,7 +67,7 @@ export function BiometricLogDialog({ open, onOpenChange }: BiometricLogProps) {
               <button
                 key={k.value}
                 type="button"
-                onClick={() => { setKind(k.value); setFields({}) }}
+                onClick={() => { setKind(k.value); setFields({}); setFasting(false) }}
                 className={cn(
                   "h-7 text-[8px] font-mono font-semibold tracking-wider rounded-sm border transition-colors",
                   kind === k.value
@@ -87,6 +92,17 @@ export function BiometricLogDialog({ open, onOpenChange }: BiometricLogProps) {
               className={inputClass}
             />
           ))}
+          {kind === "glucose" && (
+            <label className="flex items-center gap-2 text-[11px] font-mono text-on-surface/60 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={fasting}
+                onChange={(e) => setFasting(e.target.checked)}
+                className="accent-health"
+              />
+              Em jejum
+            </label>
+          )}
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => onOpenChange(false)} className="h-8 px-4 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 transition-colors">
               CANCELAR

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { useTitle } from "@/lib/useTitle"
 import { useTasks, useUpdateTask, useDeleteTask, useCreateTask } from "@/lib/queries/tasks"
 import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
 import { CategoryChips } from "@/components/tasks/CategoryChips"
@@ -14,6 +15,7 @@ import { useUndoToast } from "@/components/UndoToast"
 type Category = "finance" | "logistics" | "personal" | "health"
 
 export default function TasksPage() {
+  useTitle("Tasks · Suganuma Ops Hub")
   const [category, setCategory] = useState<Category | null>(null)
   const [showDone, setShowDone] = useState(false)
   const [addOpen, setAddOpen] = useState(false)

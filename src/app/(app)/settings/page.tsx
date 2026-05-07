@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useTitle } from "@/lib/useTitle"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
@@ -30,6 +31,7 @@ const ACCENTS: { value: Accent; label: string; color: string }[] = [
 ]
 
 export default function SettingsPage() {
+  useTitle("Settings · Suganuma Ops Hub")
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [tokens, setTokens] = useState<AgentToken[]>([])

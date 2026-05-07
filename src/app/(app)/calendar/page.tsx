@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useTitle } from "@/lib/useTitle"
 import Link from "next/link"
 import { useCalendarData } from "@/lib/queries/calendar"
 import { useCreateTask } from "@/lib/queries/tasks"
@@ -26,6 +27,7 @@ function dotClass(color: string) {
 }
 
 export default function CalendarPage() {
+  useTitle("Calendar · Suganuma Ops Hub")
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth())

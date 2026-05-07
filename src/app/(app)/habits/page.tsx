@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useTitle } from "@/lib/useTitle"
 import { useHabits, useCreateHabit, useUpdateHabit, useDeleteHabit, useHabitEntries, useLogHabitEntry, useDeleteHabitEntry } from "@/lib/queries/habits"
 import type { HabitTrackRow } from "@/lib/queries/habits"
 import { cn } from "@/lib/utils"
@@ -137,6 +138,7 @@ function HabitRow({ habit, weekDays }: { habit: HabitTrackRow; weekDays: string[
 }
 
 export default function HabitsPage() {
+  useTitle("Habits · Suganuma Ops Hub")
   const { data: habits = [], isLoading } = useHabits()
   const createHabit = useCreateHabit()
   const [newName, setNewName] = useState("")

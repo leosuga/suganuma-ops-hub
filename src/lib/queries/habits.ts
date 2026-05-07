@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeTable } from "@/lib/realtime"
 import type { HabitTrack, HabitEntry } from "@/lib/schemas/habit"
 import type { Database } from "@/lib/database.types"
 
@@ -13,6 +14,7 @@ export const habitKeys = {
 }
 
 export function useHabits() {
+  useRealtimeTable("habit_track", habitKeys.all)
   return useQuery({
     queryKey: habitKeys.all,
     queryFn: async (): Promise<HabitTrackRow[]> => {
@@ -79,6 +81,7 @@ export function useDeleteHabit() {
 }
 
 export function useHabitEntries(habitId?: string) {
+  useRealtimeTable("habit_entry", habitKeys.entries(habitId))
   return useQuery({
     queryKey: habitKeys.entries(habitId),
     enabled: !!habitId,

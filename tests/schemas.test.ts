@@ -2,6 +2,10 @@ import { describe, it, expect } from "vitest"
 import { taskSchema } from "@/lib/schemas/task"
 import { transactionSchema, accountSchema } from "@/lib/schemas/finance"
 import { healthLogSchema, pregnancySchema, appointmentSchema, protocolSchema, protocolEntrySchema } from "@/lib/schemas/health"
+import { mealSchema, mealPlanSchema } from "@/lib/schemas/meal"
+import { noteSchema } from "@/lib/schemas/note"
+import { habitTrackSchema, habitEntrySchema } from "@/lib/schemas/habit"
+
 
 describe("taskSchema", () => {
   it("parses a valid task with defaults", () => {
@@ -154,5 +158,74 @@ describe("protocolEntrySchema", () => {
 
   it("requires protocol_id", () => {
     expect(protocolEntrySchema.safeParse({ done_on: "2026-05-03" }).success).toBe(false)
+  })
+})
+
+describe("mealSchema", () => {
+  it("parses a valid meal", () => {
+    const r = mealSchema.safeParse({ name: "Salada Caesar" })
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(r.data.kind).toBe("recipe")
+      expect(r.data.tags).toEqual([])
+      expect(r.data.ingredients).toEqual([])
+    }
+  })
+
+  it("rejects empty name", () => {
+    expect(mealSchema.safeParse({ name: "" }).success).toBe(false)
+  })
+
+  it("accepts optional fields", () => {
+    expect(mealSchema.safeParse({ name: "X", prep_time: 15, notes: "nota" }).success).toBe(true)
+  })
+})
+
+describe("mealPlanSchema", () => {
+  it("parses a valid meal plan", () => {
+    const r = mealPlanSchema.safeParse({ date: "2026-05-06", meal_type: "lunch" })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.meal_id).toBeNull()
+  })
+
+  it("rejects invalid meal_type", () => {
+    expect(mealPlanSchema.safeParse({ date: "2026-05-06", meal_type: "brunch" }).success).toBe(false)
+  })
+})
+
+describe("noteSchema", () => {
+  it("parses a valid note", () => {
+    const r = noteSchema.safeParse({ title: "Ideia" })
+    expect(r.success).toBe(true)
+    if (r.success) {
+      expect(r.data.pinned).toBe(false)
+      expect(r.data.tags).toEqual([])
+    }
+  })
+
+  it("rejects empty title", () => {
+    expect(noteSchema.safeParse({ title: "" }).success).toBe(false)
+  })
+})
+
+describe("habitTrackSchema", () => {
+  it("parses a valid habit", () => {
+    const r = habitTrackSchema.safeParse({ name: "Beber água" })
+    expect(r.success).toBe(true)
+    if (r.success) expect(r.data.active).toBe(true)
+  })
+
+  it("rejects empty name", () => {
+    expect(habitTrackSchema.safeParse({ name: "" }).success).toBe(false)
+  })
+})
+
+describe("habitEntrySchema", () => {
+  it("parses a valid entry", () => {
+    expect(habitEntrySchema.safeParse({ habit_id: "550e8400-e29b-41d4-a716-446655440000", done_on: "2026-05-06" }).success).toBe(true)
+  })
+
+  it("requires habit_id", () => {
+    expect(habitEntrySchema.safeParse({ done_on: "2026-05-06" }).success).toBe(false)
   })
 })

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import { useTitle } from "@/lib/useTitle"
 import { useMeals, useCreateMeal, useDeleteMeal, useMealPlans, useSetMealPlan } from "@/lib/queries/meals"
 import type { MealRow } from "@/lib/queries/meals"
 import { cn } from "@/lib/utils"
@@ -92,6 +93,7 @@ function AddMealForm({ onCreated }: { onCreated: () => void }) {
 }
 
 export default function MealsPage() {
+  useTitle("Meals · Suganuma Ops Hub")
   const { data: meals = [] } = useMeals()
   const setMealPlan = useSetMealPlan()
   const [showNewMeal, setShowNewMeal] = useState(false)

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTitle } from "@/lib/useTitle"
 import { useHealthLogs } from "@/lib/queries/health"
 import { PregnancyCard } from "@/components/health/PregnancyCard"
 import { BiometricList, BiometricLogDialog } from "@/components/health/BiometricLog"
@@ -31,6 +32,7 @@ function HealthCharts() {
 }
 
 export default function HealthPage() {
+  useTitle("Health · Suganuma Ops Hub")
   const [bioOpen, setBioOpen] = useState(false)
   const [apptOpen, setApptOpen] = useState(false)
   const [protocolOpen, setProtocolOpen] = useState(false)

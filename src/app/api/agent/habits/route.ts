@@ -4,47 +4,41 @@ import { createServiceClient } from "@/lib/supabase/service"
 import { z } from "zod"
 
 const createSchema = z.object({
-  title: z.string().min(1).max(300),
-  starts_at: z.string().datetime(),
-  location: z.string().optional(),
-  kind: z.string().optional(),
+  name: z.string().min(1).max(200),
+  active: z.boolean().default(true),
 })
 
-// GET /api/agent/health/appointments
+// GET /api/agent/habits
 export async function GET(req: NextRequest) {
   let ownerId: string
   try { ownerId = await validateAgentToken(req) } catch { return unauthorized() }
 
   const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") ?? "50"), 200)
-  const since = req.nextUrl.searchParams.get("since") // ISO datetime
-
   const supabase = createServiceClient()
-  let query = supabase
-    .from("appointment")
+  const { data, error } = await supabase
+    .from("habit_track")
     .select("*")
     .eq("owner_id", ownerId)
-    .order("starts_at", { ascending: true })
+    .order("active", { ascending: false })
+    .order("created_at", { ascending: true })
     .limit(limit)
 
-  if (since) query = query.gte("starts_at", since)
-
-  const { data, error } = await query
   if (error) return serverError(error.message)
-  return NextResponse.json({ appointments: data })
+  return NextResponse.json({ habits: data })
 }
 
-// POST /api/agent/health/appointments
+// POST /api/agent/habits
 export async function POST(req: NextRequest) {
   let ownerId: string
   try { ownerId = await validateAgentToken(req) } catch { return unauthorized() }
 
-  const body = await req.json().catch(() => ({ }))
+  const body = await req.json().catch(() => ({}))
   const parsed = createSchema.safeParse(body)
   if (!parsed.success) return badRequest(JSON.stringify(parsed.error.flatten().fieldErrors))
 
   const supabase = createServiceClient()
   const { data, error } = await supabase
-    .from("appointment")
+    .from("habit_track")
     .insert({ ...parsed.data, owner_id: ownerId })
     .select("*")
     .single()

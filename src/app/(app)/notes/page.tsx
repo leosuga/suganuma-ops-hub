@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { useTitle } from "@/lib/useTitle"
 import dynamic from "next/dynamic"
 import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from "@/lib/queries/notes"
 import type { NoteRow } from "@/lib/queries/notes"
@@ -171,6 +172,7 @@ function QuickAddNote({ onCreated }: { onCreated: () => void }) {
 }
 
 export default function NotesPage() {
+  useTitle("Notes · Suganuma Ops Hub")
   const { data: notes = [], isLoading } = useNotes()
   const deleteNote = useDeleteNote()
   const createNote = useCreateNote()

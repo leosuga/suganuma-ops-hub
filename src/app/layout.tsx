@@ -8,6 +8,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 export const metadata: Metadata = {
   title: "Suganuma Ops Hub",
   description: "Personal command center",
+  manifest: "/manifest.webmanifest",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

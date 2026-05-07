@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useTitle } from "@/lib/useTitle"
 import dynamic from "next/dynamic"
 import { useAccounts, useTransactions, useDeleteTransaction, useCreateTransaction } from "@/lib/queries/finance"
 import { FinanceKPIs } from "@/components/finance/FinanceKPIs"
@@ -21,6 +22,7 @@ function currentMonth() {
 }
 
 export default function FinancePage() {
+  useTitle("Finance · Suganuma Ops Hub")
   const [addOpen, setAddOpen] = useState(false)
   const [csvOpen, setCsvOpen] = useState(false)
   const [editingTxn, setEditingTxn] = useState<TransactionRow | null>(null)
