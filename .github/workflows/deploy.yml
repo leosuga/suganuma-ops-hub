@@ -44,11 +44,9 @@ jobs:
               -t ops-hub:latest .
 
             echo "Switching containers..."
-            OLD=$(docker ps -q --filter name=sw2ag8vuujt87zk04wwbxsvg 2>/dev/null || echo "")
-            [ -n "$OLD" ] && docker stop "$OLD" && docker rm "$OLD"
             docker stop suganuma-ops-hub 2>/dev/null && docker rm suganuma-ops-hub 2>/dev/null || true
 
-            docker run -d --name suganuma-ops-hub --network "$NET" --env-file .env.prod --restart unless-stopped ops-hub:latest
+            docker run -d --name suganuma-ops-hub --hostname suganuma-ops-hub --network "$NET" --env-file .env.prod --restart unless-stopped ops-hub:latest
 
             [ -f ~/update-ops-proxy.sh ] && bash ~/update-ops-proxy.sh || true
 
