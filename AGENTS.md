@@ -156,3 +156,4 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `loading.tsx`: skeleton pages existem em `dashboard`, `tasks`, `finance`, `health`, `notes`, `meals`, `habits`, `calendar`
 - `staleTime: 60_000` / `gcTime: 5 * 60_000` configurados globalmente no `QueryClient` do `AppShell.tsx`
 - `next.config.ts`: `experimental.optimizePackageImports: ["recharts", "cmdk"]` adicionado. `typedRoutes` foi testado e **revertido** — quebra build por causa de `string` hrefs no `BottomNav.tsx`.
+- **React Compiler (2026-05-09)**: `reactCompiler: true` habilitado no `next.config.ts` (não `experimental`). Requer `babel-plugin-react-compiler` como `devDependency`. Build + tests passam sem alterações de código. Otimização automática de memoization no React 19.
