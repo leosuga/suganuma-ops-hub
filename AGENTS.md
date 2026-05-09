@@ -142,11 +142,15 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `lucide-react` — ícones (não usado diretamente, svg inline nos componentes de shell)
 
 ## Pontos de atenção
-- `@tailwindcss/typography` NÃO está instalado — classes `prose`/`prose-invert` no Notes podem não funcionar como esperado Tailwind v4
+- `@tailwindcss/typography` NÃO está instalado — classes `prose`/`prose-invert` no Notes podem não funcionar como esperado Tailwind v4. Tentativa de instalar `@tailwindcss/typography@0.5.19` quebrou o build porque não é compatível com `@plugin "@tailwindcss/typography"` do Tailwind v4. Aguardar versão v4-compatible do plugin.
 - ESLint tem dependência corrompida (`debug` module) — é problema preexistente de `node_modules`, não do código. **NUNCA usar `eslint: { ignoreDuringBuilds: true }`** no next.config.ts (chave inexistente no Next.js 16.2.4, veja seção Deploy). CI roda `tsc --noEmit` + `npm run build` como verificações reais.
-- Node.js v25.6.0 — vitest 4.1.5 funciona mas pode ter instabilidades. Usar sempre `--no-watch` para evitar hangs
+- Node.js v25.6.0 — vitest 4.1.5 funciona mas pode ter instabilidades com fork workers (timeout ao iniciar testes). Usar sempre `--no-watch` para evitar hangs. Se `npm test` falhar com "Failed to start forks worker", é problema preexistente do ambiente, não do código.
 - BottomNav mobile máximo 5 itens (DASH, CAL, TASKS, FIN, HUB). Notes, Meals, Habits acessíveis via Sidebar (desktop) ou CommandPalette
 - `due_at` é `string | null` no DB mas `string | undefined` no Zod schema — nos mutations usar `undefined` (não `null`) para evitar type errors
-- Realtime: tabelas precisam ser adicionadas à `supabase_realtime` publication na migration SQL
+- Realtime: tabelas precisam ser adicionadas à `supabase_realtime` publication na migration SQL. `notes` já tinha; `meals` (`meal`, `meal_plan`) e `habits` (`habit_track`, `habit_entry`) foram adicionados nesta sessão.
 - Light mode: `html.light` definido no globals.css com variáveis customizadas. O `--color-health` tem valor diferente no light mode (`#2E8B57`)
-- MCP Server (`mcp-server/src/index.ts`) + SDK (`packages/ops-hub-sdk/`) para integração com Claude Desktop — requer token de agente gerado em Settings
+- MCP Server (`mcp-server/src/index.ts`) + SDK (`packages/ops-hub-sdk/`) para integração com Claude Desktop — agora completo com tools: `tasks_*`, `finance_*`, `health_*`, `dashboard_get`, `notes_list/create/update/delete`, `meals_list/create/set_plan`, `habits_list/create/log_entry`, `health_list_appointments`
+- Dynamic `<title>`: todas as rotas de `/(app)` usam `useTitle()` de `@/lib/useTitle` para setar `document.title` (ex: `"Tasks · Suganuma Ops Hub"`)
+- `loading.tsx`: skeleton pages existem em `dashboard`, `tasks`, `finance`, `health`, `notes`, `meals`, `habits`, `calendar`
+- `staleTime: 60_000` / `gcTime: 5 * 60_000` configurados globalmente no `QueryClient` do `AppShell.tsx`
+- `next.config.ts`: `experimental.optimizePackageImports: ["recharts", "cmdk"]` adicionado
