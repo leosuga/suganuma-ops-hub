@@ -140,7 +140,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `cmdk` — command palette
 - `next-themes` — dark/light mode
 - `@serwist/next` + `serwist` — PWA (instalado, sw.js manual)
-- `lucide-react` — ícones (não usado diretamente, svg inline nos componentes de shell)
+- `lucide-react` — removido do bundle; todos os ícones são SVG inline (`src/components/ui/` também migrado)
 
 ## Pontos de atenção
 - **`@tailwindcss/typography` instalado (2026-05-09)**: Versão `0.5.0-alpha.3` (tag `next`) funciona com Tailwind v4 via `@plugin "@tailwindcss/typography"` no `globals.css`. Build + tests passam. As notas agora têm estilo tipográfico aplicado.

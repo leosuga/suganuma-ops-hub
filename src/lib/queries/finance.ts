@@ -24,6 +24,7 @@ export interface TransactionFilters {
 // ── Accounts ──────────────────────────────────────────────
 
 export function useAccounts() {
+  useRealtimeTable("account", financeKeys.accounts)
   return useQuery({
     queryKey: financeKeys.accounts,
     queryFn: async (): Promise<AccountRow[]> => {
