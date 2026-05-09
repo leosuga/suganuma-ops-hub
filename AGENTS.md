@@ -82,7 +82,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - Base image: **`node:22-alpine`** (atualizado de v20 em 2026-05-09)
 - `next build` precisa de `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` em tempo de build. Passar via `ARG` + `ENV` no stage `builder` e `--build-arg` no `docker build`
 - `output: "standalone"` no next.config → copiar `.next/standalone` e `.next/static` no runner
-- Node.js 20 Alpine, user `nextjs` (gid 1001)
+- user `nextjs` (gid 1001)
 
 ### next.config.ts — Next.js 16.2.4
 - ⚠️ A chave `eslint` **não existe** no tipo `NextConfig` do Next.js 16.2.4. Usá-la causa erro de type check no build (`Object literal may only specify known properties`). **NUNCA adicionar `eslint: { ignoreDuringBuilds: true }`**.
@@ -145,6 +145,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 ## Pontos de atenção
 - `@tailwindcss/typography` NÃO está instalado — classes `prose`/`prose-invert` no Notes podem não funcionar como esperado Tailwind v4. Tentativa de instalar `@tailwindcss/typography@0.5.19` quebrou o build porque não é compatível com `@plugin "@tailwindcss/typography"` do Tailwind v4. Aguardar versão v4-compatible do plugin.
 - Node.js v25.6.0 local, **v22-alpine em produção** — vitest 4.1.5 funciona mas pode ter instabilidades com fork workers (timeout ao iniciar testes). Usar sempre `--no-watch` para evitar hangs. Se `npm test` falhar com "Failed to start forks worker", é problema preexistente do ambiente, não do código.
+- **Testes fixados (2026-05-09)**: `tsc --noEmit` passa; `npx vitest run` = 83 tests passando (8 files). Ajustes nos mocks: `chain()` retorna `any`, `MockClient` usa `as any`, `useRealtimeTable` mockado em habits/meals, `getSession` adicionado ao `authMock`.
 - **ESLint fix (2026-05-09)**: a dependência `debug` corrompida foi resolvida via `rm -rf node_modules && npm install`. O ESLint agora funciona. Falsos positivos das rules `react-hooks/set-state-in-effect` e `react-hooks/refs` foram desativados no `eslint.config.mjs` — essas rules sinalizam errors em patterns comuns do projeto (form reset via useEffect, setMounted(true), ref assignment).
 - BottomNav mobile máximo 5 itens (DASH, CAL, TASKS, FIN, HUB). Notes, Meals, Habits acessíveis via Sidebar (desktop) ou CommandPalette
 - `due_at` é `string | null` no DB mas `string | undefined` no Zod schema — nos mutations usar `undefined` (não `null`) para evitar type errors

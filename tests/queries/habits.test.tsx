@@ -1,18 +1,20 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { vi } from "vitest"
+
+vi.mock("@/lib/supabase/client", () => ({ createClient: vi.fn() }))
+vi.mock("@/lib/realtime", () => ({ useRealtimeTable: vi.fn() }))
+
 import { renderHook, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import React from "react"
 
-vi.mock("@/lib/supabase/client", () => ({ createClient: vi.fn() }))
-
 import { useHabits, useCreateHabit, useUpdateHabit, useDeleteHabit, useHabitEntries, useLogHabitEntry, useDeleteHabitEntry } from "@/lib/queries/habits"
 import { createClient } from "@/lib/supabase/client"
 
-const MockClient = createClient as unknown as vi.Mock
+const MockClient = createClient as any
 
-function chain(value: unknown, error?: string) {
+function chain(value: unknown, error?: string): any {
   const result = error ? { data: null, error: { message: error } } : { data: value, error: null }
-  function wrap(): Record<string, (...args: unknown[]) => Record<string, unknown>> {
+  function wrap(): any {
     const proxy: Record<string, unknown> = {}
     return new Proxy(proxy, {
       get(_t, prop) {
@@ -25,7 +27,10 @@ function chain(value: unknown, error?: string) {
 }
 
 function authMock() {
-  return { getUser: vi.fn().mockResolvedValue({ data: { user: { id: "owner-1" } }, error: null }) }
+  return {
+    getUser: vi.fn().mockResolvedValue({ data: { user: { id: "owner-1" } }, error: null }),
+    getSession: vi.fn().mockResolvedValue({ data: { session: { user: { id: "owner-1" } } }, error: null }),
+  }
 }
 
 const habit = { id: "h-1", owner_id: "owner-1", name: "Beber água", active: true, created_at: "2026-01-01T00:00:00Z" }

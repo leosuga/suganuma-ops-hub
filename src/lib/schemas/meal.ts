@@ -12,7 +12,7 @@ export const mealSchema = z.object({
 
 export const mealPlanSchema = z.object({
   id: z.string().uuid().optional(),
-  meal_id: z.string().uuid().optional().nullable(),
+  meal_id: z.string().uuid().nullable().default(null),
   date: z.string(),
   meal_type: z.enum(["breakfast", "lunch", "dinner", "snack"]),
   notes: z.string().optional().nullable(),

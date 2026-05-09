@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { vi } from "vitest"
 import { renderHook, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import React from "react"
@@ -9,12 +9,11 @@ vi.mock("@/lib/realtime", () => ({ useRealtimeTable: vi.fn() }))
 import { useHealthLogs, useCreateHealthLog, usePregnancy, useUpsertPregnancy, useAppointments, useCreateAppointment, useDeleteAppointment, useProtocols, useCreateProtocol, useUpdateProtocol, useLogProtocolEntry } from "@/lib/queries/health"
 import { createClient } from "@/lib/supabase/client"
 
-const MockClient = createClient as unknown as vi.Mock
+const MockClient = createClient as any
 
-function chain(value: unknown, error?: string) {
+function chain(value: unknown, error?: string): any {
   const result = error ? { data: null, error: { message: error } } : { data: value, error: null }
-
-  function wrap(): Record<string, (...args: unknown[]) => Record<string, unknown>> {
+  function wrap(): any {
     const proxy: Record<string, unknown> = {}
     return new Proxy(proxy, {
       get(_t, prop) {
@@ -28,7 +27,6 @@ function chain(value: unknown, error?: string) {
       },
     })
   }
-
   return wrap()
 }
 
