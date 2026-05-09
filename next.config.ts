@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   images: { unoptimized: true },
   typescript: { ignoreBuildErrors: false },
+  reactCompiler: true,
   experimental: {
     optimizePackageImports: ["recharts", "cmdk"],
   },

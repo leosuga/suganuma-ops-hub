@@ -14,6 +14,14 @@ const eslintConfig = defineConfig([
     "mcp-server/node_modules/**",
   ]),
   {
+    files: ["tests/**/*.{ts,tsx}"],
+    rules: {
+      // Mocks de Supabase usam `any` intencionalmente — é código de teste,
+      // não afeta produção. O Proxy chain não pode ser tipado precisamente.
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
+  {
     files: ["src/**/*.{ts,tsx}"],
     rules: {
       // These rules have false positives on common patterns like
