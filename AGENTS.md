@@ -143,7 +143,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `lucide-react` — ícones (não usado diretamente, svg inline nos componentes de shell)
 
 ## Pontos de atenção
-- `@tailwindcss/typography` NÃO está instalado — classes `prose`/`prose-invert` no Notes podem não funcionar como esperado Tailwind v4. Tentativa de instalar `@tailwindcss/typography@0.5.19` quebrou o build porque não é compatível com `@plugin "@tailwindcss/typography"` do Tailwind v4. Aguardar versão v4-compatible do plugin.
+- **`@tailwindcss/typography` instalado (2026-05-09)**: Versão `0.5.0-alpha.3` (tag `next`) funciona com Tailwind v4 via `@plugin "@tailwindcss/typography"` no `globals.css`. Build + tests passam. As notas agora têm estilo tipográfico aplicado.
 - Node.js v25.6.0 local, **v22-alpine em produção** — vitest 4.1.5 funciona mas pode ter instabilidades com fork workers (timeout ao iniciar testes). Usar sempre `--no-watch` para evitar hangs. Se `npm test` falhar com "Failed to start forks worker", é problema preexistente do ambiente, não do código.
 - **Testes fixados (2026-05-09)**: `tsc --noEmit` passa; `npx vitest run` = 83 tests passando (8 files). Ajustes nos mocks: `chain()` retorna `any`, `MockClient` usa `as any`, `useRealtimeTable` mockado em habits/meals, `getSession` adicionado ao `authMock`.
 - **ESLint fix (2026-05-09)**: a dependência `debug` corrompida foi resolvida via `rm -rf node_modules && npm install`. O ESLint agora funciona. Falsos positivos das rules `react-hooks/set-state-in-effect` e `react-hooks/refs` foram desativados no `eslint.config.mjs` — essas rules sinalizam errors em patterns comuns do projeto (form reset via useEffect, setMounted(true), ref assignment).
