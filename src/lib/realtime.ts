@@ -11,7 +11,10 @@ import type { RealtimeChannel } from "@supabase/supabase-js"
 export function useRealtimeTable(table: string, queryKey: readonly unknown[]) {
   const queryClient = useQueryClient()
   const queryKeyRef = useRef(queryKey)
-  queryKeyRef.current = queryKey
+
+  useEffect(() => {
+    queryKeyRef.current = queryKey
+  }, [queryKey])
 
   useEffect(() => {
     const supabase = createClient()
