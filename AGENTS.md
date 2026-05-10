@@ -5,7 +5,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 <!-- END:nextjs-agent-rules -->
 
 ## Stack — versões exatas (não assuma defaults de treino)
-- Next.js **16.2.4** | React **19.2.4** | Zod **4.3.6** | Tailwind **v4**
+- Next.js **16.2.6** | React **19.2.6** | Zod **4.3.6** | Tailwind **v4**
 - UI primitives: `@base-ui/react` (Dialog, Checkbox, Button) — **NÃO é Radix UI**
 - Tokens CSS: `--color-bg`, `--color-surface`, `--color-teal`, `--color-amber`, `--color-danger`, `--color-health`, `--color-on-surface` via `@theme inline` no globals.css
 - Tema customizável: `--color-accent` / `--color-accent-hi` (5 opções: teal, blue, green, purple, orange) via `src/lib/theme.ts`
@@ -25,7 +25,7 @@ Cada módulo segue este pipeline:
 1. **Migration SQL** (`supabase/migrations/XXXX_nome.sql`) — DDL + RLS + índices + realtime
 2. **Zod Schema** (`src/lib/schemas/nome.ts`) — validação, tipos exportados (`export type X = z.infer<...>`)
 3. **Database Types** (`src/lib/database.types.ts`) — tipos Row/Insert/Update para o Supabase
-4. **Queries TanStack** (`src/lib/queries/nome.ts`) — hooks `useQuery`/`useMutation` com optimistic updates onde cabível
+4. **Queries TanStack** (`src/lib/queries/nome.ts`) — **exportar `queryOptions`** (ex: `tasksOptions`, `accountsOptions`) + hooks `useQuery`/`useMutation`. `queryOptions` facilita prefetch server-side e elimina duplicação de `queryKey`/`queryFn`
 5. **Componentes** (`src/components/nome/`) — reutilizáveis, seguindo o design system do projeto
 6. **Página** (`src/app/(app)/nome/page.tsx`) — server ou client component com `SectionErrorBoundary`
 7. **Navegação** — adicionar em: Sidebar, BottomNav (mobile, máx 5 itens), TopBar, CommandPalette
@@ -84,8 +84,8 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `output: "standalone"` no next.config → copiar `.next/standalone` e `.next/static` no runner
 - user `nextjs` (gid 1001)
 
-### next.config.ts — Next.js 16.2.4
-- ⚠️ A chave `eslint` **não existe** no tipo `NextConfig` do Next.js 16.2.4. Usá-la causa erro de type check no build (`Object literal may only specify known properties`). **NUNCA adicionar `eslint: { ignoreDuringBuilds: true }`**.
+### next.config.ts — Next.js 16.2.6
+- ⚠️ A chave `eslint` **não existe** no tipo `NextConfig` do Next.js 16.2.6. Usá-la causa erro de type check no build (`Object literal may only specify known properties`). **NUNCA adicionar `eslint: { ignoreDuringBuilds: true }`**.
 - `images: { unoptimized: true }` é necessário para standalone Docker (sem otimizador de imagem)
 - `typescript: { ignoreBuildErrors: false }` mantém o type check habilitado (padrão implícito, mas explícito é melhor)
 
@@ -139,8 +139,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `papaparse` — import CSV de extratos bancários
 - `cmdk` — command palette
 - `next-themes` — dark/light mode
-- `@serwist/next` + `serwist` — PWA (instalado, sw.js manual)
-- `lucide-react` — removido do bundle; todos os ícones são SVG inline (`src/components/ui/` também migrado)
+- `serwist` — removido do bundle; SW é manual (`public/sw.js`), não usa `@serwist/next`
 
 ## Pontos de atenção
 - **`@tailwindcss/typography` instalado (2026-05-09)**: Versão `0.5.0-alpha.3` (tag `next`) funciona com Tailwind v4 via `@plugin "@tailwindcss/typography"` no `globals.css`. Build + tests passam. As notas agora têm estilo tipográfico aplicado.
@@ -157,3 +156,11 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `staleTime: 60_000` / `gcTime: 5 * 60_000` configurados globalmente no `QueryClient` do `AppShell.tsx`
 - `next.config.ts`: `experimental.optimizePackageImports: ["recharts", "cmdk"]` adicionado. `typedRoutes` foi testado e **revertido** — quebra build por causa de `string` hrefs no `BottomNav.tsx`.
 - **React Compiler (2026-05-09)**: `reactCompiler: true` habilitado no `next.config.ts` (não `experimental`). Requer `babel-plugin-react-compiler` como `devDependency`. Build + tests passam sem alterações de código. Otimização automática de memoization no React 19.
+- **`queryOptions` API TanStack v5 (2026-05-09)**: Todas as queries (`tasks`, `finance`, `health`, `notes`, `meals`, `habits`) exportam `queryOptions` (ex: `tasksOptions`, `accountsOptions`). Facilita prefetch server-side e elimina duplicação de `queryKey`/`queryFn`.
+- **Dependências removidas (2026-05-09)**: `lucide-react` (substituído por SVG inline em `src/components/ui/*`), `@serwist/next` e `serwist` (SW é manual em `public/sw.js`). Bundle mais leve e zero lixo.
+- **PWA icons PNG (2026-05-09)**: `icon-192.png` e `icon-512.png` gerados via Pillow. `manifest.webmanifest` usa PNGs primários + SVGs fallback.
+- **Docker DNS interno > IP fixo**: O erro 502 após deploy foi causado pelo Caddy apontando para IP fixo do container antigo. `--hostname` + `reverse_proxy hostname:3000` resolve via DNS do Docker.
+- **`typedRoutes` não é viável com BottomNav**: `BottomNav.tsx` usa `string` em vez de literais para hrefs. Habilitar `typedRoutes` quebra o build instantaneamente.
+- **`@next/bundle-analyzer` incompatível com Turbopack**: Não gera relatório. `next experimental-analyze` não produziu output útil. Sem alternativa clara no momento.
+- **Supabase CLI `--linked` só funciona para projetos Cloud**: Nosso Supabase é self-hosted (`api.suganuma.com.br`). `--local` requer Docker daemon. Tipos manuais validados via audit são suficientes.
+- **postcss vulnerability no Next.js interno**: `next@16.2.6` ainda traz `postcss@8.4.31` (moderate XSS). Não corrigível via bump de patch. Aguardar Next.js 16.2.7+.
