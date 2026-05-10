@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeTable } from "@/lib/realtime"
 import type { HabitTrack, HabitEntry } from "@/lib/schemas/habit"
@@ -13,21 +13,23 @@ export const habitKeys = {
     habitId ? (["habits", "entries", habitId] as const) : (["habits", "entries"] as const),
 }
 
+const habitsOptions = queryOptions({
+  queryKey: habitKeys.all,
+  queryFn: async (): Promise<HabitTrackRow[]> => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("habit_track")
+      .select("*")
+      .order("active", { ascending: false })
+      .order("created_at", { ascending: true })
+    if (error) throw error
+    return (data ?? []) as HabitTrackRow[]
+  },
+})
+
 export function useHabits() {
   useRealtimeTable("habit_track", habitKeys.all)
-  return useQuery({
-    queryKey: habitKeys.all,
-    queryFn: async (): Promise<HabitTrackRow[]> => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("habit_track")
-        .select("*")
-        .order("active", { ascending: false })
-        .order("created_at", { ascending: true })
-      if (error) throw error
-      return (data ?? []) as HabitTrackRow[]
-    },
-  })
+  return useQuery(habitsOptions)
 }
 
 export function useCreateHabit() {
@@ -80,9 +82,8 @@ export function useDeleteHabit() {
   })
 }
 
-export function useHabitEntries(habitId?: string) {
-  useRealtimeTable("habit_entry", habitKeys.entries(habitId))
-  return useQuery({
+export function habitEntriesOptions(habitId?: string) {
+  return queryOptions({
     queryKey: habitKeys.entries(habitId),
     enabled: !!habitId,
     queryFn: async (): Promise<HabitEntryRow[]> => {
@@ -97,6 +98,11 @@ export function useHabitEntries(habitId?: string) {
       return (data ?? []) as HabitEntryRow[]
     },
   })
+}
+
+export function useHabitEntries(habitId?: string) {
+  useRealtimeTable("habit_entry", habitKeys.entries(habitId))
+  return useQuery(habitEntriesOptions(habitId))
 }
 
 export function useLogHabitEntry() {

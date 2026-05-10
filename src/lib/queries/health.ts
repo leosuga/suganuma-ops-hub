@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { HealthLog, Pregnancy, Appointment, Protocol, ProtocolEntry } from "@/lib/schemas/health"
 import type { Database } from "@/lib/database.types"
@@ -22,9 +22,8 @@ export const healthKeys = {
 
 // ── Health Logs (biometrics) ──────────────────────────────
 
-export function useHealthLogs(kind?: string) {
-  useRealtimeTable("health_log", healthKeys.logs())
-  return useQuery({
+export function healthLogsOptions(kind?: string) {
+  return queryOptions({
     queryKey: healthKeys.logs(kind),
     queryFn: async (): Promise<HealthLogRow[]> => {
       const supabase = createClient()
@@ -35,6 +34,11 @@ export function useHealthLogs(kind?: string) {
       return (data ?? []) as HealthLogRow[]
     },
   })
+}
+
+export function useHealthLogs(kind?: string) {
+  useRealtimeTable("health_log", healthKeys.logs())
+  return useQuery(healthLogsOptions(kind))
 }
 
 export function useCreateHealthLog() {
@@ -57,21 +61,23 @@ export function useCreateHealthLog() {
 
 // ── Pregnancy ─────────────────────────────────────────────
 
+const pregnancyOptions = queryOptions({
+  queryKey: healthKeys.pregnancy,
+  queryFn: async (): Promise<PregnancyRow | null> => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("pregnancy")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (error) throw error
+    return data as PregnancyRow | null
+  },
+})
+
 export function usePregnancy() {
-  return useQuery({
-    queryKey: healthKeys.pregnancy,
-    queryFn: async (): Promise<PregnancyRow | null> => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("pregnancy")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle()
-      if (error) throw error
-      return data as PregnancyRow | null
-    },
-  })
+  return useQuery(pregnancyOptions)
 }
 
 export function useUpsertPregnancy() {
@@ -94,19 +100,21 @@ export function useUpsertPregnancy() {
 
 // ── Appointments ──────────────────────────────────────────
 
+const appointmentsOptions = queryOptions({
+  queryKey: healthKeys.appointments,
+  queryFn: async (): Promise<AppointmentRow[]> => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("appointment")
+      .select("*")
+      .order("starts_at", { ascending: true })
+    if (error) throw error
+    return (data ?? []) as AppointmentRow[]
+  },
+})
+
 export function useAppointments() {
-  return useQuery({
-    queryKey: healthKeys.appointments,
-    queryFn: async (): Promise<AppointmentRow[]> => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("appointment")
-        .select("*")
-        .order("starts_at", { ascending: true })
-      if (error) throw error
-      return (data ?? []) as AppointmentRow[]
-    },
-  })
+  return useQuery(appointmentsOptions)
 }
 
 export function useCreateAppointment() {
@@ -141,19 +149,21 @@ export function useDeleteAppointment() {
 
 // ── Protocols ─────────────────────────────────────────────
 
+const protocolsOptions = queryOptions({
+  queryKey: healthKeys.protocols,
+  queryFn: async (): Promise<ProtocolRow[]> => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("protocol")
+      .select("*")
+      .order("created_at", { ascending: true })
+    if (error) throw error
+    return (data ?? []) as ProtocolRow[]
+  },
+})
+
 export function useProtocols() {
-  return useQuery({
-    queryKey: healthKeys.protocols,
-    queryFn: async (): Promise<ProtocolRow[]> => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("protocol")
-        .select("*")
-        .order("created_at", { ascending: true })
-      if (error) throw error
-      return (data ?? []) as ProtocolRow[]
-    },
-  })
+  return useQuery(protocolsOptions)
 }
 
 export function useCreateProtocol() {
@@ -209,8 +219,8 @@ export function useDeleteProtocol() {
   })
 }
 
-export function useProtocolEntries(protocolId?: string) {
-  return useQuery({
+export function protocolEntriesOptions(protocolId?: string) {
+  return queryOptions({
     queryKey: healthKeys.protocolEntries(protocolId),
     enabled: !!protocolId,
     queryFn: async (): Promise<ProtocolEntryRow[]> => {
@@ -225,6 +235,10 @@ export function useProtocolEntries(protocolId?: string) {
       return (data ?? []) as ProtocolEntryRow[]
     },
   })
+}
+
+export function useProtocolEntries(protocolId?: string) {
+  return useQuery(protocolEntriesOptions(protocolId))
 }
 
 export function useLogProtocolEntry() {

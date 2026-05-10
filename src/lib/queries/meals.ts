@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeTable } from "@/lib/realtime"
 import type { Meal, MealPlan } from "@/lib/schemas/meal"
@@ -12,20 +12,22 @@ export const mealKeys = {
   plans: (weekStart: string) => ["meals", "plans", weekStart] as const,
 }
 
+const mealsOptions = queryOptions({
+  queryKey: mealKeys.all,
+  queryFn: async (): Promise<MealRow[]> => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("meal")
+      .select("*")
+      .order("updated_at", { ascending: false })
+    if (error) throw error
+    return (data ?? []) as MealRow[]
+  },
+})
+
 export function useMeals() {
   useRealtimeTable("meal", mealKeys.all)
-  return useQuery({
-    queryKey: mealKeys.all,
-    queryFn: async (): Promise<MealRow[]> => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("meal")
-        .select("*")
-        .order("updated_at", { ascending: false })
-      if (error) throw error
-      return (data ?? []) as MealRow[]
-    },
-  })
+  return useQuery(mealsOptions)
 }
 
 export function useCreateMeal() {
@@ -58,9 +60,8 @@ export function useDeleteMeal() {
   })
 }
 
-export function useMealPlans(weekStart: string) {
-  useRealtimeTable("meal_plan", mealKeys.plans(weekStart))
-  return useQuery({
+export function mealPlansOptions(weekStart: string) {
+  return queryOptions({
     queryKey: mealKeys.plans(weekStart),
     queryFn: async (): Promise<MealPlanRow[]> => {
       const supabase = createClient()
@@ -76,6 +77,11 @@ export function useMealPlans(weekStart: string) {
       return (data ?? []) as MealPlanRow[]
     },
   })
+}
+
+export function useMealPlans(weekStart: string) {
+  useRealtimeTable("meal_plan", mealKeys.plans(weekStart))
+  return useQuery(mealPlansOptions(weekStart))
 }
 
 export function useSetMealPlan() {

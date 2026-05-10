@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { Task } from "@/lib/schemas/task"
 import type { Database } from "@/lib/database.types"
@@ -10,23 +10,24 @@ export const taskKeys = {
   all: ["tasks"] as const,
 }
 
+export const tasksOptions = queryOptions({
+  queryKey: taskKeys.all,
+  queryFn: async (): Promise<TaskRow[]> => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("task")
+      .select("*")
+      .neq("status", "archived")
+      .order("due_at", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: false })
+    if (error) throw error
+    return (data ?? []) as TaskRow[]
+  },
+})
 
 export function useTasks() {
   useRealtimeTable("task", taskKeys.all)
-  return useQuery({
-    queryKey: taskKeys.all,
-    queryFn: async (): Promise<TaskRow[]> => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("task")
-        .select("*")
-        .neq("status", "archived")
-        .order("due_at", { ascending: true, nullsFirst: false })
-        .order("created_at", { ascending: false })
-      if (error) throw error
-      return (data ?? []) as TaskRow[]
-    },
-  })
+  return useQuery(tasksOptions)
 }
 
 export function useCreateTask() {

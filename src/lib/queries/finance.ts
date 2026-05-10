@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { Account, Transaction } from "@/lib/schemas/finance"
 import type { Database } from "@/lib/database.types"
@@ -23,20 +23,22 @@ export interface TransactionFilters {
 
 // ── Accounts ──────────────────────────────────────────────
 
+const accountsOptions = queryOptions({
+  queryKey: financeKeys.accounts,
+  queryFn: async (): Promise<AccountRow[]> => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("account")
+      .select("*")
+      .order("created_at", { ascending: true })
+    if (error) throw error
+    return (data ?? []) as AccountRow[]
+  },
+})
+
 export function useAccounts() {
   useRealtimeTable("account", financeKeys.accounts)
-  return useQuery({
-    queryKey: financeKeys.accounts,
-    queryFn: async (): Promise<AccountRow[]> => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("account")
-        .select("*")
-        .order("created_at", { ascending: true })
-      if (error) throw error
-      return (data ?? []) as AccountRow[]
-    },
-  })
+  return useQuery(accountsOptions)
 }
 
 export function useCreateAccount() {
@@ -101,9 +103,8 @@ export function useDeleteAccount() {
 
 // ── Transactions ──────────────────────────────────────────
 
-export function useTransactions(filters?: TransactionFilters) {
-  useRealtimeTable("transaction", financeKeys.all)
-  return useQuery({
+export function transactionsOptions(filters?: TransactionFilters) {
+  return queryOptions({
     queryKey: financeKeys.transactions(filters),
     queryFn: async (): Promise<TransactionRow[]> => {
       const supabase = createClient()
@@ -123,6 +124,11 @@ export function useTransactions(filters?: TransactionFilters) {
       return (data ?? []) as TransactionRow[]
     },
   })
+}
+
+export function useTransactions(filters?: TransactionFilters) {
+  useRealtimeTable("transaction", financeKeys.all)
+  return useQuery(transactionsOptions(filters))
 }
 
 export function useCreateTransaction() {

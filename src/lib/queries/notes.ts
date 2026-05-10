@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { Note } from "@/lib/schemas/note"
 import type { Database } from "@/lib/database.types"
@@ -11,21 +11,23 @@ export const noteKeys = {
   pinned: ["notes", "pinned"] as const,
 }
 
+const notesOptions = queryOptions({
+  queryKey: noteKeys.all,
+  queryFn: async (): Promise<NoteRow[]> => {
+    const supabase = createClient()
+    const { data, error } = await supabase
+      .from("note")
+      .select("*")
+      .order("pinned", { ascending: false })
+      .order("updated_at", { ascending: false })
+    if (error) throw error
+    return (data ?? []) as NoteRow[]
+  },
+})
+
 export function useNotes() {
   useRealtimeTable("note", noteKeys.all)
-  return useQuery({
-    queryKey: noteKeys.all,
-    queryFn: async (): Promise<NoteRow[]> => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("note")
-        .select("*")
-        .order("pinned", { ascending: false })
-        .order("updated_at", { ascending: false })
-      if (error) throw error
-      return (data ?? []) as NoteRow[]
-    },
-  })
+  return useQuery(notesOptions)
 }
 
 export function useCreateNote() {
