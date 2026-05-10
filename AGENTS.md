@@ -73,16 +73,22 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 ## Deploy
 
 ### Infraestrutura real no VPS
-- **VPS**: acessível via SSH com `secrets.VPS_HOST`, `secrets.VPS_USER`, `secrets.VPS_SSH_KEY`
-- **Proxy**: Caddy rodando como container `caddy_proxy` na rede `coolify` (NÃO gerenciar via docker-compose — o proxy é global do VPS)
-- **Coolify**: container `coolify` na porta `8081`. A instância atual (05/2026) pode ter apps/projects apagados — verificar via API antes de qualquer ação
-- **Container da app em produção**: nome `suganuma-ops-hub`, imagem `ops-hub:latest`, na rede do proxy
+- **VPS**: acessível via SSH com `secrets.VPS_HOST`, `secrets.VPS_USER`, `secrets.VPS_SSH_KEY` (`144.22.194.71`, `ubuntu`, chave OneDrive/Chave_Leo)
+- **Proxy**: **Caddy** gerencia todas as portas 80/443 no VPS — `suganuma.com.br`, `ops.suganuma.com.br`, `api.suganuma.com.br`, `coolify.suganuma.com.br`, etc. NÃO usar outro proxy (Traefik, Nginx) em paralelo
+- **Coolify**: instalado e funcional (`coolify.suganuma.com.br:8081`). Docker socket montado via `docker-compose.custom.yml`. API token ativo (`8|...`). App `suganuma-ops-hub` registrada (`jgm57p9ild1iiriynleuatcz`)
+  - Coolify serve para **gerenciar builds, env vars, deploys e rollbacks** da aplicação
+  - O deploy via Coolify lança o container na rede Docker `coolify` (mesma rede do Caddy)
+  - **Não é necessário migrar para Traefik** — o Caddy já gerencia todo o proxy do VPS
+  - Caddy resolve o container do app via Docker DNS interno (`reverse_proxy suganuma-ops-hub:3000`)
+  - Se Coolify renomear o container, atualizar o bloco `ops.suganuma.com.br` no Caddyfile
+- **Container da app em produção**: nome `suganuma-ops-hub`, imagem `ops-hub:latest`, na rede `coolify` (compartilhada com Caddy)
 
 ### Dockerfile — regras críticas
 - Base image: **`node:22-alpine`** (atualizado de v20 em 2026-05-09)
 - `next build` precisa de `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` em tempo de build. Passar via `ARG` + `ENV` no stage `builder` e `--build-arg` no `docker build`
 - `output: "standalone"` no next.config → copiar `.next/standalone` e `.next/static` no runner
 - user `nextjs` (gid 1001)
+- **HEALTHCHECK (2026-05-10)**: verifica `sw.js` via `node -e "http.get('http://127.0.0.1:3000/sw.js', ...)"` — start-period=40s para dar tempo do Next.js subir. Sem curl no Alpine minimal
 
 ### next.config.ts — Next.js 16.2.6
 - ⚠️ A chave `eslint` **não existe** no tipo `NextConfig` do Next.js 16.2.6. Usá-la causa erro de type check no build (`Object literal may only specify known properties`). **NUNCA adicionar `eslint: { ignoreDuringBuilds: true }`**.
@@ -155,7 +161,6 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `loading.tsx`: skeleton pages existem em `dashboard`, `tasks`, `finance`, `health`, `notes`, `meals`, `habits`, `calendar`
 - `staleTime: 60_000` / `gcTime: 5 * 60_000` configurados globalmente no `QueryClient` do `AppShell.tsx`
 - `next.config.ts`: `experimental.optimizePackageImports: ["recharts", "cmdk"]` adicionado. `typedRoutes` foi testado e **revertido** — quebra build por causa de `string` hrefs no `BottomNav.tsx`.
-- **React Compiler (2026-05-09)**: `reactCompiler: true` habilitado no `next.config.ts` (não `experimental`). Requer `babel-plugin-react-compiler` como `devDependency`. Build + tests passam sem alterações de código. Otimização automática de memoization no React 19.
 - **`queryOptions` API TanStack v5 (2026-05-09)**: Todas as queries (`tasks`, `finance`, `health`, `notes`, `meals`, `habits`) exportam `queryOptions` (ex: `tasksOptions`, `accountsOptions`). Facilita prefetch server-side e elimina duplicação de `queryKey`/`queryFn`.
 - **Dependências removidas (2026-05-09)**: `lucide-react` (substituído por SVG inline em `src/components/ui/*`), `@serwist/next` e `serwist` (SW é manual em `public/sw.js`). Bundle mais leve e zero lixo.
 - **PWA icons PNG (2026-05-09)**: `icon-192.png` e `icon-512.png` gerados via Pillow. `manifest.webmanifest` usa PNGs primários + SVGs fallback.
@@ -164,3 +169,5 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - **`@next/bundle-analyzer` incompatível com Turbopack**: Não gera relatório. `next experimental-analyze` não produziu output útil. Sem alternativa clara no momento.
 - **Supabase CLI `--linked` só funciona para projetos Cloud**: Nosso Supabase é self-hosted (`api.suganuma.com.br`). `--local` requer Docker daemon. Tipos manuais validados via audit são suficientes.
 - **postcss vulnerability no Next.js interno**: `next@16.2.6` ainda traz `postcss@8.4.31` (moderate XSS). Não corrigível via bump de patch. Aguardar Next.js 16.2.7+.
+- **Coolify no VPS (2026-05-10)**: instalado e funcional (`coolify.suganuma.com.br:8081`), mas **não gerencia deploys** porque o proxy padrão (Traefik) conflita com Caddy existente. App `suganuma-ops-hub` registrada (`jgm57p9ild1iiriynleuatcz`) e Docker socket corrigido via `docker-compose.custom.yml`. **Decisão**: deploy manual continua; migração Caddy→Traefik é futura e documentada em `.kilo/plans/1778139698600-coolify-migration-future.md`.
+- **Next.js 16 `next.config.ts` — `reactCompiler` em root, não `experimental`**: `reactCompiler: true` funciona (não `experimental.reactCompiler`). Requer `babel-plugin-react-compiler` como devDependency. Build + tests passam sem alterações de código.
