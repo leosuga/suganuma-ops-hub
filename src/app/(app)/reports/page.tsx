@@ -1,14 +1,6 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts"
 import { fetchReports } from "@/lib/queries/reports"
 import { useTitle } from "@/lib/useTitle"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
@@ -35,35 +27,61 @@ function isoWeekKey(d: Date) {
   return `${String(s.getDate()).padStart(2, "0")}/${String(s.getMonth() + 1).padStart(2, "0")}`
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-function TasksTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="bg-surface border border-border rounded-sm px-3 py-2 text-[10px] font-mono">
-      <p className="text-on-surface/40 mb-1">Semana {label}</p>
-      {payload.map((p: { name: string; value: number; color: string }) => (
-        <p key={p.name} style={{ color: p.color }}>
-          {p.name === "completed" ? "Concluídas" : "Criadas"}: {p.value}
-        </p>
-      ))}
-    </div>
-  )
-}
+/* ── Simple HTML BarChart component ── */
+function SimpleBarChart({
+  data,
+  keys,
+  colors,
+  labels,
+  max,
+  height = 140,
+}: {
+  data: { [key: string]: number; label: string }[]
+  keys: string[]
+  colors: string[]
+  labels: string[]
+  max?: number
+  height?: number
+}) {
+  const calculatedMax =
+    max !== undefined
+      ? max
+      : Math.max(1, ...data.flatMap((d) => keys.map((k) => d[k] || 0)))
 
-function FinanceTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null
   return (
-    <div className="bg-surface border border-border rounded-sm px-3 py-2 text-[10px] font-mono">
-      <p className="text-on-surface/40 mb-1">{label}</p>
-      {payload.map((p: { name: string; value: number; color: string }) => (
-        <p key={p.name} style={{ color: p.color }}>
-          {p.name === "income" ? "Receita" : "Despesa"}: {formatCurrency(p.value)}
-        </p>
-      ))}
+    <div className="relative" style={{ height }}>
+      <div className="absolute inset-0 flex items-end gap-[2px]">
+        {data.map((item, idx) => (
+          <div key={idx} className="flex-1 flex flex-col justify-end gap-[1px]">
+            {keys.map((k, ki) => {
+              const value = item[k] || 0
+              const h = value > 0 ? `${(value / calculatedMax) * 100}%` : "0%"
+              return (
+                <div
+                  key={k}
+                  className="w-full rounded-t-[2px] transition-all duration-300"
+                  style={{ height: h, backgroundColor: colors[ki] }}
+                  title={`${labels[ki]}: ${value}`}
+                />
+              )
+            })}
+          </div>
+        ))}
+      </div>
+      {/* X-axis labels */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-[1px] pt-2">
+        {data.map((item, idx) => (
+          <span
+            key={idx}
+            className="text-[8px] font-mono text-on-surface/30 flex-1 text-center"
+          >
+            {typeof item.label === "string" ? item.label : ""}
+          </span>
+        ))}
+      </div>
     </div>
   )
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 export default function ReportsPage() {
   useTitle("Reports · Suganuma Ops Hub")
@@ -176,14 +194,26 @@ export default function ReportsPage() {
     for (let i = 5; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
       const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-      const label = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")
+      const label = d
+        .toLocaleDateString("pt-BR", { month: "short" })
+        .replace(".", "")
       const inc = transactions
-        .filter((t: any) => t.kind === "income" && t.occurred_on?.startsWith(ym))
+        .filter(
+          (t: any) => t.kind === "income" && t.occurred_on?.startsWith(ym)
+        )
         .reduce((s: number, t: any) => s + Number(t.amount), 0)
       const exp = transactions
-        .filter((t: any) => (t.kind === "expense" || t.kind === "tax") && t.occurred_on?.startsWith(ym))
+        .filter(
+          (t: any) =>
+            (t.kind === "expense" || t.kind === "tax") &&
+            t.occurred_on?.startsWith(ym)
+        )
         .reduce((s: number, t: any) => s + Number(t.amount), 0)
-      months.push({ label: label.charAt(0).toUpperCase() + label.slice(1), income: inc, expense: exp })
+      months.push({
+        label: label.charAt(0).toUpperCase() + label.slice(1),
+        income: inc,
+        expense: exp,
+      })
     }
     return months
   }, [transactions, today])
@@ -195,7 +225,10 @@ export default function ReportsPage() {
       const d = addDays(today, -i)
       days.push({
         dateStr: d.toDateString(),
-        label: d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }),
+        label: d.toLocaleDateString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+        }),
       })
     }
     return days
@@ -238,7 +271,7 @@ export default function ReportsPage() {
           </h1>
           <div className="border border-danger/30 bg-danger/5 rounded-sm p-4">
             <span className="text-[10px] font-mono text-danger">
-             Erro ao carregar dados: {String(error)}
+              Erro ao carregar dados: {String(error)}
             </span>
           </div>
         </div>
@@ -249,7 +282,7 @@ export default function ReportsPage() {
   return (
     <SectionErrorBoundary label="REPORTS">
       <div className="p-4 space-y-6">
-        {<main>
+        <main>
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
             REPORTS
           </h1>
@@ -257,80 +290,109 @@ export default function ReportsPage() {
           {/* KPI Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="border border-border bg-surface rounded-sm p-4">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">TASKS – TAXA</span>
-              <span className="text-xl font-mono font-semibold text-on-surface block">{kpis.completionRate}%</span>
-              <span className="text-[10px] font-mono text-on-surface/30 block mt-1">{kpis.completedTasks}/{kpis.totalTasks} concluídas</span>
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">
+                TASKS – TAXA
+              </span>
+              <span className="text-xl font-mono font-semibold text-on-surface block">
+                {kpis.completionRate}%
+              </span>
+              <span className="text-[10px] font-mono text-on-surface/30 block mt-1">
+                {kpis.completedTasks}/{kpis.totalTasks} concluídas
+              </span>
             </div>
 
             <div className="border border-border bg-surface rounded-sm p-4">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">TASKS – ATRASADAS</span>
-              <span className={`text-xl font-mono font-semibold block ${kpis.overdueTasks > 0 ? "text-danger" : "text-on-surface"}`}>{kpis.overdueTasks}</span>
-              <span className="text-[10px] font-mono text-on-surface/30 block mt-1">pendências críticas</span>
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">
+                TASKS – ATRASADAS
+              </span>
+              <span
+                className={`text-xl font-mono font-semibold block ${
+                  kpis.overdueTasks > 0 ? "text-danger" : "text-on-surface"
+                }`}
+              >
+                {kpis.overdueTasks}
+              </span>
+              <span className="text-[10px] font-mono text-on-surface/30 block mt-1">
+                pendências críticas
+              </span>
             </div>
 
             <div className="border border-border bg-surface rounded-sm p-4">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">FINANCEIRO – SALDO</span>
-              <span className={`text-xl font-mono font-semibold block ${kpis.netBalance >= 0 ? "text-teal" : "text-danger"}`}>{formatCurrency(kpis.netBalance)}</span>
-              <span className="text-[10px] font-mono text-on-surface/30 block mt-1">{formatCurrency(kpis.income)} rec / {formatCurrency(kpis.expense)} desp</span>
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">
+                FINANCEIRO – SALDO
+              </span>
+              <span
+                className={`text-xl font-mono font-semibold block ${
+                  kpis.netBalance >= 0 ? "text-teal" : "text-danger"
+                }`}
+              >
+                {formatCurrency(kpis.netBalance)}
+              </span>
+              <span className="text-[10px] font-mono text-on-surface/30 block mt-1">
+                {formatCurrency(kpis.income)} rec /{" "}
+                {formatCurrency(kpis.expense)} desp
+              </span>
             </div>
 
             <div className="border border-border bg-surface rounded-sm p-4">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">HÁBITOS – STREAK MÁX</span>
-              <span className="text-xl font-mono font-semibold text-health block">{kpis.maxStreak}d</span>
-              <span className="text-[10px] font-mono text-on-surface/30 block mt-1">{kpis.activeHabits} ativos</span>
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">
+                HÁBITOS – STREAK MÁX
+              </span>
+              <span className="text-xl font-mono font-semibold text-health block">
+                {kpis.maxStreak}d
+              </span>
+              <span className="text-[10px] font-mono text-on-surface/30 block mt-1">
+                {kpis.activeHabits} ativos
+              </span>
             </div>
           </div>
 
-          {/* Weekly Task Trend */}
+          {/* Weekly Task Trend — Simple HTML Bars */}
           <div className="border border-border bg-surface rounded-sm p-4">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">TASKS – CONCLUÍDAS POR SEMANA</span>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={taskTrendData} barCategoryGap="20%">
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 9, fontFamily: "ui-monospace", fill: "rgba(222,227,229,0.3)" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis hide />
-                <Tooltip content={<TasksTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-                <Bar dataKey="completed" fill="#55D7ED" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="created" fill="rgba(222,227,229,0.15)" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-            <div className="flex gap-4 justify-center mt-2">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
+              TASKS – CONCLUÍDAS POR SEMANA
+            </span>
+            <div className="mb-4">
+              <SimpleBarChart
+                data={taskTrendData}
+                keys={["completed", "created"]}
+                colors={["#55D7ED", "rgba(222,227,229,0.15)"]}
+                labels={["Concluídas", "Criadas"]}
+              />
+            </div>
+            <div className="flex gap-4 justify-center">
               <span className="text-[9px] font-mono text-on-surface/30 flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-sm bg-[#55D7ED]" /> Concluídas
+                <span className="inline-block w-2 h-2 rounded-sm bg-[#55D7ED]" />{" "}
+                Concluídas
               </span>
               <span className="text-[9px] font-mono text-on-surface/30 flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-sm bg-[rgba(222,227,229,0.15)]" /> Criadas
+                <span className="inline-block w-2 h-2 rounded-sm bg-[rgba(222,227,229,0.15)]" />{" "}
+                Criadas
               </span>
             </div>
           </div>
 
-          {/* Monthly Finance Trend */}
+          {/* Monthly Finance Trend — Simple HTML Bars */}
           <div className="border border-border bg-surface rounded-sm p-4">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">FINANCEIRO – FLUXO MENSAL</span>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={financeTrendData} barCategoryGap="20%">
-                <XAxis
-                  dataKey="label"
-                  tick={{ fontSize: 9, fontFamily: "ui-monospace", fill: "rgba(222,227,229,0.3)" }}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis hide />
-                <Tooltip content={<FinanceTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
-                <Bar dataKey="income" fill="#55D7ED" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="expense" fill="#FFB4AB" radius={[2, 2, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-            <div className="flex gap-4 justify-center mt-2">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
+              FINANCEIRO – FLUXO MENSAL
+            </span>
+            <div className="mb-4">
+              <SimpleBarChart
+                data={financeTrendData}
+                keys={["income", "expense"]}
+                colors={["#55D7ED", "#FFB4AB"]}
+                labels={["Receita", "Despesa"]}
+              />
+            </div>
+            <div className="flex gap-4 justify-center">
               <span className="text-[9px] font-mono text-on-surface/30 flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-sm bg-[#55D7ED]" /> Receita
+                <span className="inline-block w-2 h-2 rounded-sm bg-[#55D7ED]" />{" "}
+                Receita
               </span>
               <span className="text-[9px] font-mono text-on-surface/30 flex items-center gap-1">
-                <span className="inline-block w-2 h-2 rounded-sm bg-[#FFB4AB]" /> Despesa
+                <span className="inline-block w-2 h-2 rounded-sm bg-[#FFB4AB]" />{" "}
+                Despesa
               </span>
             </div>
           </div>
@@ -338,15 +400,24 @@ export default function ReportsPage() {
           {/* Habit Heatmap */}
           {activeHabitList.length > 0 && (
             <div className="border border-border bg-surface rounded-sm p-4 overflow-x-auto">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">HÁBITOS – ÚLTIMOS 14 DIAS</span>
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
+                HÁBITOS – ÚLTIMOS 14 DIAS
+              </span>
               <div className="min-w-max">
                 <div
                   className="grid gap-x-1"
-                  style={{ gridTemplateColumns: `100px repeat(${heatmapDays.length}, minmax(20px, 1fr))` }}
+                  style={{
+                    gridTemplateColumns: `100px repeat(${heatmapDays.length}, minmax(20px, 1fr))`,
+                  }}
                 >
                   <div className="text-[9px] font-mono text-on-surface/20" />
                   {heatmapDays.map((day) => (
-                    <div key={day.dateStr} className="text-center text-[8px] font-mono text-on-surface/20 pb-1">{day.label}</div>
+                    <div
+                      key={day.dateStr}
+                      className="text-center text-[8px] font-mono text-on-surface/20 pb-1"
+                    >
+                      {day.label}
+                    </div>
                   ))}
 
                   {activeHabitList.map((habit: any) => (
@@ -367,7 +438,7 @@ export default function ReportsPage() {
                               className="w-4 h-4 rounded-[2px]"
                               style={{
                                 backgroundColor: done
-                                  ? (habit.color || "var(--color-health)")
+                                  ? habit.color || "var(--color-health)"
                                   : "rgba(222,227,229,0.06)",
                               }}
                             />
@@ -380,7 +451,7 @@ export default function ReportsPage() {
               </div>
             </div>
           )}
-        </main>}
+        </main>
       </div>
     </SectionErrorBoundary>
   )
