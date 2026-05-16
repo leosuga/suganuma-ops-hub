@@ -47,12 +47,11 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: "/reports",
-    label: "REPS",
+    href: "/health",
+    label: "HUB",
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M2 13V8M6 13V5M10 13V3M14 13V7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-        <path d="M1 13h14" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M8 13.5S2 10 2 5.5a3.5 3.5 0 0 1 6-2.449A3.5 3.5 0 0 1 14 5.5C14 10 8 13.5 8 13.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
       </svg>
     ),
   },
