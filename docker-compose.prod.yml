@@ -1,5 +1,7 @@
 services:
   app:
+    container_name: suganuma-ops-hub
+    hostname: suganuma-ops-hub
     build:
       context: .
       dockerfile: Dockerfile
