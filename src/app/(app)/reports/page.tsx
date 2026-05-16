@@ -1,6 +1,5 @@
 "use client"
 
-import { useMemo } from "react"
 import {
   BarChart,
   Bar,
@@ -8,8 +7,6 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  LineChart,
-  Line,
   Cell,
 } from "recharts"
 import { useTitle } from "@/lib/useTitle"
