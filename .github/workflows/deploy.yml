@@ -52,7 +52,15 @@ jobs:
             docker build \
               --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
               --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
-              -t ops-hub:latest . || { echo "BUILD FAILED"; exit 1; }
+              -t ops-hub:latest . > /tmp/build.log 2>&1
+            BUILD_EXIT=$?
+            if [ $BUILD_EXIT -ne 0 ]; then
+              echo "BUILD FAILED (exit $BUILD_EXIT)"
+              echo "--- last 100 lines ---"
+              tail -n 100 /tmp/build.log
+              exit 1
+            fi
+            echo "Build complete"
 
             # Stop and remove old container
             echo "Switching containers..."
