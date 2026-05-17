@@ -3,7 +3,10 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useCreateTask } from "@/lib/queries/tasks"
+import { projectKeys } from "@/lib/queries/projects"
+import type { ProjectRow } from "@/lib/queries/projects"
 import { cn } from "@/lib/utils"
+import { useQueryClient } from "@tanstack/react-query"
 
 type Category = "finance" | "logistics" | "personal" | "health"
 type Priority = "low" | "med" | "high" | "urgent"
@@ -13,16 +16,30 @@ interface QuickAddDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-function parseTitle(raw: string): {
+function parseTitle(
+  raw: string,
+  projects: ProjectRow[]
+): {
   title: string
   category?: Category
   priority?: Priority
   due_at?: string
+  project_id?: string | null
 } {
   let title = raw.trim()
   let category: Category | undefined
   let priority: Priority | undefined
   let due_at: string | undefined
+  let project_id: string | undefined | null
+
+  // >Nome do Projeto
+  const projMatch = title.match(/>([\w\sÀ-ú\-]+?)(?=\s[#!^]|\s*$)/)
+  if (projMatch) {
+    const name = projMatch[1].trim().toLowerCase()
+    const found = projects.find((p) => p.name.toLowerCase() === name)
+    if (found) project_id = found.id
+    title = title.replace(projMatch[0], "").trim()
+  }
 
   // #finance #logistics #personal #health
   const catMatch = title.match(/#(finance|logistics|personal|health)/i)
@@ -55,7 +72,7 @@ function parseTitle(raw: string): {
     title = title.replace(dueMatch[0], "").trim()
   }
 
-  return { title, category, priority, due_at }
+  return { title, category, priority, due_at, project_id }
 }
 
 const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
@@ -77,8 +94,10 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
   const [category, setCategory] = useState<Category>("personal")
   const [priority, setPriority] = useState<Priority>("med")
   const createTask = useCreateTask()
+  const queryClient = useQueryClient()
 
-  const parsed = parseTitle(input)
+  const projects = queryClient.getQueryData<ProjectRow[]>(projectKeys.all) ?? []
+  const parsed = parseTitle(input, projects)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -89,6 +108,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
       category: parsed.category ?? category,
       priority: parsed.priority ?? priority,
       due_at: parsed.due_at ?? null,
+      project_id: parsed.project_id ?? null,
       status: "todo",
     })
 
@@ -109,7 +129,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Título da task... (#finance !urgent ^tomorrow)"
+            placeholder="Título da task... (>projeto #finance !urgent ^tomorrow)"
             autoFocus
             className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
           />

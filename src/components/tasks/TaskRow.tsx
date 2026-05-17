@@ -1,8 +1,11 @@
 "use client"
 
 import { useState, useRef, useCallback } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
+import { projectKeys } from "@/lib/queries/projects"
+import type { ProjectRow } from "@/lib/queries/projects"
 
 const PRIORITY_COLORS: Record<string, string> = {
   urgent: "text-danger border-danger/40 bg-danger/10",
@@ -31,6 +34,10 @@ export function TaskRow({ task, onToggle, onEdit, onDelete }: TaskRowProps) {
   const [swipeX, setSwipeX] = useState(0)
   const rowRef = useRef<HTMLDivElement>(null)
   const swipingRef = useRef(false)
+  const queryClient = useQueryClient()
+
+  const projects = queryClient.getQueryData<ProjectRow[]>(projectKeys.all) ?? []
+  const project = task.project_id ? projects.find((p) => p.id === task.project_id) : null
 
   const dueText = task.due_at
     ? new Date(task.due_at).toLocaleDateString("pt-BR", {
@@ -134,6 +141,13 @@ export function TaskRow({ task, onToggle, onEdit, onDelete }: TaskRowProps) {
             isDone ? "line-through text-on-surface/40" : "text-on-surface"
           )}
         >
+          {project && (
+            <span
+              className="inline-block w-2 h-2 rounded-full mr-1.5 align-middle flex-none"
+              style={{ backgroundColor: project.color }}
+              title={project.name}
+            />
+          )}
           {task.title}
         </span>
 

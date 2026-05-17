@@ -1,9 +1,12 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { useTitle } from "@/lib/useTitle"
 import { useTasks, useUpdateTask, useDeleteTask, useCreateTask } from "@/lib/queries/tasks"
 import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
+import { useProjects } from "@/lib/queries/projects"
 import { CategoryChips } from "@/components/tasks/CategoryChips"
 import { TaskRow } from "@/components/tasks/TaskRow"
 import { QuickAddDialog } from "@/components/tasks/QuickAddDialog"
@@ -16,6 +19,7 @@ type Category = "finance" | "logistics" | "personal" | "health"
 
 export default function TasksPage() {
   useTitle("Tasks · Suganuma Ops Hub")
+  const searchParams = useSearchParams()
   const [category, setCategory] = useState<Category | null>(null)
   const [showDone, setShowDone] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
@@ -23,14 +27,21 @@ export default function TasksPage() {
   const [search, setSearch] = useState("")
 
   const { data: tasks = [], isLoading, isError } = useTasks()
+  const { data: projects = [] } = useProjects()
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
   const createTask = useCreateTask()
   const toast = useUndoToast()
 
+  const projectFilter = searchParams.get("project")
+  const projectFilterName = projectFilter
+    ? projects.find((p) => p.id === projectFilter)?.name ?? null
+    : null
+
   const filtered = tasks.filter((t) => {
     if (!showDone && t.status === "done") return false
     if (category && t.category !== category) return false
+    if (projectFilter && t.project_id !== projectFilter) return false
     if (search.trim()) {
       const q = search.toLowerCase().trim()
       const titleMatch = t.title.toLowerCase().includes(q)
@@ -124,6 +135,19 @@ export default function TasksPage() {
           </button>
         </div>
       </div>
+
+      {/* Project filter chip */}
+      {projectFilterName && (
+        <div className="px-4 py-2 border-b border-border flex items-center gap-2">
+          <span className="text-[9px] font-mono text-on-surface/30 uppercase tracking-wider">PROJETO:</span>
+          <span className="text-[10px] font-mono font-semibold text-teal uppercase tracking-wider">
+            {projectFilterName}
+          </span>
+          <Link href="/tasks" className="text-[10px] font-mono text-on-surface/30 hover:text-danger transition-colors ml-auto">
+            × LIMPAR
+          </Link>
+        </div>
+      )}
 
       {/* Category filter */}
       <CategoryChips value={category} onChange={setCategory} counts={counts} />

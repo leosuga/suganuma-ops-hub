@@ -8,6 +8,7 @@ import { useTitle } from "@/lib/useTitle"
 import { useAppointments, useProtocols, useProtocolEntries, usePregnancy, useCreateHealthLog } from "@/lib/queries/health"
 import { useMealPlans } from "@/lib/queries/meals"
 import { useNotes } from "@/lib/queries/notes"
+import { useProjects } from "@/lib/queries/projects"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import type { TaskRow } from "@/lib/queries/tasks"
@@ -202,6 +203,7 @@ export default function DashboardPage() {
   const createHealthLog = useCreateHealthLog()
   const { data: notes = [] } = useNotes()
   const { data: mealPlans = [] } = useMealPlans(currentMonth())
+  const { data: projects = [] } = useProjects()
 
   const [weightInput, setWeightInput] = useState("")
 
@@ -450,6 +452,43 @@ export default function DashboardPage() {
                     <span className="text-[10px] font-mono text-health w-16 flex-none">{dateStr} {timeStr}</span>
                     <span className="flex-1 text-[12px] font-mono text-on-surface truncate">{a.title}</span>
                     {a.location && <span className="text-[10px] font-mono text-on-surface/30 truncate max-w-[100px]">{a.location}</span>}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Projetos ativos */}
+        {projects.filter((p) => p.status === "active").length > 0 && (
+          <div className="border border-border bg-surface rounded-sm">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+                PROJETOS ATIVOS
+              </span>
+              <Link href="/projects" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
+                VER TODOS →
+              </Link>
+            </div>
+            <div className="divide-y divide-border">
+              {projects.filter((p) => p.status === "active").map((project) => {
+                const total = tasks.filter((t) => t.project_id === project.id).length
+                const doneTasks = tasks.filter((t) => t.project_id === project.id && t.status === "done").length
+                const pct = total > 0 ? Math.round((doneTasks / total) * 100) : 0
+                return (
+                  <div key={project.id} className="px-4 py-2.5 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full flex-none" style={{ backgroundColor: project.color }} />
+                      <Link href={`/tasks?project=${project.id}`} className="text-[11px] font-mono text-on-surface/60 hover:text-teal transition-colors">
+                        {project.name}
+                      </Link>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-20 h-1.5 bg-bg rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: project.color }} />
+                      </div>
+                      <span className="text-[10px] font-mono text-on-surface/30 w-10 text-right">{pct}%</span>
+                    </div>
                   </div>
                 )
               })}

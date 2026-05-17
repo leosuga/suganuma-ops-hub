@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useUpdateTask, useDeleteTask } from "@/lib/queries/tasks"
+import { useProjects } from "@/lib/queries/projects"
 import type { TaskRow } from "@/lib/queries/tasks"
 import { cn } from "@/lib/utils"
 
@@ -44,10 +45,12 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
   const [priority, setPriority] = useState<Priority>("med")
   const [status, setStatus] = useState<Status>("todo")
   const [dueAt, setDueAt] = useState("")
+  const [projectId, setProjectId] = useState("")
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
+  const { data: projects = [] } = useProjects()
 
   useEffect(() => {
     if (task) {
@@ -62,6 +65,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       } else {
         setDueAt("")
       }
+      setProjectId(task.project_id ?? "")
       setConfirmDelete(false)
     }
   }, [task])
@@ -79,6 +83,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       status: Status
       due_at?: string | undefined
       completed_at?: string | null
+      project_id?: string | null
     } = {
       id: task.id,
       title: title.trim(),
@@ -87,6 +92,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       priority,
       status,
       due_at: dueAt ? new Date(dueAt).toISOString() : undefined,
+      project_id: projectId || null,
     }
 
     if (status === "done" && task.status !== "done") {
@@ -176,6 +182,24 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+              Projeto
+            </span>
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
+            >
+              <option value="">Sem projeto</option>
+              {projects.filter((p) => p.status === "active").map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex flex-col gap-1.5">
