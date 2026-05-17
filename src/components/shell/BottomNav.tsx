@@ -47,12 +47,14 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: "/reports",
-    label: "REPS",
+    href: "/projects",
+    label: "PROJ",
     icon: (
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="2" width="4" height="12" rx="1" stroke="currentColor" strokeWidth="1.2" />
-        <rect x="10" y="6" width="4" height="8" rx="1" stroke="currentColor" strokeWidth="1.2" />
+        <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+        <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+        <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+        <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
       </svg>
     ),
   },
