@@ -1,13 +1,13 @@
-const CACHE = "ops-hub-v4"
+const CACHE = "ops-hub-v5"
 const STATIC_ASSETS = "/_next/static/"
 
 self.addEventListener("install", (e) => {
-  console.log("[SW] install v4")
+  console.log("[SW] install v5")
   e.waitUntil(self.skipWaiting())
 })
 
 self.addEventListener("activate", (e) => {
-  console.log("[SW] activate v4")
+  console.log("[SW] activate v5")
   e.waitUntil(
     caches
       .keys()
