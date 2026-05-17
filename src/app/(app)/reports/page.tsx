@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useTitle } from "@/lib/useTitle"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
@@ -81,6 +81,40 @@ function SimpleBarChart({
   )
 }
 
+/* ── Period filter pills ── */
+function PeriodFilter({
+  value,
+  onChange,
+}: {
+  value: number | "all"
+  onChange: (v: number | "all") => void
+}) {
+  const options: { label: string; value: number | "all" }[] = [
+    { label: "7D", value: 7 },
+    { label: "30D", value: 30 },
+    { label: "90D", value: 90 },
+    { label: "TUDO", value: "all" },
+  ]
+
+  return (
+    <div className="flex gap-1">
+      {options.map((opt) => (
+        <button
+          key={String(opt.value)}
+          onClick={() => onChange(opt.value)}
+          className={`text-[9px] font-mono font-semibold tracking-wider px-2 py-1 rounded-sm transition-colors ${
+            value === opt.value
+              ? "bg-teal/20 text-teal border border-teal/40"
+              : "text-on-surface/30 hover:text-on-surface/60 border border-transparent"
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export default function ReportsPage() {
   useTitle("Reports · Suganuma Ops Hub")
 
@@ -89,6 +123,7 @@ export default function ReportsPage() {
   const [habits, setHabits] = useState<any[]>([])
   const [entries, setEntries] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState<number | "all">(30)
 
   useEffect(() => {
     const supabase = createClient()
@@ -105,6 +140,14 @@ export default function ReportsPage() {
       setLoading(false)
     })
   }, [])
+
+  const getCutoff = useCallback(() => {
+    if (period === "all") return null
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() - period)
+    return d
+  }, [period])
 
   if (loading) {
     return (
@@ -123,17 +166,32 @@ export default function ReportsPage() {
     )
   }
 
-  const total = tasks.length
-  const done = tasks.filter((t: any) => t.completed_at).length
+  const cutoff = getCutoff()
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // Filter data by period
+  const filteredTasks = cutoff
+    ? tasks.filter((t: any) => t.created_at && new Date(t.created_at) >= cutoff)
+    : tasks
+  const filteredTransactions = cutoff
+    ? transactions.filter((t: any) => t.occurred_on && new Date(t.occurred_on) >= cutoff)
+    : transactions
+  const filteredEntries = cutoff
+    ? entries.filter((e: any) => new Date(e.done_on) >= cutoff)
+    : entries
+
+  const total = filteredTasks.length
+  const done = filteredTasks.filter((t: any) => t.completed_at).length
   const rate = total > 0 ? Math.round((done / total) * 100) : 0
   const overdue = tasks.filter(
     (t: any) => !t.completed_at && t.due_at && new Date(t.due_at) < new Date()
   ).length
 
-  const inc = transactions
+  const inc = filteredTransactions
     .filter((t: any) => t.kind === "income")
     .reduce((s: number, t: any) => s + Number(t.amount), 0)
-  const exp = transactions
+  const exp = filteredTransactions
     .filter((t: any) => t.kind === "expense" || t.kind === "tax")
     .reduce((s: number, t: any) => s + Number(t.amount), 0)
 
@@ -142,8 +200,6 @@ export default function ReportsPage() {
 
   // Simple streak calc (max streak across all habits)
   let maxStreak = 0
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
   for (const h of habits) {
     const days = new Set(
       entries
@@ -162,7 +218,8 @@ export default function ReportsPage() {
   /* ── Weekly task trend ── */
   const taskTrendData = (() => {
     const weeks: { label: string; completed: number; created: number }[] = []
-    for (let i = 7; i >= 0; i--) {
+    const weekCount = period === 7 ? 1 : period === 30 ? 4 : period === 90 ? 12 : 8
+    for (let i = weekCount - 1; i >= 0; i--) {
       const weekStart = addDays(startOfWeek(today), -i * 7)
       const weekEnd = addDays(weekStart, 7)
       const label = isoWeekKey(weekStart)
@@ -183,7 +240,8 @@ export default function ReportsPage() {
   /* ── Monthly finance trend ── */
   const financeTrendData = (() => {
     const months: { label: string; income: number; expense: number }[] = []
-    for (let i = 5; i >= 0; i--) {
+    const monthCount = period === 7 ? 1 : period === 30 ? 1 : period === 90 ? 3 : 6
+    for (let i = monthCount - 1; i >= 0; i--) {
       const d = new Date(today.getFullYear(), today.getMonth() - i, 1)
       const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
       const label = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")
@@ -200,8 +258,9 @@ export default function ReportsPage() {
 
   /* ── Heatmap data ── */
   const heatmapDays = (() => {
+    const dayCount = period === 7 ? 7 : period === 30 ? 14 : period === 90 ? 30 : 14
     const days: { dateStr: string; label: string }[] = []
-    for (let i = 13; i >= 0; i--) {
+    for (let i = dayCount - 1; i >= 0; i--) {
       const d = addDays(today, -i)
       days.push({
         dateStr: d.toDateString(),
@@ -212,16 +271,19 @@ export default function ReportsPage() {
   })()
 
   const entrySet = new Set<string>()
-  for (const e of entries) {
+  for (const e of filteredEntries) {
     entrySet.add(`${e.habit_id}::${new Date(e.done_on).toDateString()}`)
   }
 
   return (
     <SectionErrorBoundary label="REPORTS">
       <div className="p-4 space-y-6">
-        <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
-          REPORTS
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
+            REPORTS
+          </h1>
+          <PeriodFilter value={period} onChange={setPeriod} />
+        </div>
 
         {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -308,7 +370,7 @@ export default function ReportsPage() {
         {activeHabits.length > 0 && (
           <div className="border border-border bg-surface rounded-sm p-4 overflow-x-auto">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
-              HÁBITOS – ÚLTIMOS 14 DIAS
+              HÁBITOS – ÚLTIMOS {heatmapDays.length} DIAS
             </span>
             <div className="min-w-max">
               <div
