@@ -36,6 +36,7 @@ export type Database = {
           priority: "low" | "med" | "high" | "urgent"
           due_at: string | null
           completed_at: string | null
+          project_id: string | null
           created_at: string
           updated_at: string
         }
@@ -49,6 +50,7 @@ export type Database = {
           priority?: "low" | "med" | "high" | "urgent"
           due_at?: string | null
           completed_at?: string | null
+          project_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -62,6 +64,39 @@ export type Database = {
           priority?: "low" | "med" | "high" | "urgent"
           due_at?: string | null
           completed_at?: string | null
+          project_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      project: {
+        Row: {
+          id: string
+          owner_id: string
+          name: string
+          description: string | null
+          color: string
+          status: "active" | "done" | "paused"
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          name: string
+          description?: string | null
+          color?: string
+          status?: "active" | "done" | "paused"
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          name?: string
+          description?: string | null
+          color?: string
+          status?: "active" | "done" | "paused"
           created_at?: string
           updated_at?: string
         }

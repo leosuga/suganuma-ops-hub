@@ -9,6 +9,7 @@ export const taskSchema = z.object({
   status: z.enum(["todo", "doing", "done", "archived"]).default("todo"),
   priority: z.enum(["low", "med", "high", "urgent"]).default("med"),
   due_at: z.string().datetime().optional().nullable(),
+  project_id: z.string().uuid().optional().nullable(),
 })
 
 export type Task = z.infer<typeof taskSchema>

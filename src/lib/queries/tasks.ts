@@ -8,6 +8,7 @@ export type TaskRow = Database["public"]["Tables"]["task"]["Row"]
 
 export const taskKeys = {
   all: ["tasks"] as const,
+  byProject: (projectId: string) => ["tasks", "project", projectId] as const,
 }
 
 export const tasksOptions = queryOptions({
