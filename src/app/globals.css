@@ -145,7 +145,7 @@
     background: #0A0A0A;
     color: #DEE3E5;
   }
-  html.light {
+  html:not(.dark) {
     color-scheme: light;
     --color-bg: #F2F4F5;
     --color-surface: #FFFFFF;
