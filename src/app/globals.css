@@ -47,18 +47,18 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
-  /* Suganuma Ops Hub custom tokens */
-  --color-bg: #0A0A0A;
-  --color-surface: #121212;
-  --color-surface-hover: #1A1A1A;
-  --color-accent: #55D7ED;
-  --color-accent-hi: #9EEFFF;
-  --color-teal: var(--color-accent);
-  --color-teal-hi: var(--color-accent-hi);
-  --color-amber: #FFBB52;
-  --color-danger: #FFB4AB;
-  --color-health: #A8D8B0;
-  --color-on-surface: #DEE3E5;
+  /* Suganuma Ops Hub custom tokens — themed via CSS variables */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-accent: var(--accent);
+  --color-accent-hi: var(--accent-hi);
+  --color-teal: var(--accent);
+  --color-teal-hi: var(--accent-hi);
+  --color-amber: var(--amber);
+  --color-danger: var(--danger);
+  --color-health: var(--health);
+  --color-on-surface: var(--on-surface);
   --font-sans: "Inter", ui-sans-serif, system-ui;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
@@ -144,15 +144,28 @@
     color-scheme: dark;
     background: #0A0A0A;
     color: #DEE3E5;
+    --bg: #0A0A0A;
+    --surface: #121212;
+    --surface-hover: #1A1A1A;
+    --on-surface: #DEE3E5;
+    --accent: #55D7ED;
+    --accent-hi: #9EEFFF;
+    --amber: #FFBB52;
+    --danger: #FFB4AB;
+    --health: #A8D8B0;
   }
   html:not(.dark) {
     color-scheme: light;
-    --color-bg: #F2F4F5;
-    --color-surface: #FFFFFF;
-    --color-surface-hover: #E8EAEB;
-    --color-on-surface: #1C2025;
-    --color-health: #2E8B57;
     background: #F2F4F5;
     color: #1C2025;
+    --bg: #F2F4F5;
+    --surface: #FFFFFF;
+    --surface-hover: #E8EAEB;
+    --on-surface: #1C2025;
+    --accent: #2A8B9B;
+    --accent-hi: #55D7ED;
+    --amber: #CC9020;
+    --danger: #D9534F;
+    --health: #2E8B57;
   }
 }
