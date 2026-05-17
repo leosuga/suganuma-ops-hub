@@ -48,15 +48,6 @@ const NAV_ITEMS = [
   },
   {
     href: "/health",
-    label: "HUB",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M8 13.5S2 10 2 5.5a3.5 3.5 0 0 1 6-2.449A3.5 3.5 0 0 1 14 5.5C14 10 8 13.5 8 13.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
-  {
-    href: "/health",
     label: "HLTH",
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
