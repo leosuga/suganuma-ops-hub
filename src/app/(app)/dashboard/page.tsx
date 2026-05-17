@@ -12,6 +12,14 @@ import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import type { TaskRow } from "@/lib/queries/tasks"
 
+function weeksFromDueDate(dueDate: string): number {
+  const due = new Date(dueDate)
+  const now = new Date()
+  const diffMs = due.getTime() - now.getTime()
+  const weeksLeft = diffMs / (7 * 24 * 60 * 60 * 1000)
+  return Math.max(0, Math.round(40 - weeksLeft))
+}
+
 function StatCard({
   label,
   value,
@@ -413,7 +421,7 @@ export default function DashboardPage() {
           {pregnancy?.due_date && (
             <StatCard
               label="Semana"
-              value={pregnancy.week ?? "—"}
+              value={weeksFromDueDate(pregnancy.due_date)}
               sub="de gestação"
               color="text-health"
             />
