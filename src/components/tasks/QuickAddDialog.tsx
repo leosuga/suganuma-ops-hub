@@ -25,12 +25,21 @@ function parseTitle(
   priority?: Priority
   due_at?: string
   project_id?: string | null
+  delegated_to?: string
 } {
   let title = raw.trim()
   let category: Category | undefined
   let priority: Priority | undefined
   let due_at: string | undefined
   let project_id: string | undefined | null
+  let delegated_to: string | undefined
+
+  // @Nome (delegado para)
+  const delegMatch = title.match(/@(\S+)/)
+  if (delegMatch) {
+    delegated_to = delegMatch[1]
+    title = title.replace(delegMatch[0], "").trim()
+  }
 
   // >Nome do Projeto
   const projMatch = title.match(/>([\w\sÀ-ú\-]+?)(?=\s[#!^]|\s*$)/)
@@ -72,7 +81,7 @@ function parseTitle(
     title = title.replace(dueMatch[0], "").trim()
   }
 
-  return { title, category, priority, due_at, project_id }
+  return { title, category, priority, due_at, project_id, delegated_to }
 }
 
 const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
@@ -109,6 +118,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
       priority: parsed.priority ?? priority,
       due_at: parsed.due_at ?? null,
       project_id: parsed.project_id ?? null,
+      delegated_to: parsed.delegated_to ?? undefined,
       status: "todo",
     })
 

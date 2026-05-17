@@ -37,6 +37,7 @@ export type Database = {
           due_at: string | null
           completed_at: string | null
           project_id: string | null
+          delegated_to: string | null
           created_at: string
           updated_at: string
         }
@@ -51,6 +52,7 @@ export type Database = {
           due_at?: string | null
           completed_at?: string | null
           project_id?: string | null
+          delegated_to?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -65,6 +67,7 @@ export type Database = {
           due_at?: string | null
           completed_at?: string | null
           project_id?: string | null
+          delegated_to?: string | null
           created_at?: string
           updated_at?: string
         }

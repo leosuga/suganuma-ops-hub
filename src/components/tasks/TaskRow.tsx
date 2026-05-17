@@ -161,6 +161,13 @@ export function TaskRow({ task, onToggle, onEdit, onDelete }: TaskRowProps) {
           {task.category.slice(0, 3)}
         </span>
 
+        {/* Delegated badge */}
+        {task.delegated_to && (
+          <span className="flex-none text-[8px] font-mono text-on-surface/30 px-1 py-0.5 border border-on-surface/20 rounded-sm">
+            @{task.delegated_to}
+          </span>
+        )}
+
         {/* Due date */}
         {dueText && (
           <span

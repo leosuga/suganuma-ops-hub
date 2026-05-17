@@ -46,6 +46,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
   const [status, setStatus] = useState<Status>("todo")
   const [dueAt, setDueAt] = useState("")
   const [projectId, setProjectId] = useState("")
+  const [delegatedTo, setDelegatedTo] = useState("")
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const updateTask = useUpdateTask()
@@ -66,6 +67,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
         setDueAt("")
       }
       setProjectId(task.project_id ?? "")
+      setDelegatedTo(task.delegated_to ?? "")
       setConfirmDelete(false)
     }
   }, [task])
@@ -84,6 +86,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       due_at?: string | undefined
       completed_at?: string | null
       project_id?: string | null
+      delegated_to?: string | null
     } = {
       id: task.id,
       title: title.trim(),
@@ -93,6 +96,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       status,
       due_at: dueAt ? new Date(dueAt).toISOString() : undefined,
       project_id: projectId || null,
+      delegated_to: delegatedTo.trim() || null,
     }
 
     if (status === "done" && task.status !== "done") {
@@ -200,6 +204,18 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+              Delegado para
+            </span>
+            <input
+              value={delegatedTo}
+              onChange={(e) => setDelegatedTo(e.target.value)}
+              placeholder="@Nome"
+              className={inputClass}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
