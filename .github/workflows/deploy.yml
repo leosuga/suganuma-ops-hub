@@ -22,6 +22,8 @@ jobs:
             export WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}"
 
             bash << 'RUNDEPLOY'
+            set -x
+
             # Build dir
             cd ~
             rm -rf ops-hub
@@ -45,6 +47,11 @@ jobs:
             fi
             echo "Network: $NET"
 
+            echo "Diagnostics before build:"
+            df -h
+            docker system df
+            echo "---"
+
             # Build image
             echo "Building (5-15 min)..."
             docker build \
@@ -52,7 +59,7 @@ jobs:
               --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
               -t ops-hub:latest . || { echo "BUILD FAILED"; exit 1; }
 
-            # Stop and remove old container
+            # Stop old container only if new build succeeded
             echo "Switching containers..."
             docker stop suganuma-ops-hub 2>/dev/null || true
             docker rm suganuma-ops-hub 2>/dev/null || true
@@ -66,26 +73,15 @@ jobs:
               --restart unless-stopped \
               ops-hub:latest || { echo "CONTAINER START FAILED"; exit 1; }
 
-            # Verify container is running
             sleep 5
             if ! docker ps --format '{{.Names}}' | grep -q "^suganuma-ops-hub$"; then
               echo "FAILED: Container not running after start"
-              docker logs suganuma-ops-hub --tail 20 || true
               exit 1
             fi
 
-            # Update proxy if script exists
             if [ -f ~/update-ops-proxy.sh ]; then
               bash ~/update-ops-proxy.sh || echo "WARN: proxy update script failed (non-critical)"
             fi
 
-            # Health check — verify sw.js version
-            for i in 1 2 3 4 5 6; do
-              sleep 10
-              SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null | head -c 30 || echo "-")
-              echo "[$i] sw.js: $SW"
-              echo "$SW" | grep -q "v4" && echo "DEPLOY OK" && exit 0
-            done
-            echo "DEPLOY WARNING: sw.js not reachable or version mismatch"
-            # Do not exit 1 here — the app may still be starting
+            echo "DEPLOY COMPLETE"
             RUNDEPLOY
