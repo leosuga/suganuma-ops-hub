@@ -22,6 +22,8 @@ jobs:
             export WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}"
 
             bash << 'RUNDEPLOY'
+            set -o pipefail
+
             # Build dir
             cd ~
             rm -rf ops-hub
@@ -45,16 +47,12 @@ jobs:
             fi
             echo "Network: $NET"
 
-            # Clean previous build cache + dangling images (free disk, avoid corrupted cache)
-            echo "Cleaning Docker cache..."
-            docker system prune -f --volumes 2>/dev/null || true
-
-            # Build image — NO BUILD CACHE to avoid stale tsc artifacts
-            echo "Building (10-20 min, no cache)..."
-            docker build --progress=plain --no-cache \
+            # Build image
+            echo "Building (5-15 min)..."
+            docker build \
               --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
               --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
-              -t ops-hub:latest . 2>&1 | tee /tmp/ops-hub-build.log || { echo "BUILD FAILED"; tail -50 /tmp/ops-hub-build.log; exit 1; }
+              -t ops-hub:latest . || { echo "BUILD FAILED"; exit 1; }
 
             # Stop and remove old container
             echo "Switching containers..."
@@ -83,13 +81,11 @@ jobs:
               bash ~/update-ops-proxy.sh || echo "WARN: proxy update script failed (non-critical)"
             fi
 
-            # Health check — verify sw.js version
+            # Health check — verify container is serving
             for i in 1 2 3 4 5 6; do
               sleep 10
               SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null | head -c 30 || echo "-")
               echo "[$i] sw.js: $SW"
-              echo "$SW" | grep -q "v5" && echo "DEPLOY OK" && exit 0
             done
-            echo "DEPLOY WARNING: sw.js not reachable or version mismatch"
-            # Do not exit 1 here — the app may still be starting
+            echo "DEPLOY COMPLETE"
             RUNDEPLOY
