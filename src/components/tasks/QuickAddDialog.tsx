@@ -139,7 +139,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Título da task... (>projeto #finance !urgent ^tomorrow)"
+            placeholder="Título da task... (>projeto #finance !urgent ^tomorrow @Fulano)"
             autoFocus
             className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
           />
