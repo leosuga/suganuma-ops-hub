@@ -69,6 +69,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       }
       setProjectId(task.project_id ?? "")
       setDelegatedTo(task.delegated_to ?? "")
+      setImportant(task.important ?? false)
       setConfirmDelete(false)
     }
   }, [task])
@@ -88,6 +89,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       completed_at?: string | null
       project_id?: string | null
       delegated_to?: string | null
+      important?: boolean
     } = {
       id: task.id,
       title: title.trim(),
@@ -98,6 +100,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       due_at: dueAt ? new Date(dueAt).toISOString() : undefined,
       project_id: projectId || null,
       delegated_to: delegatedTo.trim() || null,
+      important,
     }
 
     if (status === "done" && task.status !== "done") {
@@ -217,6 +220,23 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               placeholder="@Nome"
               className={inputClass}
             />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+              Importante
+            </span>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={important}
+                onChange={(e) => setImportant(e.target.checked)}
+                className="w-3.5 h-3.5 rounded-[3px] border border-on-surface/30 bg-bg checked:bg-amber checked:border-amber focus:outline-none cursor-pointer"
+              />
+              <span className="text-[11px] font-mono text-on-surface/50">
+                Marcar como importante (Eisenhower)
+              </span>
+            </label>
           </div>
 
           <div className="flex flex-col gap-1.5">

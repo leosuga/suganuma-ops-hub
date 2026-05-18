@@ -168,6 +168,13 @@ export function TaskRow({ task, onToggle, onEdit, onDelete }: TaskRowProps) {
           </span>
         )}
 
+        {/* Important badge */}
+        {task.important && (
+          <span className="flex-none text-[10px] text-amber" title="Importante">
+            ★
+          </span>
+        )}
+
         {/* Due date */}
         {dueText && (
           <span
