@@ -49,13 +49,17 @@ function parseTitle(
     title = title.replace(delegMatch[0], "").trim()
   }
 
-  // >Nome do Projeto
-  const projMatch = title.match(/>([\w\sÀ-ú\-]+?)(?=\s[#!^]|\s*$)/)
-  if (projMatch) {
-    const name = projMatch[1].trim().toLowerCase()
-    const found = projects.find((p) => p.name.toLowerCase() === name)
-    if (found) project_id = found.id
-    title = title.replace(projMatch[0], "").trim()
+  // >Nome do Projeto — match against known projects (longest name first)
+  const sorted = [...projects].sort((a, b) => b.name.length - a.name.length)
+  for (const proj of sorted) {
+    const escaped = proj.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+    const re = new RegExp(`>${escaped}(?=\\s|$)`, "i")
+    const match = title.match(re)
+    if (match) {
+      project_id = proj.id
+      title = title.replace(match[0], "").trim()
+      break
+    }
   }
 
   // #finance #logistics #personal #health
