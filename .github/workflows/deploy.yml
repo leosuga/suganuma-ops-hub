@@ -5,7 +5,18 @@ on:
     branches: [main]
 
 jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx tsc --noEmit
+
   deploy:
+    needs: typecheck
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to VPS
@@ -22,19 +33,16 @@ jobs:
             export WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}"
 
             bash << 'RUNDEPLOY'
-            # Build dir
             cd ~
             rm -rf ops-hub
             git clone --depth 1 https://github.com/leosuga/suganuma-ops-hub.git ops-hub || { echo "GIT CLONE FAILED"; exit 1; }
             cd ops-hub
 
-            # Write env file
             echo NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL > .env.prod
             echo NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY >> .env.prod
             echo SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY >> .env.prod
             echo WEBHOOK_SECRET=$WEBHOOK_SECRET >> .env.prod
 
-            # Detect Docker network (caddy_proxy container)
             NET=$(docker inspect caddy_proxy --format '{{json .NetworkSettings.Networks}}' 2>/dev/null | python3 -c "import sys,json; print(list(json.load(sys.stdin).keys())[0])" 2>/dev/null || echo "")
             if [ -z "$NET" ]; then
               NET=$(docker network ls --filter name=proxy -q | head -1)
@@ -45,30 +53,24 @@ jobs:
             fi
             echo "Network: $NET"
 
-            # Build image
-            echo "Building (5-15 min)..."
+            echo "Building (2-5 min)..."
             docker build \
               --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
               --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
               -t ops-hub:latest . || { echo "BUILD FAILED"; exit 1; }
 
-            # Stop and remove old container
             echo "Switching containers..."
             docker stop suganuma-ops-hub 2>/dev/null || true
             docker rm suganuma-ops-hub 2>/dev/null || true
 
-            # Start new container (with memory limits to survive OOM killer)
             docker run -d \
               --name suganuma-ops-hub \
               --hostname suganuma-ops-hub \
               --network "$NET" \
               --env-file .env.prod \
               --restart unless-stopped \
-              --memory 256m \
-              --memory-swap 256m \
               ops-hub:latest || { echo "CONTAINER START FAILED"; exit 1; }
 
-            # Verify container is running
             sleep 5
             if ! docker ps --format '{{.Names}}' | grep -q "^suganuma-ops-hub$"; then
               echo "FAILED: Container not running after start"
@@ -76,12 +78,10 @@ jobs:
               exit 1
             fi
 
-            # Update proxy if script exists
             if [ -f ~/update-ops-proxy.sh ]; then
               bash ~/update-ops-proxy.sh || echo "WARN: proxy update script failed (non-critical)"
             fi
 
-            # Health check — verify sw.js version
             for i in 1 2 3 4 5 6; do
               sleep 10
               SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null | head -c 30 || echo "-")
@@ -89,5 +89,4 @@ jobs:
               echo "$SW" | grep -q "v5" && echo "DEPLOY OK" && exit 0
             done
             echo "DEPLOY WARNING: sw.js not reachable or version mismatch"
-            # Do not exit 1 here — the app may still be starting
             RUNDEPLOY
