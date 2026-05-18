@@ -84,7 +84,7 @@ jobs:
               sleep 10
               SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null | head -c 30 || echo "-")
               echo "[$i] sw.js: $SW"
-              echo "$SW" | grep -q "v4" && echo "DEPLOY OK" && exit 0
+              echo "$SW" | grep -q "v5" && echo "DEPLOY OK" && exit 0
             done
             echo "DEPLOY WARNING: sw.js not reachable or version mismatch"
             # Do not exit 1 here — the app may still be starting
