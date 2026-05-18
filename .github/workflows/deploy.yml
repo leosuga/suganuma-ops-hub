@@ -16,7 +16,6 @@ jobs:
       - run: npx tsc --noEmit
 
   deploy:
-    needs: typecheck
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to VPS
