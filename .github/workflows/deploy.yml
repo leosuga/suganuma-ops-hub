@@ -57,13 +57,15 @@ jobs:
             docker stop suganuma-ops-hub 2>/dev/null || true
             docker rm suganuma-ops-hub 2>/dev/null || true
 
-            # Start new container
+            # Start new container (with memory limits to survive OOM killer)
             docker run -d \
               --name suganuma-ops-hub \
               --hostname suganuma-ops-hub \
               --network "$NET" \
               --env-file .env.prod \
               --restart unless-stopped \
+              --memory 256m \
+              --memory-swap 256m \
               ops-hub:latest || { echo "CONTAINER START FAILED"; exit 1; }
 
             # Verify container is running
