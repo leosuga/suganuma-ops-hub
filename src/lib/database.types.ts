@@ -38,6 +38,7 @@ export type Database = {
           completed_at: string | null
           project_id: string | null
           delegated_to: string | null
+          important: boolean
           created_at: string
           updated_at: string
         }
@@ -53,6 +54,7 @@ export type Database = {
           completed_at?: string | null
           project_id?: string | null
           delegated_to?: string | null
+          important?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -68,6 +70,7 @@ export type Database = {
           completed_at?: string | null
           project_id?: string | null
           delegated_to?: string | null
+          important?: boolean
           created_at?: string
           updated_at?: string
         }

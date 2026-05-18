@@ -47,6 +47,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
   const [dueAt, setDueAt] = useState("")
   const [projectId, setProjectId] = useState("")
   const [delegatedTo, setDelegatedTo] = useState("")
+  const [important, setImportant] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const updateTask = useUpdateTask()

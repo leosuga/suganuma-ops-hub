@@ -26,6 +26,7 @@ function parseTitle(
   due_at?: string
   project_id?: string | null
   delegated_to?: string
+  important?: boolean
 } {
   let title = raw.trim()
   let category: Category | undefined
@@ -33,6 +34,13 @@ function parseTitle(
   let due_at: string | undefined
   let project_id: string | undefined | null
   let delegated_to: string | undefined
+  let important: boolean | undefined
+
+  // +importante
+  if (title.includes("+importante")) {
+    important = true
+    title = title.replace("+importante", "").trim()
+  }
 
   // @Nome (delegado para)
   const delegMatch = title.match(/@(\S+)/)
@@ -81,7 +89,7 @@ function parseTitle(
     title = title.replace(dueMatch[0], "").trim()
   }
 
-  return { title, category, priority, due_at, project_id, delegated_to }
+  return { title, category, priority, due_at, project_id, delegated_to, important }
 }
 
 const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
@@ -119,6 +127,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
       due_at: parsed.due_at ?? null,
       project_id: parsed.project_id ?? null,
       delegated_to: parsed.delegated_to ?? undefined,
+      important: parsed.important ?? false,
       status: "todo",
     })
 

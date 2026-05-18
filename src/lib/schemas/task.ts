@@ -11,6 +11,7 @@ export const taskSchema = z.object({
   due_at: z.string().datetime().optional().nullable(),
   project_id: z.string().uuid().optional().nullable(),
   delegated_to: z.string().optional(),
+  important: z.boolean().default(false),
 })
 
 export type Task = z.infer<typeof taskSchema>
