@@ -9,7 +9,10 @@ import { useAppointments, useProtocols, useProtocolEntries, usePregnancy, useCre
 import { useMealPlans } from "@/lib/queries/meals"
 import { useNotes } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
+import { projectKeys } from "@/lib/queries/projects"
 import { cn } from "@/lib/utils"
+import { parseTitle } from "@/lib/parse-title"
+import { useQueryClient } from "@tanstack/react-query"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import type { TaskRow } from "@/lib/queries/tasks"
 
@@ -88,16 +91,22 @@ function ProtocolsSummary() {
 function QuickAddTask({ onCreated }: { onCreated: () => void }) {
   const [input, setInput] = useState("")
   const createTask = useCreateTask()
+  const queryClient = useQueryClient()
+  const projects = queryClient.getQueryData<{ id: string; name: string }[]>(projectKeys.all) ?? []
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!input.trim()) return
+    const parsed = parseTitle(input, projects)
+    if (!parsed.title.trim()) return
     await createTask.mutateAsync({
-      title: input.trim(),
-      category: "personal",
-      priority: "med",
+      title: parsed.title,
+      category: parsed.category ?? "personal",
+      priority: parsed.priority ?? "med",
       status: "todo",
-      due_at: null,
+      due_at: parsed.due_at ?? null,
+      project_id: parsed.project_id ?? null,
+      delegated_to: parsed.delegated_to ?? undefined,
+      important: parsed.important ?? false,
     })
     setInput("")
     onCreated()
@@ -118,7 +127,7 @@ function QuickAddTask({ onCreated }: { onCreated: () => void }) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Nova task rápida..."
+          placeholder="Nova task rápida... (>projeto #finance !urgent ^tomorrow @Fulano +importante)"
           className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
         />
         <button
