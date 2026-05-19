@@ -91,13 +91,14 @@ function ProtocolsSummary() {
 function QuickAddTask({ onCreated }: { onCreated: () => void }) {
   const [input, setInput] = useState("")
   const createTask = useCreateTask()
-  const queryClient = useQueryClient()
-  const projects = queryClient.getQueryData<{ id: string; name: string }[]>(projectKeys.all) ?? []
+  const { data: projects = [] } = useProjects()
+
+  const parsed = parseTitle(input, projects)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const parsed = parseTitle(input, projects)
     if (!parsed.title.trim()) return
+
     await createTask.mutateAsync({
       title: parsed.title,
       category: parsed.category ?? "personal",
@@ -132,7 +133,7 @@ function QuickAddTask({ onCreated }: { onCreated: () => void }) {
         />
         <button
           type="submit"
-          disabled={!input.trim() || createTask.isPending}
+          disabled={!parsed.title.trim() || createTask.isPending}
           className="h-8 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors flex-none"
         >
           {createTask.isPending ? "..." : "+ ADD"}
