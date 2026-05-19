@@ -361,6 +361,7 @@ export type Database = {
           content: string | null
           tags: string[] | null
           pinned: boolean
+          linked_task_id: string | null
           created_at: string
           updated_at: string
         }
@@ -371,6 +372,7 @@ export type Database = {
           content?: string | null
           tags?: string[] | null
           pinned?: boolean
+          linked_task_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -381,6 +383,7 @@ export type Database = {
           content?: string | null
           tags?: string[] | null
           pinned?: boolean
+          linked_task_id?: string | null
           created_at?: string
           updated_at?: string
         }

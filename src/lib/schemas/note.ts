@@ -6,6 +6,7 @@ export const noteSchema = z.object({
   content: z.string().optional().nullable(),
   tags: z.array(z.string()).default([]),
   pinned: z.boolean().default(false),
+  linked_task_id: z.string().uuid().optional().nullable(),
 })
 
 export type Note = z.infer<typeof noteSchema>
