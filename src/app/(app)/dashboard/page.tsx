@@ -19,6 +19,7 @@ import { NeedsAttention } from "@/components/dashboard/NeedsAttention"
 import { TaskKPIs } from "@/components/dashboard/TaskKPIs"
 import { EisenhowerMatrix } from "@/components/dashboard/EisenhowerMatrix"
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview"
+import { BudgetCard } from "@/components/dashboard/BudgetCard"
 import type { TaskRow } from "@/lib/queries/tasks"
 
 function weeksFromDueDate(dueDate: string): number {
@@ -169,6 +170,8 @@ export default function DashboardPage() {
           )}
           <ProtocolsSummary />
         </div>
+
+        <BudgetCard income={income} expense={expense} />
 
         {upcomingAppts.length > 0 && (
           <div className="border border-border bg-surface rounded-sm overflow-hidden">

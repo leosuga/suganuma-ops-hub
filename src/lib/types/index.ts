@@ -5,3 +5,4 @@ export type { HealthLogRow, PregnancyRow, AppointmentRow, ProtocolRow, ProtocolE
 export type { NoteRow, NoteInsert } from "./note"
 export type { MealRow, MealPlanRow } from "./meal"
 export type { HabitTrackRow, HabitEntryRow } from "./habit"
+export type { BudgetRow } from "./budget"
