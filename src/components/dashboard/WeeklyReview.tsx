@@ -86,7 +86,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
         <div className="grid grid-cols-3 gap-3">
           <div className="flex flex-col items-center gap-1">
             <span className="text-[10px] font-mono text-on-surface/40 tracking-wider uppercase">
-              CONCLU\u00cdDAS
+              CONCLUÍDAS
             </span>
             <span className="text-2xl font-mono font-bold text-teal">
               {completedThisWeek}
@@ -122,7 +122,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
         {activeHabits > 0 && (
           <div className="border-t border-border pt-4">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
-              H\u00c1BITOS
+              HÁBITOS
             </span>
             <div className="grid gap-x-1" style={{ gridTemplateColumns: `90px repeat(${activeDays}, minmax(16px, 1fr))` }}>
               <div className="text-[9px] font-mono text-on-surface/20" />
@@ -162,7 +162,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
 
         {activeHabits === 0 && (
           <div className="text-[10px] font-mono text-on-surface/20 text-center py-2">
-            Nenhum h\u00e1bito ativo
+            Nenhum hábito ativo
           </div>
         )}
       </div>
