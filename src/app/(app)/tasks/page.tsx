@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useTitle } from "@/lib/useTitle"
@@ -10,10 +11,13 @@ import { useProjects } from "@/lib/queries/projects"
 import { CategoryChips } from "@/components/tasks/CategoryChips"
 import { TaskRow } from "@/components/tasks/TaskRow"
 import { QuickAddDialog } from "@/components/tasks/QuickAddDialog"
-import { EditTaskDialog } from "@/components/tasks/EditTaskDialog"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { VirtualizedList } from "@/components/VirtualizedList"
 import { useUndoToast } from "@/components/UndoToast"
+
+const EditTaskDialog = dynamic(() => import("@/components/tasks/EditTaskDialog").then(m => ({ default: m.EditTaskDialog })), {
+  loading: () => <div className="fixed inset-0 z-50 bg-black/50 animate-pulse" />,
+})
 
 type Category = "finance" | "logistics" | "personal" | "health"
 

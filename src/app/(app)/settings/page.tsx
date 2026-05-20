@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import dynamic from "next/dynamic"
 import { useTitle } from "@/lib/useTitle"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -8,7 +9,10 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { cn } from "@/lib/utils"
 import { getAccent, setAccent, type Accent } from "@/lib/theme"
 import { exportAllData, importAllData } from "@/lib/export-import"
-import { SelectiveImportDialog } from "@/components/settings/SelectiveImportDialog"
+
+const SelectiveImportDialog = dynamic(() => import("@/components/settings/SelectiveImportDialog").then(m => ({ default: m.SelectiveImportDialog })), {
+  loading: () => <div className="fixed inset-0 z-50 bg-black/50 animate-pulse" />,
+})
 
 interface AgentToken {
   id: string
