@@ -44,6 +44,7 @@ Cada módulo segue este pipeline:
 | Habits | `/habits` | 0009 | `habits.ts` | `habits/page.tsx` | 8 |
 | Projects | `/projects` | 0010 | `projects.ts` | `projects/page.tsx` | — |
 | Budget | (dashboard) | 0016 | `budget.ts` | (BudgetCard no Dashboard) | — |
+| Reports | `/reports` | — | `reports.ts` | `reports/page.tsx` | — |
 | Settings | `/settings` | — | — | `settings/page.tsx` | — |
 
 Schemas testados: `tests/schemas.test.ts` (27 testes Zod)
@@ -177,16 +178,77 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `WEBHOOK_SECRET` — HMAC webhooks
 - `COOLIFY_TOKEN` — token API Coolify (opcional, não mais usado no pipeline atual)
 
+## Performance — regras e aprendizados (2026-05-20)
+
+### TanStack Query — configuração ótima
+- **`refetchOnWindowFocus: false`** global — o app já usa realtime WebSocket (Supabase Postgres Changes), refetch ao focar aba é redundante
+- **`staleTime` por query**, não global único:
+  - `Infinity`: budget (só muda via mutation explícita), pregnancy (quase estático)
+  - `5 * 60_000` (5min): projects, protocols (mudam raramente)
+  - `30_000` (30s): tasks, transactions (mudam com frequência, realtime já empurra updates)
+  - Demais queries: usam default global `60_000` (notes, meals, habits, calendar)
+- **`gcTime: 5 * 60_000`** global (5 minutos) — adequado para dados que o usuário revisita em navegação
+
+### Code-splitting com `next/dynamic`
+- **Sempre usar `dynamic(() => import(...))` com `loading:`** para componentes abaixo da dobra ou acionados por interação
+- A ordem de lazy-loading aplicada:
+  1. `CommandPalette` (cmdk) — já era lazy, via AppShell (mantido)
+  2. `RevenueChart` (recharts) — lazy, `/finance`
+  3. `CSVImportDialog` (papaparse) — lazy, `/finance`
+  4. `ReactMarkdown` — lazy, `/notes`
+  5. **`HealthTrends`** (recharts, WeightChart + BloodPressureChart) — lazy, `/health` — **-384 KB** na first load
+  6. **`EditTaskDialog`** (407 linhas) — lazy, `/tasks` — **-15 KB**
+  7. **`SelectiveImportDialog`** — lazy, `/settings` — **-74 KB**
+- **Skeleton `loading:` obrigatório** — `dynamic()` sem fallback causa layout shift e UX ruim
+- **Conflito de nomes**: Turbopack não permite importar `type { NoteRow }` e `{ NoteRow }` (componente) no mesmo arquivo. Renomear um deles ou remover type import se não usado
+- **Componentes inline NUNCA** — definir componente dentro do mesmo arquivo da página impede tree-shaking. Extrair para `src/components/X/` sempre
+
+### CSS e fontes
+- **`--font-geist-mono`**: removido do `@theme inline` — Geist nunca foi importado, era variável morta
+- **`@tailwindcss/typography`**: JIT purga classes não usadas automaticamente. CSS code-split não traz ganho real
+- **`next/font/google`** com Inter: self-hosting automático, sem requisição externa — continua ótimo
+
+### Dependências
+- **`remark-gfm` removido** — zero imports no código, 94 pacotes a menos
+- **`require("papaparse")` → `import Papa from "papaparse"`** — tree-shaking correto via ESM
+- **`recharts` 3.8.1**: ~150-180 KB. Só usar onde indispensável (RevenueChart, WeightChart, BloodPressureChart). Sempre lazy-load
+
+### Arquivos removidos
+- **9 `loading.tsx` deletados** — inúteis em app 100% client-side (páginas são `"use client"`, loading.tsx depende de RSC streaming)
+
+### Bundle atual por rota (2026-05-20, uncompressed)
+| Rota | Tamanho | vs antes |
+|---|---|---|
+| /health | 935 KB | -29% |
+| /settings | 835 KB | -10% |
+| /tasks | 943 KB | -4% |
+| /dashboard | 890 KB | -2% |
+| /finance | 954 KB | -2% |
+| /login | 743 KB | -2% |
+| **/reports** | 844 KB | **agora com cache TanStack** |
+
+### Build
+- Local: ~4.5s (`SKIP_TSC=1`)
+- VPS: ~60s (Docker build + push)
+- **NUNCA adicionar job `typecheck`** no workflow — já removido permanentemente
+- **`loading.tsx` NUNCA recriar** — o app é 100% client-side, loading.tsx não funciona sem RSC
+
+### O que NÃO fazer
+- Converter páginas para RSC — reescreveria toda arquitetura de dados (TanStack Query + Realtime são client-side)
+- Substituir recharts por SVG nativo — 4+ gráficos, horas de trabalho, risco de bugs
+- CSS code-split — Tailwind JIT já purga classes não usadas, ganho marginal
+- Build cache no Docker — setup atual (`rm -rf` + `git clone`) não aproveita, complexidade não vale
+
 ## Dependências notáveis
 - `@base-ui/react` — Dialog, Checkbox, Button (NÃO Radix)
 - `@tanstack/react-query` + devtools
 - `@tanstack/react-virtual` — virtualização de listas (>50 itens)
 - `recharts` — gráficos (RevenueChart, WeightChart, BloodPressureChart)
-- `react-markdown` + `remark-gfm` — renderização de markdown nas notas
+- `react-markdown` — renderização de markdown nas notas (`remark-gfm` removido)
 - `papaparse` — import CSV de extratos bancários
 - `cmdk` — command palette
 - `next-themes` — dark/light mode
-- `serwist` — removido do bundle; SW é manual (`public/sw.js`), não usa `@serwist/next`
+- `serwist` — removido do bundle; SW é manual (`public/sw.js`)
 
 ## Pontos de atenção
 - **`@tailwindcss/typography` instalado (2026-05-09)**: Versão `0.5.0-alpha.3` (tag `next`) funciona com Tailwind v4 via `@plugin "@tailwindcss/typography"` no `globals.css`.
@@ -198,7 +260,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - **Realtime**: tabelas adicionadas à `supabase_realtime` publication: task, account, transaction, note, meal, meal_plan, habit_track, habit_entry, project, budget
 - **Tipos planos** (`src/lib/types/*.ts`): 9 arquivos (task, project, finance, health, note, meal, habit, budget, index). Substituem `database.types.ts` para type checking
 - **Migrations SQL executadas manualmente** via Supabase SQL editor (0010-0016). NÃO são executadas automaticamente pelo deploy
-- **`queryOptions` API TanStack v5**: Todas as queries exportam `queryOptions`. `staleTime: 60_000` / `gcTime: 5 * 60_000` globais
+- **`queryOptions` API TanStack v5**: Todas as queries exportam `queryOptions`. `staleTime` e `gcTime` configurados por query (ver seção Performance). `refetchOnWindowFocus: false` global
 - **`sw.js`**: versão `v5`. Estratégia: `_next/static` CacheFirst, navegação NetworkOnly
 - **Coolify no VPS**: instalado mas **não gerencia deploys**. Deploy manual via GitHub Actions SSH
 - **Next.js 16 `next.config.ts`**: `reactCompiler: true` em root (não `experimental`). `typedRoutes` quebra build com BottomNav strings
