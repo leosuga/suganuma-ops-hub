@@ -7,6 +7,7 @@ import type { HabitTrackRow } from "@/lib/queries/habits"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
+import { HabitStats } from "@/components/habits/HabitStats"
 
 function getLast7Days() {
   const days: string[] = []
@@ -197,6 +198,8 @@ export default function HabitsPage() {
             <button type="button" onClick={() => setAdding(false)} className="text-on-surface/30 hover:text-on-surface/60 text-[14px]">×</button>
           </form>
         )}
+
+        {!isLoading && <HabitStats habits={habits} />}
 
         <div className="flex-1 overflow-auto">
           {isLoading ? (
