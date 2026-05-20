@@ -30,11 +30,11 @@ Cada módulo segue este pipeline:
 6. **Página** (`src/app/(app)/nome/page.tsx`) — server ou client component com `SectionErrorBoundary`
 7. **Navegação** — adicionar em: Sidebar, BottomNav (mobile, máx 5 itens), TopBar, CommandPalette
 
-## Domínios (28 rotas)
+## Domínios
 
 | Módulo | Rota | Migration | Queries | Página | Testes |
 |--------|------|-----------|---------|--------|--------|
-| Dashboard | `/dashboard` | — | tasks+finance+health+meals+notes | `dashboard/page.tsx` | — |
+| Dashboard | `/dashboard` | — | tasks+finance+health+meals+notes+projects+budget | `dashboard/page.tsx` | — |
 | Tasks | `/tasks` | 0001 | `tasks.ts` | `tasks/page.tsx` | 7 |
 | Finance | `/finance` | 0002 | `finance.ts` | `finance/page.tsx` | 6 |
 | Health | `/health` | 0003 | `health.ts` | `health/page.tsx` | 13 |
@@ -42,9 +42,40 @@ Cada módulo segue este pipeline:
 | Notes | `/notes` | 0007 | `notes.ts` | `notes/page.tsx` | 5 |
 | Meals | `/meals` | 0008 | `meals.ts` | `meals/page.tsx` | 5 |
 | Habits | `/habits` | 0009 | `habits.ts` | `habits/page.tsx` | 8 |
+| Projects | `/projects` | 0010 | `projects.ts` | `projects/page.tsx` | — |
+| Budget | (dashboard) | 0016 | `budget.ts` | (BudgetCard no Dashboard) | — |
 | Settings | `/settings` | — | — | `settings/page.tsx` | — |
 
 Schemas testados: `tests/schemas.test.ts` (27 testes Zod)
+
+## Features e comportamentos
+
+### Tasks
+- **Parser `parseTitle()`** (`src/lib/parse-title.ts`): usado por QuickAddDialog, QuickAddTask do Dashboard, e demais entradas de task. Suporta:
+  - `>NomeProjeto` — busca por nome exato nos projetos existentes (case-insensitive, longest match first)
+  - `#finance|logistics|personal|health` — categoria fixa
+  - `#palavra` — tags livres (coluna `tags text[]`). Palavras após `#` que NÃO são categorias reservadas viram tags
+  - `!urgent|high|med|low` — prioridade
+  - `^today|tomorrow|YYYY-MM-DD` — data de vencimento
+  - `@Nome` — delegação (campo `delegated_to`)
+  - `+importante` — toggle boolean `important` (Eisenhower)
+  - `*diario|*semanal|*mensal` — recorrência (coluna `recurrence`)
+- **Recorrência** (`0014_recurrence.sql`): ao concluir task com `recurrence`, o sistema auto-cria a próxima task (due_at = +1d/+7d/+1m). A nova task herda: título, categoria, prioridade, projeto, delegado, importante, tags
+- **Tags** (`0015_tags.sql`): coluna `tags text[]` na task. Exibidas como pills `#tag` no TaskRow. Filtro por tag na TasksPage
+- **Notas vinculadas**: tasks podem ter notas vinculadas (`linked_task_id` em note, FK com `on delete set null`). EditTaskDialog mostra lista de notas vinculadas
+- **Matriz de Eisenhower**: Dashboard exibe quadrantes (Urg+Imp / Imp+NãoUrg / Urg+NãoImp / NemUrgNemImp) filtrados por `important` e `priority`/`due_at`
+
+### Notes
+- **Converter nota em task**: botão `→TASK` no NoteRow (modo leitura). Cria task com título+conteúdo da nota e vincula automaticamente via `linked_task_id`
+
+### Projects
+- **Templates** (`src/lib/templates.ts`): 5 templates hardcoded — Reforma, Servidor, Estudos, Freelance, Evento. Cada template define nome, cor, descrição e lista de tasks. Ao selecionar um template no CreateProjectDialog, o projeto é criado com as tasks automaticamente inseridas
+- **Progresso**: barra de progresso calculada a partir das tasks vinculadas (`done/total`)
+
+### Export/Import
+- **Export**: `exportAllData()` exporta 15 tabelas como JSON. Download via Blob
+- **Import total**: `importAllData(json)` insere todas as tabelas
+- **Import seletivo** (`SelectiveImportDialog`): UI que lista tabelas do arquivo JSON, permite selecionar quais importar, mostra contagem de linhas por tabela
 
 ## Componentes compartilhados
 - **`SectionErrorBoundary`** (`src/components/SectionErrorBoundary.tsx`) — class component com retry, envolve todas as páginas
@@ -64,11 +95,12 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - Realtime Postgres Changes em `task` table dispara re-check
 - `requireInteraction: true` para não sumir automaticamente
 
-## Export/Import
+## Export/Import (2026-05-20)
 - `exportAllData()` / `importAllData(json)` em `src/lib/export-import.ts`
-- Exporta todas as tabelas do usuário como JSON → download via Blob
-- Import faz INSERT batch com `owner_id` do usuário atual
-- UI na página Settings
+- Exporta **15 tabelas**: task, project, account, transaction, health_log, pregnancy, appointment, protocol, protocol_entry, note, meal, meal_plan, habit_track, habit_entry, budget
+- Import total: substitui `owner_id` pelo usuário atual e insere em batch
+- **Import seletivo** (`src/components/settings/SelectiveImportDialog.tsx`): dialog que lista tabelas do JSON com contagem de linhas, permite selecionar quais importar
+- UI na página Settings com 3 botões: Exportar backup, Importar seletivo, Importar tudo
 
 ## Deploy
 
@@ -95,6 +127,12 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `images: { unoptimized: true }` é necessário para standalone Docker (sem otimizador de imagem)
 - `typescript: { ignoreBuildErrors: false }` mantém o type check habilitado (padrão implícito, mas explícito é melhor)
 
+### tsconfig.json — regras críticas (2026-05-20)
+- **NÃO usar plugin `"next"`** — causa type checking pesado de páginas/rotas que trava no Actions runner
+- `include` estreito: `["src/**/*.ts", "src/**/*.tsx"]` — evita checar node_modules e configs
+- `tsBuildInfoFile: ".next/tsconfig.tsbuildinfo"` — cache incremental configurado
+- O `tsc --noEmit` NUNCA passou no Actions runner com este projeto. O type checking é feito localmente via VSCode. O deploy no VPS usa `SKIP_TSC=1`
+
 ### Middleware — nunca usar regex negativo no matcher
 - O `config.matcher` com regex negativo `(?!)` **não funciona** confiavelmente para excluir rotas como `/sw.js` e `/manifest.webmanifest`
 - Usar `matcher: "/:path*"` (cobre tudo) e fazer bypass **dentro do código** com array `BYPASS` explícito:
@@ -118,16 +156,19 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - **Network detection**: `NET=$(docker inspect caddy_proxy --format '{{json .NetworkSettings.Networks}}' | python3 -c "import sys,json; print(list(json.load(sys.stdin).keys())[0])")` — fallback `caddy_default`
 - **docker-compose.prod.yml**: simplificado para apenas serviço `app` com `networks: proxy: external: true`. O Caddy é gerenciado FORA do compose
 
-### Pipeline de deploy atual (funcional)
+### Pipeline de deploy atual (funcional — 2026-05-20)
+- Workflow: **1 job único** (sem typecheck paralelo). O job `typecheck` foi removido — nunca completava no Actions runner (OOM/CPU timeout com ~70 arquivos TS em strict mode)
+- Build no VPS usa `SKIP_TSC=1` (permanente). A compilação é via SWC (rápida, ~60s). Type checking local via VSCode + `tsc --noEmit` opcional
+- 10 deploys consecutivos verdes (#149-#158)
 1. SSH no VPS (`appleboy/ssh-action@v1`)
 2. `git clone --depth 1` do repo
 3. `echo` das variáveis no `.env.prod` (sem heredoc — evitar conflito de expansão)
 4. Detecta rede do `caddy_proxy` via `{{json}}`+Python
 5. `docker build --build-arg NEXT_PUBLIC_SUPABASE_URL=... --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=... -t ops-hub:latest .`
-6. Para container antigo (`sw2ag8vuujt87zk04wwbxsvg*`), remove anterior (`suganuma-ops-hub`)
+6. Para container antigo, remove anterior (`suganuma-ops-hub`)
 7. `docker run -d --name suganuma-ops-hub --network $NET --env-file .env.prod --restart unless-stopped ops-hub:latest`
 8. `~/update-ops-proxy.sh` se existir
-9. Verifica `sw.js` contém `"ops-hub-v4"` (sinal de deploy bem-sucedido)
+9. Verifica `sw.js` contém `"v5"` (sinal de deploy bem-sucedido)
 
 ### Secrets necessários no GitHub
 - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` — acesso SSH ao VPS
@@ -148,26 +189,17 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `serwist` — removido do bundle; SW é manual (`public/sw.js`), não usa `@serwist/next`
 
 ## Pontos de atenção
-- **`@tailwindcss/typography` instalado (2026-05-09)**: Versão `0.5.0-alpha.3` (tag `next`) funciona com Tailwind v4 via `@plugin "@tailwindcss/typography"` no `globals.css`. Build + tests passam. As notas agora têm estilo tipográfico aplicado.
-- Node.js v25.6.0 local, **v22-alpine em produção** — vitest 4.1.5 funciona mas pode ter instabilidades com fork workers (timeout ao iniciar testes). Usar sempre `--no-watch` para evitar hangs. Se `npm test` falhar com "Failed to start forks worker", é problema preexistente do ambiente, não do código.
-- **Testes fixados (2026-05-09)**: `tsc --noEmit` passa; `npx vitest run` = 83 tests passando (8 files). Ajustes nos mocks: `chain()` retorna `any`, `MockClient` usa `as any`, `useRealtimeTable` mockado em habits/meals, `getSession` adicionado ao `authMock`.
-- **ESLint fix (2026-05-09)**: a dependência `debug` corrompida foi resolvida via `rm -rf node_modules && npm install`. O ESLint agora funciona. Falsos positivos das rules `react-hooks/set-state-in-effect` e `react-hooks/refs` foram desativados no `eslint.config.mjs` — essas rules sinalizam errors em patterns comuns do projeto (form reset via useEffect, setMounted(true), ref assignment).
-- BottomNav mobile máximo 5 itens (DASH, CAL, TASKS, FIN, HUB). Notes, Meals, Habits acessíveis via Sidebar (desktop) ou CommandPalette
-- `due_at` é `string | null` no DB mas `string | undefined` no Zod schema — nos mutations usar `undefined` (não `null`) para evitar type errors
-- Realtime: tabelas precisam ser adicionadas à `supabase_realtime` publication na migration SQL. `notes` já tinha; `meals` (`meal`, `meal_plan`) e `habits` (`habit_track`, `habit_entry`) foram adicionados nesta sessão.
-- Light mode: `html.light` definido no globals.css com variáveis customizadas. O `--color-health` tem valor diferente no light mode (`#2E8B57`)
-- MCP Server (`mcp-server/src/index.ts`) + SDK (`packages/ops-hub-sdk/`) para integração com Claude Desktop — agora completo com tools: `tasks_*`, `finance_*`, `health_*`, `dashboard_get`, `notes_list/create/update/delete`, `meals_list/create/set_plan`, `habits_list/create/log_entry`, `health_list_appointments`
-- Dynamic `<title>`: todas as rotas de `/(app)` usam `useTitle()` de `@/lib/useTitle` para setar `document.title` (ex: `"Tasks · Suganuma Ops Hub"`)
-- `loading.tsx`: skeleton pages existem em `dashboard`, `tasks`, `finance`, `health`, `notes`, `meals`, `habits`, `calendar`
-- `staleTime: 60_000` / `gcTime: 5 * 60_000` configurados globalmente no `QueryClient` do `AppShell.tsx`
-- `next.config.ts`: `experimental.optimizePackageImports: ["recharts", "cmdk"]` adicionado. `typedRoutes` foi testado e **revertido** — quebra build por causa de `string` hrefs no `BottomNav.tsx`.
-- **`queryOptions` API TanStack v5 (2026-05-09)**: Todas as queries (`tasks`, `finance`, `health`, `notes`, `meals`, `habits`) exportam `queryOptions` (ex: `tasksOptions`, `accountsOptions`). Facilita prefetch server-side e elimina duplicação de `queryKey`/`queryFn`.
-- **Dependências removidas (2026-05-09)**: `lucide-react` (substituído por SVG inline em `src/components/ui/*`), `@serwist/next` e `serwist` (SW é manual em `public/sw.js`). Bundle mais leve e zero lixo.
-- **PWA icons PNG (2026-05-09)**: `icon-192.png` e `icon-512.png` gerados via Pillow. `manifest.webmanifest` usa PNGs primários + SVGs fallback.
-- **Docker DNS interno > IP fixo**: O erro 502 após deploy foi causado pelo Caddy apontando para IP fixo do container antigo. `--hostname` + `reverse_proxy hostname:3000` resolve via DNS do Docker.
-- **`typedRoutes` não é viável com BottomNav**: `BottomNav.tsx` usa `string` em vez de literais para hrefs. Habilitar `typedRoutes` quebra o build instantaneamente.
-- **`@next/bundle-analyzer` incompatível com Turbopack**: Não gera relatório. `next experimental-analyze` não produziu output útil. Sem alternativa clara no momento.
-- **Supabase CLI `--linked` só funciona para projetos Cloud**: Nosso Supabase é self-hosted (`api.suganuma.com.br`). `--local` requer Docker daemon. Tipos manuais validados via audit são suficientes.
-- **postcss vulnerability no Next.js interno**: `next@16.2.6` ainda traz `postcss@8.4.31` (moderate XSS). Não corrigível via bump de patch. Aguardar Next.js 16.2.7+.
-- **Coolify no VPS (2026-05-10)**: instalado e funcional (`coolify.suganuma.com.br:8081`), mas **não gerencia deploys** porque o proxy padrão (Traefik) conflita com Caddy existente. App `suganuma-ops-hub` registrada (`jgm57p9ild1iiriynleuatcz`) e Docker socket corrigido via `docker-compose.custom.yml`. **Decisão**: deploy manual continua; migração Caddy→Traefik é futura e documentada em `.kilo/plans/1778139698600-coolify-migration-future.md`.
-- **Next.js 16 `next.config.ts` — `reactCompiler` em root, não `experimental`**: `reactCompiler: true` funciona (não `experimental.reactCompiler`). Requer `babel-plugin-react-compiler` como devDependency. Build + tests passam sem alterações de código.
+- **`@tailwindcss/typography` instalado (2026-05-09)**: Versão `0.5.0-alpha.3` (tag `next`) funciona com Tailwind v4 via `@plugin "@tailwindcss/typography"` no `globals.css`.
+- Node.js v25.6.0 local, **v22-alpine em produção** — vitest 4.1.5 funciona mas pode ter instabilidades. Usar `--no-watch`.
+- **Build**: `SKIP_TSC=1` no Dockerfile (permanente). Build no VPS ~60s via SWC. Type checking via VSCode local, NÃO no deploy.
+- **Workflow**: 1 job único (sem typecheck paralelo). Job `typecheck` removido em 2026-05-20 — nunca completava (~70 arquivos TS strict).
+- BottomNav mobile máximo 5 itens (DASH, CAL, TASKS, FIN, HUB)
+- `due_at` é `string | null` no DB mas `string | undefined` no Zod schema — usar `undefined` nos mutations
+- **Realtime**: tabelas adicionadas à `supabase_realtime` publication: task, account, transaction, note, meal, meal_plan, habit_track, habit_entry, project, budget
+- **Tipos planos** (`src/lib/types/*.ts`): 9 arquivos (task, project, finance, health, note, meal, habit, budget, index). Substituem `database.types.ts` para type checking
+- **Migrations SQL executadas manualmente** via Supabase SQL editor (0010-0016). NÃO são executadas automaticamente pelo deploy
+- **`queryOptions` API TanStack v5**: Todas as queries exportam `queryOptions`. `staleTime: 60_000` / `gcTime: 5 * 60_000` globais
+- **`sw.js`**: versão `v5`. Estratégia: `_next/static` CacheFirst, navegação NetworkOnly
+- **Coolify no VPS**: instalado mas **não gerencia deploys**. Deploy manual via GitHub Actions SSH
+- **Next.js 16 `next.config.ts`**: `reactCompiler: true` em root (não `experimental`). `typedRoutes` quebra build com BottomNav strings
+- **Escaping de caracteres no write tool**: `\u00cd` e outros escapes Unicode podem aparecer em vez de caracteres acentuados ao usar o `write` tool. Sempre revisar arquivos escritos e corrigir acentos manualmente
