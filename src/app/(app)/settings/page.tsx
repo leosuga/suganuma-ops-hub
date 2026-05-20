@@ -8,6 +8,7 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { cn } from "@/lib/utils"
 import { getAccent, setAccent, type Accent } from "@/lib/theme"
 import { exportAllData, importAllData } from "@/lib/export-import"
+import { SelectiveImportDialog } from "@/components/settings/SelectiveImportDialog"
 
 interface AgentToken {
   id: string
@@ -43,6 +44,7 @@ export default function SettingsPage() {
   const [accent, setAccentState] = useState<Accent>("teal")
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
+  const [selectImportOpen, setSelectImportOpen] = useState(false)
 
   const loadTokens = useCallback(async () => {
     const res = await fetch("/api/agent/tokens")
@@ -256,8 +258,11 @@ export default function SettingsPage() {
           <button onClick={handleExport} disabled={exporting} className="h-8 px-4 text-[9px] font-mono font-semibold tracking-wider border border-teal text-teal rounded-sm hover:bg-teal/10 disabled:opacity-30 transition-colors">
             {exporting ? "EXPORTANDO..." : "EXPORTAR BACKUP ↓"}
           </button>
+          <button onClick={() => setSelectImportOpen(true)} className="h-8 px-4 text-[9px] font-mono font-semibold tracking-wider border border-teal/40 text-teal rounded-sm hover:bg-teal/10 transition-colors">
+            IMPORTAR SELETIVO ↑
+          </button>
           <button onClick={handleImport} disabled={importing} className="h-8 px-4 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/40 rounded-sm hover:border-on-surface/40 hover:text-on-surface/70 disabled:opacity-30 transition-colors">
-            {importing ? "IMPORTANDO..." : "IMPORTAR JSON ↑"}
+            {importing ? "IMPORTANDO..." : "IMPORTAR TUDO ↑"}
           </button>
         </div>
       </div>
@@ -297,6 +302,8 @@ export default function SettingsPage() {
       <p className="text-center text-[9px] font-mono text-on-surface/20">
         SUGANUMA OPS HUB — ACESSO RESTRITO
       </p>
+
+      <SelectiveImportDialog open={selectImportOpen} onOpenChange={setSelectImportOpen} />
     </div>
     </SectionErrorBoundary>
   )
