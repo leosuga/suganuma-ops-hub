@@ -1,4 +1,4 @@
-import type { Json } from "@/lib/database.types"
+type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export interface HealthLogRow {
   id: string
