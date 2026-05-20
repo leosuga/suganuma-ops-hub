@@ -7,6 +7,7 @@ import dynamic from "next/dynamic"
 import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from "@/lib/queries/notes"
 import type { NoteRow } from "@/lib/queries/notes"
 import { useTasks } from "@/lib/queries/tasks"
+import { useCreateTask } from "@/lib/queries/tasks"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
@@ -16,6 +17,7 @@ const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
 function NoteRow({ note, onDelete }: { note: NoteRow; onDelete: (id: string) => void }) {
   const updateNote = useUpdateNote()
   const { data: tasks = [] } = useTasks()
+  const createTask = useCreateTask()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(note.title)
   const [content, setContent] = useState(note.content ?? "")
@@ -46,6 +48,17 @@ function NoteRow({ note, onDelete }: { note: NoteRow; onDelete: (id: string) => 
       linked_task_id: linkedTaskId || null,
     })
     setEditing(false)
+  }
+
+  async function handleConvertToTask() {
+    const result = await createTask.mutateAsync({
+      title: note.title,
+      notes: note.content ?? undefined,
+      category: "personal",
+      priority: "med",
+      status: "todo",
+    })
+    await updateNote.mutateAsync({ id: note.id, linked_task_id: result.id, pinned: false })
   }
 
   const dateStr = new Date(note.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })
@@ -139,7 +152,7 @@ function NoteRow({ note, onDelete }: { note: NoteRow; onDelete: (id: string) => 
         </div>
 
         <div className="flex items-center gap-0.5 flex-none">
-          {linkedTask && (
+          {linkedTask ? (
             <Link
               href={`/tasks?project=${linkedTask.project_id ?? ""}`}
               onClick={(e) => e.stopPropagation()}
@@ -148,6 +161,15 @@ function NoteRow({ note, onDelete }: { note: NoteRow; onDelete: (id: string) => 
             >
               TASK ↗
             </Link>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleConvertToTask() }}
+              disabled={createTask.isPending}
+              className="flex-none text-[7px] font-mono text-on-surface/30 hover:text-teal border border-on-surface/20 hover:border-teal rounded-sm px-1 py-0.5 transition-colors"
+              title="Converter em task"
+            >
+              →TASK
+            </button>
           )}
           <button onClick={handleTogglePin} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-amber transition-colors text-[11px]" title={note.pinned ? "Desafixar" : "Fixar"}>
             {note.pinned ? "★" : "☆"}

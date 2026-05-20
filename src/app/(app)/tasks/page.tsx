@@ -25,6 +25,7 @@ export default function TasksPage() {
   const [addOpen, setAddOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<TaskRowType | null>(null)
   const [search, setSearch] = useState("")
+  const [tagFilter, setTagFilter] = useState("")
 
   const { data: tasks = [], isLoading, isError } = useTasks()
   const { data: projects = [] } = useProjects()
@@ -42,6 +43,10 @@ export default function TasksPage() {
     if (!showDone && t.status === "done") return false
     if (category && t.category !== category) return false
     if (projectFilter && t.project_id !== projectFilter) return false
+    if (tagFilter.trim()) {
+      const tag = tagFilter.trim().toLowerCase()
+      if (!t.tags?.some((tg) => tg.toLowerCase() === tag)) return false
+    }
     if (search.trim()) {
       const q = search.toLowerCase().trim()
       const titleMatch = t.title.toLowerCase().includes(q)
@@ -89,6 +94,7 @@ export default function TasksPage() {
         project_id: task.project_id ?? undefined,
          delegated_to: task.delegated_to ?? undefined,
         important: task.important,
+        tags: task.tags,
       })
     }
   }

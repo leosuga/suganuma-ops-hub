@@ -6,6 +6,8 @@ interface ProjectLike {
   name: string
 }
 
+const RESERVED_HASH = new Set(["finance", "logistics", "personal", "health"])
+
 interface ParsedTitle {
   title: string
   category?: Category
@@ -15,6 +17,7 @@ interface ParsedTitle {
   delegated_to?: string
   important?: boolean
   recurrence?: string | null
+  tags?: string[]
 }
 
 export function parseTitle(raw: string, projects: ProjectLike[]): ParsedTitle {
@@ -26,6 +29,7 @@ export function parseTitle(raw: string, projects: ProjectLike[]): ParsedTitle {
   let delegated_to: string | undefined
   let important: boolean | undefined
   let recurrence: string | null | undefined
+  let tags: string[] | undefined
 
   // *diario *semanal *mensal (recurrence)
   const recMatch = title.match(/\*(diari[oa]|semanal|mensal)/i)
@@ -70,6 +74,18 @@ export function parseTitle(raw: string, projects: ProjectLike[]): ParsedTitle {
     title = title.replace(catMatch[0], "").trim()
   }
 
+  // #tags — free-form (remaining #word patterns after categories extracted)
+  const tagMatches = title.matchAll(/#(\w+)/gi)
+  const collected: string[] = []
+  for (const m of tagMatches) {
+    const word = m[1].toLowerCase()
+    if (word.length > 0) collected.push(word)
+  }
+  if (collected.length > 0) {
+    tags = [...new Set(collected)]
+    title = title.replace(/#\w+/gi, "").trim()
+  }
+
   // !urgent !high !low
   const priMatch = title.match(/!(urgent|high|med|low)/i)
   if (priMatch) {
@@ -94,5 +110,5 @@ export function parseTitle(raw: string, projects: ProjectLike[]): ParsedTitle {
     title = title.replace(dueMatch[0], "").trim()
   }
 
-  return { title, category, priority, due_at, project_id, delegated_to, important, recurrence }
+  return { title, category, priority, due_at, project_id, delegated_to, important, recurrence, tags }
 }

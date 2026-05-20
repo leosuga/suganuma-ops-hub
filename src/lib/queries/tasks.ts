@@ -19,6 +19,7 @@ type TaskVars = {
   delegated_to?: string | null
   important?: boolean
   recurrence?: string | null
+  tags?: string[] | null
 }
 
 export const taskKeys = {

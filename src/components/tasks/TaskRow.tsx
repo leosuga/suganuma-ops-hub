@@ -182,6 +182,13 @@ export function TaskRow({ task, onToggle, onEdit, onDelete }: TaskRowProps) {
           </span>
         )}
 
+        {/* Tags */}
+        {task.tags && task.tags.length > 0 && task.tags.map((tag) => (
+          <span key={tag} className="flex-none text-[7px] font-mono text-teal px-1 py-0.5 border border-teal/30 rounded-sm">
+            #{tag}
+          </span>
+        ))}
+
         {/* Due date */}
         {dueText && (
           <span

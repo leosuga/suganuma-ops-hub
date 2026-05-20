@@ -54,6 +54,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
       delegated_to: parsed.delegated_to ?? undefined,
       important: parsed.important ?? false,
       recurrence: parsed.recurrence ?? null,
+      tags: parsed.tags ?? null,
       status: "todo",
     })
 

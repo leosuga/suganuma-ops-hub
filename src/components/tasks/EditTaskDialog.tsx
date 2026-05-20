@@ -51,6 +51,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
   const [delegatedTo, setDelegatedTo] = useState("")
   const [important, setImportant] = useState(false)
   const [recurrence, setRecurrence] = useState("")
+  const [tagsInput, setTagsInput] = useState("")
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const updateTask = useUpdateTask()
@@ -78,6 +79,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       setDelegatedTo(task.delegated_to ?? "")
       setImportant(task.important ?? false)
       setRecurrence(task.recurrence ?? "")
+      setTagsInput((task.tags ?? []).join(" "))
       setConfirmDelete(false)
     }
   }, [task])
@@ -99,6 +101,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       delegated_to?: string | null
       important?: boolean
       recurrence?: string | null
+      tags?: string[] | null
     } = {
       id: task.id,
       title: title.trim(),
@@ -111,6 +114,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       delegated_to: delegatedTo.trim() || null,
       important,
       recurrence: recurrence || null,
+      tags: tagsInput.trim() ? tagsInput.trim().split(/\s+/).filter(Boolean) : null,
     }
 
     if (status === "done" && task.status !== "done") {
@@ -289,6 +293,18 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+              Tags
+            </span>
+            <input
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              placeholder="#casa #trabalho — separar por espaços"
+              className={inputClass}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
