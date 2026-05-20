@@ -20,6 +20,7 @@ export const projectKeys = {
 
 export const projectsOptions = queryOptions({
   queryKey: projectKeys.all,
+  staleTime: 5 * 60_000,
   queryFn: async (): Promise<ProjectRow[]> => {
     const supabase = createClient()
     const { data, error } = await supabase

@@ -10,6 +10,7 @@ export const budgetKeys = {
 export function budgetOptions(month: string) {
   return queryOptions({
     queryKey: budgetKeys.byMonth(month),
+    staleTime: Infinity,
     queryFn: async (): Promise<BudgetRow | null> => {
       const supabase = createClient()
       const { data, error } = await supabase

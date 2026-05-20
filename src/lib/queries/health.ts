@@ -59,6 +59,7 @@ export function useCreateHealthLog() {
 
 const pregnancyOptions = queryOptions({
   queryKey: healthKeys.pregnancy,
+  staleTime: Infinity,
   queryFn: async (): Promise<PregnancyRow | null> => {
     const supabase = createClient()
     const { data, error } = await supabase
@@ -147,6 +148,7 @@ export function useDeleteAppointment() {
 
 const protocolsOptions = queryOptions({
   queryKey: healthKeys.protocols,
+  staleTime: 5 * 60_000,
   queryFn: async (): Promise<ProtocolRow[]> => {
     const supabase = createClient()
     const { data, error } = await supabase

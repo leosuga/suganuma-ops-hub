@@ -1,0 +1,187 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import Link from "next/link"
+import dynamic from "next/dynamic"
+import { useUpdateNote } from "@/lib/queries/notes"
+import type { NoteRow as NoteRowType } from "@/lib/queries/notes"
+import { useTasks } from "@/lib/queries/tasks"
+import { useCreateTask } from "@/lib/queries/tasks"
+import { cn } from "@/lib/utils"
+
+const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
+
+export function NoteRow({ note, onDelete }: { note: NoteRowType; onDelete: (id: string) => void }) {
+  const updateNote = useUpdateNote()
+  const { data: tasks = [] } = useTasks()
+  const createTask = useCreateTask()
+  const [editing, setEditing] = useState(false)
+  const [title, setTitle] = useState(note.title)
+  const [content, setContent] = useState(note.content ?? "")
+  const [linkedTaskId, setLinkedTaskId] = useState(note.linked_task_id ?? "")
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+
+  useEffect(() => {
+    setTitle(note.title)
+    setContent(note.content ?? "")
+    setLinkedTaskId(note.linked_task_id ?? "")
+  }, [note])
+
+  const linkedTask = linkedTaskId ? tasks.find(t => t.id === linkedTaskId) : null
+
+  async function handleTogglePin() {
+    await updateNote.mutateAsync({ id: note.id, pinned: !note.pinned })
+  }
+
+  async function handleSave() {
+    if (!title.trim()) return
+    const tagsFromContent = content.match(/#[\w-]+/g)?.map((t) => t.slice(1)) ?? (note.tags ?? [])
+    await updateNote.mutateAsync({
+      id: note.id,
+      title: title.trim(),
+      content: content.trim() || null,
+      tags: tagsFromContent,
+      linked_task_id: linkedTaskId || null,
+    })
+    setEditing(false)
+  }
+
+  async function handleConvertToTask() {
+    const result = await createTask.mutateAsync({
+      title: note.title,
+      notes: note.content ?? undefined,
+      category: "personal",
+      priority: "med",
+      status: "todo",
+    })
+    await updateNote.mutateAsync({ id: note.id, linked_task_id: result.id, pinned: false })
+  }
+
+  const dateStr = new Date(note.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })
+
+  if (editing) {
+    return (
+      <div className="border border-teal/20 bg-surface rounded-sm p-3 space-y-3">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && e.metaKey) handleSave() }}
+          placeholder="Título"
+          autoFocus
+          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono font-semibold text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+        />
+        <textarea
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Escreva sua nota..."
+          rows={6}
+          className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors resize-none"
+        />
+        {note.tags && note.tags.length > 0 && (
+          <div className="flex gap-1 flex-wrap">
+            {note.tags.map((t) => (
+              <span key={t} className="text-[9px] font-mono text-on-surface/30 px-1.5 py-0.5 border border-border rounded-sm">{t}</span>
+            ))}
+          </div>
+        )}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            Vincular a task
+          </span>
+          <select
+            value={linkedTaskId}
+            onChange={(e) => setLinkedTaskId(e.target.value)}
+            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
+          >
+            <option value="">Nenhuma</option>
+            {tasks.filter(t => t.status !== "done" && t.status !== "archived").map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.title.slice(0, 50)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex justify-end gap-2">
+          <button onClick={() => setEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">CANCELAR</button>
+          <button onClick={handleSave} disabled={updateNote.isPending || !title.trim()} className="h-7 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors">
+            {updateNote.isPending ? "..." : "SALVAR"}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={cn(
+      "border border-border bg-surface rounded-sm p-3 transition-colors",
+      note.pinned && "border-amber/20"
+    )}>
+      <div className="flex items-start gap-2">
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setEditing(true)}>
+          <div className="flex items-center gap-2">
+            <h3 className="text-[13px] font-mono font-semibold text-on-surface truncate">{note.title}</h3>
+            {note.pinned && (
+              <span className="flex-none text-[8px] font-mono text-amber uppercase tracking-wider">PIN</span>
+            )}
+          </div>
+          {note.content && (
+            <div className={cn(
+              "prose prose-invert max-w-none text-[11px] font-mono text-on-surface/40 mt-1",
+              expanded ? "" : "line-clamp-2"
+            )}>
+              <ReactMarkdown>{note.content}</ReactMarkdown>
+            </div>
+          )}
+          {note.content && note.content.length > 120 && !expanded && (
+            <button onClick={(e) => { e.stopPropagation(); setExpanded(true) }} className="text-[9px] font-mono text-teal/60 hover:text-teal mt-0.5">
+              expandir...
+            </button>
+          )}
+          {note.tags && note.tags.length > 0 && (
+            <div className="flex gap-1 flex-wrap mt-1.5">
+              {note.tags.map((t) => (
+                <span key={t} className="text-[8px] font-mono text-on-surface/30 px-1.5 py-0.5 border border-border rounded-sm">{t}</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center gap-0.5 flex-none">
+          {linkedTask ? (
+            <Link
+              href={`/tasks?project=${linkedTask.project_id ?? ""}`}
+              onClick={(e) => e.stopPropagation()}
+              title={`Task: ${linkedTask.title}`}
+              className="flex-none text-[8px] font-mono text-teal/60 hover:text-teal border border-teal/30 rounded-sm px-1.5 py-0.5 no-underline"
+            >
+              TASK ↗
+            </Link>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); handleConvertToTask() }}
+              disabled={createTask.isPending}
+              className="flex-none text-[7px] font-mono text-on-surface/30 hover:text-teal border border-on-surface/20 hover:border-teal rounded-sm px-1 py-0.5 transition-colors"
+              title="Converter em task"
+            >
+              →TASK
+            </button>
+          )}
+          <button onClick={handleTogglePin} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-amber transition-colors text-[11px]" title={note.pinned ? "Desafixar" : "Fixar"}>
+            {note.pinned ? "★" : "☆"}
+          </button>
+          {confirmDelete ? (
+            <>
+              <button onClick={() => { onDelete(note.id); setConfirmDelete(false) }} className="text-[8px] font-mono text-danger hover:opacity-70 tracking-wider">DEL</button>
+              <button onClick={() => setConfirmDelete(false)} className="text-on-surface/30 hover:text-on-surface/60 text-[14px] ml-1">×</button>
+            </>
+          ) : (
+            <button onClick={() => setConfirmDelete(true)} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors">×</button>
+          )}
+        </div>
+      </div>
+      <div className="text-[9px] font-mono text-on-surface/20 mt-2">{dateStr}</div>
+    </div>
+  )
+}

@@ -13,7 +13,10 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
 import type { TransactionRow } from "@/lib/queries/finance"
 
-const RevenueChart = dynamic(() => import("@/components/finance/RevenueChart").then(m => ({ default: m.RevenueChart })), { ssr: false })
+const RevenueChart = dynamic(() => import("@/components/finance/RevenueChart").then(m => ({ default: m.RevenueChart })), {
+  ssr: false,
+  loading: () => <div className="h-48 animate-pulse rounded-sm bg-surface border border-border" />,
+})
 const CSVImportDialog = dynamic(() => import("@/components/finance/CSVImportDialog").then(m => ({ default: m.CSVImportDialog })), { ssr: false })
 
 function currentMonth() {

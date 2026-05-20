@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import Papa from "papaparse"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useImportCSV } from "@/lib/queries/finance"
 import { cn } from "@/lib/utils"
@@ -27,9 +28,6 @@ function detectKind(amount: number): Transaction["kind"] {
 }
 
 function parseCSVRows(text: string): ParsedRow[] {
-  // dynamic import is not needed — papaparse is sync for string input
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const Papa = require("papaparse") as typeof import("papaparse")
   const result = Papa.parse<Record<string, string>>(text, {
     header: true,
     skipEmptyLines: true,

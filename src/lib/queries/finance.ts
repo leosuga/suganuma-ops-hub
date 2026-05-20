@@ -105,6 +105,7 @@ export function useDeleteAccount() {
 export function transactionsOptions(filters?: TransactionFilters) {
   return queryOptions({
     queryKey: financeKeys.transactions(filters),
+    staleTime: 30_000,
     queryFn: async (): Promise<TransactionRow[]> => {
       const supabase = createClient()
       let q = supabase.from("transaction").select("*")

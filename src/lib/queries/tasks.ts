@@ -29,6 +29,7 @@ export const taskKeys = {
 
 export const tasksOptions = queryOptions({
   queryKey: taskKeys.all,
+  staleTime: 30_000,
   queryFn: async (): Promise<TaskRow[]> => {
     const supabase = createClient()
     const { data, error } = await supabase
