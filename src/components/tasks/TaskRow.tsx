@@ -175,6 +175,13 @@ export function TaskRow({ task, onToggle, onEdit, onDelete }: TaskRowProps) {
           </span>
         )}
 
+        {/* Recurrence badge */}
+        {task.recurrence && (
+          <span className="flex-none text-[8px] font-mono text-purple-400 px-1 py-0.5 border border-purple-400/30 rounded-sm">
+            {task.recurrence === "daily" ? "1D" : task.recurrence === "weekly" ? "7D" : "30D"}
+          </span>
+        )}
+
         {/* Due date */}
         {dueText && (
           <span

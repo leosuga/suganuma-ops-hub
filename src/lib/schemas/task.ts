@@ -12,6 +12,7 @@ export const taskSchema = z.object({
   project_id: z.string().uuid().optional().nullable(),
   delegated_to: z.string().optional(),
   important: z.boolean().default(false),
+  recurrence: z.enum(["daily", "weekly", "monthly"]).optional().nullable(),
 })
 
 export type Task = z.infer<typeof taskSchema>

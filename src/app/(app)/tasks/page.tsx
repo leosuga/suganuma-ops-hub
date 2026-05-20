@@ -63,11 +63,34 @@ export default function TasksPage() {
 
   function handleToggle(id: string, currentStatus: string) {
     const isDone = currentStatus === "done"
+    const task = tasks.find((t) => t.id === id)
     updateTask.mutate({
       id,
       status: isDone ? "todo" : "done",
       completed_at: isDone ? null : new Date().toISOString(),
     })
+    if (!isDone && task?.recurrence) {
+      const nextDue = new Date()
+      nextDue.setHours(23, 59, 0, 0)
+      if (task.recurrence === "daily") {
+        nextDue.setDate(nextDue.getDate() + 1)
+      } else if (task.recurrence === "weekly") {
+        nextDue.setDate(nextDue.getDate() + 7)
+      } else if (task.recurrence === "monthly") {
+        nextDue.setMonth(nextDue.getMonth() + 1)
+      }
+      createTask.mutate({
+        title: task.title,
+        category: task.category,
+        priority: task.priority,
+        status: "todo",
+        due_at: nextDue.toISOString(),
+        recurrence: task.recurrence,
+        project_id: task.project_id ?? undefined,
+         delegated_to: task.delegated_to ?? undefined,
+        important: task.important,
+      })
+    }
   }
 
   function handleDelete(id: string) {

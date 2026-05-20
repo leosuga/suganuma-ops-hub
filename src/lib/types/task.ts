@@ -11,6 +11,7 @@ export interface TaskRow {
   project_id: string | null
   delegated_to: string | null
   important: boolean
+  recurrence: string | null
   created_at: string
   updated_at: string
 }
@@ -28,6 +29,7 @@ export interface TaskInsert {
   project_id?: string | null
   delegated_to?: string | null
   important?: boolean
+  recurrence?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -45,6 +47,7 @@ export interface TaskUpdate {
   project_id?: string | null
   delegated_to?: string | null
   important?: boolean
+  recurrence?: string | null
   created_at?: string
   updated_at?: string
 }

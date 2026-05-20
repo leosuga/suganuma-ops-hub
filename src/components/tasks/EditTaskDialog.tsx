@@ -50,6 +50,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
   const [projectId, setProjectId] = useState("")
   const [delegatedTo, setDelegatedTo] = useState("")
   const [important, setImportant] = useState(false)
+  const [recurrence, setRecurrence] = useState("")
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const updateTask = useUpdateTask()
@@ -76,6 +77,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       setProjectId(task.project_id ?? "")
       setDelegatedTo(task.delegated_to ?? "")
       setImportant(task.important ?? false)
+      setRecurrence(task.recurrence ?? "")
       setConfirmDelete(false)
     }
   }, [task])
@@ -96,6 +98,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       project_id?: string | null
       delegated_to?: string | null
       important?: boolean
+      recurrence?: string | null
     } = {
       id: task.id,
       title: title.trim(),
@@ -107,6 +110,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       project_id: projectId || null,
       delegated_to: delegatedTo.trim() || null,
       important,
+      recurrence: recurrence || null,
     }
 
     if (status === "done" && task.status !== "done") {
@@ -262,6 +266,29 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 Marcar como importante (Eisenhower)
               </span>
             </label>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+              Recorrência
+            </span>
+            <div className="flex gap-1.5">
+              {[{ value: "", label: "NENHUMA" }, { value: "daily", label: "DIÁRIA" }, { value: "weekly", label: "SEMANAL" }, { value: "monthly", label: "MENSAL" }].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setRecurrence(opt.value)}
+                  className={cn(
+                    "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
+                    recurrence === opt.value
+                      ? "bg-teal/15 text-teal border-teal/40"
+                      : "text-on-surface/40 border-border hover:border-on-surface/30"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
