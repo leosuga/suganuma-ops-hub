@@ -6,6 +6,20 @@ import { useRealtimeTable } from "@/lib/realtime"
 
 export type { TaskRow }
 
+type TaskVars = {
+  id?: string
+  title?: string
+  notes?: string | null
+  category?: string
+  status?: string
+  priority?: string
+  due_at?: string | null
+  completed_at?: string | null
+  project_id?: string | null
+  delegated_to?: string | null
+  important?: boolean
+}
+
 export const taskKeys = {
   all: ["tasks"] as const,
   byProject: (projectId: string) => ["tasks", "project", projectId] as const,
@@ -57,10 +71,8 @@ export function useCreateTask() {
 export function useUpdateTask() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...updates
-    }: { id: string; completed_at?: string | null } & Partial<Omit<Task, "id">> & { notes?: string | null; due_at?: string | null }) => {
+    mutationFn: async (vars: TaskVars & { id: string }) => {
+      const { id, ...updates } = vars
       const supabase = createClient()
       const { data, error } = await supabase
         .from("task")
@@ -71,7 +83,7 @@ export function useUpdateTask() {
       if (error) throw error
       return data as TaskRow
     },
-    onMutate: async (vars: { id: string; completed_at?: string | null } & Partial<Omit<Task, "id">> & { notes?: string | null; due_at?: string | null }) => {
+    onMutate: async (vars) => {
       await queryClient.cancelQueries({ queryKey: taskKeys.all })
       const prev = queryClient.getQueryData<TaskRow[]>(taskKeys.all)
       queryClient.setQueryData<TaskRow[]>(taskKeys.all, (old) =>

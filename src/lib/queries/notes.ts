@@ -6,6 +6,15 @@ import { useRealtimeTable } from "@/lib/realtime"
 
 export type { NoteRow }
 
+type NoteVars = {
+  id?: string
+  title?: string
+  content?: string | null
+  tags?: string[] | null
+  pinned?: boolean
+  linked_task_id?: string | null
+}
+
 export const noteKeys = {
   all: ["notes"] as const,
   pinned: ["notes", "pinned"] as const,
@@ -55,10 +64,8 @@ export function useCreateNote() {
 export function useUpdateNote() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...updates
-    }: { id: string } & Partial<Omit<Note, "id">>) => {
+    mutationFn: async (vars: NoteVars & { id: string }) => {
+      const { id, ...updates } = vars
       const supabase = createClient()
       const { data, error } = await supabase
         .from("note")

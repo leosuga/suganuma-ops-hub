@@ -6,6 +6,14 @@ import { useRealtimeTable } from "@/lib/realtime"
 
 export type { ProjectRow }
 
+type ProjectVars = {
+  id?: string
+  name?: string
+  description?: string | null
+  color?: string
+  status?: string
+}
+
 export const projectKeys = {
   all: ["projects"] as const,
 }
@@ -54,10 +62,8 @@ export function useCreateProject() {
 export function useUpdateProject() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({
-      id,
-      ...updates
-    }: { id: string } & Partial<Omit<Project, "id">>) => {
+    mutationFn: async (vars: ProjectVars & { id: string }) => {
+      const { id, ...updates } = vars
       const supabase = createClient()
       const { data, error } = await supabase
         .from("project")
