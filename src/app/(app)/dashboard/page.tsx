@@ -18,6 +18,7 @@ import { DailyBriefing } from "@/components/dashboard/DailyBriefing"
 import { NeedsAttention } from "@/components/dashboard/NeedsAttention"
 import { TaskKPIs } from "@/components/dashboard/TaskKPIs"
 import { EisenhowerMatrix } from "@/components/dashboard/EisenhowerMatrix"
+import { WeeklyReview } from "@/components/dashboard/WeeklyReview"
 import type { TaskRow } from "@/lib/queries/tasks"
 
 function weeksFromDueDate(dueDate: string): number {
@@ -149,6 +150,8 @@ export default function DashboardPage() {
             </span>
           </div>
         )}
+
+        <WeeklyReview tasks={tasks} />
 
         <TaskKPIs
           pending={pending.length}
