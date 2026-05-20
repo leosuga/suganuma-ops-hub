@@ -2,18 +2,22 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useTasks, useCreateTask } from "@/lib/queries/tasks"
-import { useTransactions, useCreateTransaction } from "@/lib/queries/finance"
+import { useTasks } from "@/lib/queries/tasks"
+import { useTransactions } from "@/lib/queries/finance"
 import { useTitle } from "@/lib/useTitle"
-import { useAppointments, useProtocols, useProtocolEntries, usePregnancy, useCreateHealthLog } from "@/lib/queries/health"
+import { useAppointments, usePregnancy, useCreateHealthLog } from "@/lib/queries/health"
 import { useMealPlans } from "@/lib/queries/meals"
 import { useNotes } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
-import { projectKeys } from "@/lib/queries/projects"
-import { cn } from "@/lib/utils"
-import { parseTitle } from "@/lib/parse-title"
-import { useQueryClient } from "@tanstack/react-query"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
+import { StatCard } from "@/components/dashboard/StatCard"
+import { ProtocolsSummary } from "@/components/dashboard/ProtocolsSummary"
+import { QuickAddTask } from "@/components/dashboard/QuickAddTask"
+import { QuickAddExpense } from "@/components/dashboard/QuickAddExpense"
+import { DailyBriefing } from "@/components/dashboard/DailyBriefing"
+import { NeedsAttention } from "@/components/dashboard/NeedsAttention"
+import { TaskKPIs } from "@/components/dashboard/TaskKPIs"
+import { EisenhowerMatrix } from "@/components/dashboard/EisenhowerMatrix"
 import type { TaskRow } from "@/lib/queries/tasks"
 
 function weeksFromDueDate(dueDate: string): number {
@@ -24,32 +28,6 @@ function weeksFromDueDate(dueDate: string): number {
   return Math.max(0, Math.round(40 - weeksLeft))
 }
 
-function StatCard({
-  label,
-  value,
-  sub,
-  color = "text-on-surface",
-}: {
-  label: string
-  value: string | number
-  sub?: string
-  color?: string
-}) {
-  return (
-    <div className="border border-border bg-surface rounded-sm p-4 flex flex-col gap-1">
-      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-        {label}
-      </span>
-      <span className={`text-[28px] font-mono font-bold leading-none ${color}`}>
-        {value}
-      </span>
-      {sub && (
-        <span className="text-[10px] font-mono text-on-surface/30">{sub}</span>
-      )}
-    </div>
-  )
-}
-
 function currentMonth() {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
@@ -57,151 +35,6 @@ function currentMonth() {
 
 function fmt(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
-}
-
-function ProtocolsSummary() {
-  const { data: protocols = [] } = useProtocols()
-  const active = protocols.filter((p) => p.active)
-  const today = new Date().toISOString().slice(0, 10)
-
-  const checks = active.map((p) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { data: entries = [] } = useProtocolEntries(p.id)
-    return entries.some((e) => e.done_on === today)
-  })
-
-  const doneCount = checks.filter(Boolean).length
-  const total = active.length
-
-  if (total === 0) return null
-
-  return (
-    <div className="border border-border bg-surface rounded-sm p-4 flex flex-col gap-1">
-      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-        PROTOCOLOS
-      </span>
-      <span className={`text-[28px] font-mono font-bold leading-none ${doneCount === total ? "text-health" : "text-on-surface"}`}>
-        {doneCount}/{total}
-      </span>
-      <span className="text-[10px] font-mono text-on-surface/30">feitos hoje</span>
-    </div>
-  )
-}
-
-function QuickAddTask({ onCreated }: { onCreated: () => void }) {
-  const [input, setInput] = useState("")
-  const createTask = useCreateTask()
-  const { data: projects = [] } = useProjects()
-
-  const parsed = parseTitle(input, projects)
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!parsed.title.trim()) return
-
-    await createTask.mutateAsync({
-      title: parsed.title,
-      category: parsed.category ?? "personal",
-      priority: parsed.priority ?? "med",
-      status: "todo",
-      due_at: parsed.due_at ?? null,
-      project_id: parsed.project_id ?? null,
-      delegated_to: parsed.delegated_to ?? undefined,
-      important: parsed.important ?? false,
-    })
-    setInput("")
-    onCreated()
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="border border-border bg-surface rounded-sm overflow-hidden">
-      <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
-          QUICK-ADD
-        </span>
-        <Link href="/tasks" className="ml-auto text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">
-          +DETALHES →
-        </Link>
-      </div>
-      <div className="flex items-center gap-2 px-4 py-2">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Nova task rápida... (>projeto #finance !urgent ^tomorrow @Fulano +importante)"
-          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
-        />
-        <button
-          type="submit"
-          disabled={!parsed.title.trim() || createTask.isPending}
-          className="h-8 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors flex-none"
-        >
-          {createTask.isPending ? "..." : "+ ADD"}
-        </button>
-      </div>
-    </form>
-  )
-}
-
-function QuickAddExpense({ onCreated }: { onCreated: () => void }) {
-  const [amount, setAmount] = useState("")
-  const [desc, setDesc] = useState("")
-  const createTxn = useCreateTransaction()
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const value = parseFloat(amount.replace(",", "."))
-    if (!value || !desc.trim()) return
-    await createTxn.mutateAsync({
-      kind: "expense",
-      amount: value,
-      currency: "BRL",
-      description: desc.trim(),
-      occurred_on: new Date().toISOString().slice(0, 10),
-      category: null,
-      account_id: null,
-    })
-    setAmount("")
-    setDesc("")
-    onCreated()
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="border border-border bg-surface rounded-sm overflow-hidden">
-      <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
-          DESPESA RÁPIDA
-        </span>
-        <Link href="/finance" className="ml-auto text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">
-          +DETALHES →
-        </Link>
-      </div>
-      <div className="flex items-center gap-2 px-4 py-2">
-        <input
-          type="text"
-          inputMode="decimal"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="R$ 0,00"
-          className="w-24 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors flex-none"
-        />
-        <input
-          type="text"
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-          placeholder="Descrição da despesa..."
-          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
-        />
-        <button
-          type="submit"
-          disabled={!amount || !desc.trim() || createTxn.isPending}
-          className="h-8 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors flex-none"
-        >
-          {createTxn.isPending ? "..." : "+ ADD"}
-        </button>
-      </div>
-    </form>
-  )
 }
 
 export default function DashboardPage() {
@@ -243,17 +76,13 @@ export default function DashboardPage() {
     e.preventDefault()
     const kg = parseFloat(weightInput.replace(",", "."))
     if (!kg) return
-    await createHealthLog.mutateAsync({
-      kind: "weight",
-      value: { kg },
-    })
+    await createHealthLog.mutateAsync({ kind: "weight", value: { kg } })
     setWeightInput("")
   }
 
   return (
     <SectionErrorBoundary label="DASHBOARD">
       <div className="p-4 space-y-5">
-        {/* Header */}
         <div>
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
             SUGANUMA OPS HUB
@@ -263,51 +92,18 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* Quick-add section */}
-        <QuickAddTask onCreated={() => {}} />
-        <QuickAddExpense onCreated={() => {}} />
+        <QuickAddTask />
+        <QuickAddExpense />
 
-        {/* Daily briefing */}
-        <div className="border border-border bg-surface rounded-sm overflow-hidden">
-          <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
-              HOJE
-            </span>
-          </div>
-          <div className="p-3 space-y-1">
-            <span className="text-[10px] font-mono text-on-surface/50">
-              {pending.length} tasks · {done.length} concluídas · {urgent.length} urgentes
-            </span>
-            {todayAppts.length > 0 && (
-              <span className="text-[10px] font-mono text-health block">
-                {todayAppts.map(a => {
-                  const t = new Date(a.starts_at)
-                  return t.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) + " " + a.title
-                }).join(" · ")}
-              </span>
-            )}
-            {todayMeals.length > 0 && (
-              <span className="text-[10px] font-mono text-amber block">
-                Refeições: {todayMeals.map(m => m.meal_type === "breakfast" ? "café" : m.meal_type === "lunch" ? "almoço" : m.meal_type === "dinner" ? "janta" : "lanche").join(", ")}
-              </span>
-            )}
-            {todayNotes.length > 0 && (
-              <span className="text-[10px] font-mono text-on-surface/40 block">
-                Notas fixadas: {todayNotes.map(n => n.title).join(", ")}
-              </span>
-            )}
-            {pending.length === 0 && todayAppts.length === 0 && todayMeals.length === 0 && (
-              <span className="text-[10px] font-mono text-on-surface/20">Nada agendado para hoje</span>
-            )}
-            <div className="flex gap-2 pt-1">
-              <Link href="/calendar" className="text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">CALENDÁRIO →</Link>
-              <Link href="/meals" className="text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">REFEIÇÕES →</Link>
-              <Link href="/notes" className="text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">NOTAS →</Link>
-            </div>
-          </div>
-        </div>
+        <DailyBriefing
+          pendingCount={pending.length}
+          doneCount={done.length}
+          urgentCount={urgent.length}
+          todayAppts={todayAppts}
+          todayMeals={todayMeals}
+          todayNotes={todayNotes}
+        />
 
-        {/* Weight quick-log */}
         <form onSubmit={handleQuickWeight} className="border border-border bg-surface rounded-sm overflow-hidden">
           <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
@@ -319,8 +115,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2 px-4 py-2">
             <input
-              type="text"
-              inputMode="decimal"
+              type="text" inputMode="decimal"
               value={weightInput}
               onChange={(e) => setWeightInput(e.target.value)}
               placeholder="68.5 kg"
@@ -336,53 +131,8 @@ export default function DashboardPage() {
           </div>
         </form>
 
-        {/* Precisa de atenção */}
-        {needsAttention.length > 0 && (
-          <div className="border border-border bg-surface rounded-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-                {urgent.length > 0 ? "PRECISA DE ATENÇÃO" : "PRÓXIMAS TASKS"}
-              </span>
-              <Link href="/tasks" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
-                VER TASKS →
-              </Link>
-            </div>
-            <div className="divide-y divide-border">
-              {needsAttention.map((task: TaskRow) => {
-                const isOverdue = task.due_at && task.status !== "done" && new Date(task.due_at) < new Date()
-                const dueText = task.due_at
-                  ? new Date(task.due_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
-                  : null
-                return (
-                  <div key={task.id} className="flex items-center gap-3 h-10 px-4">
-                    <span className={cn(
-                      "flex-1 text-[12px] font-mono truncate",
-                      task.priority === "urgent" ? "text-danger" : "text-on-surface"
-                    )}>
-                      {task.title}
-                    </span>
-                    {dueText && (
-                      <span className={cn(
-                        "flex-none text-[10px] font-mono",
-                        isOverdue ? "text-danger" : "text-on-surface/30"
-                      )}>
-                        {dueText}
-                      </span>
-                    )}
-                    <span className={cn(
-                      "flex-none text-[9px] font-mono font-semibold tracking-wider uppercase",
-                      task.priority === "urgent" ? "text-danger" : "text-on-surface/40"
-                    )}>
-                      {task.priority === "urgent" ? "URG" : task.priority.toUpperCase()}
-                    </span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+        <NeedsAttention tasks={needsAttention} urgentCount={urgent.length} />
 
-        {/* Alertas */}
         {urgent.length > 0 && (
           <div className="border border-danger/40 bg-danger/5 rounded-sm px-4 py-2.5 flex items-center gap-3">
             <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse flex-none" />
@@ -400,48 +150,23 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* KPIs tasks */}
-        {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="border border-border bg-surface rounded-sm p-4 h-20 animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatCard label="Pendentes" value={pending.length} sub="tasks abertas" color={pending.length > 10 ? "text-amber" : "text-on-surface"} />
-            <StatCard label="Concluídas" value={done.length} sub="tasks hoje" color="text-teal" />
-            <StatCard label="Urgentes" value={urgent.length} sub="requerem atenção" color={urgent.length > 0 ? "text-danger" : "text-on-surface"} />
-            <StatCard label="Atrasadas" value={overdue.length} sub="fora do prazo" color={overdue.length > 0 ? "text-amber" : "text-on-surface"} />
-          </div>
-        )}
+        <TaskKPIs
+          pending={pending.length}
+          done={done.length}
+          urgent={urgent.length}
+          overdue={overdue.length}
+          isLoading={isLoading}
+        />
 
-        {/* Finance + Health KPIs */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard
-            label="Saldo mês"
-            value={fmt(balance)}
-            sub={financeLoading ? "..." : `${transactions.length} transações`}
-            color={balance >= 0 ? "text-teal" : "text-danger"}
-          />
-          <StatCard
-            label="Despesas"
-            value={fmt(expense)}
-            sub="mês atual"
-            color={expense > 0 ? "text-danger" : "text-on-surface"}
-          />
+          <StatCard label="Saldo mês" value={fmt(balance)} sub={financeLoading ? "..." : `${transactions.length} transações`} color={balance >= 0 ? "text-teal" : "text-danger"} />
+          <StatCard label="Despesas" value={fmt(expense)} sub="mês atual" color={expense > 0 ? "text-danger" : "text-on-surface"} />
           {pregnancy?.due_date && (
-            <StatCard
-              label="Semana"
-              value={weeksFromDueDate(pregnancy.due_date)}
-              sub="de gestação"
-              color="text-health"
-            />
+            <StatCard label="Semana" value={weeksFromDueDate(pregnancy.due_date)} sub="de gestação" color="text-health" />
           )}
           <ProtocolsSummary />
         </div>
 
-        {/* Próximas consultas */}
         {upcomingAppts.length > 0 && (
           <div className="border border-border bg-surface rounded-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
@@ -469,7 +194,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Projetos ativos */}
         {projects.filter((p) => p.status === "active").length > 0 && (
           <div className="border border-border bg-surface rounded-sm">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
@@ -506,69 +230,8 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Eisenhower Matrix */}
-        {pending.length > 0 && (
-          <div className="border border-border bg-surface rounded-sm">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-                FOCO — MATRIZ DE EISENHOWER
-              </span>
-              <Link href="/tasks" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
-                VER TASKS →
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 gap-[1px] bg-border">
-              {(() => {
-                const q1 = pending.filter((t) => t.important && (t.priority === "urgent" || (t.due_at && new Date(t.due_at) < new Date())))
-                const q2 = pending.filter((t) => t.important && t.priority !== "urgent" && (!t.due_at || new Date(t.due_at) >= new Date()))
-                const q3 = pending.filter((t) => !t.important && (t.priority === "urgent" || (t.due_at && new Date(t.due_at) < new Date())))
-                const q4 = pending.filter((t) => !t.important && t.priority !== "urgent" && (!t.due_at || new Date(t.due_at) >= new Date()))
-                const quadrants = [
-                  { label: "URGENTE + IMPORTANTE", tasks: q1, color: "text-danger", borderColor: "border-danger/30" },
-                  { label: "IMPORTANTE · NÃO URG", tasks: q2, color: "text-amber", borderColor: "border-amber/30" },
-                  { label: "URGENTE · NÃO IMPORT", tasks: q3, color: "text-teal", borderColor: "border-teal/30" },
-                  { label: "NEM URG · NEM IMPORT", tasks: q4, color: "text-on-surface/30", borderColor: "border-border" },
-                ]
-                return quadrants.map((q) => (
-                  <div key={q.label} className="bg-surface p-3">
-                    <div className={`text-[8px] font-mono font-semibold tracking-wider uppercase ${q.color} mb-2`}>
-                      {q.label}
-                    </div>
-                    {q.tasks.length === 0 ? (
-                      <span className="text-[10px] font-mono text-on-surface/20">Vazio</span>
-                    ) : (
-                      <div className="space-y-1">
-                        {q.tasks.slice(0, 3).map((task: TaskRow) => (
-                          <div key={task.id} className="flex items-center gap-1.5">
-                            {task.project_id && (() => {
-                              const proj = projects.find((p) => p.id === task.project_id)
-                              return proj ? (
-                                <span className="w-1.5 h-1.5 rounded-full flex-none" style={{ backgroundColor: proj.color }} />
-                              ) : null
-                            })()}
-                            <span className="text-[10px] font-mono text-on-surface/60 truncate">
-                              {task.title}
-                            </span>
-                          </div>
-                        ))}
-                        {q.tasks.length > 3 && (
-                          <span className="text-[9px] font-mono text-on-surface/20">
-                            +{q.tasks.length - 3} mais
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    <div className="text-[9px] font-mono text-on-surface/20 mt-1.5">
-                      {q.tasks.length} task{q.tasks.length !== 1 ? "s" : ""}
-                    </div>
-                  </div>
-                ))
-              })()}
-            </div>
-          </div>
-        )}
+        <EisenhowerMatrix pending={pending} projects={projects} />
 
-        {/* Tasks por categoria */}
         <div className="border border-border bg-surface rounded-sm">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
