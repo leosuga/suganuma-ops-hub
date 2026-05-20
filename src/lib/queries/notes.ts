@@ -1,14 +1,15 @@
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { Note } from "@/lib/schemas/note"
-import type { Database } from "@/lib/database.types"
+import type { NoteRow } from "@/lib/types"
 import { useRealtimeTable } from "@/lib/realtime"
 
-export type NoteRow = Database["public"]["Tables"]["note"]["Row"]
+export type { NoteRow }
 
 export const noteKeys = {
   all: ["notes"] as const,
   pinned: ["notes", "pinned"] as const,
+  byTask: (taskId: string) => ["notes", "task", taskId] as const,
 }
 
 const notesOptions = queryOptions({

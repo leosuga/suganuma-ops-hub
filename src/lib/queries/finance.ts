@@ -1,12 +1,11 @@
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { Account, Transaction } from "@/lib/schemas/finance"
-import type { Database } from "@/lib/database.types"
+import type { AccountRow, TransactionRow } from "@/lib/types"
 import { logger } from "@/lib/logger"
 import { useRealtimeTable } from "@/lib/realtime"
 
-export type AccountRow = Database["public"]["Tables"]["account"]["Row"]
-export type TransactionRow = Database["public"]["Tables"]["transaction"]["Row"]
+export type { AccountRow, TransactionRow }
 
 export const financeKeys = {
   all: ["finance"] as const,

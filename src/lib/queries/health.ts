@@ -1,14 +1,10 @@
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { HealthLog, Pregnancy, Appointment, Protocol, ProtocolEntry } from "@/lib/schemas/health"
-import type { Database } from "@/lib/database.types"
+import type { HealthLogRow, PregnancyRow, AppointmentRow, ProtocolRow, ProtocolEntryRow } from "@/lib/types"
 import { useRealtimeTable } from "@/lib/realtime"
 
-export type HealthLogRow = Database["public"]["Tables"]["health_log"]["Row"]
-export type PregnancyRow = Database["public"]["Tables"]["pregnancy"]["Row"]
-export type AppointmentRow = Database["public"]["Tables"]["appointment"]["Row"]
-export type ProtocolRow = Database["public"]["Tables"]["protocol"]["Row"]
-export type ProtocolEntryRow = Database["public"]["Tables"]["protocol_entry"]["Row"]
+export type { HealthLogRow, PregnancyRow, AppointmentRow, ProtocolRow, ProtocolEntryRow }
 
 export const healthKeys = {
   all: ["health"] as const,

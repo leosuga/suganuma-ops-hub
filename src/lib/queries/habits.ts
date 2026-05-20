@@ -2,10 +2,9 @@ import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/r
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeTable } from "@/lib/realtime"
 import type { HabitTrack, HabitEntry } from "@/lib/schemas/habit"
-import type { Database } from "@/lib/database.types"
+import type { HabitTrackRow, HabitEntryRow } from "@/lib/types"
 
-export type HabitTrackRow = Database["public"]["Tables"]["habit_track"]["Row"]
-export type HabitEntryRow = Database["public"]["Tables"]["habit_entry"]["Row"]
+export type { HabitTrackRow, HabitEntryRow }
 
 export const habitKeys = {
   all: ["habits"] as const,

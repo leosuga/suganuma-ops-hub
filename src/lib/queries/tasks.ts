@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { Task } from "@/lib/schemas/task"
-import type { Database } from "@/lib/database.types"
+import type { TaskRow } from "@/lib/types"
 import { useRealtimeTable } from "@/lib/realtime"
 
-export type TaskRow = Database["public"]["Tables"]["task"]["Row"]
+export type { TaskRow }
 
 export const taskKeys = {
   all: ["tasks"] as const,

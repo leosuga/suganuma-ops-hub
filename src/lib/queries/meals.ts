@@ -2,10 +2,9 @@ import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/r
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeTable } from "@/lib/realtime"
 import type { Meal, MealPlan } from "@/lib/schemas/meal"
-import type { Database } from "@/lib/database.types"
+import type { MealRow, MealPlanRow } from "@/lib/types"
 
-export type MealRow = Database["public"]["Tables"]["meal"]["Row"]
-export type MealPlanRow = Database["public"]["Tables"]["meal_plan"]["Row"]
+export type { MealRow, MealPlanRow }
 
 export const mealKeys = {
   all: ["meals"] as const,
