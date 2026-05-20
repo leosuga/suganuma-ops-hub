@@ -1,10 +1,12 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import Link from "next/link"
 import { useTitle } from "@/lib/useTitle"
 import dynamic from "next/dynamic"
 import { useNotes, useCreateNote, useUpdateNote, useDeleteNote } from "@/lib/queries/notes"
 import type { NoteRow } from "@/lib/queries/notes"
+import { useTasks } from "@/lib/queries/tasks"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
