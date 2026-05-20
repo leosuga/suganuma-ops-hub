@@ -15,16 +15,21 @@ const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
 
 function NoteRow({ note, onDelete }: { note: NoteRow; onDelete: (id: string) => void }) {
   const updateNote = useUpdateNote()
+  const { data: tasks = [] } = useTasks()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(note.title)
   const [content, setContent] = useState(note.content ?? "")
+  const [linkedTaskId, setLinkedTaskId] = useState(note.linked_task_id ?? "")
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     setTitle(note.title)
     setContent(note.content ?? "")
+    setLinkedTaskId(note.linked_task_id ?? "")
   }, [note])
+
+  const linkedTask = linkedTaskId ? tasks.find(t => t.id === linkedTaskId) : null
 
   async function handleTogglePin() {
     await updateNote.mutateAsync({ id: note.id, pinned: !note.pinned })
@@ -38,6 +43,7 @@ function NoteRow({ note, onDelete }: { note: NoteRow; onDelete: (id: string) => 
       title: title.trim(),
       content: content.trim() || null,
       tags: tagsFromContent,
+      linked_task_id: linkedTaskId || null,
     })
     setEditing(false)
   }
@@ -70,6 +76,23 @@ function NoteRow({ note, onDelete }: { note: NoteRow; onDelete: (id: string) => 
             ))}
           </div>
         )}
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            Vincular a task
+          </span>
+          <select
+            value={linkedTaskId}
+            onChange={(e) => setLinkedTaskId(e.target.value)}
+            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
+          >
+            <option value="">Nenhuma</option>
+            {tasks.filter(t => t.status !== "done" && t.status !== "archived").map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.title.slice(0, 50)}
+              </option>
+            ))}
+          </select>
+        </div>
         <div className="flex justify-end gap-2">
           <button onClick={() => setEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">CANCELAR</button>
           <button onClick={handleSave} disabled={updateNote.isPending || !title.trim()} className="h-7 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors">
@@ -116,6 +139,16 @@ function NoteRow({ note, onDelete }: { note: NoteRow; onDelete: (id: string) => 
         </div>
 
         <div className="flex items-center gap-0.5 flex-none">
+          {linkedTask && (
+            <Link
+              href={`/tasks?project=${linkedTask.project_id ?? ""}`}
+              onClick={(e) => e.stopPropagation()}
+              title={`Task: ${linkedTask.title}`}
+              className="flex-none text-[8px] font-mono text-teal/60 hover:text-teal border border-teal/30 rounded-sm px-1.5 py-0.5 no-underline"
+            >
+              TASK ↗
+            </Link>
+          )}
           <button onClick={handleTogglePin} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-amber transition-colors text-[11px]" title={note.pinned ? "Desafixar" : "Fixar"}>
             {note.pinned ? "★" : "☆"}
           </button>

@@ -1,9 +1,11 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useUpdateTask, useDeleteTask } from "@/lib/queries/tasks"
 import { useProjects } from "@/lib/queries/projects"
+import { useNotes, useCreateNote } from "@/lib/queries/notes"
 import type { TaskRow } from "@/lib/queries/tasks"
 import { cn } from "@/lib/utils"
 
@@ -53,6 +55,10 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
   const { data: projects = [] } = useProjects()
+  const { data: notes = [] } = useNotes()
+  const createNote = useCreateNote()
+
+  const linkedNotes = notes.filter((n) => n.linked_task_id === task?.id)
 
   useEffect(() => {
     if (task) {
@@ -156,6 +162,25 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors resize-none"
             />
           </div>
+
+          {linkedNotes.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+                Notas vinculadas
+              </span>
+              <div className="space-y-1">
+                {linkedNotes.map((n) => (
+                  <Link
+                    key={n.id}
+                    href="/notes"
+                    className="block text-[11px] font-mono text-teal/70 hover:text-teal border border-border rounded-sm px-2 py-1 truncate no-underline"
+                  >
+                    {n.title}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col gap-1">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
