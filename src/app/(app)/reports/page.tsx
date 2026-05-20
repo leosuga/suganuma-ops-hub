@@ -4,6 +4,10 @@ import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useTitle } from "@/lib/useTitle"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
+import { PeriodFilter } from "@/components/reports/PeriodFilter"
+import { ReportsKPIs } from "@/components/reports/ReportsKPIs"
+import { TaskTrendSection, FinanceTrendSection } from "@/components/reports/TrendSections"
+import { HabitHeatmap } from "@/components/reports/HabitHeatmap"
 
 function fmt(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
@@ -27,96 +31,12 @@ function isoWeekKey(d: Date) {
   return `${String(s.getDate()).padStart(2, "0")}/${String(s.getMonth() + 1).padStart(2, "0")}`
 }
 
-/* ── Simple CSS BarChart component ── */
-function SimpleBarChart({
-  data,
-  keys,
-  colors,
-  labels,
-  height = 140,
-}: {
-  data: { [key: string]: number | string; label: string }[]
-  keys: string[]
-  colors: string[]
-  labels: string[]
-  height?: number
-}) {
-  const max = Math.max(
-    1,
-    ...data.flatMap((d) => keys.map((k) => Number(d[k] || 0)))
-  )
-
-  return (
-    <div className="relative" style={{ height }}>
-      <div className="absolute inset-0 flex items-end gap-[2px]">
-        {data.map((item, idx) => (
-          <div key={idx} className="flex-1 flex flex-col justify-end gap-[1px]">
-            {keys.map((k, ki) => {
-              const value = Number(item[k] || 0)
-              const h = value > 0 ? `${(value / max) * 100}%` : "0%"
-              return (
-                <div
-                  key={k}
-                  className="w-full rounded-t-[2px] transition-all duration-300"
-                  style={{ height: h, backgroundColor: colors[ki] }}
-                  title={`${labels[ki]}: ${value}`}
-                />
-              )
-            })}
-          </div>
-        ))}
-      </div>
-      {/* X-axis labels */}
-      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-[1px] pt-2">
-        {data.map((item, idx) => (
-          <span
-            key={idx}
-            className="text-[8px] font-mono text-on-surface/30 flex-1 text-center"
-          >
-            {typeof item.label === "string" ? item.label : ""}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/* ── Period filter pills ── */
-function PeriodFilter({
-  value,
-  onChange,
-}: {
-  value: number | "all"
-  onChange: (v: number | "all") => void
-}) {
-  const options: { label: string; value: number | "all" }[] = [
-    { label: "7D", value: 7 },
-    { label: "30D", value: 30 },
-    { label: "90D", value: 90 },
-    { label: "TUDO", value: "all" },
-  ]
-
-  return (
-    <div className="flex gap-1">
-      {options.map((opt) => (
-        <button
-          key={String(opt.value)}
-          onClick={() => onChange(opt.value)}
-          className={`text-[9px] font-mono font-semibold tracking-wider px-2 py-1 rounded-sm transition-colors ${
-            value === opt.value
-              ? "bg-teal/20 text-teal border border-teal/40"
-              : "text-on-surface/30 hover:text-on-surface/60 border border-transparent"
-          }`}
-        >
-          {opt.label}
-        </button>
-      ))}
-    </div>
-  )
+function buildEntryKey(habitId: string, dateStr: string) {
+  return `${habitId}::${dateStr}`
 }
 
 export default function ReportsPage() {
-  useTitle("Reports · Suganuma Ops Hub")
+  useTitle("Reports \u00b7 Suganuma Ops Hub")
 
   const [tasks, setTasks] = useState<any[]>([])
   const [transactions, setTransactions] = useState<any[]>([])
@@ -170,7 +90,6 @@ export default function ReportsPage() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // Filter data by period
   const filteredTasks = cutoff
     ? tasks.filter((t: any) => t.created_at && new Date(t.created_at) >= cutoff)
     : tasks
@@ -196,9 +115,7 @@ export default function ReportsPage() {
     .reduce((s: number, t: any) => s + Number(t.amount), 0)
 
   const activeHabits = habits.filter((h: any) => h.active)
-  const active = activeHabits.length
 
-  // Simple streak calc (max streak across all habits)
   let maxStreak = 0
   for (const h of habits) {
     const days = new Set(
@@ -215,7 +132,6 @@ export default function ReportsPage() {
     if (streak > maxStreak) maxStreak = streak
   }
 
-  /* ── Weekly task trend ── */
   const taskTrendData = (() => {
     const weeks: { label: string; completed: number; created: number }[] = []
     const weekCount = period === 7 ? 1 : period === 30 ? 4 : period === 90 ? 12 : 8
@@ -237,7 +153,6 @@ export default function ReportsPage() {
     return weeks
   })()
 
-  /* ── Monthly finance trend ── */
   const financeTrendData = (() => {
     const months: { label: string; income: number; expense: number }[] = []
     const monthCount = period === 7 ? 1 : period === 30 ? 1 : period === 90 ? 3 : 6
@@ -256,7 +171,6 @@ export default function ReportsPage() {
     return months
   })()
 
-  /* ── Heatmap data ── */
   const heatmapDays = (() => {
     const dayCount = period === 7 ? 7 : period === 30 ? 14 : period === 90 ? 30 : 14
     const days: { dateStr: string; label: string }[] = []
@@ -272,7 +186,7 @@ export default function ReportsPage() {
 
   const entrySet = new Set<string>()
   for (const e of filteredEntries) {
-    entrySet.add(`${e.habit_id}::${new Date(e.done_on).toDateString()}`)
+    entrySet.add(buildEntryKey(e.habit_id, new Date(e.done_on).toDateString()))
   }
 
   return (
@@ -285,134 +199,28 @@ export default function ReportsPage() {
           <PeriodFilter value={period} onChange={setPeriod} />
         </div>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="border border-border bg-surface rounded-sm p-4">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">
-              TASKS – TAXA
-            </span>
-            <span className="text-xl font-mono font-semibold text-on-surface block">{rate}%</span>
-            <span className="text-[10px] font-mono text-on-surface/30 block mt-1">{done}/{total} concluídas</span>
-          </div>
+        <ReportsKPIs
+          rate={rate}
+          done={done}
+          total={total}
+          overdue={overdue}
+          balance={inc - exp}
+          income={inc}
+          expense={exp}
+          maxStreak={maxStreak}
+          activeHabits={activeHabits.length}
+          fmt={fmt}
+        />
 
-          <div className="border border-border bg-surface rounded-sm p-4">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">
-              TASKS – ATRASADAS
-            </span>
-            <span className={`text-xl font-mono font-semibold block ${overdue > 0 ? "text-danger" : "text-on-surface"}`}>{overdue}</span>
-            <span className="text-[10px] font-mono text-on-surface/30 block mt-1">pendências críticas</span>
-          </div>
+        <TaskTrendSection data={taskTrendData} />
+        <FinanceTrendSection data={financeTrendData} />
 
-          <div className="border border-border bg-surface rounded-sm p-4">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">
-              FINANCEIRO – SALDO
-            </span>
-            <span className={`text-xl font-mono font-semibold block ${inc - exp >= 0 ? "text-teal" : "text-danger"}`}>{fmt(inc - exp)}</span>
-            <span className="text-[10px] font-mono text-on-surface/30 block mt-1">{fmt(inc)} rec / {fmt(exp)} desp</span>
-          </div>
-
-          <div className="border border-border bg-surface rounded-sm p-4">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-1">
-              HÁBITOS – STREAK MÁX
-            </span>
-            <span className="text-xl font-mono font-semibold text-health block">{maxStreak}d</span>
-            <span className="text-[10px] font-mono text-on-surface/30 block mt-1">{active} ativos</span>
-          </div>
-        </div>
-
-        {/* Weekly Task Trend */}
-        <div className="border border-border bg-surface rounded-sm p-4">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
-            TASKS – CONCLUÍDAS POR SEMANA
-          </span>
-          <div className="mb-4">
-            <SimpleBarChart
-              data={taskTrendData}
-              keys={["completed", "created"]}
-              colors={["#55D7ED", "rgba(222,227,229,0.15)"]}
-              labels={["Concluídas", "Criadas"]}
-            />
-          </div>
-          <div className="flex gap-4 justify-center">
-            <span className="text-[9px] font-mono text-on-surface/30 flex items-center gap-1">
-              <span className="inline-block w-2 h-2 rounded-sm bg-[#55D7ED]" /> Concluídas
-            </span>
-            <span className="text-[9px] font-mono text-on-surface/30 flex items-center gap-1">
-              <span className="inline-block w-2 h-2 rounded-sm bg-[rgba(222,227,229,0.15)]" /> Criadas
-            </span>
-          </div>
-        </div>
-
-        {/* Monthly Finance Trend */}
-        <div className="border border-border bg-surface rounded-sm p-4">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
-            FINANCEIRO – FLUXO MENSAL
-          </span>
-          <div className="mb-4">
-            <SimpleBarChart
-              data={financeTrendData}
-              keys={["income", "expense"]}
-              colors={["#55D7ED", "#FFB4AB"]}
-              labels={["Receita", "Despesa"]}
-            />
-          </div>
-          <div className="flex gap-4 justify-center">
-            <span className="text-[9px] font-mono text-on-surface/30 flex items-center gap-1">
-              <span className="inline-block w-2 h-2 rounded-sm bg-[#55D7ED]" /> Receita
-            </span>
-            <span className="text-[9px] font-mono text-on-surface/30 flex items-center gap-1">
-              <span className="inline-block w-2 h-2 rounded-sm bg-[#FFB4AB]" /> Despesa
-            </span>
-          </div>
-        </div>
-
-        {/* Habit Heatmap */}
-        {activeHabits.length > 0 && (
-          <div className="border border-border bg-surface rounded-sm p-4 overflow-x-auto">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
-              HÁBITOS – ÚLTIMOS {heatmapDays.length} DIAS
-            </span>
-            <div className="min-w-max">
-              <div
-                className="grid gap-x-1"
-                style={{ gridTemplateColumns: `100px repeat(${heatmapDays.length}, minmax(20px, 1fr))` }}
-              >
-                <div className="text-[9px] font-mono text-on-surface/20" />
-                {heatmapDays.map((day) => (
-                  <div key={day.dateStr} className="text-center text-[8px] font-mono text-on-surface/20 pb-1">{day.label}</div>
-                ))}
-
-                {activeHabits.map((habit: any) => (
-                  <div key={habit.id} className="contents">
-                    <div className="text-[10px] font-mono text-on-surface/50 flex items-center gap-1 py-1 truncate">
-                      <span>{habit.emoji || "●"}</span>
-                      <span className="truncate">{habit.name}</span>
-                    </div>
-                    {heatmapDays.map((day) => {
-                      const key = `${habit.id}::${day.dateStr}`
-                      const done = entrySet.has(key)
-                      return (
-                        <div
-                          key={`${habit.id}-${day.dateStr}`}
-                          className="flex items-center justify-center py-1"
-                        >
-                          <div
-                            className="w-4 h-4 rounded-[2px]"
-                            style={{
-                              backgroundColor: done
-                                ? habit.color || "var(--color-health)"
-                                : "rgba(222,227,229,0.06)",
-                            }}
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
+        <HabitHeatmap
+          habits={activeHabits}
+          heatmapDays={heatmapDays}
+          entrySet={entrySet}
+          buildEntryKey={buildEntryKey}
+        />
       </div>
     </SectionErrorBoundary>
   )

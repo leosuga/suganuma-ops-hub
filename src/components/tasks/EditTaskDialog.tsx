@@ -42,7 +42,7 @@ interface EditTaskDialogProps {
 
 export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps) {
   const [title, setTitle] = useState("")
-  const [notes, setNotes] = useState("")
+  const [taskNotes, setTaskNotes] = useState("")
   const [category, setCategory] = useState<Category>("personal")
   const [priority, setPriority] = useState<Priority>("med")
   const [status, setStatus] = useState<Status>("todo")
@@ -63,7 +63,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
   useEffect(() => {
     if (task) {
       setTitle(task.title ?? "")
-      setNotes(task.notes ?? "")
+      setTaskNotes(task.notes ?? "")
       setCategory(task.category as Category)
       setPriority(task.priority as Priority)
       setStatus(task.status as Status)
@@ -99,7 +99,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
     } = {
       id: task.id,
       title: title.trim(),
-      notes: notes.trim() || undefined,
+      notes: taskNotes.trim() || undefined,
       category,
       priority,
       status,
@@ -155,8 +155,8 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               Notas
             </span>
             <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              value={taskNotes}
+              onChange={(e) => setTaskNotes(e.target.value)}
               placeholder="Notas, links, contexto..."
               rows={3}
               className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors resize-none"
