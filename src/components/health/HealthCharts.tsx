@@ -3,7 +3,7 @@
 import { WeightChart, BloodPressureChart } from "@/components/health/HealthTrends"
 import { useHealthLogs } from "@/lib/queries/health"
 
-export function HealthCharts() {
+export default function HealthCharts() {
   const { data: logs = [] } = useHealthLogs()
 
   if (logs.length === 0) return null
