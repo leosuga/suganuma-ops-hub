@@ -14,6 +14,7 @@ interface MonthRowProps {
   month: number
   monthLabel: string
   days: number
+  maxDays: number
   dayWidth: number
   events: AnnualEventRow[]
   onNewEvent: (dateStr: string) => void
@@ -102,6 +103,7 @@ export function MonthRow({
   month,
   monthLabel,
   days,
+  maxDays,
   dayWidth,
   events,
   onNewEvent,
@@ -246,23 +248,27 @@ export function MonthRow({
 
       {/* Day columns */}
       <div className="relative flex-1 flex">
-        {Array.from({ length: days }, (_, i) => {
+        {Array.from({ length: maxDays }, (_, i) => {
           const day = i + 1
+          const isValid = day <= days
           const dateStr = getDateStr(day)
           const isToday = dateStr === todayStr
+          const isPast = new Date(dateStr) < new Date(todayStr)
           return (
             <div
               key={day}
               className={cn(
-                "flex-none border-r border-border/20 cursor-pointer hover:bg-surface-hover/30 transition-colors",
-                day % 2 === 0 ? "bg-transparent" : "bg-surface/[0.02]",
-                isToday && "bg-teal/[0.08]"
+                "flex-none border-r border-border/20",
+                !isValid && "bg-on-surface/[0.01] cursor-default",
+                isValid && !isToday && !isPast && (day % 2 === 0 ? "bg-transparent" : "bg-surface/[0.02]"),
+                isValid && isPast && !isToday && "bg-on-surface/[0.015]",
+                isValid && isToday && "bg-teal/[0.10] border-teal/30"
               )}
               style={{ width: dayWidth }}
-              onClick={() => onNewEvent(dateStr)}
+              onClick={isValid ? () => onNewEvent(dateStr) : undefined}
             >
               {isToday && (
-                <div className="absolute top-0 bottom-0 w-px bg-teal/60 z-10" style={{ left: (day - 1) * dayWidth }} />
+                <div className="absolute top-0 bottom-0 w-px bg-teal/60" />
               )}
             </div>
           )

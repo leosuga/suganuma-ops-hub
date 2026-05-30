@@ -121,6 +121,7 @@ export function YearView() {
                   month={monthIdx}
                   monthLabel={monthLabel}
                   days={days}
+                  maxDays={maxDays}
                   dayWidth={dayWidth}
                   events={events}
                   onNewEvent={handleNewEvent}
