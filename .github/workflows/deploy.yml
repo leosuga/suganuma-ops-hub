@@ -93,4 +93,10 @@ jobs:
             docker ps | grep suganuma-ops-hub || true
             echo "Container image:"
             docker inspect --format='{{.Config.Image}}' suganuma-ops-hub 2>/dev/null || true
+            echo "---"
+            echo "Checking /calendar/year response:"
+            curl -s --max-time 5 https://ops.suganuma.com.br/calendar/year | head -c 200 || true
+            echo ""
+            echo "FAILED: Deploy verification failed"
+            exit 1
             RUNDEPLOY
