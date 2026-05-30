@@ -22,6 +22,7 @@ import type { AppointmentRow } from "@/lib/queries/health"
 const NAV_COMMANDS = [
   { label: "Dashboard", href: "/dashboard", shortcut: "D" },
   { label: "Calendar", href: "/calendar", shortcut: "C" },
+  { label: "Year Calendar", href: "/calendar/year", shortcut: "Y" },
   { label: "Task Engine", href: "/tasks", shortcut: "T" },
   { label: "Finance Hub", href: "/finance", shortcut: "F" },
   { label: "Health Hub", href: "/health", shortcut: "H" },

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/client"
 
-const TABLES = ["task", "project", "account", "transaction", "health_log", "pregnancy", "appointment", "protocol", "protocol_entry", "note", "meal", "meal_plan", "habit_track", "habit_entry", "budget"] as const
+const TABLES = ["task", "project", "account", "transaction", "health_log", "pregnancy", "appointment", "protocol", "protocol_entry", "note", "meal", "meal_plan", "habit_track", "habit_entry", "budget", "annual_event"] as const
 
 interface ExportData {
   version: string

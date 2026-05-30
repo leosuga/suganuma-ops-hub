@@ -98,6 +98,9 @@ export default function CalendarPage() {
           <div className="flex items-center gap-3">
             <span className="text-[10px] font-mono font-semibold tracking-[0.2em] text-on-surface/40 uppercase">CALENDAR</span>
             <button onClick={goToday} className="text-[9px] font-mono text-teal hover:text-teal-hi tracking-wider transition-colors">HOJE</button>
+            <Link href="/calendar/year" className="text-[9px] font-mono text-on-surface/20 hover:text-teal/80 tracking-wider transition-colors border-l border-border pl-2 ml-1">
+              ANO →
+            </Link>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={prevMonth} className="w-6 h-6 flex items-center justify-center text-on-surface/30 hover:text-on-surface/70 font-mono transition-colors">‹</button>
