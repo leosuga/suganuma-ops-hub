@@ -4,11 +4,9 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { cn } from "@/lib/utils"
 import type { AnnualEventRow } from "@/lib/types"
 
-const DAY_WIDTH = 24
-const HEADER_HEIGHT = 24
-const LABEL_WIDTH = 36
 const BAR_HEIGHT = 20
 const LANE_GAP = 2
+const LABEL_WIDTH = 36
 const BASE_ROW_HEIGHT = 32
 
 interface MonthRowProps {
@@ -16,6 +14,7 @@ interface MonthRowProps {
   month: number
   monthLabel: string
   days: number
+  dayWidth: number
   events: AnnualEventRow[]
   onNewEvent: (dateStr: string) => void
   onEditEvent: (event: AnnualEventRow) => void
@@ -45,10 +44,8 @@ function getLocalEvent(
 
   if (ed < mStart || sd > mEnd) return null
 
-  let startCol =
-    sd.getMonth() === month && sd.getFullYear() === year ? sd.getDate() : 1
-  let endCol =
-    ed.getMonth() === month && ed.getFullYear() === year ? ed.getDate() : days
+  let startCol = sd.getMonth() === month && sd.getFullYear() === year ? sd.getDate() : 1
+  let endCol = ed.getMonth() === month && ed.getFullYear() === year ? ed.getDate() : days
 
   startCol = Math.max(1, Math.min(startCol, days))
   endCol = Math.max(1, Math.min(endCol, days))
@@ -66,18 +63,14 @@ function getLocalEvent(
 }
 
 function assignLanes(events: MonthLocalEvent[]): Map<string, number> {
-  const sorted = [...events].sort(
-    (a, b) => a.startCol - b.startCol || a.endCol - b.endCol
-  )
+  const sorted = [...events].sort((a, b) => a.startCol - b.startCol || a.endCol - b.endCol)
   const lanes: { start: number; end: number }[][] = []
   const mapping = new Map<string, number>()
 
   for (const event of sorted) {
     let placed = false
     for (let i = 0; i < lanes.length; i++) {
-      const overlaps = lanes[i].some(
-        (l) => !(l.end < event.startCol || l.start > event.endCol)
-      )
+      const overlaps = lanes[i].some((l) => !(l.end < event.startCol || l.start > event.endCol))
       if (!overlaps) {
         lanes[i].push({ start: event.startCol, end: event.endCol })
         mapping.set(event.id, i)
@@ -109,6 +102,7 @@ export function MonthRow({
   month,
   monthLabel,
   days,
+  dayWidth,
   events,
   onNewEvent,
   onEditEvent,
@@ -117,6 +111,8 @@ export function MonthRow({
   const [localEvents, setLocalEvents] = useState<MonthLocalEvent[]>([])
   const [drag, setDrag] = useState<DragState | null>(null)
   const rowRef = useRef<HTMLDivElement>(null)
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
 
   useEffect(() => {
     const mapped = events
@@ -140,10 +136,10 @@ export function MonthRow({
       const rect = rowRef.current?.getBoundingClientRect()
       if (!rect) return 1
       const relativeX = clientX - rect.left - LABEL_WIDTH
-      const col = Math.floor(relativeX / DAY_WIDTH) + 1
+      const col = Math.floor(relativeX / dayWidth) + 1
       return Math.max(1, Math.min(days, col))
     },
-    [days]
+    [days, dayWidth]
   )
 
   useEffect(() => {
@@ -168,14 +164,8 @@ export function MonthRow({
             const delta = newCol - ogStart
             start = Math.max(1, ogStart + delta)
             end = Math.min(days, ogEnd + delta)
-            if (start < 1) {
-              end += 1 - start
-              start = 1
-            }
-            if (end > days) {
-              start -= end - days
-              end = days
-            }
+            if (start < 1) { end += 1 - start; start = 1 }
+            if (end > days) { start -= end - days; end = days }
           }
 
           return { ...event, startCol: start, endCol: end }
@@ -199,14 +189,8 @@ export function MonthRow({
         const delta = newCol - ogStart
         startCol = Math.max(1, ogStart + delta)
         endCol = Math.min(days, ogEnd + delta)
-        if (startCol < 1) {
-          endCol += 1 - startCol
-          startCol = 1
-        }
-        if (endCol > days) {
-          startCol -= endCol - days
-          endCol = days
-        }
+        if (startCol < 1) { endCol += 1 - startCol; startCol = 1 }
+        if (endCol > days) { startCol -= endCol - days; endCol = days }
       }
 
       if (startCol !== ogStart || endCol !== ogEnd) {
@@ -216,12 +200,10 @@ export function MonthRow({
         const newEnd = new Date(origEnd)
 
         if (drag.type === "left") {
-          const delta = startCol - ogStart
-          newStart.setDate(origStart.getDate() + delta)
+          newStart.setDate(origStart.getDate() + (startCol - ogStart))
         } else if (drag.type === "right") {
-          const delta = endCol - ogEnd
-          newEnd.setDate(origEnd.getDate() + delta)
-        } else if (drag.type === "move") {
+          newEnd.setDate(origEnd.getDate() + (endCol - ogEnd))
+        } else {
           const delta = startCol - ogStart
           newStart.setDate(origStart.getDate() + delta)
           newEnd.setDate(origEnd.getDate() + delta)
@@ -230,10 +212,7 @@ export function MonthRow({
         const newStartStr = newStart.toISOString().slice(0, 10)
         const newEndStr = newEnd.toISOString().slice(0, 10)
 
-        if (
-          newStartStr !== drag.originalStartDate ||
-          newEndStr !== drag.originalEndDate
-        ) {
+        if (newStartStr !== drag.originalStartDate || newEndStr !== drag.originalEndDate) {
           onUpdateEvent(drag.eventId, newStartStr, newEndStr)
         }
       }
@@ -257,7 +236,7 @@ export function MonthRow({
     >
       {/* Month label */}
       <div
-        className="flex-none flex items-center justify-end pr-1 border-r border-border/50 bg-surface/50"
+        className="flex-none flex items-center justify-end pr-1 border-r border-border/50 bg-surface/50 sticky left-0 z-20"
         style={{ width: LABEL_WIDTH }}
       >
         <span className="text-[9px] font-mono font-semibold tracking-wider text-on-surface/50 uppercase">
@@ -269,122 +248,125 @@ export function MonthRow({
       <div className="relative flex-1 flex">
         {Array.from({ length: days }, (_, i) => {
           const day = i + 1
+          const dateStr = getDateStr(day)
+          const isToday = dateStr === todayStr
           return (
             <div
               key={day}
               className={cn(
                 "flex-none border-r border-border/20 cursor-pointer hover:bg-surface-hover/30 transition-colors",
-                day % 2 === 0 ? "bg-transparent" : "bg-surface/[0.02]"
+                day % 2 === 0 ? "bg-transparent" : "bg-surface/[0.02]",
+                isToday && "bg-teal/[0.08]"
               )}
-              style={{ width: DAY_WIDTH }}
-              onClick={() => onNewEvent(getDateStr(day))}
-            />
-          )
-        })}
-
-        {/* Event bars */}
-        {localEvents.map((event) => {
-          const lane = lanes.get(event.id) ?? 0
-          const barTop =
-            (maxLanes - lane) * (BAR_HEIGHT + LANE_GAP) + LANE_GAP
-          const barLeft = (event.startCol - 1) * DAY_WIDTH + 2
-          const barWidth =
-            (event.endCol - event.startCol + 1) * DAY_WIDTH - 4
-          const isDragging = drag?.eventId === event.id
-
-          return (
-            <div
-              key={`${event.id}-${month}`}
-              className={cn(
-                "absolute rounded-sm overflow-hidden group cursor-grab active:cursor-grabbing z-10 transition-opacity",
-                isDragging && "opacity-90 z-20"
-              )}
-              style={{
-                top: barTop,
-                left: barLeft,
-                width: Math.max(barWidth, 6),
-                height: BAR_HEIGHT,
-                backgroundColor: event.color + "40",
-                borderLeftWidth: 2,
-                borderLeftStyle: "solid",
-                borderLeftColor: event.color,
-                borderTopWidth: 2,
-                borderTopStyle: "solid",
-                borderTopColor: event.color,
-              }}
-              onClick={(e) => {
-                e.stopPropagation()
-                if (!drag) {
-                  const original = events.find((ev) => ev.id === event.id)
-                  if (original) onEditEvent(original)
-                }
-              }}
+              style={{ width: dayWidth }}
+              onClick={() => onNewEvent(dateStr)}
             >
-              {/* Left resize handle */}
-              <div
-                className="absolute top-0 bottom-0 w-2 cursor-ew-resize z-30 hover:bg-white/20"
-                style={{ left: 0 }}
-                onMouseDown={(e) => {
-                  e.stopPropagation()
-                  setDrag({
-                    eventId: event.id,
-                    type: "left",
-                    startX: e.clientX,
-                    originalStartCol: event.startCol,
-                    originalEndCol: event.endCol,
-                    originalStartDate: event.start_date,
-                    originalEndDate: event.end_date,
-                  })
-                }}
-              />
-
-              {/* Right resize handle */}
-              <div
-                className="absolute top-0 bottom-0 w-2 cursor-ew-resize z-30 hover:bg-white/20"
-                style={{ right: 0 }}
-                onMouseDown={(e) => {
-                  e.stopPropagation()
-                  setDrag({
-                    eventId: event.id,
-                    type: "right",
-                    startX: e.clientX,
-                    originalStartCol: event.startCol,
-                    originalEndCol: event.endCol,
-                    originalStartDate: event.start_date,
-                    originalEndDate: event.end_date,
-                  })
-                }}
-              />
-
-              {/* Drag handle (center) */}
-              <div
-                className="absolute inset-2 z-20 cursor-grab active:cursor-grabbing"
-                onMouseDown={(e) => {
-                  e.stopPropagation()
-                  setDrag({
-                    eventId: event.id,
-                    type: "move",
-                    startX: e.clientX,
-                    originalStartCol: event.startCol,
-                    originalEndCol: event.endCol,
-                    originalStartDate: event.start_date,
-                    originalEndDate: event.end_date,
-                  })
-                }}
-              />
-
-              {/* Title */}
-              {barWidth >= 20 && (
-                <span
-                  className="absolute inset-0 flex items-center px-1 truncate text-[8px] font-mono text-white/90 pointer-events-none leading-tight"
-                  style={{ textShadow: "0 1px 1px rgba(0,0,0,0.4)" }}
-                >
-                  {event.title}
-                </span>
+              {isToday && (
+                <div className="absolute top-0 bottom-0 w-px bg-teal/60 z-10" style={{ left: (day - 1) * dayWidth }} />
               )}
             </div>
           )
         })}
+
+        {/* Event bars layer */}
+        <div className="absolute inset-0 pointer-events-none">
+          {localEvents.map((event) => {
+            const lane = lanes.get(event.id) ?? 0
+            const barTop = (maxLanes - lane) * (BAR_HEIGHT + LANE_GAP) + LANE_GAP
+            const barLeft = (event.startCol - 1) * dayWidth + 2
+            const barWidth = (event.endCol - event.startCol + 1) * dayWidth - 4
+            const isDragging = drag?.eventId === event.id
+
+            return (
+              <div
+                key={`${event.id}-${month}`}
+                className={cn(
+                  "absolute rounded-sm cursor-grab active:cursor-grabbing z-10 transition-opacity pointer-events-auto",
+                  isDragging && "opacity-90 z-20"
+                )}
+                style={{
+                  top: barTop,
+                  left: barLeft,
+                  width: Math.max(barWidth, 6),
+                  height: BAR_HEIGHT,
+                  backgroundColor: event.color + "40",
+                  borderLeft: `2px solid ${event.color}`,
+                  borderTop: `1px solid ${event.color}`,
+                  borderRight: `1px solid ${event.color}`,
+                }}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (!drag) {
+                    const original = events.find((ev) => ev.id === event.id)
+                    if (original) onEditEvent(original)
+                  }
+                }}
+              >
+                {/* Left resize handle */}
+                <div
+                  className="absolute top-0 bottom-0 w-2 cursor-ew-resize z-30 hover:bg-white/20 rounded-l-sm"
+                  style={{ left: 0 }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation()
+                    setDrag({
+                      eventId: event.id,
+                      type: "left",
+                      startX: e.clientX,
+                      originalStartCol: event.startCol,
+                      originalEndCol: event.endCol,
+                      originalStartDate: event.start_date,
+                      originalEndDate: event.end_date,
+                    })
+                  }}
+                />
+
+                {/* Right resize handle */}
+                <div
+                  className="absolute top-0 bottom-0 w-2 cursor-ew-resize z-30 hover:bg-white/20 rounded-r-sm"
+                  style={{ right: 0 }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation()
+                    setDrag({
+                      eventId: event.id,
+                      type: "right",
+                      startX: e.clientX,
+                      originalStartCol: event.startCol,
+                      originalEndCol: event.endCol,
+                      originalStartDate: event.start_date,
+                      originalEndDate: event.end_date,
+                    })
+                  }}
+                />
+
+                {/* Drag handle */}
+                <div
+                  className="absolute inset-2 z-20 cursor-grab active:cursor-grabbing"
+                  onMouseDown={(e) => {
+                    e.stopPropagation()
+                    setDrag({
+                      eventId: event.id,
+                      type: "move",
+                      startX: e.clientX,
+                      originalStartCol: event.startCol,
+                      originalEndCol: event.endCol,
+                      originalStartDate: event.start_date,
+                      originalEndDate: event.end_date,
+                    })
+                  }}
+                />
+
+                {barWidth >= 20 && (
+                  <span
+                    className="absolute inset-0 flex items-center px-1 truncate text-[8px] font-mono text-white/90 pointer-events-none leading-tight"
+                    style={{ textShadow: "0 1px 1px rgba(0,0,0,0.4)" }}
+                  >
+                    {event.title}
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

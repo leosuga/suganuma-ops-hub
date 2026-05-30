@@ -3,13 +3,14 @@
 import { MonthRow } from "./MonthRow"
 import { YearNavigator } from "./YearNavigator"
 import { EventDialog } from "./EventDialog"
+import { DayHeader } from "./DayHeader"
 import {
   useAnnualEvents,
   useCreateAnnualEvent,
   useUpdateAnnualEvent,
   useDeleteAnnualEvent,
 } from "@/lib/queries/annual"
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import type { AnnualEventRow } from "@/lib/types"
 
 const MONTHS = [
@@ -41,6 +42,8 @@ function daysForMonth(year: number, month: number): number {
 export function YearView() {
   const [year, setYear] = useState(() => new Date().getFullYear())
   const { data: events = [], isLoading } = useAnnualEvents(year)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [dayWidth, setDayWidth] = useState(24)
 
   const createEvent = useCreateAnnualEvent()
   const updateEvent = useUpdateAnnualEvent()
@@ -49,6 +52,20 @@ export function YearView() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<AnnualEventRow | null>(null)
   const [newDate, setNewDate] = useState<string | null>(null)
+
+  // Dynamic day width
+  const maxDays = 31
+  useEffect(() => {
+    function calc() {
+      const el = containerRef.current
+      if (!el) return
+      const available = el.clientWidth - 36 // label width
+      setDayWidth(Math.max(16, Math.floor(available / maxDays)))
+    }
+    calc()
+    window.addEventListener("resize", calc)
+    return () => window.removeEventListener("resize", calc)
+  }, [maxDays])
 
   function handleNewEvent(dateStr: string) {
     setEditingEvent(null)
@@ -83,11 +100,13 @@ export function YearView() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div ref={containerRef} className="h-full flex flex-col">
       <YearNavigator year={year} onChange={setYear} />
 
-      <div className="flex-1 overflow-x-auto overflow-y-auto">
-        <div style={{ minWidth: "max-content" }}>
+      <div className="flex-1 overflow-auto relative">
+        <div style={{ minWidth: maxDays * dayWidth + 36 }}>
+          <DayHeader maxDays={maxDays} dayWidth={dayWidth} />
+
           {isLoading ? (
             <div className="flex items-center justify-center h-32">
               <span className="text-[10px] font-mono text-on-surface/30">Carregando...</span>
@@ -102,6 +121,7 @@ export function YearView() {
                   month={monthIdx}
                   monthLabel={monthLabel}
                   days={days}
+                  dayWidth={dayWidth}
                   events={events}
                   onNewEvent={handleNewEvent}
                   onEditEvent={handleEditEvent}
