@@ -73,9 +73,14 @@ jobs:
 
             for i in 1 2 3 4 5 6; do
               sleep 10
-              SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null | head -c 30 || echo "-")
-              echo "[$i] sw.js: $SW"
-              echo "$SW" | grep -q "v5" && echo "DEPLOY OK" && exit 0
+              SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null || echo "-")
+              echo "[$i] sw.js: $(echo "$SW" | head -c 50)"
+              # Check for v5 and also verify container is actually new by checking docker ps
+              echo "$SW" | grep -q "v5" && docker ps --format '{{.Image}}' | grep -q "ops-hub:latest" && echo "DEPLOY OK" && exit 0
             done
             echo "DEPLOY WARNING: sw.js not reachable or version mismatch"
+            echo "Container status:"
+            docker ps | grep suganuma-ops-hub || true
+            echo "Container image:"
+            docker inspect --format='{{.Config.Image}}' suganuma-ops-hub 2>/dev/null || true
             RUNDEPLOY
