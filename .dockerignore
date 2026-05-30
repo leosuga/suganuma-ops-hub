@@ -1,0 +1,13 @@
+.git
+.github
+.next
+node_modules
+.env*
+!.env.prod
+Dockerfile
+docker-compose*
+deploy-manual.sh
+*.log
+*.md
+plans/
+public/*.svg
