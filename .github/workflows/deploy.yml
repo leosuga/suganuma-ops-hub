@@ -42,11 +42,21 @@ jobs:
             fi
             echo "Network: $NET"
 
+            echo "Verifying source files..."
+            ls -la src/app/\(app\)/calendar/year/ || true
+            ls -la src/components/annual/ || true
+
             echo "Building (2-5 min)..."
             docker build \
               --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
               --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+              --no-cache \
               -t ops-hub:latest . || { echo "BUILD FAILED"; exit 1; }
+
+            echo "Build output check:"
+            ls -la .next/standalone/ 2>/dev/null || true
+            ls -la .next/standalone/server/ 2>/dev/null || true
+            cat .next/app-path-routes-manifest.json 2>/dev/null | grep -E "calendar|year" || true
 
             echo "Switching containers..."
             docker stop suganuma-ops-hub 2>/dev/null || true
