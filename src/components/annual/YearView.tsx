@@ -1,6 +1,6 @@
 "use client"
 
-import { MonthColumn } from "./MonthColumn"
+import { MonthRow } from "./MonthRow"
 import { YearNavigator } from "./YearNavigator"
 import { EventDialog } from "./EventDialog"
 import {
@@ -86,17 +86,17 @@ export function YearView() {
     <div className="h-full flex flex-col">
       <YearNavigator year={year} onChange={setYear} />
 
-      <div className="flex-1 overflow-x-auto overflow-y-hidden relative">
-        <div className="flex h-full" style={{ minWidth: "max-content" }}>
+      <div className="flex-1 overflow-x-auto overflow-y-auto">
+        <div style={{ minWidth: "max-content" }}>
           {isLoading ? (
-            <div className="flex items-center justify-center w-full h-full">
+            <div className="flex items-center justify-center h-32">
               <span className="text-[10px] font-mono text-on-surface/30">Carregando...</span>
             </div>
           ) : (
             MONTHS.map((monthLabel, monthIdx) => {
               const days = daysForMonth(year, monthIdx)
               return (
-                <MonthColumn
+                <MonthRow
                   key={monthIdx}
                   year={year}
                   month={monthIdx}
