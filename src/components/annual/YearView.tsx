@@ -40,6 +40,7 @@ export function YearView() {
   const [year, setYear] = useState(() => new Date().getFullYear())
   const { data: events = [], isLoading } = useAnnualEvents(year)
   const containerRef = useRef<HTMLDivElement>(null)
+  const calendarRef = useRef<HTMLDivElement>(null)
   const [dayWidth, setDayWidth] = useState(24)
 
   const createEvent = useCreateAnnualEvent()
@@ -114,12 +115,48 @@ export function YearView() {
     }
   }
 
+  function handlePrint() {
+    // Aumenta dayWidth temporariamente para impressão em A4 landscape
+    setDayWidth(28)
+    setTimeout(() => {
+      window.print()
+      // Restaura após print
+      setTimeout(() => {
+        const el = containerRef.current
+        if (el) {
+          const available = el.clientWidth - 36
+          setDayWidth(Math.max(16, Math.floor(available / maxDays)))
+        }
+      }, 1000)
+    }, 100)
+  }
+
   return (
     <div ref={containerRef} className="h-full flex flex-col">
-      <YearNavigator year={year} onChange={setYear} />
+      <div className="flex items-center justify-between px-2 print:hidden">
+        <YearNavigator year={year} onChange={setYear} />
+        <button
+          onClick={handlePrint}
+          className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors"
+          title="Exportar PDF"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9" />
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+            <rect x="6" y="14" width="12" height="8" />
+          </svg>
+          PDF
+        </button>
+      </div>
 
-      <div className="flex-1 overflow-auto relative">
-        <div style={{ minWidth: maxDays * dayWidth + 36 }}>
+      {/* Print-only header */}
+      <div className="hidden print:block text-center py-4">
+        <h1 className="text-xl font-bold text-on-surface">Calendário {year}</h1>
+        <p className="text-xs text-on-surface/40 font-mono">Suganuma Ops Hub</p>
+      </div>
+
+      <div ref={calendarRef} className="flex-1 overflow-auto relative print:overflow-visible">
+        <div className="print:shadow-none" style={{ minWidth: maxDays * dayWidth + 36 }}>
           <DayHeader maxDays={maxDays} dayWidth={dayWidth} />
 
           {isLoading ? (

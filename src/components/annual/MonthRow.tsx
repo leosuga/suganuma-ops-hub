@@ -31,6 +31,8 @@ interface MonthLocalEvent {
   color: string
   startCol: number
   endCol: number
+  hasLeftExtension: boolean
+  hasRightExtension: boolean
 }
 
 function getLocalEvent(
@@ -46,8 +48,11 @@ function getLocalEvent(
 
   if (ed < mStart || sd > mEnd) return null
 
-  let startCol = sd.getMonth() === month && sd.getFullYear() === year ? sd.getDate() : 1
-  let endCol = ed.getMonth() === month && ed.getFullYear() === year ? ed.getDate() : days
+  const isStartInMonth = sd.getMonth() === month && sd.getFullYear() === year
+  const isEndInMonth = ed.getMonth() === month && ed.getFullYear() === year
+
+  let startCol = isStartInMonth ? sd.getDate() : 1
+  let endCol = isEndInMonth ? ed.getDate() : days
 
   startCol = Math.max(1, Math.min(startCol, days))
   endCol = Math.max(1, Math.min(endCol, days))
@@ -61,6 +66,8 @@ function getLocalEvent(
     color: event.color,
     startCol,
     endCol,
+    hasLeftExtension: sd < mStart,
+    hasRightExtension: ed > mEnd,
   }
 }
 
@@ -314,6 +321,34 @@ export function MonthRow({
                   }
                 }}
               >
+                {/* Left bridge indicator */}
+                {event.hasLeftExtension && (
+                  <div
+                    className="absolute -left-1 top-1/2 -translate-y-1/2"
+                    style={{
+                      width: 0,
+                      height: 0,
+                      borderTop: "5px solid transparent",
+                      borderBottom: "5px solid transparent",
+                      borderRight: `6px solid ${event.color}`,
+                    }}
+                  />
+                )}
+
+                {/* Right bridge indicator */}
+                {event.hasRightExtension && (
+                  <div
+                    className="absolute -right-1 top-1/2 -translate-y-1/2"
+                    style={{
+                      width: 0,
+                      height: 0,
+                      borderTop: "5px solid transparent",
+                      borderBottom: "5px solid transparent",
+                      borderLeft: `6px solid ${event.color}`,
+                    }}
+                  />
+                )}
+
                 {/* Left resize handle */}
                 <div
                   className="absolute top-0 bottom-0 w-2 cursor-ew-resize z-30 hover:bg-white/20 rounded-l-sm"
