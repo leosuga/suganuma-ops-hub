@@ -4,12 +4,9 @@ import { MonthRow } from "./MonthRow"
 import { YearNavigator } from "./YearNavigator"
 import { EventDialog } from "./EventDialog"
 import { DayHeader } from "./DayHeader"
-import {
-  useAnnualEvents,
-  useCreateAnnualEvent,
-  useUpdateAnnualEvent,
-  useDeleteAnnualEvent,
-} from "@/lib/queries/annual"
+import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, annualEventKeys } from "@/lib/queries/annual"
+import { useRealtimeTable } from "@/lib/realtime"
+import { useUndoToast } from "@/components/UndoToast"
 import { useState, useRef, useEffect } from "react"
 import type { AnnualEventRow } from "@/lib/types"
 
@@ -90,12 +87,30 @@ export function YearView() {
     setNewDate(null)
   }
 
+  // Realtime updates
+  useRealtimeTable("annual_event", annualEventKeys.year(year))
+
+  // Undo toast
+  const { show: showToast } = useUndoToast()
+
   function handleDeleteEvent() {
     if (editingEvent) {
+      const snapshot = { ...editingEvent }
       deleteEvent.mutate(editingEvent.id)
       setDialogOpen(false)
       setEditingEvent(null)
       setNewDate(null)
+      showToast({
+        label: `Evento "${snapshot.title}" excluído`,
+        onUndo: () => {
+          createEvent.mutate({
+            title: snapshot.title,
+            start_date: snapshot.start_date,
+            end_date: snapshot.end_date,
+            color: snapshot.color,
+          })
+        },
+      })
     }
   }
 
