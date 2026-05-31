@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import { cn } from "@/lib/utils"
+import { isHoliday } from "@/lib/holidays"
 import type { AnnualEventRow } from "@/lib/types"
 
 const BAR_HEIGHT = 20
@@ -254,13 +255,15 @@ export function MonthRow({
           const dateStr = getDateStr(day)
           const isToday = dateStr === todayStr
           const isPast = new Date(dateStr) < new Date(todayStr)
+          const isHolidayDate = isHoliday(dateStr)
           return (
             <div
               key={day}
               className={cn(
-                "flex-none border-r border-border/20",
+                "flex-none border-r border-border/20 relative",
                 !isValid && "bg-on-surface/[0.01] cursor-default",
-                isValid && !isToday && !isPast && (day % 2 === 0 ? "bg-transparent" : "bg-surface/[0.02]"),
+                isValid && isHolidayDate && "bg-danger/[0.03]",
+                isValid && !isHolidayDate && !isToday && !isPast && (day % 2 === 0 ? "bg-transparent" : "bg-surface/[0.02]"),
                 isValid && isPast && !isToday && "bg-on-surface/[0.015]",
                 isValid && isToday && "bg-teal/[0.10] border-teal/30"
               )}
@@ -268,7 +271,10 @@ export function MonthRow({
               onClick={isValid ? () => onNewEvent(dateStr) : undefined}
             >
               {isToday && (
-                <div className="absolute top-0 bottom-0 w-px bg-teal/60" />
+                <div className="absolute top-0 bottom-0 w-px bg-teal/60 z-5" />
+              )}
+              {isHolidayDate && (
+                <div className="absolute inset-x-0 bottom-0 h-0.5 bg-danger/30" />
               )}
             </div>
           )
@@ -367,6 +373,13 @@ export function MonthRow({
                     style={{ textShadow: "0 1px 1px rgba(0,0,0,0.4)" }}
                   >
                     {event.title}
+                    {(() => {
+                      const original = events.find((ev) => ev.id === event.id)
+                      if (original?.recurrence && original.recurrence !== "none") {
+                        return <span className="ml-1 text-[6px] opacity-70">↻</span>
+                      }
+                      return null
+                    })()}
                   </span>
                 )}
               </div>
