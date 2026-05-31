@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import { generateRecurringEvents } from "@/lib/recurrence"
 import type { AnnualEventRow, AnnualEventInsert, AnnualEventUpdate } from "@/lib/types"
 
 export const annualEventKeys = {
@@ -42,16 +43,16 @@ export function useCreateAnnualEvent() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
 
+      const events = generateRecurringEvents(input)
       const { data, error } = await supabase
         .from("annual_event")
-        .insert({ ...input, owner_id: user.id })
+        .insert(events.map((e) => ({ ...e, owner_id: user.id })))
         .select()
-        .single()
 
       if (error) throw error
-      return data as AnnualEventRow
+      return data as AnnualEventRow[]
     },
-    onSuccess(_data, _variables, _context) {
+    onSuccess() {
       queryClient.invalidateQueries({ queryKey: annualEventKeys.all })
     },
   })
