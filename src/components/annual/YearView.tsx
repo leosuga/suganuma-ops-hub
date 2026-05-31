@@ -76,11 +76,11 @@ export function YearView() {
     setDialogOpen(true)
   }
 
-  function handleSave(title: string, start: string, end: string, color: string) {
+  function handleSave(title: string, start: string, end: string, color: string, recurrence: string) {
     if (editingEvent) {
-      updateEvent.mutate({ id: editingEvent.id, title, start_date: start, end_date: end, color })
+      updateEvent.mutate({ id: editingEvent.id, title, start_date: start, end_date: end, color, recurrence })
     } else if (newDate) {
-      createEvent.mutate({ title, start_date: start, end_date: end, color })
+      createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence })
     }
     setDialogOpen(false)
     setEditingEvent(null)

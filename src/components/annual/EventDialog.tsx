@@ -20,7 +20,7 @@ interface EventDialogProps {
   onOpenChange: (open: boolean) => void
   initialEvent: AnnualEventRow | null
   initialDate: string | null
-  onSave: (title: string, start: string, end: string, color: string) => void
+  onSave: (title: string, start: string, end: string, color: string, recurrence: string) => void
   onDelete?: () => void
 }
 
@@ -29,6 +29,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
   const [start, setStart] = useState("")
   const [end, setEnd] = useState("")
   const [color, setColor] = useState(ANNUAL_COLORS[0])
+  const [recurrence, setRecurrence] = useState("none")
 
   const isEditing = !!initialEvent
 
@@ -38,11 +39,13 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
       setStart(initialEvent.start_date)
       setEnd(initialEvent.end_date)
       setColor(initialEvent.color)
+      setRecurrence(initialEvent.recurrence || "none")
     } else if (initialDate) {
       setTitle("")
       setStart(initialDate)
       setEnd(initialDate)
       setColor(ANNUAL_COLORS[0])
+      setRecurrence("none")
     }
   }, [initialEvent, initialDate, open])
 
@@ -52,13 +55,14 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
     const s = new Date(start + "T00:00:00")
     const en = new Date(end + "T00:00:00")
     if (en < s) {
-      onSave(title.trim(), end, start, color)
+      onSave(title.trim(), end, start, color, recurrence)
     } else {
-      onSave(title.trim(), start, end, color)
+      onSave(title.trim(), start, end, color, recurrence)
     }
     setTitle("")
     setStart("")
     setEnd("")
+    setRecurrence("none")
     onOpenChange(false)
   }
 
@@ -135,6 +139,34 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                     onClick={() => setColor(c)}
                     aria-label={`Cor ${c}`}
                   />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+                Recorrência
+              </label>
+              <div className="flex gap-2 mt-1">
+                {[
+                  { value: "none", label: "Nenhuma" },
+                  { value: "weekly", label: "Semanal" },
+                  { value: "monthly", label: "Mensal" },
+                  { value: "yearly", label: "Anual" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={cn(
+                      "px-2 py-1 text-[9px] font-mono rounded-sm border transition-all",
+                      recurrence === option.value
+                        ? "border-teal text-teal bg-teal/10"
+                        : "border-border/40 text-on-surface/40 hover:text-on-surface/60"
+                    )}
+                    onClick={() => setRecurrence(option.value)}
+                  >
+                    {option.label}
+                  </button>
                 ))}
               </div>
             </div>

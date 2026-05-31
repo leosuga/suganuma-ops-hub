@@ -5,6 +5,7 @@ export interface AnnualEventRow {
   start_date: string
   end_date: string
   color: string
+  recurrence: string
   created_at: string
   updated_at: string
 }
@@ -14,6 +15,7 @@ export interface AnnualEventInsert {
   start_date: string
   end_date: string
   color?: string
+  recurrence?: string
 }
 
 export interface AnnualEventUpdate {
@@ -21,4 +23,5 @@ export interface AnnualEventUpdate {
   start_date?: string
   end_date?: string
   color?: string
+  recurrence?: string
 }
