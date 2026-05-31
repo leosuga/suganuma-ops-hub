@@ -25,13 +25,11 @@ export function DayHeader({ maxDays, dayWidth }: DayHeaderProps) {
         {Array.from({ length: maxDays }, (_, i) => {
           const day = i + 1
           const isToday = day === todayNum
-          const isLast = day === maxDays
           return (
             <div
               key={day}
               className={cn(
-                "flex-none flex items-center justify-center text-[8px] font-mono tabular-nums",
-                isLast ? "border-r-0" : "border-r border-border/20",
+                "flex-none flex items-center justify-center border-r border-border/20 text-[8px] font-mono tabular-nums last:border-r-0",
                 isToday
                   ? "text-teal font-bold bg-teal/[0.08]"
                   : "text-on-surface/30"
