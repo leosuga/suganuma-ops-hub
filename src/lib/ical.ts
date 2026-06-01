@@ -12,7 +12,7 @@ export function exportToICal(events: { title: string; start_date: string; end_da
   lines.push("X-WR-TIMEZONE:America/Sao_Paulo")
 
   for (const event of events) {
-    const uid = `${crypto.randomUUID()}@ops.suganuma.com.br`
+    const uid = `${generateUUID()}@ops.suganuma.com.br`
     const dtstart = event.start_date.replace(/-/g, "")
     // iCal DTEND is exclusive (the day AFTER the last day)
     const endDate = new Date(event.end_date + "T00:00:00")
@@ -119,4 +119,12 @@ function unescapeICalText(text: string): string {
     .replace(/\\;/g, ";")
     .replace(/\\,/g, ",")
     .replace(/\\\\/g, "\\")
+}
+
+function generateUUID(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === "x" ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }
