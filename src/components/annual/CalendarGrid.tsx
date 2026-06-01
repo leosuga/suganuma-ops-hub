@@ -3,6 +3,7 @@
 import { MonthRow } from "./MonthRow"
 import { DayHeader } from "./DayHeader"
 import type { AnnualEventRow } from "@/lib/types"
+import type { AnnualTaskRow } from "@/lib/queries/annual"
 
 const MONTHS = [
   "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
@@ -25,6 +26,7 @@ interface CalendarGridProps {
   dayWidth: number
   viewMode: "bars" | "dots"
   events: AnnualEventRow[]
+  tasks?: AnnualTaskRow[]
   onNewEvent: (dateStr: string) => void
   onEditEvent: (event: AnnualEventRow) => void
   onUpdateEvent: (id: string, start: string, end: string) => void
@@ -36,6 +38,7 @@ export function CalendarGrid({
   dayWidth,
   viewMode,
   events,
+  tasks = [],
   onNewEvent,
   onEditEvent,
   onUpdateEvent,
@@ -62,6 +65,7 @@ export function CalendarGrid({
             dayWidth={dayWidth}
             viewMode={viewMode}
             events={events}
+            tasks={tasks}
             onNewEvent={onNewEvent}
             onEditEvent={onEditEvent}
             onUpdateEvent={onUpdateEvent}

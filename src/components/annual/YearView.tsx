@@ -6,7 +6,7 @@ import { EventDialog } from "./EventDialog"
 import { ColorLegend } from "./ColorLegend"
 import { exportToICal, importFromICal } from "@/lib/ical"
 import { cn } from "@/lib/utils"
-import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, useUpdateAnnualEventSeries, useDeleteAnnualEventSeries, annualEventKeys } from "@/lib/queries/annual"
+import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, useUpdateAnnualEventSeries, useDeleteAnnualEventSeries, useAnnualTasks, annualEventKeys } from "@/lib/queries/annual"
 import { useRealtimeTable } from "@/lib/realtime"
 import { useUndoToast } from "@/components/UndoToast"
 import { useState, useRef, useEffect, useMemo, useCallback } from "react"
@@ -18,6 +18,8 @@ export function YearView() {
 
   const { data: eventsYear1 = [], isLoading: isLoading1 } = useAnnualEvents(year)
   const { data: eventsYear2 = [], isLoading: isLoading2 } = useAnnualEvents(year + 1)
+  const { data: tasksYear1 = [] } = useAnnualTasks(year)
+  const { data: tasksYear2 = [] } = useAnnualTasks(year + 1)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
@@ -304,6 +306,7 @@ export function YearView() {
             dayWidth={dayWidth}
             viewMode={viewMode}
             events={filteredEvents}
+            tasks={tasksYear1}
             onNewEvent={handleNewEvent}
             onEditEvent={handleEditEvent}
             onUpdateEvent={(id, start, end) => updateEvent.mutate({ id, start_date: start, end_date: end })}
@@ -315,6 +318,7 @@ export function YearView() {
               dayWidth={dayWidth}
               viewMode={viewMode}
               events={filteredEvents}
+              tasks={tasksYear2}
               onNewEvent={handleNewEvent}
               onEditEvent={handleEditEvent}
               onUpdateEvent={(id, start, end) => updateEvent.mutate({ id, start_date: start, end_date: end })}

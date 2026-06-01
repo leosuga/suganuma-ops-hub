@@ -6,6 +6,7 @@ import type { AnnualEventRow, AnnualEventInsert, AnnualEventUpdate } from "@/lib
 export const annualEventKeys = {
   all: ["annual-event"] as const,
   year: (year: number) => ["annual-event", year] as const,
+  tasks: (year: number) => ["annual-event-tasks", year] as const,
 }
 
 export function annualEventsOptions(year: number) {
@@ -151,5 +152,39 @@ export function useDeleteAnnualEvent() {
     onSuccess() {
       queryClient.invalidateQueries({ queryKey: annualEventKeys.all })
     },
+  })
+}
+
+export interface AnnualTaskRow {
+  id: string
+  title: string
+  due_at: string
+  priority: string
+  status: string
+  category: string
+}
+
+export function useAnnualTasks(year: number) {
+  return useQuery({
+    queryKey: annualEventKeys.tasks(year),
+    queryFn: async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const { data, error } = await supabase
+        .from("task")
+        .select("id, title, due_at, priority, status, category")
+        .eq("owner_id", user.id)
+        .in("status", ["todo", "doing"])
+        .not("due_at", "is", null)
+        .gte("due_at", `${year}-01-01`)
+        .lte("due_at", `${year}-12-31`)
+        .order("due_at", { ascending: true })
+
+      if (error) throw error
+      return (data ?? []) as AnnualTaskRow[]
+    },
+    staleTime: 30_000,
   })
 }

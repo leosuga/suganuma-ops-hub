@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { isHoliday } from "@/lib/holidays"
 import type { AnnualEventRow } from "@/lib/types"
+import type { AnnualTaskRow } from "@/lib/queries/annual"
 
 const BAR_HEIGHT = 20
 const LANE_GAP = 2
@@ -19,6 +20,7 @@ interface MonthRowProps {
   dayWidth: number
   viewMode?: "bars" | "dots"
   events: AnnualEventRow[]
+  tasks?: AnnualTaskRow[]
   onNewEvent: (dateStr: string) => void
   onEditEvent: (event: AnnualEventRow) => void
   onUpdateEvent: (id: string, start: string, end: string) => void
@@ -124,6 +126,7 @@ export function MonthRow({
   dayWidth,
   viewMode = "bars",
   events,
+  tasks = [],
   onNewEvent,
   onEditEvent,
   onUpdateEvent,
@@ -497,8 +500,55 @@ export function MonthRow({
                     📁 Projeto: {hoveredEvent.project_name || "Vinculado"}
                   </p>
                 )}
-              </div>
-            </div>
+          </div>
+
+          {/* Task pills layer */}
+          <div className="absolute inset-0 pointer-events-none">
+            {tasks
+              .filter((t) => {
+                const d = new Date(t.due_at + "T00:00:00")
+                return d.getMonth() === month && d.getFullYear() === year
+              })
+              .map((task) => {
+                const d = new Date(task.due_at + "T00:00:00")
+                const col = d.getDate()
+                const isDone = task.status === "done"
+                const isUrgent = task.priority === "urgent" || task.priority === "high"
+                const taskColor =
+                  task.category === "finance" ? "#F59E0B" :
+                  task.category === "health" ? "#10B981" :
+                  task.category === "personal" ? "#8B5CF6" :
+                  task.category === "logistics" ? "#3B82F6" : "#6B7280"
+
+                return (
+                  <div
+                    key={`task-${task.id}`}
+                    className="absolute z-10 cursor-pointer pointer-events-auto rounded-full"
+                    style={{
+                      left: (col - 1) * dayWidth + dayWidth / 2 - 3,
+                      bottom: 2,
+                      width: 6,
+                      height: 6,
+                      backgroundColor: isDone ? "#6B7280" : taskColor,
+                      opacity: isDone ? 0.4 : isUrgent ? 1 : 0.7,
+                      border: isUrgent && !isDone ? `1px solid ${taskColor}` : "none",
+                    }}
+                    onMouseEnter={(e) => setHoveredEvent({
+                      ...task as any,
+                      clientX: e.clientX,
+                      clientY: e.clientY,
+                    })}
+                    onMouseLeave={() => setHoveredEvent(null)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      // Navigate to tasks page - could use router
+                      window.location.href = `/tasks`
+                    }}
+                  />
+                )
+              })}
+          </div>
+        </div>
           )}
         </div>
       </div>
