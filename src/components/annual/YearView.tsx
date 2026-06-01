@@ -5,6 +5,7 @@ import { YearNavigator } from "./YearNavigator"
 import { EventDialog } from "./EventDialog"
 import { DayHeader } from "./DayHeader"
 import { ColorLegend } from "./ColorLegend"
+import { exportToICal, importFromICal } from "@/lib/ical"
 import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, annualEventKeys } from "@/lib/queries/annual"
 import { useRealtimeTable } from "@/lib/realtime"
 import { useUndoToast } from "@/components/UndoToast"
@@ -167,22 +168,77 @@ export function YearView() {
     }, 100)
   }
 
+  function handleExportICal() {
+    const ics = exportToICal(filteredEvents)
+    const blob = new Blob([ics], { type: "text/calendar" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `calendario-${year}.ics`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  function handleImportICal(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      const content = ev.target?.result as string
+      if (!content) return
+      const imported = importFromICal(content)
+      for (const event of imported) {
+        createEvent.mutate(event)
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = "" // reset
+  }
+
   return (
     <div ref={containerRef} className="h-full flex flex-col">
       <div className="flex items-center justify-between px-2 print:hidden">
         <YearNavigator year={year} onChange={setYear} />
-        <button
-          onClick={handlePrint}
-          className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors"
-          title="Exportar PDF"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="6 9 6 2 18 2 18 9" />
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-            <rect x="6" y="14" width="12" height="8" />
-          </svg>
-          PDF
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportICal}
+            className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors"
+            title="Exportar iCal (.ics)"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+              <line x1="16" y1="2" x2="16" y2="6" />
+              <line x1="8" y1="2" x2="8" y2="6" />
+              <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+            iCal
+          </button>
+
+          <label className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors cursor-pointer">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Import
+            <input type="file" accept=".ics,.ical" onChange={handleImportICal} className="sr-only" />
+          </label>
+
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors"
+            title="Exportar PDF"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 6 2 18 2 18 9" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
+            PDF
+          </button>
+        </div>
       </div>
 
       <ColorLegend
