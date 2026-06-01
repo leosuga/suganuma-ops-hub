@@ -14,18 +14,8 @@ import { useState, useRef, useEffect, useMemo } from "react"
 import type { AnnualEventRow } from "@/lib/types"
 
 const MONTHS = [
-  "Jan",
-  "Fev",
-  "Mar",
-  "Abr",
-  "Mai",
-  "Jun",
-  "Jul",
-  "Ago",
-  "Set",
-  "Out",
-  "Nov",
-  "Dez",
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
 ]
 
 const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
@@ -56,13 +46,12 @@ export function YearView() {
   const [editingEvent, setEditingEvent] = useState<AnnualEventRow | null>(null)
   const [newDate, setNewDate] = useState<string | null>(null)
 
-  // Dynamic day width
   const maxDays = 31
   useEffect(() => {
     function calc() {
       const el = containerRef.current
       if (!el) return
-      const available = el.clientWidth - 36 // label width
+      const available = el.clientWidth - 36
       setDayWidth(Math.max(16, Math.floor(available / maxDays)))
     }
     calc()
@@ -70,21 +59,16 @@ export function YearView() {
     return () => window.removeEventListener("resize", calc)
   }, [maxDays])
 
-  // Filtered events
   const filteredEvents = useMemo(() => {
     if (activeColors.size === 0) return events
     return events.filter((e) => activeColors.has(e.color))
   }, [events, activeColors])
 
-  // Color filter handlers
   function handleToggleColor(color: string) {
     setActiveColors((prev) => {
       const next = new Set(prev)
-      if (next.has(color)) {
-        next.delete(color)
-      } else {
-        next.add(color)
-      }
+      if (next.has(color)) next.delete(color)
+      else next.add(color)
       return next
     })
   }
@@ -93,7 +77,6 @@ export function YearView() {
     setActiveColors(new Set())
   }
 
-  // Zoom handlers
   function handleZoomIn() {
     setDayWidth((w) => Math.min(60, w + 4))
   }
@@ -125,10 +108,15 @@ export function YearView() {
     setNewDate(null)
   }
 
-  // Realtime updates
+  function handleClone(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null) {
+    createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId })
+    setDialogOpen(false)
+    setEditingEvent(null)
+    setNewDate(null)
+  }
+
   useRealtimeTable("annual_event", annualEventKeys.year(year))
 
-  // Undo toast
   const { show: showToast } = useUndoToast()
 
   function handleDeleteEvent() {
@@ -155,11 +143,9 @@ export function YearView() {
   }
 
   function handlePrint() {
-    // Aumenta dayWidth temporariamente para impressão em A4 landscape
     setDayWidth(28)
     setTimeout(() => {
       window.print()
-      // Restaura após print
       setTimeout(() => {
         const el = containerRef.current
         if (el) {
@@ -191,12 +177,51 @@ export function YearView() {
       const content = ev.target?.result as string
       if (!content) return
       const imported = importFromICal(content)
-      for (const event of imported) {
-        createEvent.mutate(event)
-      }
+      for (const event of imported) createEvent.mutate(event)
     }
     reader.readAsText(file)
-    e.target.value = "" // reset
+    e.target.value = ""
+  }
+
+  function handleExportPNG() {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+    const rect = calendarRef.current?.getBoundingClientRect()
+    if (!rect) return
+    svg.setAttribute("width", String(rect.width))
+    svg.setAttribute("height", String(rect.height))
+    svg.setAttribute("xmlns", "http://www.w3.org/2000/svg")
+    const foreignObject = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject")
+    foreignObject.setAttribute("width", "100%")
+    foreignObject.setAttribute("height", "100%")
+    const div = document.createElement("div")
+    div.innerHTML = calendarRef.current?.innerHTML || ""
+    foreignObject.appendChild(div)
+    svg.appendChild(foreignObject)
+    const svgData = new XMLSerializer().serializeToString(svg)
+    const canvas = document.createElement("canvas")
+    canvas.width = rect.width * 2
+    canvas.height = rect.height * 2
+    const ctx = canvas.getContext("2d")
+    if (!ctx) return
+    ctx.fillStyle = "#0A0A0A"
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    ctx.scale(2, 2)
+    const img = new Image()
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0)
+      canvas.toBlob((blob) => {
+        if (!blob) return
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = `calendario-${year}.png`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      })
+    }
+    img.src = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgData)))
   }
 
   return (
@@ -257,6 +282,19 @@ export function YearView() {
           </label>
 
           <button
+            onClick={handleExportPNG}
+            className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors"
+            title="Exportar PNG"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+            PNG
+          </button>
+
+          <button
             onClick={handlePrint}
             className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors"
             title="Exportar PDF"
@@ -280,7 +318,6 @@ export function YearView() {
         dayWidth={dayWidth}
       />
 
-      {/* Print-only header */}
       <div className="hidden print:block text-center py-4">
         <h1 className="text-xl font-bold text-on-surface">Calendário {year}</h1>
         <p className="text-xs text-on-surface/40 font-mono">Suganuma Ops Hub</p>
@@ -327,6 +364,7 @@ export function YearView() {
         initialDate={newDate}
         onSave={handleSave}
         onDelete={handleDeleteEvent}
+        onClone={handleClone}
       />
     </div>
   )

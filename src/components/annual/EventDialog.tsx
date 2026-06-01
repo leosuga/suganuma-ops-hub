@@ -23,9 +23,10 @@ interface EventDialogProps {
   initialDate: string | null
   onSave: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null) => void
   onDelete?: () => void
+  onClone?: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null) => void
 }
 
-export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onSave, onDelete }: EventDialogProps) {
+export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onSave, onDelete, onClone }: EventDialogProps) {
   const [title, setTitle] = useState("")
   const [start, setStart] = useState("")
   const [end, setEnd] = useState("")
@@ -53,6 +54,40 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
       setProjectId(null)
     }
   }, [initialEvent, initialDate, open])
+
+  function shiftDate(dateStr: string, days: number): string {
+    const d = new Date(dateStr + "T00:00:00")
+    d.setDate(d.getDate() + days)
+    return d.toISOString().slice(0, 10)
+  }
+
+  function shiftMonth(dateStr: string, months: number): string {
+    const d = new Date(dateStr + "T00:00:00")
+    d.setMonth(d.getMonth() + months)
+    return d.toISOString().slice(0, 10)
+  }
+
+  function handleShift(days: number) {
+    if (!start || !end) return
+    const duration = new Date(end + "T00:00:00").getTime() - new Date(start + "T00:00:00").getTime()
+    const newStart = shiftDate(start, days)
+    const newStartDate = new Date(newStart + "T00:00:00")
+    const newEndDate = new Date(newStartDate.getTime() + duration)
+    const newEnd = newEndDate.toISOString().slice(0, 10)
+    setStart(newStart)
+    setEnd(newEnd)
+  }
+
+  function handleShiftMonth(months: number) {
+    if (!start || !end) return
+    const duration = new Date(end + "T00:00:00").getTime() - new Date(start + "T00:00:00").getTime()
+    const newStart = shiftMonth(start, months)
+    const newStartDate = new Date(newStart + "T00:00:00")
+    const newEndDate = new Date(newStartDate.getTime() + duration)
+    const newEnd = newEndDate.toISOString().slice(0, 10)
+    setStart(newStart)
+    setEnd(newEnd)
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -128,6 +163,34 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
               </div>
             </div>
 
+            {/* Shift controls */}
+            {isEditing && (
+              <div className="flex items-center gap-1">
+                <span className="text-[9px] font-mono text-on-surface/40 mr-1">Shift:</span>
+                {[-7, -1, 1, 7].map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => handleShift(d)}
+                    className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm hover:bg-surface/80 text-on-surface/60"
+                  >
+                    {d > 0 ? `+${d}` : d}d
+                  </button>
+                ))}
+                <span className="text-on-surface/20 mx-0.5">|</span>
+                {[-1, 1].map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => handleShiftMonth(m)}
+                    className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm hover:bg-surface/80 text-on-surface/60"
+                  >
+                    {m > 0 ? `+${m}` : m}m
+                  </button>
+                ))}
+              </div>
+            )}
+
             <div>
               <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
                 Cor
@@ -197,18 +260,35 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
 
           <DialogFooter>
             <div className="flex w-full items-center justify-between">
-              {isEditing && onDelete && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDelete}
-                  className="bg-danger/20 hover:bg-danger/30 text-danger border-danger/30"
-                >
-                  Excluir
-                </Button>
-              )}
-              <div className="flex gap-2 ml-auto">
+              <div className="flex gap-2">
+                {isEditing && onDelete && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDelete}
+                    className="bg-danger/20 hover:bg-danger/30 text-danger border-danger/30"
+                  >
+                    Excluir
+                  </Button>
+                )}
+                {isEditing && onClone && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (!title.trim() || !start || !end) return
+                      onClone(title.trim(), start, end, color, recurrence, projectId)
+                      onOpenChange(false)
+                    }}
+                    className="border-border/40 text-on-surface/60 hover:text-on-surface"
+                  >
+                    Clonar
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-2">
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)} size="sm">
                   Cancelar
                 </Button>
