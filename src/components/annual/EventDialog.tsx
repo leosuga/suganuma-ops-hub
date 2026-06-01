@@ -262,7 +262,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
 
           <DialogFooter>
             <div className="flex w-full items-center justify-between">
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {isEditing && onDelete && (
                   <Button
                     type="button"
@@ -272,6 +272,20 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                     className="bg-danger/20 hover:bg-danger/30 text-danger border-danger/30"
                   >
                     Excluir
+                  </Button>
+                )}
+                {isEditing && initialEvent?.series_id && onDeleteSeries && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      if (initialEvent.series_id) onDeleteSeries(initialEvent.series_id)
+                      onOpenChange(false)
+                    }}
+                    className="bg-danger/10 hover:bg-danger/20 text-danger/70 border-danger/20"
+                  >
+                    Excluir série
                   </Button>
                 )}
                 {isEditing && onClone && (
@@ -291,6 +305,21 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                 )}
               </div>
               <div className="flex gap-2">
+                {isEditing && initialEvent?.series_id && onSaveSeries && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (!title.trim() || !start || !end || !initialEvent.series_id) return
+                      onSaveSeries(initialEvent.series_id, title.trim(), start, end, color, projectId)
+                      onOpenChange(false)
+                    }}
+                    className="border-teal/40 text-teal hover:bg-teal/10"
+                  >
+                    Salvar série
+                  </Button>
+                )}
                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)} size="sm">
                   Cancelar
                 </Button>
