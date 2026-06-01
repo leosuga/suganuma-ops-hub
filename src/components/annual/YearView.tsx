@@ -6,6 +6,7 @@ import { EventDialog } from "./EventDialog"
 import { DayHeader } from "./DayHeader"
 import { ColorLegend } from "./ColorLegend"
 import { exportToICal, importFromICal } from "@/lib/ical"
+import { cn } from "@/lib/utils"
 import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, annualEventKeys } from "@/lib/queries/annual"
 import { useRealtimeTable } from "@/lib/realtime"
 import { useUndoToast } from "@/components/UndoToast"
@@ -45,6 +46,7 @@ export function YearView() {
   const calendarRef = useRef<HTMLDivElement>(null)
   const [dayWidth, setDayWidth] = useState(24)
   const [activeColors, setActiveColors] = useState<Set<string>>(new Set())
+  const [viewMode, setViewMode] = useState<"bars" | "dots">("bars")
 
   const createEvent = useCreateAnnualEvent()
   const updateEvent = useUpdateAnnualEvent()
@@ -200,7 +202,35 @@ export function YearView() {
   return (
     <div ref={containerRef} className="h-full flex flex-col">
       <div className="flex items-center justify-between px-2 print:hidden">
-        <YearNavigator year={year} onChange={setYear} />
+        <div className="flex items-center gap-2">
+          <YearNavigator year={year} onChange={setYear} />
+          <div className="flex items-center border border-border/50 rounded-md overflow-hidden">
+            <button
+              onClick={() => setViewMode("bars")}
+              className={cn(
+                "px-2 py-1 text-[9px] font-mono transition-colors",
+                viewMode === "bars"
+                  ? "bg-teal/20 text-teal"
+                  : "text-on-surface/40 hover:text-on-surface/60"
+              )}
+              title="Barras"
+            >
+              ▬
+            </button>
+            <button
+              onClick={() => setViewMode("dots")}
+              className={cn(
+                "px-2 py-1 text-[9px] font-mono transition-colors",
+                viewMode === "dots"
+                  ? "bg-teal/20 text-teal"
+                  : "text-on-surface/40 hover:text-on-surface/60"
+              )}
+              title="Pontos"
+            >
+              ●
+            </button>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportICal}
@@ -276,6 +306,7 @@ export function YearView() {
                   days={days}
                   maxDays={maxDays}
                   dayWidth={dayWidth}
+                  viewMode={viewMode}
                   events={filteredEvents}
                   onNewEvent={handleNewEvent}
                   onEditEvent={handleEditEvent}

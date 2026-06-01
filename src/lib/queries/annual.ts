@@ -20,8 +20,7 @@ export function annualEventsOptions(year: number) {
         .from("annual_event")
         .select("id, owner_id, title, start_date, end_date, color, recurrence, project_id, created_at, updated_at, project:project_id(name)")
         .eq("owner_id", user.id)
-        .gte("end_date", `${year}-01-01`)
-        .lte("start_date", `${year}-12-31`)
+        .or(`start_date.lte.${year}-12-31,end_date.gte.${year}-01-01`)
         .order("start_date", { ascending: true })
 
       if (error) throw error

@@ -17,6 +17,7 @@ interface MonthRowProps {
   days: number
   maxDays: number
   dayWidth: number
+  viewMode?: "bars" | "dots"
   events: AnnualEventRow[]
   onNewEvent: (dateStr: string) => void
   onEditEvent: (event: AnnualEventRow) => void
@@ -118,6 +119,7 @@ export function MonthRow({
   days,
   maxDays,
   dayWidth,
+  viewMode = "bars",
   events,
   onNewEvent,
   onEditEvent,
@@ -295,43 +297,74 @@ export function MonthRow({
 
         {/* Event bars layer */}
         <div className="absolute inset-0 pointer-events-none">
-          {localEvents.map((event) => {
-            const lane = lanes.get(event.id) ?? 0
-            const barTop = (maxLanes - lane) * (BAR_HEIGHT + LANE_GAP) + LANE_GAP
-            const barLeft = (event.startCol - 1) * dayWidth + 2
-            const barWidth = (event.endCol - event.startCol + 1) * dayWidth - 4
-            const isDragging = drag?.eventId === event.id
+          {viewMode === "dots"
+            ? // Compact dots mode: one dot per day per event
+              localEvents.map((event) => {
+                const original = events.find((ev) => ev.id === event.id)
+                if (!original) return null
+                return Array.from({ length: event.endCol - event.startCol + 1 }, (_, i) => {
+                  const col = event.startCol + i
+                  const dotLeft = (col - 1) * dayWidth + dayWidth / 2 - 3
+                  const dotTop = BASE_ROW_HEIGHT / 2 - 3
+                  return (
+                    <div
+                      key={`${event.id}-${col}-dot`}
+                      className="absolute z-10 cursor-pointer pointer-events-auto rounded-full"
+                      style={{
+                        left: dotLeft,
+                        top: dotTop,
+                        width: 6,
+                        height: 6,
+                        backgroundColor: event.color,
+                      }}
+                      onMouseEnter={(e) => setHoveredEvent({ ...original, clientX: e.clientX, clientY: e.clientY })}
+                      onMouseLeave={() => setHoveredEvent(null)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onEditEvent(original)
+                      }}
+                    />
+                  )
+                })
+              })
+            : // Default bars mode
+              localEvents.map((event) => {
+                const lane = lanes.get(event.id) ?? 0
+                const barTop = (maxLanes - lane) * (BAR_HEIGHT + LANE_GAP) + LANE_GAP
+                const barLeft = (event.startCol - 1) * dayWidth + 2
+                const barWidth = (event.endCol - event.startCol + 1) * dayWidth - 4
+                const isDragging = drag?.eventId === event.id
 
-            return (
-              <div
-                key={`${event.id}-${month}`}
-                className={cn(
-                  "absolute rounded-sm cursor-grab active:cursor-grabbing z-10 transition-opacity pointer-events-auto",
-                  isDragging && "opacity-90 z-20"
-                )}
-                style={{
-                  top: barTop,
-                  left: barLeft,
-                  width: Math.max(barWidth, 6),
-                  height: BAR_HEIGHT,
-                  backgroundColor: event.color + "40",
-                  borderLeft: `2px solid ${event.color}`,
-                  borderTop: `1px solid ${event.color}`,
-                  borderRight: `1px solid ${event.color}`,
-                }}
-                onMouseEnter={(e) => {
-                  const original = events.find((ev) => ev.id === event.id)
-                  if (original) setHoveredEvent({ ...original, clientX: e.clientX, clientY: e.clientY })
-                }}
-                onMouseLeave={() => setHoveredEvent(null)}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (!drag) {
-                    const original = events.find((ev) => ev.id === event.id)
-                    if (original) onEditEvent(original)
-                  }
-                }}
-              >
+                return (
+                  <div
+                    key={`${event.id}-${month}`}
+                    className={cn(
+                      "absolute rounded-sm cursor-grab active:cursor-grabbing z-10 transition-opacity pointer-events-auto",
+                      isDragging && "opacity-90 z-20"
+                    )}
+                    style={{
+                      top: barTop,
+                      left: barLeft,
+                      width: Math.max(barWidth, 6),
+                      height: BAR_HEIGHT,
+                      backgroundColor: event.color + "40",
+                      borderLeft: `2px solid ${event.color}`,
+                      borderTop: `1px solid ${event.color}`,
+                      borderRight: `1px solid ${event.color}`,
+                    }}
+                    onMouseEnter={(e) => {
+                      const original = events.find((ev) => ev.id === event.id)
+                      if (original) setHoveredEvent({ ...original, clientX: e.clientX, clientY: e.clientY })
+                    }}
+                    onMouseLeave={() => setHoveredEvent(null)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (!drag) {
+                        const original = events.find((ev) => ev.id === event.id)
+                        if (original) onEditEvent(original)
+                      }
+                    }}
+                  >
                 {/* Left bridge indicator */}
                 {event.hasLeftExtension && (
                   <div

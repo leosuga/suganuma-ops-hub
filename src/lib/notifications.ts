@@ -21,7 +21,7 @@ async function checkAndNotify() {
 
   if (now.getTime() - lastTs < 10_000) return
 
-  const [overdueRes, upcomingRes] = await Promise.all([
+  const [overdueRes, upcomingRes, annualRes] = await Promise.all([
     supabase
       .from("task")
       .select("id, title, due_at")
@@ -38,6 +38,14 @@ async function checkAndNotify() {
       .lt("starts_at", new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString())
       .order("starts_at", { ascending: true })
       .limit(3),
+    supabase
+      .from("annual_event")
+      .select("id, title, start_date")
+      .eq("owner_id", user.id)
+      .gte("start_date", now.toISOString().slice(0, 10))
+      .lte("start_date", new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
+      .order("start_date", { ascending: true })
+      .limit(5),
   ])
 
   const overdue = overdueRes.data
@@ -71,6 +79,23 @@ async function checkAndNotify() {
         body: names,
         icon: "/icon-192.png",
         tag: "upcoming-appts",
+        requireInteraction: true,
+      })
+      notified = true
+    } catch { /* browser blocks */ }
+  }
+
+  const annual = annualRes.data
+  if (annual && annual.length > 0) {
+    const names = annual.map((e) => {
+      const t = new Date(e.start_date)
+      return `${t.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} ${e.title}`
+    }).join(", ")
+    try {
+      new Notification("Evento do calendário próximo", {
+        body: names,
+        icon: "/icon-192.png",
+        tag: "upcoming-annual",
         requireInteraction: true,
       })
       notified = true
