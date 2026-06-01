@@ -1,9 +1,8 @@
 "use client"
 
-import { MonthRow } from "./MonthRow"
+import { CalendarGrid } from "./CalendarGrid"
 import { YearNavigator } from "./YearNavigator"
 import { EventDialog } from "./EventDialog"
-import { DayHeader } from "./DayHeader"
 import { ColorLegend } from "./ColorLegend"
 import { exportToICal, importFromICal } from "@/lib/ical"
 import { cn } from "@/lib/utils"
@@ -13,25 +12,13 @@ import { useUndoToast } from "@/components/UndoToast"
 import { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import type { AnnualEventRow } from "@/lib/types"
 
-const MONTHS = [
-  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
-]
-
-const DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-
-function isLeap(year: number): boolean {
-  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
-}
-
-function daysForMonth(year: number, month: number): number {
-  if (month === 1 && isLeap(year)) return 29
-  return DAYS_IN_MONTH[month]
-}
-
 export function YearView() {
   const [year, setYear] = useState(() => new Date().getFullYear())
-  const { data: events = [], isLoading } = useAnnualEvents(year)
+  const [dualYear, setDualYear] = useState(false)
+
+  const { data: eventsYear1 = [], isLoading: isLoading1 } = useAnnualEvents(year)
+  const { data: eventsYear2 = [], isLoading: isLoading2 } = useAnnualEvents(year + 1)
+
   const containerRef = useRef<HTMLDivElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
   const [dayWidth, setDayWidth] = useState(24)
@@ -48,23 +35,29 @@ export function YearView() {
   const [editingEvent, setEditingEvent] = useState<AnnualEventRow | null>(null)
   const [newDate, setNewDate] = useState<string | null>(null)
 
+  const allEvents = useMemo(() => {
+    if (!dualYear) return eventsYear1
+    return [...eventsYear1, ...eventsYear2]
+  }, [eventsYear1, eventsYear2, dualYear])
+
   const maxDays = 31
   useEffect(() => {
     function calc() {
       const el = containerRef.current
       if (!el) return
       const available = el.clientWidth - 36
-      setDayWidth(Math.max(16, Math.floor(available / maxDays)))
+      const years = dualYear ? 2 : 1
+      setDayWidth(Math.max(14, Math.floor(available / (maxDays * years + years - 1))))
     }
     calc()
     window.addEventListener("resize", calc)
     return () => window.removeEventListener("resize", calc)
-  }, [maxDays])
+  }, [maxDays, dualYear])
 
   const filteredEvents = useMemo(() => {
-    if (activeColors.size === 0) return events
-    return events.filter((e) => activeColors.has(e.color))
-  }, [events, activeColors])
+    if (activeColors.size === 0) return allEvents
+    return allEvents.filter((e) => activeColors.has(e.color))
+  }, [allEvents, activeColors])
 
   function handleToggleColor(color: string) {
     setActiveColors((prev) => {
@@ -132,7 +125,7 @@ export function YearView() {
   }
 
   const handleMoveToMonth = useCallback((id: string, fromMonth: number, toMonth: number) => {
-    const event = events.find((e) => e.id === id)
+    const event = allEvents.find((e) => e.id === id)
     if (!event) return
     const deltaMonths = toMonth - fromMonth
     const start = new Date(event.start_date + "T00:00:00")
@@ -145,9 +138,10 @@ export function YearView() {
       start_date: start.toISOString().slice(0, 10),
       end_date: newEnd.toISOString().slice(0, 10),
     })
-  }, [events, updateEvent])
+  }, [allEvents, updateEvent])
 
   useRealtimeTable("annual_event", annualEventKeys.year(year))
+  useRealtimeTable("annual_event", annualEventKeys.year(year + 1))
 
   const { show: showToast } = useUndoToast()
 
@@ -182,7 +176,8 @@ export function YearView() {
         const el = containerRef.current
         if (el) {
           const available = el.clientWidth - 36
-          setDayWidth(Math.max(16, Math.floor(available / maxDays)))
+          const years = dualYear ? 2 : 1
+          setDayWidth(Math.max(16, Math.floor(available / (maxDays * years + years - 1))))
         }
       }, 1000)
     }, 100)
@@ -194,7 +189,7 @@ export function YearView() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `calendario-${year}.ics`
+    a.download = `calendario-${year}${dualYear ? `-${year + 1}` : ""}.ics`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
@@ -246,7 +241,7 @@ export function YearView() {
         const url = URL.createObjectURL(blob)
         const a = document.createElement("a")
         a.href = url
-        a.download = `calendario-${year}.png`
+        a.download = `calendario-${year}${dualYear ? `-${year + 1}` : ""}.png`
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
@@ -261,6 +256,18 @@ export function YearView() {
       <div className="flex items-center justify-between px-2 print:hidden">
         <div className="flex items-center gap-2">
           <YearNavigator year={year} onChange={setYear} />
+          <button
+            onClick={() => setDualYear((d) => !d)}
+            className={cn(
+              "px-2 py-1 text-[9px] font-mono border border-border/50 rounded-md transition-colors",
+              dualYear
+                ? "bg-teal/20 text-teal border-teal/30"
+                : "text-on-surface/40 hover:text-on-surface/60"
+            )}
+            title={dualYear ? "1 ano" : "2 anos"}
+          >
+            {dualYear ? "2y" : "1y"}
+          </button>
           <div className="flex items-center border border-border/50 rounded-md overflow-hidden">
             <button onClick={() => setViewMode("bars")} className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "bars" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")} title="Barras">▬</button>
             <button onClick={() => setViewMode("dots")} className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "dots" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")} title="Pontos">●</button>
@@ -286,36 +293,33 @@ export function YearView() {
       <ColorLegend activeColors={activeColors} onToggleColor={handleToggleColor} onReset={handleResetColors} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} dayWidth={dayWidth} />
 
       <div className="hidden print:block text-center py-4">
-        <h1 className="text-xl font-bold text-on-surface">Calendário {year}</h1>
+        <h1 className="text-xl font-bold text-on-surface">Calendário {year}{dualYear ? ` - ${year + 1}` : ""}</h1>
         <p className="text-xs text-on-surface/40 font-mono">Suganuma Ops Hub</p>
       </div>
 
       <div ref={calendarRef} className="flex-1 overflow-auto relative print:overflow-visible">
-        <div className="print:shadow-none" style={{ minWidth: maxDays * dayWidth + 36 }}>
-          <DayHeader maxDays={maxDays} dayWidth={dayWidth} />
-          {isLoading ? (
-            <div className="flex items-center justify-center h-32"><span className="text-[10px] font-mono text-on-surface/30">Carregando...</span></div>
-          ) : (
-            MONTHS.map((monthLabel, monthIdx) => {
-              const days = daysForMonth(year, monthIdx)
-              return (
-                <MonthRow
-                  key={monthIdx}
-                  year={year}
-                  month={monthIdx}
-                  monthLabel={monthLabel}
-                  days={days}
-                  maxDays={maxDays}
-                  dayWidth={dayWidth}
-                  viewMode={viewMode}
-                  events={filteredEvents}
-                  onNewEvent={handleNewEvent}
-                  onEditEvent={handleEditEvent}
-                  onUpdateEvent={(id, start, end) => updateEvent.mutate({ id, start_date: start, end_date: end })}
-                  onMoveToMonth={handleMoveToMonth}
-                />
-              )
-            })
+        <div className={cn("print:shadow-none", dualYear && "flex gap-4")}>
+          <CalendarGrid
+            year={year}
+            dayWidth={dayWidth}
+            viewMode={viewMode}
+            events={filteredEvents}
+            onNewEvent={handleNewEvent}
+            onEditEvent={handleEditEvent}
+            onUpdateEvent={(id, start, end) => updateEvent.mutate({ id, start_date: start, end_date: end })}
+            onMoveToMonth={handleMoveToMonth}
+          />
+          {dualYear && (
+            <CalendarGrid
+              year={year + 1}
+              dayWidth={dayWidth}
+              viewMode={viewMode}
+              events={filteredEvents}
+              onNewEvent={handleNewEvent}
+              onEditEvent={handleEditEvent}
+              onUpdateEvent={(id, start, end) => updateEvent.mutate({ id, start_date: start, end_date: end })}
+              onMoveToMonth={handleMoveToMonth}
+            />
           )}
         </div>
       </div>
