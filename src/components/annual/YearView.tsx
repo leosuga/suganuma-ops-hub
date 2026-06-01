@@ -4,10 +4,11 @@ import { MonthRow } from "./MonthRow"
 import { YearNavigator } from "./YearNavigator"
 import { EventDialog } from "./EventDialog"
 import { DayHeader } from "./DayHeader"
+import { ColorLegend } from "./ColorLegend"
 import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, annualEventKeys } from "@/lib/queries/annual"
 import { useRealtimeTable } from "@/lib/realtime"
 import { useUndoToast } from "@/components/UndoToast"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, useMemo } from "react"
 import type { AnnualEventRow } from "@/lib/types"
 
 const MONTHS = [
@@ -42,6 +43,7 @@ export function YearView() {
   const containerRef = useRef<HTMLDivElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
   const [dayWidth, setDayWidth] = useState(24)
+  const [activeColors, setActiveColors] = useState<Set<string>>(new Set())
 
   const createEvent = useCreateAnnualEvent()
   const updateEvent = useUpdateAnnualEvent()
@@ -64,6 +66,38 @@ export function YearView() {
     window.addEventListener("resize", calc)
     return () => window.removeEventListener("resize", calc)
   }, [maxDays])
+
+  // Filtered events
+  const filteredEvents = useMemo(() => {
+    if (activeColors.size === 0) return events
+    return events.filter((e) => activeColors.has(e.color))
+  }, [events, activeColors])
+
+  // Color filter handlers
+  function handleToggleColor(color: string) {
+    setActiveColors((prev) => {
+      const next = new Set(prev)
+      if (next.has(color)) {
+        next.delete(color)
+      } else {
+        next.add(color)
+      }
+      return next
+    })
+  }
+
+  function handleResetColors() {
+    setActiveColors(new Set())
+  }
+
+  // Zoom handlers
+  function handleZoomIn() {
+    setDayWidth((w) => Math.min(60, w + 4))
+  }
+
+  function handleZoomOut() {
+    setDayWidth((w) => Math.max(14, w - 4))
+  }
 
   function handleNewEvent(dateStr: string) {
     setEditingEvent(null)
@@ -151,6 +185,15 @@ export function YearView() {
         </button>
       </div>
 
+      <ColorLegend
+        activeColors={activeColors}
+        onToggleColor={handleToggleColor}
+        onReset={handleResetColors}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        dayWidth={dayWidth}
+      />
+
       {/* Print-only header */}
       <div className="hidden print:block text-center py-4">
         <h1 className="text-xl font-bold text-on-surface">Calendário {year}</h1>
@@ -177,7 +220,7 @@ export function YearView() {
                   days={days}
                   maxDays={maxDays}
                   dayWidth={dayWidth}
-                  events={events}
+                  events={filteredEvents}
                   onNewEvent={handleNewEvent}
                   onEditEvent={handleEditEvent}
                   onUpdateEvent={(id, start, end) =>
