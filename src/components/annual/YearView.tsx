@@ -77,11 +77,11 @@ export function YearView() {
     setDialogOpen(true)
   }
 
-  function handleSave(title: string, start: string, end: string, color: string, recurrence: string) {
+  function handleSave(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null) {
     if (editingEvent) {
-      updateEvent.mutate({ id: editingEvent.id, title, start_date: start, end_date: end, color, recurrence })
+      updateEvent.mutate({ id: editingEvent.id, title, start_date: start, end_date: end, color, recurrence, project_id: projectId })
     } else if (newDate) {
-      createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence })
+      createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId })
     }
     setDialogOpen(false)
     setEditingEvent(null)
@@ -109,6 +109,8 @@ export function YearView() {
             start_date: snapshot.start_date,
             end_date: snapshot.end_date,
             color: snapshot.color,
+            recurrence: snapshot.recurrence,
+            project_id: snapshot.project_id,
           })
         },
       })

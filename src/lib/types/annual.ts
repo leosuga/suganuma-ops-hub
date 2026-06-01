@@ -6,6 +6,8 @@ export interface AnnualEventRow {
   end_date: string
   color: string
   recurrence: string
+  project_id: string | null
+  project_name?: string  // joined from project table
   created_at: string
   updated_at: string
 }
@@ -16,6 +18,7 @@ export interface AnnualEventInsert {
   end_date: string
   color?: string
   recurrence?: string
+  project_id?: string | null
 }
 
 export interface AnnualEventUpdate {
@@ -24,4 +27,5 @@ export interface AnnualEventUpdate {
   end_date?: string
   color?: string
   recurrence?: string
+  project_id?: string | null
 }

@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
+import { useProjects } from "@/lib/queries/projects"
 import { ANNUAL_COLORS } from "@/lib/annual-colors"
 import type { AnnualEventRow } from "@/lib/types"
 import { useState, useEffect } from "react"
@@ -20,7 +21,7 @@ interface EventDialogProps {
   onOpenChange: (open: boolean) => void
   initialEvent: AnnualEventRow | null
   initialDate: string | null
-  onSave: (title: string, start: string, end: string, color: string, recurrence: string) => void
+  onSave: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null) => void
   onDelete?: () => void
 }
 
@@ -30,6 +31,8 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
   const [end, setEnd] = useState("")
   const [color, setColor] = useState(ANNUAL_COLORS[0])
   const [recurrence, setRecurrence] = useState("none")
+  const [projectId, setProjectId] = useState<string | null>(null)
+  const { data: projects = [] } = useProjects()
 
   const isEditing = !!initialEvent
 
@@ -40,12 +43,14 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
       setEnd(initialEvent.end_date)
       setColor(initialEvent.color)
       setRecurrence(initialEvent.recurrence || "none")
+      setProjectId(initialEvent.project_id || null)
     } else if (initialDate) {
       setTitle("")
       setStart(initialDate)
       setEnd(initialDate)
       setColor(ANNUAL_COLORS[0])
       setRecurrence("none")
+      setProjectId(null)
     }
   }, [initialEvent, initialDate, open])
 
@@ -55,14 +60,15 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
     const s = new Date(start + "T00:00:00")
     const en = new Date(end + "T00:00:00")
     if (en < s) {
-      onSave(title.trim(), end, start, color, recurrence)
+      onSave(title.trim(), end, start, color, recurrence, projectId)
     } else {
-      onSave(title.trim(), start, end, color, recurrence)
+      onSave(title.trim(), start, end, color, recurrence, projectId)
     }
     setTitle("")
     setStart("")
     setEnd("")
     setRecurrence("none")
+    setProjectId(null)
     onOpenChange(false)
   }
 
@@ -169,6 +175,23 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                   </button>
                 ))}
               </div>
+            </div>
+            <div>
+              <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+                Projeto
+              </label>
+              <select
+                value={projectId || ""}
+                onChange={(e) => setProjectId(e.target.value || null)}
+                className="mt-1 w-full bg-surface border border-border/50 rounded-sm px-2 py-1.5 text-[10px] font-mono text-on-surface focus:outline-none focus:border-teal/50"
+              >
+                <option value="">Nenhum</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

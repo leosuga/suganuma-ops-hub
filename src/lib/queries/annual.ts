@@ -18,14 +18,18 @@ export function annualEventsOptions(year: number) {
 
       const { data, error } = await supabase
         .from("annual_event")
-        .select("id, owner_id, title, start_date, end_date, color, created_at, updated_at")
+        .select("id, owner_id, title, start_date, end_date, color, recurrence, project_id, created_at, updated_at, project:project_id(name)")
         .eq("owner_id", user.id)
         .gte("end_date", `${year}-01-01`)
         .lte("start_date", `${year}-12-31`)
         .order("start_date", { ascending: true })
 
       if (error) throw error
-      return (data ?? []) as AnnualEventRow[]
+      const rows = (data ?? []).map((row: any) => ({
+        ...row,
+        project_name: row.project?.name || null,
+      }))
+      return rows as AnnualEventRow[]
     },
     staleTime: 30_000,
   })

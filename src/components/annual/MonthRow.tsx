@@ -106,6 +106,11 @@ interface DragState {
   originalEndDate: string
 }
 
+interface TooltipEvent extends AnnualEventRow {
+  clientX: number
+  clientY: number
+}
+
 export function MonthRow({
   year,
   month,
@@ -120,6 +125,7 @@ export function MonthRow({
 }: MonthRowProps) {
   const [localEvents, setLocalEvents] = useState<MonthLocalEvent[]>([])
   const [drag, setDrag] = useState<DragState | null>(null)
+  const [hoveredEvent, setHoveredEvent] = useState<TooltipEvent | null>(null)
   const rowRef = useRef<HTMLDivElement>(null)
   const today = new Date()
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`
@@ -313,6 +319,11 @@ export function MonthRow({
                   borderTop: `1px solid ${event.color}`,
                   borderRight: `1px solid ${event.color}`,
                 }}
+                onMouseEnter={(e) => {
+                  const original = events.find((ev) => ev.id === event.id)
+                  if (original) setHoveredEvent({ ...original, clientX: e.clientX, clientY: e.clientY })
+                }}
+                onMouseLeave={() => setHoveredEvent(null)}
                 onClick={(e) => {
                   e.stopPropagation()
                   if (!drag) {
@@ -420,6 +431,38 @@ export function MonthRow({
               </div>
             )
           })}
+
+          {/* Tooltip overlay */}
+          {hoveredEvent && (
+            <div
+              className="fixed z-[100] pointer-events-none"
+              style={{
+                left: hoveredEvent.clientX + 12,
+                top: hoveredEvent.clientY - 10,
+              }}
+            >
+              <div className="bg-surface border border-border/50 rounded-md shadow-lg px-3 py-2 min-w-[160px]">
+                <p className="text-[10px] font-semibold text-on-surface mb-0.5 truncate">
+                  {hoveredEvent.title}
+                </p>
+                <p className="text-[9px] font-mono text-on-surface/50">
+                  {hoveredEvent.start_date} → {hoveredEvent.end_date}
+                </p>
+                {hoveredEvent.recurrence && hoveredEvent.recurrence !== "none" && (
+                  <p className="text-[8px] font-mono text-teal mt-0.5">
+                    ↻ {hoveredEvent.recurrence === "weekly" && "Semanal"}
+                    {hoveredEvent.recurrence === "monthly" && "Mensal"}
+                    {hoveredEvent.recurrence === "yearly" && "Anual"}
+                  </p>
+                )}
+                {hoveredEvent.project_id && (
+                  <p className="text-[8px] font-mono text-amber mt-0.5">
+                    📁 Projeto: {hoveredEvent.project_name || "Vinculado"}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
