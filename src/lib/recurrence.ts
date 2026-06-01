@@ -9,6 +9,10 @@ export function generateRecurringEvents(base: AnnualEventInsert): AnnualEventIns
   const duration = end.getTime() - start.getTime()
   const year = start.getFullYear()
 
+  // Generate a series UUID for all clones
+  const seriesId = generateUUID()
+  events[0].series_id = seriesId
+
   if (base.recurrence === "weekly") {
     for (let i = 1; i <= 52; i++) {
       const nextStart = new Date(start)
@@ -19,6 +23,7 @@ export function generateRecurringEvents(base: AnnualEventInsert): AnnualEventIns
         ...base,
         start_date: nextStart.toISOString().slice(0, 10),
         end_date: nextEnd.toISOString().slice(0, 10),
+        series_id: seriesId,
       })
     }
   } else if (base.recurrence === "monthly") {
@@ -31,6 +36,7 @@ export function generateRecurringEvents(base: AnnualEventInsert): AnnualEventIns
         ...base,
         start_date: nextStart.toISOString().slice(0, 10),
         end_date: nextEnd.toISOString().slice(0, 10),
+        series_id: seriesId,
       })
     }
   } else if (base.recurrence === "yearly") {
@@ -39,4 +45,12 @@ export function generateRecurringEvents(base: AnnualEventInsert): AnnualEventIns
   }
 
   return events
+}
+
+function generateUUID(): string {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === "x" ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }

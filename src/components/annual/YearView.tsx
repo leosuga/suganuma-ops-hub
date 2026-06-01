@@ -7,10 +7,10 @@ import { DayHeader } from "./DayHeader"
 import { ColorLegend } from "./ColorLegend"
 import { exportToICal, importFromICal } from "@/lib/ical"
 import { cn } from "@/lib/utils"
-import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, annualEventKeys } from "@/lib/queries/annual"
+import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, useUpdateAnnualEventSeries, useDeleteAnnualEventSeries, annualEventKeys } from "@/lib/queries/annual"
 import { useRealtimeTable } from "@/lib/realtime"
 import { useUndoToast } from "@/components/UndoToast"
-import { useState, useRef, useEffect, useMemo } from "react"
+import { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import type { AnnualEventRow } from "@/lib/types"
 
 const MONTHS = [
@@ -41,6 +41,8 @@ export function YearView() {
   const createEvent = useCreateAnnualEvent()
   const updateEvent = useUpdateAnnualEvent()
   const deleteEvent = useDeleteAnnualEvent()
+  const updateSeries = useUpdateAnnualEventSeries()
+  const deleteSeries = useDeleteAnnualEventSeries()
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<AnnualEventRow | null>(null)
@@ -114,6 +116,36 @@ export function YearView() {
     setEditingEvent(null)
     setNewDate(null)
   }
+
+  function handleSaveSeries(seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null) {
+    updateSeries.mutate({ seriesId, title, color, project_id: projectId })
+    setDialogOpen(false)
+    setEditingEvent(null)
+    setNewDate(null)
+  }
+
+  function handleDeleteSeries(seriesId: string) {
+    deleteSeries.mutate(seriesId)
+    setDialogOpen(false)
+    setEditingEvent(null)
+    setNewDate(null)
+  }
+
+  const handleMoveToMonth = useCallback((id: string, fromMonth: number, toMonth: number) => {
+    const event = events.find((e) => e.id === id)
+    if (!event) return
+    const deltaMonths = toMonth - fromMonth
+    const start = new Date(event.start_date + "T00:00:00")
+    const end = new Date(event.end_date + "T00:00:00")
+    const duration = end.getTime() - start.getTime()
+    start.setMonth(start.getMonth() + deltaMonths)
+    const newEnd = new Date(start.getTime() + duration)
+    updateEvent.mutate({
+      id,
+      start_date: start.toISOString().slice(0, 10),
+      end_date: newEnd.toISOString().slice(0, 10),
+    })
+  }, [events, updateEvent])
 
   useRealtimeTable("annual_event", annualEventKeys.year(year))
 
@@ -230,93 +262,28 @@ export function YearView() {
         <div className="flex items-center gap-2">
           <YearNavigator year={year} onChange={setYear} />
           <div className="flex items-center border border-border/50 rounded-md overflow-hidden">
-            <button
-              onClick={() => setViewMode("bars")}
-              className={cn(
-                "px-2 py-1 text-[9px] font-mono transition-colors",
-                viewMode === "bars"
-                  ? "bg-teal/20 text-teal"
-                  : "text-on-surface/40 hover:text-on-surface/60"
-              )}
-              title="Barras"
-            >
-              ▬
-            </button>
-            <button
-              onClick={() => setViewMode("dots")}
-              className={cn(
-                "px-2 py-1 text-[9px] font-mono transition-colors",
-                viewMode === "dots"
-                  ? "bg-teal/20 text-teal"
-                  : "text-on-surface/40 hover:text-on-surface/60"
-              )}
-              title="Pontos"
-            >
-              ●
-            </button>
+            <button onClick={() => setViewMode("bars")} className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "bars" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")} title="Barras">▬</button>
+            <button onClick={() => setViewMode("dots")} className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "dots" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")} title="Pontos">●</button>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleExportICal}
-            className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors"
-            title="Exportar iCal (.ics)"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            iCal
+          <button onClick={handleExportICal} className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors" title="Exportar iCal (.ics)">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> iCal
           </button>
-
           <label className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors cursor-pointer">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="17 8 12 3 7 8" />
-              <line x1="12" y1="3" x2="12" y2="15" />
-            </svg>
-            Import
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg> Import
             <input type="file" accept=".ics,.ical" onChange={handleImportICal} className="sr-only" />
           </label>
-
-          <button
-            onClick={handleExportPNG}
-            className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors"
-            title="Exportar PNG"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <circle cx="8.5" cy="8.5" r="1.5" />
-              <polyline points="21 15 16 10 5 21" />
-            </svg>
-            PNG
+          <button onClick={handleExportPNG} className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors" title="Exportar PNG">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg> PNG
           </button>
-
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors"
-            title="Exportar PDF"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 6 2 18 2 18 9" />
-              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-              <rect x="6" y="14" width="12" height="8" />
-            </svg>
-            PDF
+          <button onClick={handlePrint} className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors" title="Exportar PDF">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9" /><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" /><rect x="6" y="14" width="12" height="8" /></svg> PDF
           </button>
         </div>
       </div>
 
-      <ColorLegend
-        activeColors={activeColors}
-        onToggleColor={handleToggleColor}
-        onReset={handleResetColors}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        dayWidth={dayWidth}
-      />
+      <ColorLegend activeColors={activeColors} onToggleColor={handleToggleColor} onReset={handleResetColors} onZoomIn={handleZoomIn} onZoomOut={handleZoomOut} dayWidth={dayWidth} />
 
       <div className="hidden print:block text-center py-4">
         <h1 className="text-xl font-bold text-on-surface">Calendário {year}</h1>
@@ -326,11 +293,8 @@ export function YearView() {
       <div ref={calendarRef} className="flex-1 overflow-auto relative print:overflow-visible">
         <div className="print:shadow-none" style={{ minWidth: maxDays * dayWidth + 36 }}>
           <DayHeader maxDays={maxDays} dayWidth={dayWidth} />
-
           {isLoading ? (
-            <div className="flex items-center justify-center h-32">
-              <span className="text-[10px] font-mono text-on-surface/30">Carregando...</span>
-            </div>
+            <div className="flex items-center justify-center h-32"><span className="text-[10px] font-mono text-on-surface/30">Carregando...</span></div>
           ) : (
             MONTHS.map((monthLabel, monthIdx) => {
               const days = daysForMonth(year, monthIdx)
@@ -347,9 +311,8 @@ export function YearView() {
                   events={filteredEvents}
                   onNewEvent={handleNewEvent}
                   onEditEvent={handleEditEvent}
-                  onUpdateEvent={(id, start, end) =>
-                    updateEvent.mutate({ id, start_date: start, end_date: end })
-                  }
+                  onUpdateEvent={(id, start, end) => updateEvent.mutate({ id, start_date: start, end_date: end })}
+                  onMoveToMonth={handleMoveToMonth}
                 />
               )
             })
@@ -365,6 +328,8 @@ export function YearView() {
         onSave={handleSave}
         onDelete={handleDeleteEvent}
         onClone={handleClone}
+        onSaveSeries={handleSaveSeries}
+        onDeleteSeries={handleDeleteSeries}
       />
     </div>
   )

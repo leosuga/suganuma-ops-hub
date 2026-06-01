@@ -24,6 +24,8 @@ interface EventDialogProps {
   onSave: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null) => void
   onDelete?: () => void
   onClone?: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null) => void
+  onSaveSeries?: (seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null) => void
+  onDeleteSeries?: (seriesId: string) => void
 }
 
 export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onSave, onDelete, onClone }: EventDialogProps) {

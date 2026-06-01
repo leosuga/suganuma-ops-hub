@@ -22,6 +22,7 @@ interface MonthRowProps {
   onNewEvent: (dateStr: string) => void
   onEditEvent: (event: AnnualEventRow) => void
   onUpdateEvent: (id: string, start: string, end: string) => void
+  onMoveToMonth?: (id: string, fromMonth: number, toMonth: number) => void
 }
 
 interface MonthLocalEvent {
@@ -101,10 +102,12 @@ interface DragState {
   eventId: string
   type: "left" | "right" | "move"
   startX: number
+  startY: number
   originalStartCol: number
   originalEndCol: number
   originalStartDate: string
   originalEndDate: string
+  originalMonth: number
 }
 
 interface TooltipEvent extends AnnualEventRow {
@@ -124,6 +127,7 @@ export function MonthRow({
   onNewEvent,
   onEditEvent,
   onUpdateEvent,
+  onMoveToMonth,
 }: MonthRowProps) {
   const [localEvents, setLocalEvents] = useState<MonthLocalEvent[]>([])
   const [drag, setDrag] = useState<DragState | null>(null)

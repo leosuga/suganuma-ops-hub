@@ -18,7 +18,7 @@ export function annualEventsOptions(year: number) {
 
       const { data, error } = await supabase
         .from("annual_event")
-        .select("id, owner_id, title, start_date, end_date, color, recurrence, project_id, created_at, updated_at, project:project_id(name)")
+        .select("id, owner_id, title, start_date, end_date, color, recurrence, project_id, series_id, created_at, updated_at, project:project_id(name)")
         .eq("owner_id", user.id)
         .or(`start_date.lte.${year}-12-31,end_date.gte.${year}-01-01`)
         .order("start_date", { ascending: true })
@@ -54,6 +54,52 @@ export function useCreateAnnualEvent() {
 
       if (error) throw error
       return data as AnnualEventRow[]
+    },
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: annualEventKeys.all })
+    },
+  })
+}
+
+export function useUpdateAnnualEventSeries() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ seriesId, ...input }: AnnualEventUpdate & { seriesId: string }) => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const { data, error } = await supabase
+        .from("annual_event")
+        .update(input)
+        .eq("series_id", seriesId)
+        .eq("owner_id", user.id)
+        .select()
+
+      if (error) throw error
+      return data as AnnualEventRow[]
+    },
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: annualEventKeys.all })
+    },
+  })
+}
+
+export function useDeleteAnnualEventSeries() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (seriesId: string) => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const { error } = await supabase
+        .from("annual_event")
+        .delete()
+        .eq("series_id", seriesId)
+        .eq("owner_id", user.id)
+
+      if (error) throw error
     },
     onSuccess() {
       queryClient.invalidateQueries({ queryKey: annualEventKeys.all })

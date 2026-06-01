@@ -7,6 +7,7 @@ export interface AnnualEventRow {
   color: string
   recurrence: string
   project_id: string | null
+  series_id: string | null
   project_name?: string  // joined from project table
   created_at: string
   updated_at: string
@@ -19,6 +20,7 @@ export interface AnnualEventInsert {
   color?: string
   recurrence?: string
   project_id?: string | null
+  series_id?: string | null
 }
 
 export interface AnnualEventUpdate {
@@ -28,4 +30,5 @@ export interface AnnualEventUpdate {
   color?: string
   recurrence?: string
   project_id?: string | null
+  series_id?: string | null
 }
