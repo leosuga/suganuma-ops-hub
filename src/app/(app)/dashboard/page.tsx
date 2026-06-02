@@ -9,6 +9,7 @@ import { useAppointments, usePregnancy, useCreateHealthLog } from "@/lib/queries
 import { useMealPlans } from "@/lib/queries/meals"
 import { useNotes } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
+import { useAnnualEvents } from "@/lib/queries/annual"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { StatCard } from "@/components/dashboard/StatCard"
 import { ProtocolsSummary } from "@/components/dashboard/ProtocolsSummary"
@@ -63,15 +64,28 @@ export default function DashboardPage() {
   const expense = transactions.filter((t) => t.kind === "expense" || t.kind === "tax").reduce((s, t) => s + Number(t.amount), 0)
   const balance = income - expense
 
-  const now = new Date()
-  const upcomingAppts = appointments
-    .filter((a) => new Date(a.starts_at) >= now)
-    .slice(0, 3)
+        const now = new Date()
+        const upcomingAppts = appointments
+          .filter((a) => new Date(a.starts_at) >= now)
+          .slice(0, 3)
 
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const todayMeals = mealPlans.filter((mp) => mp.date === todayStr)
-  const todayNotes = notes.filter((n) => n.pinned).slice(0, 2)
-  const todayAppts = appointments.filter((a) => a.starts_at.slice(0, 10) === todayStr)
+        const todayStr = new Date().toISOString().slice(0, 10)
+        const todayMeals = mealPlans.filter((mp) => mp.date === todayStr)
+        const todayNotes = notes.filter((n) => n.pinned).slice(0, 2)
+        const todayAppts = appointments.filter((a) => a.starts_at.slice(0, 10) === todayStr)
+
+        const tomorrow = new Date(now)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        const tomorrowStr = tomorrow.toISOString().slice(0, 10)
+
+        const { data: allEvents = [] } = useAnnualEvents(now.getFullYear())
+        const eventsForAttention = allEvents.filter((e) =>
+          e.start_date <= tomorrowStr && e.end_date >= todayStr
+        )
+        const appointmentsForAttention = appointments.filter((a) => {
+          const d = a.starts_at.slice(0, 10)
+          return d === todayStr || d === tomorrowStr
+        })
 
   const isLoading = tasksLoading || financeLoading
 
@@ -134,7 +148,12 @@ export default function DashboardPage() {
           </div>
         </form>
 
-        <NeedsAttention tasks={needsAttention} urgentCount={urgent.length} />
+        <NeedsAttention
+          tasks={needsAttention}
+          urgentCount={urgent.length}
+          events={eventsForAttention}
+          appointments={appointmentsForAttention}
+        />
 
         {urgent.length > 0 && (
           <div className="border border-danger/40 bg-danger/5 rounded-sm px-4 py-2.5 flex items-center gap-3">
