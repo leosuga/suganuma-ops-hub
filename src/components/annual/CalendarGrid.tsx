@@ -3,7 +3,7 @@
 import { MonthRow } from "./MonthRow"
 import { DayHeader } from "./DayHeader"
 import type { AnnualEventRow } from "@/lib/types"
-import type { AnnualTaskRow } from "@/lib/queries/annual"
+import type { AnnualTaskRow, AnnualAppointmentRow } from "@/lib/queries/annual"
 
 const MONTHS = [
   "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
