@@ -111,6 +111,7 @@ interface DragState {
   originalStartDate: string
   originalEndDate: string
   originalMonth: number
+  clickOffsetX?: number
 }
 
 interface TooltipEvent extends AnnualEventRow {
@@ -159,10 +160,13 @@ export function MonthRow({
   )
 
   const colFromX = useCallback(
-    (clientX: number) => {
+    (clientX: number, clickOffsetX?: number) => {
       const rect = rowRef.current?.getBoundingClientRect()
       if (!rect) return 1
-      const relativeX = clientX - rect.left - LABEL_WIDTH
+      let relativeX = clientX - rect.left - LABEL_WIDTH
+      if (clickOffsetX !== undefined) {
+        relativeX -= clickOffsetX
+      }
       const col = Math.floor(relativeX / dayWidth) + 1
       return Math.max(1, Math.min(days, col))
     },
@@ -174,7 +178,7 @@ export function MonthRow({
 
     function handleMouseMove(e: MouseEvent) {
       if (!drag) return
-      const newCol = colFromX(e.clientX)
+      const newCol = colFromX(e.clientX, drag.clickOffsetX)
       setLocalEvents((prev) =>
         prev.map((event) => {
           if (event.id !== drag.eventId) return event
@@ -202,7 +206,7 @@ export function MonthRow({
 
     function handleMouseUp(e: MouseEvent) {
       if (!drag) return
-      const newCol = colFromX(e.clientX)
+      const newCol = colFromX(e.clientX, drag.clickOffsetX)
       const ogStart = drag.originalStartCol
       const ogEnd = drag.originalEndCol
       let startCol = ogStart
@@ -486,6 +490,8 @@ export function MonthRow({
                   className="absolute inset-2 z-20 cursor-grab active:cursor-grabbing"
                   onMouseDown={(e) => {
                     e.stopPropagation()
+                    const rect = (e.target as HTMLElement).getBoundingClientRect()
+                    const clickOffsetX = e.clientX - rect.left
                     setDrag({
                       eventId: event.id,
                       type: "move",
@@ -494,6 +500,7 @@ export function MonthRow({
                       originalEndCol: event.endCol,
                       originalStartDate: event.start_date,
                       originalEndDate: event.end_date,
+                      clickOffsetX,
                     })
                   }}
                 />
