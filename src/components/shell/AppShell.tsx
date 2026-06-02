@@ -7,7 +7,7 @@ import { Sidebar } from "./Sidebar"
 import { BottomNav } from "./BottomNav"
 import { TopBar } from "./TopBar"
 import { logger } from "@/lib/logger"
-import { useTaskNotifications } from "@/lib/notifications"
+import { useNotifications } from "@/lib/notifications"
 import { useInitAccent } from "@/lib/theme"
 import { UndoToastProvider } from "@/components/UndoToast"
 
@@ -28,7 +28,7 @@ export function AppShell({ children, user }: AppShellProps) {
     }
   }, [])
 
-  useTaskNotifications()
+  useNotifications()
   useInitAccent()
 
   const [queryClient] = useState(

@@ -125,26 +125,68 @@ export function useTaskNotifications() {
     intervalRef.current = setInterval(checkAndNotify, CHECK_INTERVAL)
 
     const supabase = createClient()
-    let channel: RealtimeChannel | null = null
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) return
 
-      channel = supabase
-        .channel("rt:task-notifs")
-        .on(
-          "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "task", filter: `owner_id=eq.${session.user.id}` },
-          () => {
-            checkAndNotify()
-          }
-        )
-        .subscribe()
+      const userId = session.user.id
+
+      const channels: RealtimeChannel[] = []
+
+      channels.push(
+        supabase
+          .channel("rt:task-notifs")
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "task", filter: `owner_id=eq.${userId}` },
+            () => checkAndNotify()
+          )
+          .subscribe()
+      )
+
+      channels.push(
+        supabase
+          .channel("rt:annual-notifs")
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "annual_event", filter: `owner_id=eq.${userId}` },
+            () => checkAndNotify()
+          )
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "annual_event", filter: `owner_id=eq.${userId}` },
+            () => checkAndNotify()
+          )
+          .subscribe()
+      )
+
+      channels.push(
+        supabase
+          .channel("rt:appt-notifs")
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "appointment", filter: `owner_id=eq.${userId}` },
+            () => checkAndNotify()
+          )
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "appointment", filter: `owner_id=eq.${userId}` },
+            () => checkAndNotify()
+          )
+          .subscribe()
+      )
+
+      return () => {
+        for (const ch of channels) supabase.removeChannel(ch)
+      }
     })
 
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)
-      if (channel) supabase.removeChannel(channel)
     }
   }, [])
+}
+
+export function useNotifications() {
+  return useTaskNotifications()
 }
