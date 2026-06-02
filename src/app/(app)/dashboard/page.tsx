@@ -20,6 +20,7 @@ import { TaskKPIs } from "@/components/dashboard/TaskKPIs"
 import { EisenhowerMatrix } from "@/components/dashboard/EisenhowerMatrix"
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview"
 import { BudgetCard } from "@/components/dashboard/BudgetCard"
+import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents"
 import type { TaskRow } from "@/lib/queries/tasks"
 
 function weeksFromDueDate(dueDate: string): number {
@@ -172,6 +173,8 @@ export default function DashboardPage() {
         </div>
 
         <BudgetCard income={income} expense={expense} />
+
+        <UpcomingEvents />
 
         {upcomingAppts.length > 0 && (
           <div className="border border-border bg-surface rounded-sm overflow-hidden">

@@ -36,6 +36,10 @@ export function annualEventsOptions(year: number) {
   })
 }
 
+export function useAnnualEvents(year: number) {
+  return useQuery(annualEventsOptions(year))
+}
+
 export function useAnnualTasks(year: number) {
   return useQuery({
     queryKey: annualEventKeys.tasks(year),
