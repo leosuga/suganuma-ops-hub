@@ -4,7 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { EventDialog } from "@/components/annual/EventDialog"
 import {
-  useAnnualEvents,
+  useUpcomingEvents,
   useUpdateAnnualEvent,
   useDeleteAnnualEvent,
   useCreateAnnualEvent,
@@ -15,9 +15,8 @@ import type { AnnualEventRow } from "@/lib/types"
 export function UpcomingEvents() {
   const now = new Date()
   const todayStr = now.toISOString().slice(0, 10)
-  const year = now.getFullYear()
 
-  const { data: events = [], isLoading } = useAnnualEvents(year)
+  const { data: events = [], isLoading } = useUpcomingEvents(5)
   const updateEvent = useUpdateAnnualEvent()
   const deleteEvent = useDeleteAnnualEvent()
   const createEvent = useCreateAnnualEvent()

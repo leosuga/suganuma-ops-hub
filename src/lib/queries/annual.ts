@@ -40,6 +40,39 @@ export function useAnnualEvents(year: number) {
   return useQuery(annualEventsOptions(year))
 }
 
+export function upcomingEventsOptions(limit: number = 10) {
+  return queryOptions({
+    queryKey: [...annualEventKeys.all, "upcoming", limit],
+    queryFn: async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const todayStr = new Date().toISOString().slice(0, 10)
+
+      const { data, error } = await supabase
+        .from("annual_event")
+        .select("id, owner_id, title, start_date, end_date, start_time, end_time, color, recurrence, project_id, series_id, created_at, updated_at, project:project_id(name)")
+        .eq("owner_id", user.id)
+        .gte("end_date", todayStr)
+        .order("start_date", { ascending: true })
+        .limit(limit)
+
+      if (error) throw error
+      const rows = (data ?? []).map((row: any) => ({
+        ...row,
+        project_name: row.project?.name || null,
+      }))
+      return rows as AnnualEventRow[]
+    },
+    staleTime: 30_000,
+  })
+}
+
+export function useUpcomingEvents(limit: number = 10) {
+  return useQuery(upcomingEventsOptions(limit))
+}
+
 export function useAnnualTasks(year: number) {
   return useQuery({
     queryKey: annualEventKeys.tasks(year),

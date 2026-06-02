@@ -9,7 +9,7 @@ import { useAppointments, usePregnancy, useCreateHealthLog } from "@/lib/queries
 import { useMealPlans } from "@/lib/queries/meals"
 import { useNotes } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
-import { useAnnualEvents } from "@/lib/queries/annual"
+import { useUpcomingEvents } from "@/lib/queries/annual"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { StatCard } from "@/components/dashboard/StatCard"
 import { ProtocolsSummary } from "@/components/dashboard/ProtocolsSummary"
@@ -78,7 +78,7 @@ export default function DashboardPage() {
         tomorrow.setDate(tomorrow.getDate() + 1)
         const tomorrowStr = tomorrow.toISOString().slice(0, 10)
 
-        const { data: allEvents = [] } = useAnnualEvents(now.getFullYear())
+        const { data: allEvents = [] } = useUpcomingEvents(20)
         const eventsForAttention = allEvents.filter((e) =>
           e.start_date <= tomorrowStr && e.end_date >= todayStr
         )
