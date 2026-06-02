@@ -128,6 +128,7 @@ export function MonthRow({
   viewMode = "bars",
   events,
   tasks = [],
+  appointments = [],
   onNewEvent,
   onEditEvent,
   onUpdateEvent,
@@ -303,7 +304,50 @@ export function MonthRow({
           )
         })}
 
-        {/* Event bars layer */}
+          {/* Appointment indicators */}
+          <div className="absolute top-0 left-0 right-0 h-3 pointer-events-none">
+            {appointments
+              .filter((a) => {
+                const d = new Date(a.starts_at)
+                return d.getMonth() === month && d.getFullYear() === year
+              })
+              .map((appt) => {
+                const d = new Date(appt.starts_at)
+                const col = d.getDate()
+                const apptColor =
+                  appt.kind === "consulta" ? "#EF4444" :
+                  appt.kind === "exame" ? "#8B5CF6" :
+                  appt.kind === "vacina" ? "#10B981" :
+                  "#F59E0B"
+                return (
+                  <div
+                    key={`appt-${appt.id}`}
+                    className="absolute pointer-events-auto cursor-pointer"
+                    style={{
+                      left: (col - 1) * dayWidth + dayWidth / 2 - 3,
+                      top: 2,
+                      width: 0,
+                      height: 0,
+                      borderLeft: "4px solid transparent",
+                      borderRight: "4px solid transparent",
+                      borderBottom: `6px solid ${apptColor}`,
+                    }}
+                    onMouseEnter={(e) => setHoveredEvent({
+                      ...appt as any,
+                      clientX: e.clientX,
+                      clientY: e.clientY,
+                    })}
+                    onMouseLeave={() => setHoveredEvent(null)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      window.location.href = "/health"
+                    }}
+                  />
+                )
+              })}
+          </div>
+
+          {/* Event bars layer */}
         <div className="absolute inset-0 pointer-events-none">
           {viewMode === "dots"
             ? // Compact dots mode: one dot per day per event

@@ -27,6 +27,7 @@ interface CalendarGridProps {
   viewMode: "bars" | "dots"
   events: AnnualEventRow[]
   tasks?: AnnualTaskRow[]
+  appointments?: AnnualAppointmentRow[]
   onNewEvent: (dateStr: string) => void
   onEditEvent: (event: AnnualEventRow) => void
   onUpdateEvent: (id: string, start: string, end: string) => void
