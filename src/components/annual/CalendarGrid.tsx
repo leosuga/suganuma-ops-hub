@@ -40,6 +40,7 @@ export function CalendarGrid({
   viewMode,
   events,
   tasks = [],
+  appointments = [],
   onNewEvent,
   onEditEvent,
   onUpdateEvent,
@@ -67,6 +68,7 @@ export function CalendarGrid({
             viewMode={viewMode}
             events={events}
             tasks={tasks}
+            appointments={appointments}
             onNewEvent={onNewEvent}
             onEditEvent={onEditEvent}
             onUpdateEvent={onUpdateEvent}
