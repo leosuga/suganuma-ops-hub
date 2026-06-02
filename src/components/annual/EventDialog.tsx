@@ -21,10 +21,10 @@ interface EventDialogProps {
   onOpenChange: (open: boolean) => void
   initialEvent: AnnualEventRow | null
   initialDate: string | null
-  onSave: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null) => void
+  onSave: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean) => void
   onDelete?: () => void
-  onClone?: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null) => void
-  onSaveSeries?: (seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null, startTime: string | null, endTime: string | null) => void
+  onClone?: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean) => void
+  onSaveSeries?: (seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean) => void
   onDeleteSeries?: (seriesId: string) => void
 }
 
@@ -50,6 +50,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
       setColor(initialEvent.color)
       setStartTime(initialEvent.start_time || null)
       setEndTime(initialEvent.end_time || null)
+      setIsAllDay(initialEvent.is_all_day || false)
       setRecurrence(initialEvent.recurrence || "none")
       setProjectId(initialEvent.project_id || null)
     } else if (initialDate) {
@@ -59,6 +60,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
       setColor(ANNUAL_COLORS[0])
       setStartTime(null)
       setEndTime(null)
+      setIsAllDay(false)
       setRecurrence("none")
       setProjectId(null)
     }
@@ -104,9 +106,9 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
     const s = new Date(start + "T00:00:00")
     const en = new Date(end + "T00:00:00")
     if (en < s) {
-      onSave(title.trim(), end, start, color, recurrence, projectId, startTime, endTime)
+      onSave(title.trim(), end, start, color, recurrence, projectId, startTime, endTime, isAllDay)
     } else {
-      onSave(title.trim(), start, end, color, recurrence, projectId, startTime, endTime)
+      onSave(title.trim(), start, end, color, recurrence, projectId, startTime, endTime, isAllDay)
     }
     setTitle("")
     setStart("")
@@ -115,6 +117,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
     setProjectId(null)
     setStartTime(null)
     setEndTime(null)
+    setIsAllDay(false)
     onOpenChange(false)
   }
 
@@ -328,7 +331,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                     size="sm"
                     onClick={() => {
                       if (!title.trim() || !start || !end) return
-                      onClone(title.trim(), start, end, color, recurrence, projectId, startTime, endTime)
+                      onClone(title.trim(), start, end, color, recurrence, projectId, startTime, endTime, isAllDay)
                       onOpenChange(false)
                     }}
                     className="border-border/40 text-on-surface/60 hover:text-on-surface"
@@ -345,7 +348,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                     size="sm"
                     onClick={() => {
                       if (!title.trim() || !start || !end || !initialEvent.series_id) return
-                      onSaveSeries(initialEvent.series_id, title.trim(), start, end, color, projectId, startTime, endTime)
+                      onSaveSeries(initialEvent.series_id, title.trim(), start, end, color, projectId, startTime, endTime, isAllDay)
                       onOpenChange(false)
                     }}
                     className="border-teal/40 text-teal hover:bg-teal/10"
