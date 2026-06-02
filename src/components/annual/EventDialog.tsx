@@ -37,6 +37,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
   const [endTime, setEndTime] = useState<string | null>(null)
   const [recurrence, setRecurrence] = useState("none")
   const [projectId, setProjectId] = useState<string | null>(null)
+  const [isAllDay, setIsAllDay] = useState(false)
   const { data: projects = [] } = useProjects()
 
   const isEditing = !!initialEvent

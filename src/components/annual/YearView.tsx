@@ -5,6 +5,7 @@ import { YearNavigator } from "./YearNavigator"
 import { EventDialog } from "./EventDialog"
 import { ColorLegend } from "./ColorLegend"
 import { WeekView } from "./WeekView"
+import { MonthView } from "./MonthView"
 import { exportToICal, importFromICal } from "@/lib/ical"
 import { cn } from "@/lib/utils"
 import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, useUpdateAnnualEventSeries, useDeleteAnnualEventSeries, useAnnualTasks, useAnnualAppointments, annualEventKeys } from "@/lib/queries/annual"
@@ -16,8 +17,9 @@ import type { AnnualEventRow } from "@/lib/types"
 export function YearView() {
   const [year, setYear] = useState(() => new Date().getFullYear())
   const [dualYear, setDualYear] = useState(false)
-  const [calendarView, setCalendarView] = useState<"year" | "week">("year")
+  const [calendarView, setCalendarView] = useState<"year" | "month" | "week">("year")
   const [weekOffset, setWeekOffset] = useState(0)
+  const [monthViewMonth, setMonthViewMonth] = useState(() => new Date().getMonth())
 
   const { data: eventsYear1 = [], isLoading: isLoading1 } = useAnnualEvents(year)
   const { data: eventsYear2 = [], isLoading: isLoading2 } = useAnnualEvents(year + 1)
@@ -272,6 +274,13 @@ export function YearView() {
               Ano
             </button>
             <button
+              onClick={() => setCalendarView("month")}
+              className={cn("px-2 py-1 text-[9px] font-mono transition-colors", calendarView === "month" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")}
+              title="Mês"
+            >
+              Mês
+            </button>
+            <button
               onClick={() => setCalendarView("week")}
               className={cn("px-2 py-1 text-[9px] font-mono transition-colors", calendarView === "week" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")}
               title="Semana"
@@ -281,19 +290,16 @@ export function YearView() {
           </div>
           {calendarView === "week" && (
             <div className="flex items-center gap-1">
-              <button
-                onClick={() => setWeekOffset((w) => w - 1)}
-                className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60"
-              >
-                ←
-              </button>
+              <button onClick={() => setWeekOffset((w) => w - 1)} className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60">←</button>
               <span className="text-[9px] font-mono text-on-surface/40">Semana</span>
-              <button
-                onClick={() => setWeekOffset((w) => w + 1)}
-                className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60"
-              >
-                →
-              </button>
+              <button onClick={() => setWeekOffset((w) => w + 1)} className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60">→</button>
+            </div>
+          )}
+          {calendarView === "month" && (
+            <div className="flex items-center gap-1">
+              <button onClick={() => setMonthViewMonth((m) => (m + 11) % 12)} className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60">←</button>
+              <span className="text-[9px] font-mono text-on-surface/40">Mês</span>
+              <button onClick={() => setMonthViewMonth((m) => (m + 1) % 12)} className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60">→</button>
             </div>
           )}
           {calendarView === "year" && (
@@ -354,7 +360,15 @@ export function YearView() {
       </div>
 
       <div ref={calendarRef} className="flex-1 overflow-auto relative print:overflow-visible">
-        {calendarView === "week" ? (
+        {calendarView === "month" ? (
+          <MonthView
+            year={year}
+            month={monthViewMonth}
+            events={allEvents}
+            onNewEvent={handleNewEvent}
+            onEditEvent={handleEditEvent}
+          />
+        ) : calendarView === "week" ? (
           <WeekView
             year={year}
             weekOffset={weekOffset}

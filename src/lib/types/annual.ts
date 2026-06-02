@@ -6,6 +6,7 @@ export interface AnnualEventRow {
   end_date: string
   start_time: string | null
   end_time: string | null
+  is_all_day: boolean
   color: string
   recurrence: string
   project_id: string | null
@@ -21,6 +22,7 @@ export interface AnnualEventInsert {
   end_date: string
   start_time?: string | null
   end_time?: string | null
+  is_all_day?: boolean
   color?: string
   recurrence?: string
   project_id?: string | null
@@ -33,6 +35,7 @@ export interface AnnualEventUpdate {
   end_date?: string
   start_time?: string | null
   end_time?: string | null
+  is_all_day?: boolean
   color?: string
   recurrence?: string
   project_id?: string | null
