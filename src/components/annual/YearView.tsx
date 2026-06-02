@@ -96,26 +96,26 @@ export function YearView() {
     setDialogOpen(true)
   }
 
-  function handleSave(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null) {
+  function handleSave(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null) {
     if (editingEvent) {
-      updateEvent.mutate({ id: editingEvent.id, title, start_date: start, end_date: end, color, recurrence, project_id: projectId })
+      updateEvent.mutate({ id: editingEvent.id, title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime })
     } else if (newDate) {
-      createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId })
+      createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime })
     }
     setDialogOpen(false)
     setEditingEvent(null)
     setNewDate(null)
   }
 
-  function handleClone(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null) {
-    createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId })
+  function handleClone(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null) {
+    createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime })
     setDialogOpen(false)
     setEditingEvent(null)
     setNewDate(null)
   }
 
-  function handleSaveSeries(seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null) {
-    updateSeries.mutate({ seriesId, title, color, project_id: projectId })
+  function handleSaveSeries(seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null, startTime: string | null, endTime: string | null) {
+    updateSeries.mutate({ seriesId, title, color, project_id: projectId, start_time: startTime, end_time: endTime })
     setDialogOpen(false)
     setEditingEvent(null)
     setNewDate(null)

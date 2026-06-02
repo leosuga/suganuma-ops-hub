@@ -21,14 +21,14 @@ interface EventDialogProps {
   onOpenChange: (open: boolean) => void
   initialEvent: AnnualEventRow | null
   initialDate: string | null
-  onSave: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null) => void
+  onSave: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null) => void
   onDelete?: () => void
-  onClone?: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null) => void
-  onSaveSeries?: (seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null) => void
+  onClone?: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null) => void
+  onSaveSeries?: (seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null, startTime: string | null, endTime: string | null) => void
   onDeleteSeries?: (seriesId: string) => void
 }
 
-export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onSave, onDelete, onClone }: EventDialogProps) {
+export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onSave, onDelete, onClone, onSaveSeries, onDeleteSeries }: EventDialogProps) {
   const [title, setTitle] = useState("")
   const [start, setStart] = useState("")
   const [end, setEnd] = useState("")
@@ -103,15 +103,17 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
     const s = new Date(start + "T00:00:00")
     const en = new Date(end + "T00:00:00")
     if (en < s) {
-      onSave(title.trim(), end, start, color, recurrence, projectId)
+      onSave(title.trim(), end, start, color, recurrence, projectId, startTime, endTime)
     } else {
-      onSave(title.trim(), start, end, color, recurrence, projectId)
+      onSave(title.trim(), start, end, color, recurrence, projectId, startTime, endTime)
     }
     setTitle("")
     setStart("")
     setEnd("")
     setRecurrence("none")
     setProjectId(null)
+    setStartTime(null)
+    setEndTime(null)
     onOpenChange(false)
   }
 
@@ -167,6 +169,30 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                   value={end}
                   onChange={(e) => setEnd(e.target.value)}
                   required
+                />
+              </div>
+            </div>
+
+            {/* Time inputs */}
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+                  Hora Início
+                </label>
+                <Input
+                  type="time"
+                  value={startTime || ""}
+                  onChange={(e) => setStartTime(e.target.value || null)}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+                  Hora Fim
+                </label>
+                <Input
+                  type="time"
+                  value={endTime || ""}
+                  onChange={(e) => setEndTime(e.target.value || null)}
                 />
               </div>
             </div>
@@ -301,7 +327,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                     size="sm"
                     onClick={() => {
                       if (!title.trim() || !start || !end) return
-                      onClone(title.trim(), start, end, color, recurrence, projectId)
+                      onClone(title.trim(), start, end, color, recurrence, projectId, startTime, endTime)
                       onOpenChange(false)
                     }}
                     className="border-border/40 text-on-surface/60 hover:text-on-surface"
@@ -318,7 +344,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                     size="sm"
                     onClick={() => {
                       if (!title.trim() || !start || !end || !initialEvent.series_id) return
-                      onSaveSeries(initialEvent.series_id, title.trim(), start, end, color, projectId)
+                      onSaveSeries(initialEvent.series_id, title.trim(), start, end, color, projectId, startTime, endTime)
                       onOpenChange(false)
                     }}
                     className="border-teal/40 text-teal hover:bg-teal/10"
