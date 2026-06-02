@@ -503,13 +503,18 @@ export function MonthRow({
                     className="absolute inset-0 flex items-center px-1 truncate text-[8px] font-mono text-white/90 pointer-events-none leading-tight"
                     style={{ textShadow: "0 1px 1px rgba(0,0,0,0.4)" }}
                   >
-                    {event.title}
                     {(() => {
                       const original = events.find((ev) => ev.id === event.id)
-                      if (original?.recurrence && original.recurrence !== "none") {
-                        return <span className="ml-1 text-[6px] opacity-70">↻</span>
-                      }
-                      return null
+                      const timeStr = original?.start_time ? ` ${original.start_time.slice(0, 5)}` : ""
+                      return (
+                        <>
+                          {event.title}
+                          <span className="text-[7px] opacity-70 ml-0.5">{timeStr}</span>
+                          {original?.recurrence && original.recurrence !== "none" && (
+                            <span className="ml-1 text-[6px] opacity-70">↻</span>
+                          )}
+                        </>
+                      )
                     })()}
                   </span>
                 )}

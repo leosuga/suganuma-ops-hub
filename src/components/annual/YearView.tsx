@@ -4,6 +4,7 @@ import { CalendarGrid } from "./CalendarGrid"
 import { YearNavigator } from "./YearNavigator"
 import { EventDialog } from "./EventDialog"
 import { ColorLegend } from "./ColorLegend"
+import { WeekView } from "./WeekView"
 import { exportToICal, importFromICal } from "@/lib/ical"
 import { cn } from "@/lib/utils"
 import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, useUpdateAnnualEventSeries, useDeleteAnnualEventSeries, useAnnualTasks, useAnnualAppointments, annualEventKeys } from "@/lib/queries/annual"
@@ -15,6 +16,8 @@ import type { AnnualEventRow } from "@/lib/types"
 export function YearView() {
   const [year, setYear] = useState(() => new Date().getFullYear())
   const [dualYear, setDualYear] = useState(false)
+  const [calendarView, setCalendarView] = useState<"year" | "week">("year")
+  const [weekOffset, setWeekOffset] = useState(0)
 
   const { data: eventsYear1 = [], isLoading: isLoading1 } = useAnnualEvents(year)
   const { data: eventsYear2 = [], isLoading: isLoading2 } = useAnnualEvents(year + 1)
@@ -260,22 +263,71 @@ export function YearView() {
       <div className="flex items-center justify-between px-2 print:hidden">
         <div className="flex items-center gap-2">
           <YearNavigator year={year} onChange={setYear} />
-          <button
-            onClick={() => setDualYear((d) => !d)}
-            className={cn(
-              "px-2 py-1 text-[9px] font-mono border border-border/50 rounded-md transition-colors",
-              dualYear
-                ? "bg-teal/20 text-teal border-teal/30"
-                : "text-on-surface/40 hover:text-on-surface/60"
-            )}
-            title={dualYear ? "1 ano" : "2 anos"}
-          >
-            {dualYear ? "2y" : "1y"}
-          </button>
           <div className="flex items-center border border-border/50 rounded-md overflow-hidden">
-            <button onClick={() => setViewMode("bars")} className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "bars" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")} title="Barras">▬</button>
-            <button onClick={() => setViewMode("dots")} className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "dots" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")} title="Pontos">●</button>
+            <button
+              onClick={() => setCalendarView("year")}
+              className={cn("px-2 py-1 text-[9px] font-mono transition-colors", calendarView === "year" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")}
+              title="Ano"
+            >
+              Ano
+            </button>
+            <button
+              onClick={() => setCalendarView("week")}
+              className={cn("px-2 py-1 text-[9px] font-mono transition-colors", calendarView === "week" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")}
+              title="Semana"
+            >
+              Sem
+            </button>
           </div>
+          {calendarView === "week" && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setWeekOffset((w) => w - 1)}
+                className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60"
+              >
+                ←
+              </button>
+              <span className="text-[9px] font-mono text-on-surface/40">Semana</span>
+              <button
+                onClick={() => setWeekOffset((w) => w + 1)}
+                className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60"
+              >
+                →
+              </button>
+            </div>
+          )}
+          {calendarView === "year" && (
+            <button
+              onClick={() => setDualYear((d) => !d)}
+              className={cn(
+                "px-2 py-1 text-[9px] font-mono border border-border/50 rounded-md transition-colors",
+                dualYear
+                  ? "bg-teal/20 text-teal border-teal/30"
+                  : "text-on-surface/40 hover:text-on-surface/60"
+              )}
+              title={dualYear ? "1 ano" : "2 anos"}
+            >
+              {dualYear ? "2y" : "1y"}
+            </button>
+          )}
+          {calendarView === "year" && (
+            <div className="flex items-center border border-border/50 rounded-md overflow-hidden">
+              <button
+                onClick={() => setViewMode("bars")}
+                className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "bars" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")}
+                title="Barras"
+              >
+                ▬
+              </button>
+              <button
+                onClick={() => setViewMode("dots")}
+                className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "dots" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")}
+                title="Pontos"
+              >
+                ●
+              </button>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <button onClick={handleExportICal} className="flex items-center gap-1.5 px-3 py-1 text-[10px] font-mono font-medium text-on-surface/60 bg-surface hover:bg-surface/80 border border-border/50 rounded-md transition-colors" title="Exportar iCal (.ics)">
@@ -302,34 +354,43 @@ export function YearView() {
       </div>
 
       <div ref={calendarRef} className="flex-1 overflow-auto relative print:overflow-visible">
-        <div className={cn("print:shadow-none", dualYear && "flex gap-4")}>
-          <CalendarGrid
+        {calendarView === "week" ? (
+          <WeekView
             year={year}
-            dayWidth={dayWidth}
-            viewMode={viewMode}
-            events={filteredEvents}
-            tasks={tasksYear1}
-            appointments={appointmentsYear1}
-            onNewEvent={handleNewEvent}
+            weekOffset={weekOffset}
+            events={allEvents}
             onEditEvent={handleEditEvent}
-            onUpdateEvent={(id, start, end) => updateEvent.mutate({ id, start_date: start, end_date: end })}
-            onMoveToMonth={handleMoveToMonth}
           />
-          {dualYear && (
+        ) : (
+          <div className={cn("print:shadow-none", dualYear && "flex gap-4")}>
             <CalendarGrid
-              year={year + 1}
+              year={year}
               dayWidth={dayWidth}
               viewMode={viewMode}
               events={filteredEvents}
-              tasks={tasksYear2}
-              appointments={appointmentsYear2}
+              tasks={tasksYear1}
+              appointments={appointmentsYear1}
               onNewEvent={handleNewEvent}
               onEditEvent={handleEditEvent}
               onUpdateEvent={(id, start, end) => updateEvent.mutate({ id, start_date: start, end_date: end })}
               onMoveToMonth={handleMoveToMonth}
             />
-          )}
-        </div>
+            {dualYear && (
+              <CalendarGrid
+                year={year + 1}
+                dayWidth={dayWidth}
+                viewMode={viewMode}
+                events={filteredEvents}
+                tasks={tasksYear2}
+                appointments={appointmentsYear2}
+                onNewEvent={handleNewEvent}
+                onEditEvent={handleEditEvent}
+                onUpdateEvent={(id, start, end) => updateEvent.mutate({ id, start_date: start, end_date: end })}
+                onMoveToMonth={handleMoveToMonth}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       <EventDialog
