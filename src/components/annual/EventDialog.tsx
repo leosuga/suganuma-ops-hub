@@ -33,6 +33,8 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
   const [start, setStart] = useState("")
   const [end, setEnd] = useState("")
   const [color, setColor] = useState(ANNUAL_COLORS[0])
+  const [startTime, setStartTime] = useState<string | null>(null)
+  const [endTime, setEndTime] = useState<string | null>(null)
   const [recurrence, setRecurrence] = useState("none")
   const [projectId, setProjectId] = useState<string | null>(null)
   const { data: projects = [] } = useProjects()
@@ -45,6 +47,8 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
       setStart(initialEvent.start_date)
       setEnd(initialEvent.end_date)
       setColor(initialEvent.color)
+      setStartTime(initialEvent.start_time || null)
+      setEndTime(initialEvent.end_time || null)
       setRecurrence(initialEvent.recurrence || "none")
       setProjectId(initialEvent.project_id || null)
     } else if (initialDate) {
@@ -52,6 +56,8 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
       setStart(initialDate)
       setEnd(initialDate)
       setColor(ANNUAL_COLORS[0])
+      setStartTime(null)
+      setEndTime(null)
       setRecurrence("none")
       setProjectId(null)
     }

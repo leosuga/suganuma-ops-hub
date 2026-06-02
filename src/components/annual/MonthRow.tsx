@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { isHoliday } from "@/lib/holidays"
 import type { AnnualEventRow } from "@/lib/types"
-import type { AnnualTaskRow } from "@/lib/queries/annual"
+import type { AnnualTaskRow, AnnualAppointmentRow } from "@/lib/queries/annual"
 
 const BAR_HEIGHT = 20
 const LANE_GAP = 2
@@ -21,6 +21,7 @@ interface MonthRowProps {
   viewMode?: "bars" | "dots"
   events: AnnualEventRow[]
   tasks?: AnnualTaskRow[]
+  appointments?: AnnualAppointmentRow[]
   onNewEvent: (dateStr: string) => void
   onEditEvent: (event: AnnualEventRow) => void
   onUpdateEvent: (id: string, start: string, end: string) => void
