@@ -253,28 +253,3 @@ export interface AnnualAppointmentRow {
   kind: string | null
   location: string | null
 }
-
-export function useAnnualTasks(year: number) {
-  return useQuery({
-    queryKey: annualEventKeys.tasks(year),
-    queryFn: async () => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Not authenticated")
-
-      const { data, error } = await supabase
-        .from("task")
-        .select("id, title, due_at, priority, status, category")
-        .eq("owner_id", user.id)
-        .in("status", ["todo", "doing"])
-        .not("due_at", "is", null)
-        .gte("due_at", `${year}-01-01`)
-        .lte("due_at", `${year}-12-31`)
-        .order("due_at", { ascending: true })
-
-      if (error) throw error
-      return (data ?? []) as AnnualTaskRow[]
-    },
-    staleTime: 30_000,
-  })
-}
