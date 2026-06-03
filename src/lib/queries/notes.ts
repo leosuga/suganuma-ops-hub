@@ -13,12 +13,15 @@ type NoteVars = {
   tags?: string[] | null
   pinned?: boolean
   linked_task_id?: string | null
+  para?: "projects" | "areas" | "resources" | "archive" | null
+  daily_date?: string | null
 }
 
 export const noteKeys = {
   all: ["notes"] as const,
   pinned: ["notes", "pinned"] as const,
   byTask: (taskId: string) => ["notes", "task", taskId] as const,
+  daily: (date: string) => ["notes", "daily", date] as const,
 }
 
 const notesOptions = queryOptions({
@@ -116,6 +119,26 @@ export function useDeleteNote() {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: noteKeys.all })
+    },
+  })
+}
+
+export function useDailyNote(date: string) {
+  useRealtimeTable("note", noteKeys.daily(date))
+  return useQuery({
+    queryKey: noteKeys.daily(date),
+    queryFn: async (): Promise<NoteRow | null> => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+      const { data, error } = await supabase
+        .from("note")
+        .select("*")
+        .eq("owner_id", user.id)
+        .eq("daily_date", date)
+        .maybeSingle()
+      if (error) throw error
+      return (data ?? null) as NoteRow | null
     },
   })
 }

@@ -3,6 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useCreateTask } from "@/lib/queries/tasks"
+import { useDailyNote, useCreateNote, useUpdateNote } from "@/lib/queries/notes"
+import { parseFrontmatter } from "@/lib/frontmatter"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
@@ -16,7 +18,12 @@ interface DayDetailModalProps {
 
 export function DayDetailModal({ open, onOpenChange, date, label, entries }: DayDetailModalProps) {
   const [taskInput, setTaskInput] = useState("")
+  const [noteInput, setNoteInput] = useState("")
+  const [noteEditing, setNoteEditing] = useState(false)
   const createTask = useCreateTask()
+  const { data: dailyNote } = useDailyNote(date ?? "")
+  const createNote = useCreateNote()
+  const updateNote = useUpdateNote()
 
   async function handleQuickTask(e: React.FormEvent) {
     e.preventDefault()
@@ -31,6 +38,24 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
     setTaskInput("")
   }
 
+  async function handleDailyNoteSave() {
+    if (!date || !noteInput.trim()) return
+    if (dailyNote) {
+      await updateNote.mutateAsync({ id: dailyNote.id, content: noteInput.trim() })
+    } else {
+      await createNote.mutateAsync({
+        title: date,
+        content: noteInput.trim(),
+        tags: ["daily"],
+        pinned: false,
+        daily_date: date,
+      })
+    }
+    setNoteEditing(false)
+  }
+
+  const dailyNoteContent = dailyNote ? parseFrontmatter(dailyNote.content ?? "").body : ""
+
   if (!date) return null
   const isPast = date < new Date().toISOString().slice(0, 10)
 
@@ -41,6 +66,39 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
           <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase capitalize">{label}</DialogTitle>
         </DialogHeader>
         <div className="p-4 space-y-4">
+          {dailyNote && !noteEditing && (
+            <div>
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-amber uppercase block mb-1">Nota do dia</span>
+              <div className="text-[11px] font-mono text-on-surface/60 whitespace-pre-wrap">{dailyNoteContent || "Nota vazia"}</div>
+              <button onClick={() => { setNoteInput(dailyNote.content ?? ""); setNoteEditing(true) }} className="text-[9px] font-mono text-teal/60 hover:text-teal mt-1">editar →</button>
+            </div>
+          )}
+
+          {noteEditing && (
+            <div className="space-y-2">
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-amber uppercase block">Nota do dia</span>
+              <textarea
+                value={noteInput}
+                onChange={(e) => setNoteInput(e.target.value)}
+                placeholder="Escreva a nota do dia..."
+                rows={4}
+                className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors resize-none"
+              />
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setNoteEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">CANCELAR</button>
+                <button onClick={handleDailyNoteSave} disabled={updateNote.isPending || createNote.isPending} className="h-7 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors">
+                  {updateNote.isPending || createNote.isPending ? "..." : "SALVAR"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {!dailyNote && !noteEditing && (
+            <button onClick={() => setNoteEditing(true)} className="text-[9px] font-mono text-on-surface/30 hover:text-amber transition-colors">
+              + Criar nota do dia
+            </button>
+          )}
+
           {entries ? (
             <div className="space-y-3">
               {entries.appts.length > 0 && (
@@ -98,6 +156,7 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
             <Link href="/tasks" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">TASKS →</Link>
             <Link href="/health" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">HEALTH →</Link>
             <Link href="/meals" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">MEALS →</Link>
+            <Link href="/notes" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">NOTES →</Link>
           </div>
         </div>
       </DialogContent>

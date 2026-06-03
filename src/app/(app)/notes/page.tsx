@@ -16,6 +16,7 @@ export default function NotesPage() {
   const createNote = useCreateNote()
   const toast = useUndoToast()
   const [filterTag, setFilterTag] = useState<string | null>(null)
+  const [filterPara, setFilterPara] = useState<string | null>(null)
   const [search, setSearch] = useState("")
 
   const allTags = useMemo(() => {
@@ -26,8 +27,17 @@ export default function NotesPage() {
     return Array.from(set).sort()
   }, [notes])
 
+  const allPara = useMemo(() => {
+    const set = new Set<string>()
+    for (const n of notes) {
+      if (n.para) set.add(n.para)
+    }
+    return Array.from(set).sort()
+  }, [notes])
+
   const filtered = notes.filter((n) => {
     if (filterTag && (!n.tags || !n.tags.includes(filterTag))) return false
+    if (filterPara && n.para !== filterPara) return false
     if (search.trim()) {
       const q = search.toLowerCase().trim()
       if (!n.title.toLowerCase().includes(q) && !(n.content?.toLowerCase().includes(q))) return false
@@ -59,6 +69,13 @@ export default function NotesPage() {
   const pinned = filtered.filter((n) => n.pinned)
   const unpinned = filtered.filter((n) => !n.pinned)
 
+  const paraLabel: Record<string, string> = {
+    projects: "PROJ",
+    areas: "AREA",
+    resources: "REC",
+    archive: "ARQ",
+  }
+
   return (
     <SectionErrorBoundary label="NOTES">
       <div className="p-4 space-y-5">
@@ -72,6 +89,36 @@ export default function NotesPage() {
         </div>
 
         <QuickAddNote onCreated={() => {}} />
+
+        {allPara.length > 0 && (
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setFilterPara(null)}
+              className={cn(
+                "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                filterPara === null
+                  ? "bg-teal/15 text-teal border border-teal/40"
+                  : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+              )}
+            >
+              ALL
+            </button>
+            {allPara.map((para) => (
+              <button
+                key={para}
+                onClick={() => setFilterPara(filterPara === para ? null : para)}
+                className={cn(
+                  "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                  filterPara === para
+                    ? "bg-teal/15 text-teal border border-teal/40"
+                    : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                )}
+              >
+                {paraLabel[para] || para}
+              </button>
+            ))}
+          </div>
+        )}
 
         {allTags.length > 0 && (
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">

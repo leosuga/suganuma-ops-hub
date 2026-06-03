@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useUpdateNote } from "@/lib/queries/notes"
 import type { NoteRow as NoteRowType } from "@/lib/queries/notes"
 import { useTasks } from "@/lib/queries/tasks"
 import { useCreateTask } from "@/lib/queries/tasks"
+import { parseFrontmatter } from "@/lib/frontmatter"
 import { cn } from "@/lib/utils"
 
 const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
@@ -29,6 +30,23 @@ export function NoteRow({ note, onDelete }: { note: NoteRowType; onDelete: (id: 
   }, [note])
 
   const linkedTask = linkedTaskId ? tasks.find(t => t.id === linkedTaskId) : null
+
+  const frontmatter = useMemo(() => parseFrontmatter(note.content ?? ""), [note.content])
+  const metadataKeys = Object.keys(frontmatter.metadata)
+
+  const paraLabel: Record<string, string> = {
+    projects: "PROJ",
+    areas: "AREA",
+    resources: "REC",
+    archive: "ARQ",
+  }
+
+  const paraColor: Record<string, string> = {
+    projects: "text-teal border-teal/30",
+    areas: "text-amber border-amber/30",
+    resources: "text-on-surface/40 border-border",
+    archive: "text-on-surface/30 border-on-surface/20",
+  }
 
   async function handleTogglePin() {
     await updateNote.mutateAsync({ id: note.id, pinned: !note.pinned })
@@ -88,6 +106,22 @@ export function NoteRow({ note, onDelete }: { note: NoteRowType; onDelete: (id: 
         )}
         <div className="flex flex-col gap-1.5">
           <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            PARA
+          </span>
+          <select
+            value={note.para ?? ""}
+            onChange={(e) => updateNote.mutateAsync({ id: note.id, para: e.target.value as NoteRowType["para"] || null })}
+            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
+          >
+            <option value="">Sem categoria</option>
+            <option value="projects">Projetos</option>
+            <option value="areas">Áreas</option>
+            <option value="resources">Recursos</option>
+            <option value="archive">Arquivo</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
             Vincular a task
           </span>
           <select
@@ -120,10 +154,24 @@ export function NoteRow({ note, onDelete }: { note: NoteRowType; onDelete: (id: 
     )}>
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setEditing(true)}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-[13px] font-mono font-semibold text-on-surface truncate">{note.title}</h3>
             {note.pinned && (
               <span className="flex-none text-[8px] font-mono text-amber uppercase tracking-wider">PIN</span>
+            )}
+            {note.para && (
+              <span className={cn("flex-none text-[7px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0", paraColor[note.para])}>
+                {paraLabel[note.para]}
+              </span>
+            )}
+            {metadataKeys.length > 0 && (
+              <>
+                {metadataKeys.slice(0, 2).map((k) => (
+                  <span key={k} className="flex-none text-[7px] font-mono text-on-surface/30 border border-border rounded-sm px-1 py-0">
+                    {k}:{frontmatter.metadata[k]}
+                  </span>
+                ))}
+              </>
             )}
           </div>
           {note.content && (
@@ -131,7 +179,7 @@ export function NoteRow({ note, onDelete }: { note: NoteRowType; onDelete: (id: 
               "prose prose-invert max-w-none text-[11px] font-mono text-on-surface/40 mt-1",
               expanded ? "" : "line-clamp-2"
             )}>
-              <ReactMarkdown>{note.content}</ReactMarkdown>
+              <ReactMarkdown>{frontmatter.body}</ReactMarkdown>
             </div>
           )}
           {note.content && note.content.length > 120 && !expanded && (

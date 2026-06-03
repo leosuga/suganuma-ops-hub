@@ -265,3 +265,58 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - **Coolify no VPS**: instalado mas **não gerencia deploys**. Deploy manual via GitHub Actions SSH
 - **Next.js 16 `next.config.ts`**: `reactCompiler: true` em root (não `experimental`). `typedRoutes` quebra build com BottomNav strings
 - **Escaping de caracteres no write tool**: `\u00cd` e outros escapes Unicode podem aparecer em vez de caracteres acentuados ao usar o `write` tool. Sempre revisar arquivos escritos e corrigir acentos manualmente
+
+---
+
+## Notes Module — Current State (2026-06-03)
+
+| Aspecto | Estado |
+|---|---|
+| Schema | `note`: id, owner_id, title, content, tags[], pinned, linked_task_id, created_at, updated_at |
+| Queries | Full CRUD TanStack Query + optimistic updates + realtime |
+| Editor | Plain textarea 6 rows + react-markdown render (lazy, SSR false) |
+| Task integration | Bidirecional: `→TASK` button; EditTaskDialog shows linked notes |
+| CommandPalette | Shows up to 3 pinned notes; navigates to `/notes` |
+| Markdown | Basic only (remark-gfm removed — no tables, task lists, strikethrough) |
+| Tests | 5 tests passing (fetch, empty, create, optimistic update, optimistic delete) |
+
+### Notes Gaps vs. Full Module
+- No note detail page (`/notes/[id]`) — CommandPalette links to list only
+- No server-side search or global note search from any page
+- No archive/trash system (delete is permanent, undo toast only)
+- No calendar tie-in or daily notes
+- No GFM support (tables, task lists, strikethrough)
+- No rich editor (toolbar, preview, split-pane)
+- No attachments or images
+
+## Notes Feature Roadmap
+
+| Phase | Features | Complexity | Prerequisite |
+|---|---|---|---|
+| **1 — Foundation** | PARA categorization (`projects`, `areas`, `resources`, `archive`) + Frontmatter YAML parser + Daily Notes | Low | — |
+| **2 — Connectivity** | Bidirectional links `[[Note]]` + Inline tasks `- [ ]` sync | Medium | Phase 1 for metadata |
+| **3 — Intelligence** | Semantic search (pgvector) + Webhooks for input/output | High | pgvector on Supabase |
+
+### Implementation Notes
+- **Frontmatter**: Parse `---\nkey: value\n---` from top of `content` column; no schema migration needed for metadata
+- **PARA**: Add `para` column (ENUM) or reuse `tags` with reserved prefix `#para-projects` etc. Migration `0025_note_para.sql`
+- **Daily Notes**: Query by title pattern `YYYY-MM-DD` OR add `daily_date` column; link from calendar
+- **Bidirectional links**: Regex `\[\[(.*?)\]\]` in content; use `title` as temporary key (no slugs yet); backlinks via `content LIKE '%[[title]]%'`
+- **Inline tasks**: Detect `- [ ]` / `- [x]` in content; sync creates/updates tasks via `linked_note_id` on task table
+- **Semantic search**: Requires `pgvector` extension + `embedding` column; generate via OpenAI API on insert/update
+
+## Deploy Critical Lessons — Session History (Cumulative)
+
+| Date | Lesson | Trigger |
+|---|---|---|
+| 2026-05-09 | `node:22-alpine` base image (upgraded from v20) | Performance optimization |
+| 2026-05-10 | HEALTHCHECK in Dockerfile using `node -e "http.get(...)"` — no curl in Alpine | Docker best practice |
+| 2026-05-20 | Removed job `typecheck` from GitHub Actions — OOM/CPU timeout (~70 TS files strict mode) | Build failure |
+| 2026-05-20 | Removed 9 `loading.tsx` files — useless in 100% client-side app | RSC not used |
+| 2026-06-01 | `headers()` in `next.config.ts` with `path-to-regexp` syntax `/icon-:size*` **repeatedly crashes Turbopack build**. Removed permanently | Production crash |
+| 2026-06-01 | Duplicate `useAnnualTasks` function definition in same file (`annual.ts`) causes build failure. Deduplicate immediately | Production crash |
+| 2026-06-01 | Rolled back to `0d0f67a` when Google Calendar sync branch broke deploy | Recovery strategy |
+| 2026-06-02 | `themeColor: "#121212"` in `metadata: Metadata` causes Next.js 16 production warnings. Use separate `export const viewport` | Build warning |
+| 2026-06-02 | Caddy proxy requires explicit `caddy reload --config /etc/caddy/Caddyfile` after container swap when Caddyfile is volume-mounted. Docker auto-restart does NOT pick up new upstream containers | Deploy verification |
+| 2026-06-02 | Service Worker version bump is the **canonical cache-bust strategy** after Server Action hash mismatches | Cache invalidation |
+| 2026-06-02 | `console.warn` replaced with `throw new Error` to avoid console pollution in production | Code quality |
