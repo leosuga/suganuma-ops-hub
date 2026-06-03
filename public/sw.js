@@ -1,4 +1,4 @@
-const CACHE = "ops-hub-v6"
+const CACHE = "ops-hub-v7"
 const OFFLINE_PAGE = "/offline.html"
 const STATIC_ASSETS = "/_next/static/"
 
