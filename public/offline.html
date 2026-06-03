@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Suganuma Ops Hub — Offline</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0A0A0A;
+      color: #E0E0E0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 320px;
+      text-align: center;
+    }
+    .icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 1.5rem;
+      background: #1A1A1A;
+      border: 1px solid #333;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: #5EEAD4;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    h1 {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #5EEAD4;
+      margin-bottom: 0.75rem;
+    }
+    p {
+      font-size: 11px;
+      line-height: 1.6;
+      color: rgba(224,224,224,0.4);
+      margin-bottom: 1.5rem;
+    }
+    button {
+      background: transparent;
+      border: 1px solid #333;
+      color: #5EEAD4;
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover {
+      border-color: #5EEAD4;
+      background: rgba(94,234,212,0.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M1 4v6h6"/>
+        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+      </svg>
+    </div>
+    <h1>Sem Conexão</h1>
+    <p>Não foi possível carregar o Suganuma Ops Hub.<br>Verifique sua conexão com a internet e tente novamente.</p>
+    <button onclick="location.reload()">Tentar Novamente</button>
+  </div>
+</body>
+</html>
