@@ -7,8 +7,14 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
   title: "Suganuma Ops Hub",
-  description: "Personal command center",
+  description: "Centro de comando pessoal — tasks, finanças, saúde, calendário",
   manifest: "/manifest.webmanifest",
+  themeColor: "#121212",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "OpsHub",
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -80,6 +80,7 @@ export function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            prefetch={item.href === "/dashboard" || item.href === "/calendar" || item.href === "/tasks"}
             className={cn(
               "flex flex-col items-center gap-1 px-3 py-2 rounded-sm transition-colors",
               active

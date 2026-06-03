@@ -129,6 +129,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={["/dashboard", "/calendar", "/tasks"].includes(item.href)}
               title={item.label}
               className={cn(
                 "w-10 h-10 flex flex-col items-center justify-center rounded-sm gap-0.5 transition-colors",
@@ -148,6 +149,7 @@ export function Sidebar() {
       <div className="flex-none pb-3 flex flex-col items-center">
         <Link
           href="/settings"
+          prefetch={false}
           title="SETTINGS"
           className={cn(
             "w-10 h-10 flex flex-col items-center justify-center rounded-sm gap-0.5 transition-colors",
