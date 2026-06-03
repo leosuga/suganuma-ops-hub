@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/icon-:size*",
+        source: "/icon-:path*",
         headers: [
           {
             key: "Cache-Control",
@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
         ],
       },
       {
-        source: "/manifest:ext*",
+        source: "/manifest:path*",
         headers: [
           {
             key: "Cache-Control",
