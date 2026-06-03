@@ -23,7 +23,7 @@ import type { TransactionRow } from "@/lib/queries/finance"
 import type { AppointmentRow } from "@/lib/queries/health"
 import type { ProjectRow } from "@/lib/queries/projects"
 import type { NoteRow } from "@/lib/queries/notes"
-import type { AnnualEventRow } from "@/lib/queries/annual"
+import type { AnnualEventRow } from "@/lib/types"
 
 const NAV_COMMANDS = [
   { label: "Dashboard", href: "/dashboard", shortcut: "D" },
