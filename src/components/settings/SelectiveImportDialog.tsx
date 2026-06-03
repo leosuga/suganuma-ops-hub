@@ -118,7 +118,7 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
 
       const { error } = await supabase.from(table.name).insert(cleaned)
       if (error) {
-        console.warn(`import: erro na tabela ${table.name}:`, error.message)
+        throw new Error(`import: erro na tabela ${table.name}: ${error.message}`)
         continue
       }
       total += cleaned.length
