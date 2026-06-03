@@ -9,12 +9,15 @@ export const metadata: Metadata = {
   title: "Suganuma Ops Hub",
   description: "Centro de comando pessoal — tasks, finanças, saúde, calendário",
   manifest: "/manifest.webmanifest",
-  themeColor: "#121212",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "OpsHub",
   },
+}
+
+export const viewport = {
+  themeColor: "#121212",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
