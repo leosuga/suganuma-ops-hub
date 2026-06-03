@@ -56,7 +56,8 @@ export function UpcomingEvents() {
     projectId: string | null,
     startTime: string | null,
     endTime: string | null,
-    isAllDay: boolean
+    isAllDay: boolean,
+    location: string | null
   ) {
     if (editingEvent) {
       updateEvent.mutate({
@@ -70,6 +71,7 @@ export function UpcomingEvents() {
         start_time: startTime,
         end_time: endTime,
         is_all_day: isAllDay,
+        location,
       })
     } else if (newDate) {
       createEvent.mutate({
@@ -82,6 +84,7 @@ export function UpcomingEvents() {
         start_time: startTime,
         end_time: endTime,
         is_all_day: isAllDay,
+        location,
       })
     }
     setDialogOpen(false)
@@ -109,6 +112,7 @@ export function UpcomingEvents() {
             start_time: snapshot.start_time,
             end_time: snapshot.end_time,
             is_all_day: snapshot.is_all_day,
+            location: snapshot.location,
           })
         },
       })
@@ -178,6 +182,11 @@ export function UpcomingEvents() {
                   <span className="flex-1 text-[12px] font-mono text-on-surface truncate">
                     {event.title}
                   </span>
+                  {event.location && (
+                    <span className="text-[10px] font-mono text-on-surface/30 truncate max-w-[80px]">
+                      📍 {event.location}
+                    </span>
+                  )}
                   {event.project_name && (
                     <span className="text-[10px] font-mono text-on-surface/30 truncate max-w-[80px]">
                       {event.project_name}

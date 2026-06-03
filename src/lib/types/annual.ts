@@ -12,6 +12,7 @@ export interface AnnualEventRow {
   project_id: string | null
   series_id: string | null
   project_name?: string
+  location: string | null
   created_at: string
   updated_at: string
 }
@@ -27,6 +28,7 @@ export interface AnnualEventInsert {
   recurrence?: string
   project_id?: string | null
   series_id?: string | null
+  location?: string | null
 }
 
 export interface AnnualEventUpdate {
@@ -40,4 +42,5 @@ export interface AnnualEventUpdate {
   recurrence?: string
   project_id?: string | null
   series_id?: string | null
+  location?: string | null
 }

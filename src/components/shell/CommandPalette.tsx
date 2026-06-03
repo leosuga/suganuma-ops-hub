@@ -15,9 +15,15 @@ import {
 import { taskKeys } from "@/lib/queries/tasks"
 import { financeKeys } from "@/lib/queries/finance"
 import { healthKeys } from "@/lib/queries/health"
+import { projectKeys } from "@/lib/queries/projects"
+import { noteKeys } from "@/lib/queries/notes"
+import { annualEventKeys } from "@/lib/queries/annual"
 import type { TaskRow } from "@/lib/queries/tasks"
 import type { TransactionRow } from "@/lib/queries/finance"
 import type { AppointmentRow } from "@/lib/queries/health"
+import type { ProjectRow } from "@/lib/queries/projects"
+import type { NoteRow } from "@/lib/queries/notes"
+import type { AnnualEventRow } from "@/lib/queries/annual"
 
 const NAV_COMMANDS = [
   { label: "Dashboard", href: "/dashboard", shortcut: "D" },
@@ -47,12 +53,21 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
   const tasks = queryClient.getQueryData<TaskRow[]>(taskKeys.all) ?? []
   const transactions = queryClient.getQueryData<TransactionRow[]>(financeKeys.transactions()) ?? []
   const appointments = queryClient.getQueryData<AppointmentRow[]>(healthKeys.appointments) ?? []
+  const projects = queryClient.getQueryData<ProjectRow[]>(projectKeys.all) ?? []
+  const notes = queryClient.getQueryData<NoteRow[]>(noteKeys.all) ?? []
+  const events = queryClient.getQueryData<AnnualEventRow[]>(annualEventKeys.year(new Date().getFullYear())) ?? []
 
   const pendingTasks = tasks.filter((t) => t.status === "todo" || t.status === "doing").slice(0, 5)
   const recentTxns = transactions.slice(0, 5)
   const upcomingAppts = appointments
     .filter((a) => new Date(a.starts_at) >= new Date())
     .slice(0, 3)
+  const activeProjects = projects.filter((p) => p.status === "active").slice(0, 5)
+  const pinnedNotes = notes.filter((n) => n.pinned).slice(0, 3)
+  const upcomingEvents = events
+    .filter((e) => e.end_date >= new Date().toISOString().slice(0, 10))
+    .sort((a, b) => a.start_date.localeCompare(b.start_date))
+    .slice(0, 5)
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -142,6 +157,52 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
                   <span className="ml-auto text-[9px] font-mono text-muted-foreground">
                     {new Date(a.starts_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
                   </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        )}
+
+        {upcomingEvents.length > 0 && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Próximos eventos">
+              {upcomingEvents.map((e) => (
+                <CommandItem key={e.id} value={`event ${e.title}`} onSelect={() => navigate("/calendar/year")}>
+                  <span className="flex-1 font-mono text-[12px] truncate">{e.title}</span>
+                  <span className="ml-auto text-[9px] font-mono text-muted-foreground">
+                    {new Date(e.start_date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
+                  </span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        )}
+
+        {activeProjects.length > 0 && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Projetos ativos">
+              {activeProjects.map((p) => (
+                <CommandItem key={p.id} value={`project ${p.name}`} onSelect={() => navigate(`/tasks?project=${p.id}`)}>
+                  <span className="flex-1 font-mono text-[12px] truncate">{p.name}</span>
+                  <span
+                    className="ml-auto w-2 h-2 rounded-full flex-none"
+                    style={{ backgroundColor: p.color }}
+                  />
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        )}
+
+        {pinnedNotes.length > 0 && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Notas fixadas">
+              {pinnedNotes.map((n) => (
+                <CommandItem key={n.id} value={`note ${n.title}`} onSelect={() => navigate("/notes")}>
+                  <span className="flex-1 font-mono text-[12px] truncate">{n.title || "Nota sem título"}</span>
                 </CommandItem>
               ))}
             </CommandGroup>

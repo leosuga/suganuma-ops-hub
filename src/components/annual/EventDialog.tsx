@@ -21,10 +21,10 @@ interface EventDialogProps {
   onOpenChange: (open: boolean) => void
   initialEvent: AnnualEventRow | null
   initialDate: string | null
-  onSave: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean) => void
+  onSave: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean, location: string | null) => void
   onDelete?: () => void
-  onClone?: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean) => void
-  onSaveSeries?: (seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean) => void
+  onClone?: (title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean, location: string | null) => void
+  onSaveSeries?: (seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean, location: string | null) => void
   onDeleteSeries?: (seriesId: string) => void
 }
 
@@ -37,6 +37,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
   const [endTime, setEndTime] = useState<string | null>(null)
   const [recurrence, setRecurrence] = useState("none")
   const [projectId, setProjectId] = useState<string | null>(null)
+  const [location, setLocation] = useState<string | null>(null)
   const [isAllDay, setIsAllDay] = useState(false)
   const { data: projects = [] } = useProjects()
 
@@ -53,6 +54,8 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
       setIsAllDay(initialEvent.is_all_day || false)
       setRecurrence(initialEvent.recurrence || "none")
       setProjectId(initialEvent.project_id || null)
+      setLocation(initialEvent.location || null)
+      setIsAllDay(initialEvent.is_all_day || false)
     } else if (initialDate) {
       setTitle("")
       setStart(initialDate)
@@ -63,6 +66,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
       setIsAllDay(false)
       setRecurrence("none")
       setProjectId(null)
+      setLocation(null)
     }
   }, [initialEvent, initialDate, open])
 
@@ -106,15 +110,16 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
     const s = new Date(start + "T00:00:00")
     const en = new Date(end + "T00:00:00")
     if (en < s) {
-      onSave(title.trim(), end, start, color, recurrence, projectId, startTime, endTime, isAllDay)
+      onSave(title.trim(), end, start, color, recurrence, projectId, startTime, endTime, isAllDay, location)
     } else {
-      onSave(title.trim(), start, end, color, recurrence, projectId, startTime, endTime, isAllDay)
+      onSave(title.trim(), start, end, color, recurrence, projectId, startTime, endTime, isAllDay, location)
     }
     setTitle("")
     setStart("")
     setEnd("")
     setRecurrence("none")
     setProjectId(null)
+    setLocation(null)
     setStartTime(null)
     setEndTime(null)
     setIsAllDay(false)
@@ -279,6 +284,16 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
             </div>
             <div>
               <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+                Local
+              </label>
+              <Input
+                value={location || ""}
+                onChange={(e) => setLocation(e.target.value || null)}
+                placeholder="Ex: Sala 102, Hospital Central"
+              />
+            </div>
+            <div>
+              <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
                 Projeto
               </label>
               <select
@@ -331,7 +346,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                     size="sm"
                     onClick={() => {
                       if (!title.trim() || !start || !end) return
-                      onClone(title.trim(), start, end, color, recurrence, projectId, startTime, endTime, isAllDay)
+                      onClone(title.trim(), start, end, color, recurrence, projectId, startTime, endTime, isAllDay, location)
                       onOpenChange(false)
                     }}
                     className="border-border/40 text-on-surface/60 hover:text-on-surface"
@@ -348,7 +363,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                     size="sm"
                     onClick={() => {
                       if (!title.trim() || !start || !end || !initialEvent.series_id) return
-                      onSaveSeries(initialEvent.series_id, title.trim(), start, end, color, projectId, startTime, endTime, isAllDay)
+                      onSaveSeries(initialEvent.series_id, title.trim(), start, end, color, projectId, startTime, endTime, isAllDay, location)
                       onOpenChange(false)
                     }}
                     className="border-teal/40 text-teal hover:bg-teal/10"

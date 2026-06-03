@@ -101,26 +101,26 @@ export function YearView() {
     setDialogOpen(true)
   }
 
-  function handleSave(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean) {
+  function handleSave(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean, location: string | null) {
     if (editingEvent) {
-      updateEvent.mutate({ id: editingEvent.id, title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay })
+      updateEvent.mutate({ id: editingEvent.id, title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay, location })
     } else if (newDate) {
-      createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay })
+      createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay, location })
     }
     setDialogOpen(false)
     setEditingEvent(null)
     setNewDate(null)
   }
 
-  function handleClone(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean) {
-    createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay })
+  function handleClone(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean, location: string | null) {
+    createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay, location })
     setDialogOpen(false)
     setEditingEvent(null)
     setNewDate(null)
   }
 
-  function handleSaveSeries(seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean) {
-    updateSeries.mutate({ seriesId, title, color, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay })
+  function handleSaveSeries(seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean, location: string | null) {
+    updateSeries.mutate({ seriesId, title, color, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay, location })
     setDialogOpen(false)
     setEditingEvent(null)
     setNewDate(null)

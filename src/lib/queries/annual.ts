@@ -18,9 +18,9 @@ export function annualEventsOptions(year: number) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
 
-      const { data, error } = await supabase
+        const { data, error } = await supabase
         .from("annual_event")
-        .select("id, owner_id, title, start_date, end_date, start_time, end_time, color, recurrence, project_id, series_id, created_at, updated_at, project:project_id(name)")
+        .select("id, owner_id, title, start_date, end_date, start_time, end_time, color, recurrence, project_id, series_id, location, created_at, updated_at, project:project_id(name)")
         .eq("owner_id", user.id)
         .or(`start_date.lte.${year}-12-31,end_date.gte.${year}-01-01`)
         .order("start_date", { ascending: true })
@@ -50,9 +50,9 @@ export function upcomingEventsOptions(limit: number = 10) {
 
       const todayStr = new Date().toISOString().slice(0, 10)
 
-      const { data, error } = await supabase
+        const { data, error } = await supabase
         .from("annual_event")
-        .select("id, owner_id, title, start_date, end_date, start_time, end_time, color, recurrence, project_id, series_id, created_at, updated_at, project:project_id(name)")
+        .select("id, owner_id, title, start_date, end_date, start_time, end_time, color, recurrence, project_id, series_id, location, created_at, updated_at, project:project_id(name)")
         .eq("owner_id", user.id)
         .gte("end_date", todayStr)
         .order("start_date", { ascending: true })
