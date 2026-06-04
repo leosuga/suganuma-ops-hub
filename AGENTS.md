@@ -286,7 +286,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 | Tag Namespaces | Tags with `/` prefix grouped for hierarchical filtering |
 | Templates | QuickAddNote with 6 templates (standard, MOC, daily, project, area, resource) |
 | Review Badge | Areas with `last_review` > 30 days show ⚠ REV warning |
-| **Project Linking** | **Notes can be linked to projects via `project_id`; shown in ProjectNotesDialog + QuickAddNote picker + NoteRow +PROJ button** |
+| **Semantic Search** | **Ollama (nomic-embed-text) + Qdrant self-hosted; Busca Semântica panel em NotesPage; embedding auto-sync on note CRUD** |
 
 ## Notes Feature Roadmap
 
