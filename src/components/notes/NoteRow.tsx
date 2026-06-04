@@ -96,18 +96,7 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
     await updateNote.mutateAsync({ id: note.id, pinned: !note.pinned })
   }
 
-  async function handleSave() {
-    if (!title.trim()) return
-    const tagsFromContent = content.match(/#[\w-]+/g)?.map((t) => t.slice(1)) ?? (note.tags ?? [])
-    await updateNote.mutateAsync({
-      id: note.id,
-      title: title.trim(),
-      content: content.trim() || null,
-      tags: tagsFromContent,
-      linked_task_id: linkedTaskId || null,
-    })
-    setEditing(false)
-  }
+  const noteContexts = parseContextTags(note.tags)
 
   async function handleConvertToTask() {
     const result = await createTask.mutateAsync({
@@ -116,6 +105,10 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
       category: "personal",
       priority: "med",
       status: "todo",
+      // Herdar contexto da nota como tags da task
+      tags: noteContexts.length > 0
+        ? noteContexts.map((c) => `ctx/${c}`)
+        : note.tags ?? [],
     })
     await updateNote.mutateAsync({ id: note.id, linked_task_id: result.id, pinned: false })
   }
@@ -238,8 +231,6 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
       </div>
     )
   }
-
-  const noteContexts = parseContextTags(note.tags)
 
   return (
     <div className={cn(

@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useTitle } from "@/lib/useTitle"
 import { useTasks, useUpdateTask, useDeleteTask, useCreateTask } from "@/lib/queries/tasks"
+import { useCreateNote } from "@/lib/queries/notes"
 import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
 import { useProjects } from "@/lib/queries/projects"
 import { CategoryChips } from "@/components/tasks/CategoryChips"
@@ -37,6 +38,18 @@ export default function TasksPage() {
   const deleteTask = useDeleteTask()
   const createTask = useCreateTask()
   const toast = useUndoToast()
+  const createNote = useCreateNote()
+
+  function handleCreateNote(task: TaskRowType) {
+    const ctxFromTags = task.tags?.filter((t) => t.startsWith("ctx/")) ?? []
+    createNote.mutate({
+      title: task.title,
+      content: task.notes ?? `Nota vinculada à task: ${task.title}`,
+      linked_task_id: task.id,
+      tags: ctxFromTags.length > 0 ? ctxFromTags : undefined,
+      pinned: false,
+    })
+  }
 
   const projectFilter = searchParams.get("project")
   const projectFilterName = projectFilter
@@ -133,6 +146,7 @@ export default function TasksPage() {
         onToggle={() => handleToggle(task.id, task.status)}
         onEdit={() => setEditingTask(task)}
         onDelete={() => handleDelete(task.id)}
+        onCreateNote={() => handleCreateNote(task)}
       />
     )
   }, [filtered, handleToggle])
@@ -238,11 +252,12 @@ export default function TasksPage() {
               {filtered.map((task) => (
                 <TaskRow
                   key={task.id}
-                  task={task}
-                  onToggle={() => handleToggle(task.id, task.status)}
-                  onEdit={() => setEditingTask(task)}
-                  onDelete={() => handleDelete(task.id)}
-                />
+        task={task}
+        onToggle={() => handleToggle(task.id, task.status)}
+        onEdit={() => setEditingTask(task)}
+        onDelete={() => handleDelete(task.id)}
+        onCreateNote={() => handleCreateNote(task)}
+      />
               ))}
             </div>
           )

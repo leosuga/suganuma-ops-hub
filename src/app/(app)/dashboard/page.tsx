@@ -10,7 +10,7 @@ import { useMealPlans } from "@/lib/queries/meals"
 import { useNotes } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
 import { useUpcomingEvents } from "@/lib/queries/annual"
-import { CONTEXT_CONFIG } from "@/lib/contexts"
+import { CONTEXT_CONFIG, parseContextTags } from "@/lib/contexts"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { StatCard } from "@/components/dashboard/StatCard"
 import { ProtocolsSummary } from "@/components/dashboard/ProtocolsSummary"
@@ -51,6 +51,7 @@ export default function DashboardPage() {
   const { data: pregnancy } = usePregnancy()
   const createHealthLog = useCreateHealthLog()
   const { data: notes = [] } = useNotes()
+  const uncategorizedCount = notes.filter((n) => parseContextTags(n.tags).length === 0).length
   const { data: mealPlans = [] } = useMealPlans(currentMonth())
   const { data: projects = [] } = useProjects()
 
@@ -124,6 +125,21 @@ export default function DashboardPage() {
         />
 
         <ContextNotesWidget notes={notes} />
+
+        {uncategorizedCount > 0 && (
+          <Link
+            href="/notes"
+            className="flex items-center gap-2 px-4 py-3 border border-amber/30 bg-amber/5 rounded-sm hover:bg-amber/10 transition-colors"
+          >
+            <span className="text-[10px] font-mono text-amber">⚠</span>
+            <span className="text-[11px] font-mono text-amber/80">
+              {uncategorizedCount} {uncategorizedCount === 1 ? 'nota sem' : 'notas sem'} contexto
+            </span>
+            <span className="ml-auto text-[9px] font-mono text-amber/60 uppercase tracking-wider">
+              Organizar →
+            </span>
+          </Link>
+        )}
 
         <form onSubmit={handleQuickWeight} className="border border-border bg-surface rounded-sm overflow-hidden">
           <div className="h-8 px-4 flex items-center border-b border-border bg-bg">

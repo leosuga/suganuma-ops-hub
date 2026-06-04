@@ -26,9 +26,10 @@ interface TaskRowProps {
   onToggle: () => void
   onEdit?: () => void
   onDelete?: () => void
+  onCreateNote?: () => void
 }
 
-export function TaskRow({ task, onToggle, onEdit, onDelete }: TaskRowProps) {
+export function TaskRow({ task, onToggle, onEdit, onDelete, onCreateNote }: TaskRowProps) {
   const isDone = task.status === "done"
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [swipeX, setSwipeX] = useState(0)
@@ -210,6 +211,16 @@ export function TaskRow({ task, onToggle, onEdit, onDelete }: TaskRowProps) {
         >
           {task.priority === "urgent" ? "URG" : task.priority.toUpperCase()}
         </span>
+
+        {onCreateNote && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onCreateNote() }}
+            className="flex-none w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-teal transition-colors rounded-sm text-[11px]"
+            aria-label={`Criar nota para: ${task.title}`}
+          >
+            📝
+          </button>
+        )}
 
         {onEdit && (
           <button
