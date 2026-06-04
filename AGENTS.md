@@ -272,7 +272,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 
 | Aspecto | Estado |
 |---|---|
-| Schema | `note`: id, owner_id, title, content, tags[], pinned, linked_task_id, **para**, **daily_date**, **is_moc**, **last_review**, created_at, updated_at |
+| Schema | `note`: id, owner_id, title, content, tags[], pinned, linked_task_id, **para**, **daily_date**, **is_moc**, **last_review**, **project_id**, created_at, updated_at |
 | Queries | Full CRUD TanStack Query + optimistic updates + realtime |
 | Editor | Plain textarea 6 rows + react-markdown render (lazy, SSR false) |
 | Task integration | Bidirecional: `→TASK` button; EditTaskDialog shows linked notes |
@@ -286,6 +286,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 | Tag Namespaces | Tags with `/` prefix grouped for hierarchical filtering |
 | Templates | QuickAddNote with 6 templates (standard, MOC, daily, project, area, resource) |
 | Review Badge | Areas with `last_review` > 30 days show ⚠ REV warning |
+| **Project Linking** | **Notes can be linked to projects via `project_id`; shown in ProjectNotesDialog + QuickAddNote picker + NoteRow +PROJ button** |
 
 ## Notes Feature Roadmap
 
