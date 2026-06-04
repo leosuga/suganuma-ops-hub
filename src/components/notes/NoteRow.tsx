@@ -15,6 +15,20 @@ import { cn } from "@/lib/utils"
 
 const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
 
+const paraColor: Record<string, string> = {
+  projects: "text-teal border-teal/30",
+  areas: "text-amber border-amber/30",
+  resources: "text-teal/60 border-teal/20",
+  archive: "text-on-surface/30 border-on-surface/20",
+}
+
+const paraLabel: Record<string, string> = {
+  projects: "PROJ",
+  areas: "AREA",
+  resources: "REC",
+  archive: "ARQ",
+}
+
 export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDelete: (id: string) => void; allNotes?: NoteRowType[] }) {
   const updateNote = useUpdateNote()
   const { data: tasks = [] } = useTasks()
