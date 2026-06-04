@@ -1,7 +1,7 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { usePathname, useSearchParams } from "next/navigation"
 import { CONTEXT_CONFIG } from "@/lib/contexts"
 import { cn } from "@/lib/utils"
 
@@ -113,8 +113,25 @@ const NAV_ITEMS = [
 ]
 
 export function Sidebar() {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const [pathname, setPathname] = useState(typeof window !== "undefined" ? window.location.pathname : "")
+  const [search, setSearch] = useState(typeof window !== "undefined" ? window.location.search : "")
+
+  useEffect(() => {
+    const handleChange = () => {
+      setPathname(window.location.pathname)
+      setSearch(window.location.search)
+    }
+    window.addEventListener("popstate", handleChange)
+    // Also listen for Next.js route changes via MutationObserver on title
+    const observer = new MutationObserver(handleChange)
+    observer.observe(document.querySelector("title")!, { childList: true })
+    return () => {
+      window.removeEventListener("popstate", handleChange)
+      observer.disconnect()
+    }
+  }, [])
+
+  const searchParams = new URLSearchParams(search)
 
   return (
     <aside className="w-14 flex flex-col bg-surface border-r border-border h-full">
