@@ -64,6 +64,27 @@ export default function NotesPage() {
     window.history.replaceState({}, "", url.toString())
   }, [filterContext])
 
+  // Listen for external URL changes (e.g., from sidebar CTX toggles)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    let lastSearch = window.location.search
+    const update = () => {
+      const s = window.location.search
+      if (s !== lastSearch) {
+        lastSearch = s
+        const params = new URLSearchParams(s)
+        const ctx = params.get("ctx")
+        setFilterContext(ctx)
+      }
+    }
+    const interval = setInterval(update, 200)
+    window.addEventListener("popstate", update)
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener("popstate", update)
+    }
+  }, [])
+
   const handleSelectNote = useCallback((note: NoteRowType) => {
     setShowSemanticSearch(false)
     setSearch(note.title)

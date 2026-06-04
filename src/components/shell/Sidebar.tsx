@@ -130,7 +130,7 @@ export function Sidebar() {
     let lastPath = window.location.pathname
     let lastSearch = window.location.search
 
-    const sync = () => {
+    const update = () => {
       const p = window.location.pathname
       const s = window.location.search
       if (p !== lastPath || s !== lastSearch) {
@@ -141,15 +141,33 @@ export function Sidebar() {
       }
     }
 
-    // Poll every 200ms as primary detection (Link doesn't fire popstate)
-    const interval = setInterval(sync, 200)
+    // 1. Poll every 100ms for snappy detection
+    const interval = setInterval(update, 100)
 
-    // Also listen for actual popstate (browser back/forward)
-    window.addEventListener("popstate", sync)
+    // 2. Detect ALL clicks and check if URL changed after a short delay
+    //    This catches Next.js Link before the URL actually changes
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const anchor = target.closest("a")
+      if (anchor && anchor.href) {
+        // Delay to let Next.js finish navigation
+        setTimeout(update, 100)
+        setTimeout(update, 300)
+      }
+    }
+    document.addEventListener("click", handleClick)
+
+    // 3. Popstate for browser back/forward
+    window.addEventListener("popstate", update)
+
+    // 4. Hash changes
+    window.addEventListener("hashchange", update)
 
     return () => {
       clearInterval(interval)
-      window.removeEventListener("popstate", sync)
+      document.removeEventListener("click", handleClick)
+      window.removeEventListener("popstate", update)
+      window.removeEventListener("hashchange", update)
     }
   }, [])
 

@@ -149,6 +149,8 @@ export default function ReviewPage() {
     { label: "PESO", value: latestWeight ? `${latestWeight.value} kg` : "—", color: "text-on-surface/40" },
   ]
 
+  const hasAnyData = weekNotes.length > 0 || weekTasksDone.length > 0 || weekTransactions.length > 0 || weekAppointments.length > 0 || !!latestWeight
+
   return (
     <SectionErrorBoundary label="WEEKLY REVIEW">
       <div className="p-4 space-y-6 max-w-3xl mx-auto">
@@ -181,7 +183,28 @@ export default function ReviewPage() {
           ))}
         </div>
 
-        {/* Notes by context */}
+        {!hasAnyData && (
+          <div className="border border-border bg-surface rounded-sm p-8 text-center">
+            <p className="text-[11px] font-mono text-on-surface/30">
+              Sem dados esta semana. Use o app e volte aqui para ver seu resumo!
+            </p>
+            <div className="mt-3 flex items-center justify-center gap-2">
+              <Link href="/tasks" className="text-[9px] font-mono text-teal hover:text-teal-hi transition-colors">
+                + TASK
+              </Link>
+              <span className="text-on-surface/20">·</span>
+              <Link href="/notes" className="text-[9px] font-mono text-teal hover:text-teal-hi transition-colors">
+                + NOTA
+              </Link>
+              <span className="text-on-surface/20">·</span>
+              <Link href="/finance" className="text-[9px] font-mono text-teal hover:text-teal-hi transition-colors">
+                + TXN
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Notes created this week */}
         {weekNotes.length > 0 && (
           <div className="border border-border bg-surface rounded-sm overflow-hidden">
             <div className="px-3 py-2 border-b border-border flex items-center justify-between">
