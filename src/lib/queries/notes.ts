@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/client"
 import type { Note } from "@/lib/schemas/note"
 import type { NoteRow } from "@/lib/types"
 import { useRealtimeTable } from "@/lib/realtime"
+import { syncNoteEmbedding, deleteNoteEmbedding } from "@/lib/actions/semantic-search"
 
 export type { NoteRow }
 
@@ -62,8 +63,10 @@ export function useCreateNote() {
       if (error) throw error
       return data as NoteRow
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: noteKeys.all })
+      // Sync embedding async — fire-and-forget, failure is non-blocking
+      syncNoteEmbedding(data.id).catch(() => null)
     },
   })
 }
@@ -96,8 +99,10 @@ export function useUpdateNote() {
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(noteKeys.all, ctx.prev)
     },
-    onSettled: () => {
+    onSettled: (_data, _err, vars) => {
       queryClient.invalidateQueries({ queryKey: noteKeys.all })
+      // Sync embedding async — fire-and-forget
+      syncNoteEmbedding(vars.id).catch(() => null)
     },
   })
 }
@@ -121,8 +126,10 @@ export function useDeleteNote() {
     onError: (_err, _id, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(noteKeys.all, ctx.prev)
     },
-    onSettled: () => {
+    onSettled: (_data, _err, id) => {
       queryClient.invalidateQueries({ queryKey: noteKeys.all })
+      // Delete embedding async
+      deleteNoteEmbedding(id).catch(() => null)
     },
   })
 }

@@ -11,7 +11,28 @@ services:
       - "3000"
     networks:
       - proxy
+      - internal
+    depends_on:
+      - ollama
+
+  ollama:
+    container_name: ollama
+    hostname: ollama
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama:/root/.ollama
+    expose:
+      - "11434"
+    networks:
+      - internal
+    # Default entrypoint serves the API; pull model via deploy script
+
+volumes:
+  ollama:
 
 networks:
   proxy:
     external: true
+  internal:
+    driver: bridge

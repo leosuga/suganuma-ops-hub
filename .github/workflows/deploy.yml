@@ -20,6 +20,8 @@ jobs:
             export NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
             export SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
             export WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}"
+            export OLLAMA_URL="${{ secrets.OLLAMA_URL || 'http://ollama:11434' }}"
+            export QDRANT_URL="${{ secrets.QDRANT_URL || 'http://qdrant:6333' }}"
 
             bash << 'RUNDEPLOY'
             cd ~

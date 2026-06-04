@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useRef, useCallback } from "react"
 import { useTitle } from "@/lib/useTitle"
 import { useNotes, useDeleteNote, useCreateNote } from "@/lib/queries/notes"
 import { cn } from "@/lib/utils"
@@ -8,6 +8,8 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
 import { NoteRow } from "@/components/notes/NoteRow"
 import { QuickAddNote } from "@/components/notes/QuickAddNote"
+import { SemanticSearchPanel } from "@/components/notes/SemanticSearchPanel"
+import type { NoteRow as NoteRowType } from "@/lib/types"
 
 function groupTagsByPrefix(tags: string[]): Map<string, string[]> {
   const groups = new Map<string, string[]>()
@@ -31,6 +33,16 @@ export default function NotesPage() {
   const [filterPrefix, setFilterPrefix] = useState<string | null>(null)
   const [filterPara, setFilterPara] = useState<string | null>(null)
   const [search, setSearch] = useState("")
+  const [showSemanticSearch, setShowSemanticSearch] = useState(false)
+  const [highlightNoteId, setHighlightNoteId] = useState<string | null>(null)
+
+  const handleSelectNote = useCallback((note: NoteRowType) => {
+    setShowSemanticSearch(false)
+    setSearch(note.title)
+    setHighlightNoteId(note.id)
+    // Clear highlight after 3 seconds
+    setTimeout(() => setHighlightNoteId(null), 3000)
+  }, [])
 
   const allTags = useMemo(() => {
     const set = new Set<string>()
@@ -107,6 +119,20 @@ export default function NotesPage() {
         </div>
 
         <QuickAddNote onCreated={() => {}} />
+
+        <button
+          onClick={() => setShowSemanticSearch(!showSemanticSearch)}
+          className={cn(
+            "h-7 px-3 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors",
+            showSemanticSearch
+              ? "bg-teal/15 text-teal border-teal/40"
+              : "text-on-surface/30 border-border hover:border-on-surface/30 hover:text-on-surface/50"
+          )}
+        >
+          {showSemanticSearch ? "FECHAR BUSCA SEMÂNTICA" : "BUSCA SEMÂNTICA"}
+        </button>
+
+        {showSemanticSearch && <SemanticSearchPanel onSelectNote={handleSelectNote} />}
 
         {allPara.length > 0 && (
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
@@ -223,7 +249,14 @@ export default function NotesPage() {
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-teal uppercase">MAPS OF CONTENT</span>
             {mocs.map((n) => (
-              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} />
+              <div
+                key={n.id}
+                className={cn(
+                  highlightNoteId === n.id && "ring-1 ring-amber/40 rounded-sm"
+                )}
+              >
+                <NoteRow note={n} onDelete={handleDelete} allNotes={notes} />
+              </div>
             ))}
           </div>
         )}
@@ -231,7 +264,16 @@ export default function NotesPage() {
         {!isLoading && pinned.length > 0 && (
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">FIXADAS</span>
-            {pinned.map((n) => <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} />)}
+            {pinned.map((n) => (
+              <div
+                key={n.id}
+                className={cn(
+                  highlightNoteId === n.id && "ring-1 ring-amber/40 rounded-sm"
+                )}
+              >
+                <NoteRow note={n} onDelete={handleDelete} allNotes={notes} />
+              </div>
+            ))}
           </div>
         )}
 
@@ -240,7 +282,16 @@ export default function NotesPage() {
             {(mocs.length > 0 || pinned.length > 0) && (
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOTAS</span>
             )}
-            {unpinned.map((n) => <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} />)}
+            {unpinned.map((n) => (
+              <div
+                key={n.id}
+                className={cn(
+                  highlightNoteId === n.id && "ring-1 ring-amber/40 rounded-sm"
+                )}
+              >
+                <NoteRow note={n} onDelete={handleDelete} allNotes={notes} />
+              </div>
+            ))}
           </div>
         )}
       </div>
