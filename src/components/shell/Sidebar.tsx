@@ -1,7 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useSearchParams } from "next/navigation"
+import { CONTEXT_CONFIG } from "@/lib/contexts"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
@@ -113,6 +114,7 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   return (
     <aside className="w-14 flex flex-col bg-surface border-r border-border h-full">
@@ -144,6 +146,35 @@ export function Sidebar() {
           )
         })}
       </nav>
+
+      {/* Context shortcuts (only on Notes page) */}
+      {pathname.startsWith("/notes") && (
+        <div className="flex-none flex flex-col items-center gap-1 pb-2 border-t border-border pt-2">
+          <span className="text-[6px] font-mono text-on-surface/20 tracking-wider mb-1">CTX</span>
+          {(Object.keys(CONTEXT_CONFIG) as Array<keyof typeof CONTEXT_CONFIG>).map((ctx) => {
+            const cfg = CONTEXT_CONFIG[ctx]
+            const isActive = searchParams.get("ctx") === ctx
+            return (
+              <Link
+                key={ctx}
+                href={isActive ? "/notes" : `/notes?ctx=${ctx}`}
+                prefetch={false}
+                title={cfg.label}
+                className={cn(
+                  "w-7 h-7 flex items-center justify-center rounded-sm transition-colors",
+                  isActive
+                    ? cfg.bg + " border " + cfg.border
+                    : "text-on-surface/20 hover:text-on-surface/50"
+                )}
+              >
+                <span className={cn("text-[8px] font-mono font-bold", isActive ? cfg.color : "")}>
+                  {ctx.slice(0, 2).toUpperCase()}
+                </span>
+              </Link>
+            )
+          })}
+        </div>
+      )}
 
       {/* Settings at bottom */}
       <div className="flex-none pb-3 flex flex-col items-center">

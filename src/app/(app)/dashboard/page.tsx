@@ -10,6 +10,7 @@ import { useMealPlans } from "@/lib/queries/meals"
 import { useNotes } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
 import { useUpcomingEvents } from "@/lib/queries/annual"
+import { CONTEXT_CONFIG } from "@/lib/contexts"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { StatCard } from "@/components/dashboard/StatCard"
 import { ProtocolsSummary } from "@/components/dashboard/ProtocolsSummary"
@@ -22,6 +23,7 @@ import { EisenhowerMatrix } from "@/components/dashboard/EisenhowerMatrix"
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview"
 import { BudgetCard } from "@/components/dashboard/BudgetCard"
 import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents"
+import { ContextNotesWidget } from "@/components/dashboard/ContextNotesWidget"
 import type { TaskRow } from "@/lib/queries/tasks"
 
 function weeksFromDueDate(dueDate: string): number {
@@ -120,6 +122,8 @@ export default function DashboardPage() {
           todayMeals={todayMeals}
           todayNotes={todayNotes}
         />
+
+        <ContextNotesWidget notes={notes} />
 
         <form onSubmit={handleQuickWeight} className="border border-border bg-surface rounded-sm overflow-hidden">
           <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
