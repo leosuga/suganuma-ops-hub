@@ -127,17 +127,29 @@ export function Sidebar() {
   const [search, setSearch] = useState(typeof window !== "undefined" ? window.location.search : "")
 
   useEffect(() => {
-    const handleChange = () => {
-      setPathname(window.location.pathname)
-      setSearch(window.location.search)
+    let lastPath = window.location.pathname
+    let lastSearch = window.location.search
+
+    const sync = () => {
+      const p = window.location.pathname
+      const s = window.location.search
+      if (p !== lastPath || s !== lastSearch) {
+        lastPath = p
+        lastSearch = s
+        setPathname(p)
+        setSearch(s)
+      }
     }
-    window.addEventListener("popstate", handleChange)
-    // Also listen for Next.js route changes via MutationObserver on title
-    const observer = new MutationObserver(handleChange)
-    observer.observe(document.querySelector("title")!, { childList: true })
+
+    // Poll every 200ms as primary detection (Link doesn't fire popstate)
+    const interval = setInterval(sync, 200)
+
+    // Also listen for actual popstate (browser back/forward)
+    window.addEventListener("popstate", sync)
+
     return () => {
-      window.removeEventListener("popstate", handleChange)
-      observer.disconnect()
+      clearInterval(interval)
+      window.removeEventListener("popstate", sync)
     }
   }, [])
 
