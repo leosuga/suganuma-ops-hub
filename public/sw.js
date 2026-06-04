@@ -1,9 +1,9 @@
-const CACHE = "ops-hub-v7"
+const CACHE = "ops-hub-v8"
 const OFFLINE_PAGE = "/offline.html"
 const STATIC_ASSETS = "/_next/static/"
 
 self.addEventListener("install", (e) => {
-  console.log("[SW] install v6")
+  console.log("[SW] install v8")
   e.waitUntil(
     caches
       .open(CACHE)
