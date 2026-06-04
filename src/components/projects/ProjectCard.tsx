@@ -8,15 +8,18 @@ import { cn } from "@/lib/utils"
 interface ProjectCardProps {
   project: ProjectRow
   progress: { total: number; done: number; pct: number }
+  noteCount: number
   onStatusChange: (id: string, status: "active" | "done" | "paused") => void
   onDelete: (id: string) => void
+  onShowNotes?: (projectId: string) => void
 }
 
-export function ProjectCard({ project, progress, onStatusChange, onDelete }: ProjectCardProps) {
+export function ProjectCard({ project, progress, noteCount, onStatusChange, onDelete, onShowNotes }: ProjectCardProps) {
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showNotesInline, setShowNotesInline] = useState(false)
 
   const statusLabel =
-    project.status === "active" ? "ATIVO" : project.status === "paused" ? "PAUSADO" : "CONCLU\u00cdDO"
+    project.status === "active" ? "ATIVO" : project.status === "paused" ? "PAUSADO" : "CONCLUÍDO"
   const statusColor =
     project.status === "active"
       ? "text-teal border-teal/30"
@@ -59,9 +62,19 @@ export function ProjectCard({ project, progress, onStatusChange, onDelete }: Pro
       </div>
 
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-mono text-on-surface/30">
-          {progress.done}/{progress.total} tasks
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono text-on-surface/30">
+            {progress.done}/{progress.total} tasks
+          </span>
+          {noteCount > 0 && (
+            <button
+              onClick={() => onShowNotes?.(project.id)}
+              className="text-[10px] font-mono text-teal/60 hover:text-teal border border-teal/20 rounded-sm px-1.5 py-0.5 transition-colors"
+            >
+              {noteCount} {noteCount === 1 ? "nota" : "notas"}
+            </button>
+          )}
+        </div>
         <span
           className={cn(
             "text-[8px] font-mono font-semibold tracking-widest px-1.5 py-0.5 border rounded-sm uppercase",
@@ -102,7 +115,7 @@ export function ProjectCard({ project, progress, onStatusChange, onDelete }: Pro
             onClick={() => onStatusChange(project.id, "active")}
             className="text-[8px] font-mono text-on-surface/30 hover:text-teal tracking-wider transition-colors"
           >
-            REABRIR
+              REABRIR
           </button>
         )}
         {confirmDelete ? (
@@ -120,7 +133,7 @@ export function ProjectCard({ project, progress, onStatusChange, onDelete }: Pro
               onClick={() => setConfirmDelete(false)}
               className="text-on-surface/30 hover:text-on-surface/60 text-[12px]"
             >
-              \u00d7
+              ×
             </button>
           </div>
         ) : (

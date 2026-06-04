@@ -10,6 +10,7 @@ export interface NoteRow {
   daily_date: string | null
   is_moc: boolean
   last_review: string | null
+  project_id: string | null
   created_at: string
   updated_at: string
 }
@@ -26,6 +27,7 @@ export interface NoteInsert {
   daily_date?: string | null
   is_moc?: boolean
   last_review?: string | null
+  project_id?: string | null
   created_at?: string
   updated_at?: string
 }

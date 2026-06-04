@@ -6,10 +6,12 @@ import { useProjects, useUpdateProject, useDeleteProject, useCreateProject } fro
 import type { ProjectRow } from "@/lib/queries/projects"
 import { useTasks } from "@/lib/queries/tasks"
 import type { TaskRow } from "@/lib/queries/tasks"
+import { useNotes, useDeleteNote, useCreateNote } from "@/lib/queries/notes"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog"
 import { ProjectCard } from "@/components/projects/ProjectCard"
+import { ProjectNotesDialog } from "@/components/projects/ProjectNotesDialog"
 
 function calcProgress(projectId: string, tasks: TaskRow[]) {
   const projectTasks = tasks.filter((t) => t.project_id === projectId)
@@ -19,15 +21,24 @@ function calcProgress(projectId: string, tasks: TaskRow[]) {
   return { total, done, pct }
 }
 
+function countProjectNotes(projectId: string, notes: { project_id: string | null }[]) {
+  return notes.filter((n) => n.project_id === projectId).length
+}
+
 export default function ProjectsPage() {
-  useTitle("Projects \u00b7 Suganuma Ops Hub")
+  useTitle("Projects · Suganuma Ops Hub")
   const { data: projects = [], isLoading } = useProjects()
   const { data: tasks = [] } = useTasks()
+  const { data: notes = [] } = useNotes()
   const updateProject = useUpdateProject()
   const deleteProject = useDeleteProject()
   const createProject = useCreateProject()
+  const deleteNote = useDeleteNote()
+  const createNote = useCreateNote()
   const toast = useUndoToast()
   const [createOpen, setCreateOpen] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<ProjectRow | null>(null)
+  const [notesDialogOpen, setNotesDialogOpen] = useState(false)
 
   function handleStatusChange(id: string, status: "active" | "done" | "paused") {
     updateProject.mutate({ id, status })
@@ -41,7 +52,7 @@ export default function ProjectsPage() {
     deleteProject.mutate(id, {
       onSuccess: () => {
         toast.show({
-          label: `"${snap.name.slice(0, 40)}" exclu\u00eddo`,
+          label: `"${snap.name.slice(0, 40)}" excluído`,
           onUndo: () => {
             createProject.mutate({
               name: snap.name,
@@ -55,9 +66,52 @@ export default function ProjectsPage() {
     })
   }
 
+  function handleShowNotes(projectId: string) {
+    const project = projects.find((p) => p.id === projectId) ?? null
+    setSelectedProject(project)
+    setNotesDialogOpen(true)
+  }
+
+  function handleDeleteNote(id: string) {
+    const note = notes.find((n) => n.id === id)
+    if (!note) return
+    const snap = { ...note }
+    deleteNote.mutate(id, {
+      onSuccess: () => {
+        toast.show({
+          label: `"${snap.title.slice(0, 40)}" excluída`,
+          onUndo: () => {
+            createNote.mutate({
+              title: snap.title,
+              content: snap.content ?? null,
+              tags: snap.tags ?? [],
+              pinned: snap.pinned,
+            })
+          },
+        })
+      },
+    })
+  }
+
+  async function handleCreateProjectNote(projectId: string, title: string, content: string | null) {
+    await createNote.mutateAsync({
+      title,
+      content,
+      tags: [],
+      pinned: false,
+      para: "projects",
+      project_id: projectId,
+    })
+  }
+
   const getProgress = useCallback(
     (projectId: string) => calcProgress(projectId, tasks),
     [tasks]
+  )
+
+  const getNoteCount = useCallback(
+    (projectId: string) => countProjectNotes(projectId, notes),
+    [notes]
   )
 
   const active = projects.filter((p) => p.status === "active")
@@ -74,7 +128,7 @@ export default function ProjectsPage() {
             </h1>
             <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
               {projects.length} projeto{projects.length !== 1 ? "s" : ""}
-              {active.length > 0 && ` \u00b7 ${active.length} ativo${active.length !== 1 ? "s" : ""}`}
+              {active.length > 0 && ` · ${active.length} ativo${active.length !== 1 ? "s" : ""}`}
             </p>
           </div>
           <button
@@ -117,8 +171,10 @@ export default function ProjectsPage() {
                 key={p.id}
                 project={p}
                 progress={getProgress(p.id)}
+                noteCount={getNoteCount(p.id)}
                 onStatusChange={handleStatusChange}
                 onDelete={handleDelete}
+                onShowNotes={handleShowNotes}
               />
             ))}
           </div>
@@ -135,8 +191,10 @@ export default function ProjectsPage() {
                   key={p.id}
                   project={p}
                   progress={getProgress(p.id)}
+                  noteCount={getNoteCount(p.id)}
                   onStatusChange={handleStatusChange}
                   onDelete={handleDelete}
+                  onShowNotes={handleShowNotes}
                 />
               ))}
             </div>
@@ -146,7 +204,7 @@ export default function ProjectsPage() {
         {done.length > 0 && (
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-              CONCLU\u00cdDOS
+              CONCLUÍDOS
             </span>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {done.map((p) => (
@@ -154,8 +212,10 @@ export default function ProjectsPage() {
                   key={p.id}
                   project={p}
                   progress={getProgress(p.id)}
+                  noteCount={getNoteCount(p.id)}
                   onStatusChange={handleStatusChange}
                   onDelete={handleDelete}
+                  onShowNotes={handleShowNotes}
                 />
               ))}
             </div>
@@ -163,6 +223,13 @@ export default function ProjectsPage() {
         )}
 
         <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} />
+        <ProjectNotesDialog
+          open={notesDialogOpen}
+          onOpenChange={setNotesDialogOpen}
+          project={selectedProject}
+          notes={notes}
+          onDeleteNote={handleDeleteNote}
+        />
       </div>
     </SectionErrorBoundary>
   )

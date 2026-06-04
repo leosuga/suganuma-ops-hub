@@ -17,6 +17,7 @@ type NoteVars = {
   daily_date?: string | null
   is_moc?: boolean
   last_review?: string | null
+  project_id?: string | null
 }
 
 export const noteKeys = {

@@ -11,6 +11,7 @@ export const noteSchema = z.object({
   daily_date: z.string().optional().nullable(),
   is_moc: z.boolean().default(false),
   last_review: z.string().optional().nullable(),
+  project_id: z.string().uuid().optional().nullable(),
 })
 
 export type Note = z.infer<typeof noteSchema>

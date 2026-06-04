@@ -369,6 +369,7 @@ export type Database = {
           daily_date: string | null
           is_moc: boolean
           last_review: string | null
+          project_id: string | null
           created_at: string
           updated_at: string
         }
@@ -384,6 +385,7 @@ export type Database = {
           daily_date?: string | null
           is_moc?: boolean
           last_review?: string | null
+          project_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -399,6 +401,7 @@ export type Database = {
           daily_date?: string | null
           is_moc?: boolean
           last_review?: string | null
+          project_id?: string | null
           created_at?: string
           updated_at?: string
         }
