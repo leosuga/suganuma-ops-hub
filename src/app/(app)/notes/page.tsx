@@ -33,30 +33,34 @@ export default function NotesPage() {
   const [filterTag, setFilterTag] = useState<string | null>(null)
   const [filterPrefix, setFilterPrefix] = useState<string | null>(null)
   const [filterPara, setFilterPara] = useState<string | null>(null)
-  // Read context from URL on mount
+  const [search, setSearch] = useState("")
+  const [showSemanticSearch, setShowSemanticSearch] = useState(false)
+  const [highlightNoteId, setHighlightNoteId] = useState<string | null>(null)
+
+  // Read context from URL on mount, fallback to localStorage
   const [filterContext, setFilterContext] = useState<string | null>(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search)
       const ctx = params.get("ctx")
-      return ctx ? ctx : null
+      if (ctx) return ctx
+      const saved = localStorage.getItem("lastNotesContext")
+      if (saved) return saved
     }
     return null
   })
 
-  // Sync filterContext to URL
+  // Sync filterContext to URL and localStorage
   useEffect(() => {
     if (typeof window === "undefined") return
     const url = new URL(window.location.href)
     if (filterContext) {
       url.searchParams.set("ctx", filterContext)
+      localStorage.setItem("lastNotesContext", filterContext)
     } else {
       url.searchParams.delete("ctx")
     }
     window.history.replaceState({}, "", url.toString())
   }, [filterContext])
-  const [search, setSearch] = useState("")
-  const [showSemanticSearch, setShowSemanticSearch] = useState(false)
-  const [highlightNoteId, setHighlightNoteId] = useState<string | null>(null)
 
   const handleSelectNote = useCallback((note: NoteRowType) => {
     setShowSemanticSearch(false)

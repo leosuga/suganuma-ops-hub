@@ -18,6 +18,8 @@ import { healthKeys } from "@/lib/queries/health"
 import { projectKeys } from "@/lib/queries/projects"
 import { noteKeys } from "@/lib/queries/notes"
 import { annualEventKeys } from "@/lib/queries/annual"
+import { CONTEXT_CONFIG, parseContextTags } from "@/lib/contexts"
+import { cn } from "@/lib/utils"
 import type { TaskRow } from "@/lib/queries/tasks"
 import type { TransactionRow } from "@/lib/queries/finance"
 import type { AppointmentRow } from "@/lib/queries/health"
@@ -101,6 +103,17 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
             <CommandItem key={cmd.href} value={cmd.label} onSelect={() => navigate(cmd.href)}>
               <span className="flex-1 font-mono text-[12px]">{cmd.label}</span>
               <kbd className="ml-auto text-[9px] font-mono text-muted-foreground">{cmd.shortcut}</kbd>
+            </CommandItem>
+          ))}
+        </CommandGroup>
+
+        <CommandGroup heading="Contextos">
+          {Object.entries(CONTEXT_CONFIG).map(([ctx, cfg]) => (
+            <CommandItem key={`nav-ctx-${ctx}`} value={`ctx ${cfg.label}`} onSelect={() => navigate(`/notes?ctx=${ctx}`)}>
+              <span className="flex-1 font-mono text-[12px]">{cfg.label}</span>
+              <span className={cn("ml-auto text-[9px] font-mono px-1 rounded-sm", cfg.bg, cfg.color)}>
+                {ctx}
+              </span>
             </CommandItem>
           ))}
         </CommandGroup>
@@ -208,6 +221,30 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
             </CommandGroup>
           </>
         )}
+
+        {Object.entries(CONTEXT_CONFIG).map(([ctx, cfg]) => {
+          const ctxNotes = notes.filter((n) => parseContextTags(n.tags).includes(ctx)).slice(0, 3)
+          if (ctxNotes.length === 0) return null
+          return (
+            <div key={ctx}>
+              <CommandSeparator />
+              <CommandGroup heading={`Notas: ${cfg.label}`}>
+                {ctxNotes.map((n) => (
+                  <CommandItem
+                    key={n.id}
+                    value={`ctx ${ctx} ${n.title}`}
+                    onSelect={() => navigate(`/notes?ctx=${ctx}`)}
+                  >
+                    <span className="flex-1 font-mono text-[12px] truncate">{n.title || "Nota sem título"}</span>
+                    <span className={cn("ml-auto text-[9px] font-mono px-1 rounded-sm", cfg.bg, cfg.color)}>
+                      {ctx}
+                    </span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </div>
+          )
+        })}
       </CommandList>
     </CommandDialog>
   )
