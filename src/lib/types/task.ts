@@ -13,6 +13,7 @@ export interface TaskRow {
   important: boolean
   recurrence: string | null
   tags: string[] | null
+  linked_note_id: string | null
   created_at: string
   updated_at: string
 }
@@ -32,6 +33,7 @@ export interface TaskInsert {
   important?: boolean
   recurrence?: string | null
   tags?: string[] | null
+  linked_note_id?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -51,6 +53,7 @@ export interface TaskUpdate {
   important?: boolean
   recurrence?: string | null
   tags?: string[] | null
+  linked_note_id?: string | null
   created_at?: string
   updated_at?: string
 }

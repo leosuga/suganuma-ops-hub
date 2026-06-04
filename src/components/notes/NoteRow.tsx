@@ -1,27 +1,32 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useUpdateNote } from "@/lib/queries/notes"
 import type { NoteRow as NoteRowType } from "@/lib/queries/notes"
-import { useTasks } from "@/lib/queries/tasks"
-import { useCreateTask } from "@/lib/queries/tasks"
+import { useNotes } from "@/lib/queries/notes"
+import { useTasks, useCreateTask, useUpdateTask, useTasksByNote } from "@/lib/queries/tasks"
 import { parseFrontmatter } from "@/lib/frontmatter"
+import { parseWikiLinks, renderWikiLinksToMarkdown } from "@/lib/links"
+import { parseInlineTasks, updateInlineTask } from "@/lib/tasks-inline"
 import { cn } from "@/lib/utils"
 
 const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
 
-export function NoteRow({ note, onDelete }: { note: NoteRowType; onDelete: (id: string) => void }) {
+export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDelete: (id: string) => void; allNotes?: NoteRowType[] }) {
   const updateNote = useUpdateNote()
   const { data: tasks = [] } = useTasks()
+  const { data: linkedTasks = [] } = useTasksByNote(note.id)
   const createTask = useCreateTask()
+  const updateTask = useUpdateTask()
   const [editing, setEditing] = useState(false)
   const [title, setTitle] = useState(note.title)
   const [content, setContent] = useState(note.content ?? "")
   const [linkedTaskId, setLinkedTaskId] = useState(note.linked_task_id ?? "")
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [showBacklinks, setShowBacklinks] = useState(false)
 
   useEffect(() => {
     setTitle(note.title)
@@ -34,49 +39,33 @@ export function NoteRow({ note, onDelete }: { note: NoteRowType; onDelete: (id: 
   const frontmatter = useMemo(() => parseFrontmatter(note.content ?? ""), [note.content])
   const metadataKeys = Object.keys(frontmatter.metadata)
 
-  const paraLabel: Record<string, string> = {
-    projects: "PROJ",
-    areas: "AREA",
-    resources: "REC",
-    archive: "ARQ",
-  }
+  const wikiLinks = useMemo(() => parseWikiLinks(note.content ?? ""), [note.content])
+  const backlinks = useMemo(() => {
+    if (!allNotes) return []
+    const normalizedTitle = note.title.toLowerCase().trim()
+    return allNotes.filter((n) =>
+      n.id !== note.id && (n.content?.toLowerCase().includes(`[[${normalizedTitle}]]`) || n.content?.toLowerCase().includes(`[[${normalizedTitle}|`))
+    )
+  }, [allNotes, note])
 
-  const paraColor: Record<string, string> = {
-    projects: "text-teal border-teal/30",
-    areas: "text-amber border-amber/30",
-    resources: "text-on-surface/40 border-border",
-    archive: "text-on-surface/30 border-on-surface/20",
-  }
+  const markdownBody = useMemo(() => renderWikiLinksToMarkdown(frontmatter.body), [frontmatter.body])
+  const inlineTasks = useMemo(() => parseInlineTasks(note.content ?? ""), [note.content])
 
-  async function handleTogglePin() {
-    await updateNote.mutateAsync({ id: note.id, pinned: !note.pinned })
-  }
+  const handleInlineToggle = useCallback(async (index: number, checked: boolean) => {
+    const updatedContent = updateInlineTask(note.content ?? "", index, checked)
+    await updateNote.mutateAsync({ id: note.id, content: updatedContent })
+  }, [note.content, note.id, updateNote])
 
-  async function handleSave() {
-    if (!title.trim()) return
-    const tagsFromContent = content.match(/#[\w-]+/g)?.map((t) => t.slice(1)) ?? (note.tags ?? [])
-    await updateNote.mutateAsync({
-      id: note.id,
-      title: title.trim(),
-      content: content.trim() || null,
-      tags: tagsFromContent,
-      linked_task_id: linkedTaskId || null,
-    })
-    setEditing(false)
-  }
-
-  async function handleConvertToTask() {
+  const handleCreateTaskFromInline = useCallback(async (label: string) => {
     const result = await createTask.mutateAsync({
-      title: note.title,
-      notes: note.content ?? undefined,
+      title: label,
       category: "personal",
       priority: "med",
       status: "todo",
+      linked_note_id: note.id,
     })
-    await updateNote.mutateAsync({ id: note.id, linked_task_id: result.id, pinned: false })
-  }
-
-  const dateStr = new Date(note.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })
+    return result
+  }, [createTask, note.id])
 
   if (editing) {
     return (
@@ -179,7 +168,7 @@ export function NoteRow({ note, onDelete }: { note: NoteRowType; onDelete: (id: 
               "prose prose-invert max-w-none text-[11px] font-mono text-on-surface/40 mt-1",
               expanded ? "" : "line-clamp-2"
             )}>
-              <ReactMarkdown>{frontmatter.body}</ReactMarkdown>
+              <ReactMarkdown>{markdownBody}</ReactMarkdown>
             </div>
           )}
           {note.content && note.content.length > 120 && !expanded && (
@@ -192,6 +181,89 @@ export function NoteRow({ note, onDelete }: { note: NoteRowType; onDelete: (id: 
               {note.tags.map((t) => (
                 <span key={t} className="text-[8px] font-mono text-on-surface/30 px-1.5 py-0.5 border border-border rounded-sm">{t}</span>
               ))}
+            </div>
+          )}
+
+          {/* Inline tasks — rendered when note has linked tasks or inline task syntax */}
+          {(linkedTasks.length > 0 || inlineTasks.length > 0) && (
+            <div className="mt-2 space-y-1">
+              {inlineTasks.length > 0 && (
+                <div className="space-y-1">
+                  {inlineTasks.map((task, idx) => {
+                    const linked = linkedTasks.find((lt) => lt.title === task.label)
+                    return (
+                      <div key={idx} className="flex items-center gap-1.5">
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (linked) {
+                              await updateTask.mutateAsync({
+                                id: linked.id,
+                                status: linked.status === "done" ? "todo" : "done",
+                                completed_at: linked.status === "done" ? null : new Date().toISOString(),
+                              })
+                            }
+                            await handleInlineToggle(task.index, !task.checked)
+                          }}
+                          className={cn(
+                            "w-3.5 h-3.5 border rounded-sm flex items-center justify-center text-[8px] transition-colors",
+                            task.checked
+                              ? "bg-teal/20 border-teal text-teal"
+                              : "border-on-surface/20 hover:border-teal/60"
+                          )}
+                        >
+                          {task.checked ? "✓" : ""}
+                        </button>
+                        <span className={cn("text-[11px] font-mono", task.checked ? "text-on-surface/30 line-through" : "text-on-surface/60")}>
+                          {task.label}
+                        </span>
+                        {linked && (
+                          <span className={cn("text-[8px] font-mono px-1 rounded-sm", linked.status === "done" ? "text-teal bg-teal/10" : "text-amber bg-amber/10")}>
+                            {linked.status === "done" ? "done" : linked.status}
+                          </span>
+                        )}
+                        {!linked && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              await handleCreateTaskFromInline(task.label)
+                            }}
+                            className="text-[8px] font-mono text-on-surface/20 hover:text-teal transition-colors"
+                          >
+                            +task
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Backlinks */}
+          {backlinks.length > 0 && (
+            <div className="mt-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowBacklinks(!showBacklinks) }}
+                className="text-[9px] font-mono text-on-surface/30 hover:text-teal transition-colors"
+              >
+                🔗 {backlinks.length} {backlinks.length === 1 ? "backlink" : "backlinks"}
+              </button>
+              {showBacklinks && (
+                <div className="mt-1 space-y-1 pl-2 border-l border-border">
+                  {backlinks.map((bl) => (
+                    <Link
+                      key={bl.id}
+                      href={`/notes?search=${encodeURIComponent(bl.title)}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="block text-[11px] font-mono text-on-surface/50 hover:text-teal truncate"
+                    >
+                      ← {bl.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

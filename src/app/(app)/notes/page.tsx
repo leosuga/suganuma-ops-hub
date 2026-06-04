@@ -177,7 +177,7 @@ export default function NotesPage() {
         {!isLoading && pinned.length > 0 && (
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">FIXADAS</span>
-            {pinned.map((n) => <NoteRow key={n.id} note={n} onDelete={handleDelete} />)}
+            {pinned.map((n) => <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} />)}
           </div>
         )}
 
@@ -186,7 +186,7 @@ export default function NotesPage() {
             {pinned.length > 0 && (
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOTAS</span>
             )}
-            {unpinned.map((n) => <NoteRow key={n.id} note={n} onDelete={handleDelete} />)}
+            {unpinned.map((n) => <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} />)}
           </div>
         )}
       </div>

@@ -41,6 +41,7 @@ export type Database = {
           important: boolean
           created_at: string
           updated_at: string
+          linked_note_id: string | null
         }
         Insert: {
           id?: string
@@ -57,6 +58,7 @@ export type Database = {
           important?: boolean
           created_at?: string
           updated_at?: string
+          linked_note_id?: string | null
         }
         Update: {
           id?: string
@@ -73,6 +75,7 @@ export type Database = {
           important?: boolean
           created_at?: string
           updated_at?: string
+          linked_note_id?: string | null
         }
       }
       project: {

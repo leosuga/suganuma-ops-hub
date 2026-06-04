@@ -20,11 +20,13 @@ type TaskVars = {
   important?: boolean
   recurrence?: string | null
   tags?: string[] | null
+  linked_note_id?: string | null
 }
 
 export const taskKeys = {
   all: ["tasks"] as const,
   byProject: (projectId: string) => ["tasks", "project", projectId] as const,
+  byNote: (noteId: string) => ["tasks", "note", noteId] as const,
 }
 
 export const tasksOptions = queryOptions({
@@ -118,5 +120,24 @@ export function useDeleteTask() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.all })
     },
+  })
+}
+
+export function useTasksByNote(noteId: string) {
+  useRealtimeTable("task", taskKeys.byNote(noteId))
+  return useQuery({
+    queryKey: taskKeys.byNote(noteId),
+    queryFn: async (): Promise<TaskRow[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("task")
+        .select("*")
+        .eq("linked_note_id", noteId)
+        .neq("status", "archived")
+        .order("created_at", { ascending: false })
+      if (error) throw error
+      return (data ?? []) as TaskRow[]
+    },
+    staleTime: 30_000,
   })
 }
