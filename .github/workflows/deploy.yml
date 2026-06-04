@@ -102,8 +102,8 @@ jobs:
               sleep 10
               SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null || echo "-")
               echo "[$i] sw.js: $(echo "$SW" | head -c 50)"
-              # Check for v7 and also verify container is actually new by checking docker ps
-              echo "$SW" | grep -q "v7" && docker ps --format '{{.Image}}' | grep -q "ops-hub:latest" && echo "DEPLOY OK" && exit 0
+              # Check for v8 and also verify container is actually new by checking docker ps
+              echo "$SW" | grep -q "v8" && docker ps --format '{{.Image}}' | grep -q "ops-hub:latest" && echo "DEPLOY OK" && exit 0
             done
             echo "DEPLOY WARNING: sw.js not reachable or version mismatch"
             echo "Container status:"
