@@ -273,7 +273,7 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
 
   return (
     <div className={cn(
-      "border border-border bg-surface rounded-sm p-3 transition-colors",
+      "border border-border bg-surface rounded-sm p-2.5 md:p-3 transition-colors",
       selected && "border-teal/30 bg-teal/5",
       note.pinned && !selected && "border-amber/20",
       noteContexts.length > 0 && !selected && CONTEXT_CONFIG[noteContexts[0]]?.strip,
@@ -294,10 +294,10 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
           </button>
         )}
         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !bulkMode && setEditing(true)}>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <h3 className="text-[13px] font-mono font-semibold text-on-surface truncate">{note.title}</h3>
             {note.pinned && (
-              <span className="flex-none text-[8px] font-mono text-amber uppercase tracking-wider">PIN</span>
+              <span className="flex-none text-[7px] md:text-[8px] font-mono text-amber uppercase tracking-wider">PIN</span>
             )}
             {noteContexts.map((ctx) => {
               const cfg = CONTEXT_CONFIG[ctx]
@@ -306,10 +306,8 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
                 <span
                   key={ctx}
                   className={cn(
-                    "flex-none text-[7px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0",
-                    cfg.color,
-                    cfg.border,
-                    cfg.bg
+                    "flex-none text-[6px] md:text-[7px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0",
+                    cfg.color, cfg.border, cfg.bg
                   )}
                 >
                   {cfg.label}
@@ -317,26 +315,20 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
               )
             })}
             {note.para && (
-              <span className={cn("flex-none text-[7px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0", paraColor[note.para])}>
+              <span className={cn("flex-none text-[6px] md:text-[7px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0", paraColor[note.para])}>
                 {paraLabel[note.para]}
               </span>
             )}
             {note.is_moc && (
-              <span className="flex-none text-[7px] font-mono font-semibold text-teal uppercase tracking-wider border border-teal/30 rounded-sm px-1 py-0">
-                MOC
-              </span>
+              <span className="flex-none text-[6px] md:text-[7px] font-mono font-semibold text-teal uppercase tracking-wider border border-teal/30 rounded-sm px-1 py-0">MOC</span>
             )}
             {note.para === "areas" && isReviewPending && (
-              <span className="flex-none text-[7px] font-mono font-semibold text-amber uppercase tracking-wider border border-amber/30 rounded-sm px-1 py-0" title="Revisão pendente">
-                ⚠ REV
-              </span>
+              <span className="flex-none text-[6px] md:text-[7px] font-mono font-semibold text-amber uppercase tracking-wider border border-amber/30 rounded-sm px-1 py-0" title="Revisão pendente">⚠ REV</span>
             )}
             {metadataKeys.length > 0 && (
               <>
                 {metadataKeys.slice(0, 2).map((k) => (
-                  <span key={k} className="flex-none text-[7px] font-mono text-on-surface/30 border border-border rounded-sm px-1 py-0">
-                    {k}:{frontmatter.metadata[k]}
-                  </span>
+                  <span key={k} className="flex-none text-[6px] md:text-[7px] font-mono text-on-surface/30 border border-border rounded-sm px-1 py-0 hidden md:inline">{k}:{frontmatter.metadata[k]}</span>
                 ))}
               </>
             )}
@@ -455,25 +447,13 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
           )}
         </div>
 
-        <div className="flex items-center gap-0.5 flex-none">
+        <div className="hidden md:flex items-center gap-0.5 flex-none">
           {linkedTask ? (
-            <Link
-              href={`/tasks?project=${linkedTask.project_id ?? ""}`}
-              onClick={(e) => e.stopPropagation()}
-              title={`Task: ${linkedTask.title}`}
-              className="flex-none text-[8px] font-mono text-teal/60 hover:text-teal border border-teal/30 rounded-sm px-1.5 py-0.5 no-underline"
-            >
+            <Link href={`/tasks?project=${linkedTask.project_id ?? ""}`} onClick={(e) => e.stopPropagation()} title={`Task: ${linkedTask.title}`} className="flex-none text-[8px] font-mono text-teal/60 hover:text-teal border border-teal/30 rounded-sm px-1.5 py-0.5 no-underline">
               TASK ↗
             </Link>
           ) : (
-            <button
-              onClick={(e) => { e.stopPropagation(); handleConvertToTask() }}
-              disabled={createTask.isPending}
-              className="flex-none text-[7px] font-mono text-on-surface/30 hover:text-teal border border-on-surface/20 hover:border-teal rounded-sm px-1 py-0.5 transition-colors"
-              title="Converter em task"
-            >
-              →TASK
-            </button>
+            <button onClick={(e) => { e.stopPropagation(); handleConvertToTask() }} disabled={createTask.isPending} className="flex-none text-[7px] font-mono text-on-surface/30 hover:text-teal border border-on-surface/20 hover:border-teal rounded-sm px-1 py-0.5 transition-colors" title="Converter em task">→TASK</button>
           )}
           <button onClick={handleToggleFavorited} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors text-[11px]" title={note.favorited ? "Desfavoritar" : "Favoritar"}>
             {note.favorited ? "♥" : "♡"}
@@ -481,16 +461,7 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
           <button onClick={handleTogglePin} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-amber transition-colors text-[11px]" title={note.pinned ? "Desafixar" : "Fixar"}>
             {note.pinned ? "★" : "☆"}
           </button>
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowProjectLink(!showProjectLink) }}
-            className={cn(
-              "flex-none text-[7px] font-mono border rounded-sm px-1 py-0.5 transition-colors",
-              note.project_id
-                ? "text-teal/60 border-teal/30 hover:text-teal"
-                : "text-on-surface/30 hover:text-teal border-on-surface/20 hover:border-teal"
-            )}
-            title={note.project_id ? "Trocar projeto" : "Vincular a projeto"}
-          >
+          <button onClick={(e) => { e.stopPropagation(); setShowProjectLink(!showProjectLink) }} className={cn("flex-none text-[7px] font-mono border rounded-sm px-1 py-0.5 transition-colors", note.project_id ? "text-teal/60 border-teal/30 hover:text-teal" : "text-on-surface/30 hover:text-teal border-on-surface/20 hover:border-teal")} title={note.project_id ? "Trocar projeto" : "Vincular a projeto"}>
             {note.project_id ? "PROJ ↗" : "+PROJ"}
           </button>
           {confirmDelete ? (
@@ -501,6 +472,13 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
           ) : (
             <button onClick={() => setConfirmDelete(true)} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors">×</button>
           )}
+        </div>
+        {/* Mobile actions — minimal */}
+        <div className="flex md:hidden items-center gap-0.5 flex-none">
+          <button onClick={handleToggleFavorited} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors text-[11px]">
+            {note.favorited ? "♥" : "♡"}
+          </button>
+          <button onClick={() => setConfirmDelete(true)} className="w-4 h-4 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors text-[10px]">×</button>
         </div>
       </div>
       {showProjectLink && (

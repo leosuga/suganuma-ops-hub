@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -18,12 +19,12 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: "/calendar",
-    label: "CAL",
+    href: "/notes",
+    label: "NOTES",
     icon: (
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-        <rect x="1.5" y="2.5" width="13" height="12" rx="1.5" stroke="currentColor" strokeWidth="1.2" />
-        <path d="M1.5 6h13M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M3 2.5h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M5 5.5h6M5 8h4M5 10.5h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -46,53 +47,97 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
-  {
-    href: "/projects",
-    label: "PROJ",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-        <rect x="9" y="2" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-        <rect x="2" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-        <rect x="9" y="9" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    ),
-  },
-  {
-    href: "/health",
-    label: "HUB",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-        <path d="M8 13.5S2 10 2 5.5a3.5 3.5 0 0 1 6-2.449A3.5 3.5 0 0 1 14 5.5C14 10 8 13.5 8 13.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
-      </svg>
-    ),
-  },
+]
+
+const HUB_ITEMS = [
+  { href: "/projects", label: "PROJ", desc: "Projetos" },
+  { href: "/calendar", label: "CAL", desc: "Calendário" },
+  { href: "/review", label: "REV", desc: "Revisão" },
+  { href: "/health", label: "HLTH", desc: "Saúde" },
+  { href: "/settings", label: "SET", desc: "Ajustes" },
 ]
 
 export function BottomNav() {
   const pathname = usePathname()
+  const [hubOpen, setHubOpen] = useState(false)
+
+  const hubActive = HUB_ITEMS.some((i) => pathname.startsWith(i.href))
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface border-t border-border flex items-center justify-around px-2 z-40">
-      {NAV_ITEMS.map((item) => {
-        const active = pathname.startsWith(item.href)
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            prefetch={item.href === "/dashboard" || item.href === "/calendar" || item.href === "/tasks"}
-            className={cn(
-              "flex flex-col items-center gap-1 px-3 py-2 rounded-sm transition-colors",
-              active
-                ? "text-teal"
-                : "text-on-surface/30 hover:text-on-surface/60"
-            )}
-          >
-            {item.icon}
-            <span className="text-[8px] font-mono tracking-wider">{item.label}</span>
-          </Link>
-        )
-      })}
-    </nav>
+    <>
+      <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface/95 backdrop-blur-sm border-t border-border flex items-center justify-around px-1 z-40">
+        {NAV_ITEMS.map((item) => {
+          const active = pathname.startsWith(item.href)
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch={item.href === "/dashboard" || item.href === "/tasks"}
+              className={cn(
+                "flex flex-col items-center gap-1 px-3 py-2 rounded-sm transition-colors",
+                active ? "text-teal" : "text-on-surface/30 hover:text-on-surface/60"
+              )}
+            >
+              {item.icon}
+              <span className="text-[8px] font-mono tracking-wider">{item.label}</span>
+            </Link>
+          )
+        })}
+
+        {/* Hub toggle */}
+        <button
+          onClick={() => setHubOpen(true)}
+          className={cn(
+            "flex flex-col items-center gap-1 px-3 py-2 rounded-sm transition-colors",
+            hubActive ? "text-teal" : "text-on-surface/30 hover:text-on-surface/60"
+          )}
+        >
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+            <rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+            <rect x="10" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+            <rect x="1" y="10" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+            <rect x="10" y="10" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+          </svg>
+          <span className="text-[8px] font-mono tracking-wider">HUB</span>
+        </button>
+      </nav>
+
+      {/* Hub menu overlay */}
+      {hubOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
+            onClick={() => setHubOpen(false)}
+          />
+          <div className="fixed bottom-16 left-2 right-2 z-50 bg-surface border border-border rounded-sm shadow-2xl overflow-hidden">
+            <div className="p-3 space-y-1">
+              <div className="flex items-center justify-between px-1 pb-1.5 border-b border-border mb-1">
+                <span className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">HUB</span>
+                <button onClick={() => setHubOpen(false)} className="text-[10px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">FECHAR</button>
+              </div>
+              <div className="grid grid-cols-5 gap-1">
+                {HUB_ITEMS.map((item) => {
+                  const active = pathname.startsWith(item.href)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setHubOpen(false)}
+                      className={cn(
+                        "flex flex-col items-center gap-1 p-2 rounded-sm transition-colors",
+                        active ? "bg-teal/10 text-teal" : "text-on-surface/50 hover:bg-surface-hover hover:text-on-surface/70"
+                      )}
+                    >
+                      <span className="text-[12px] font-mono font-semibold">{item.label}</span>
+                      <span className="text-[7px] font-mono tracking-wider opacity-60">{item.desc}</span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </>
   )
 }

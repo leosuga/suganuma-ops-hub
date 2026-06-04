@@ -414,7 +414,7 @@ export default function NotesPage() {
 
         {/* Bulk actions bar */}
         {bulkMode && selectedIds.size > 0 && (
-          <div className="sticky bottom-4 border border-teal/30 bg-surface rounded-sm p-3 space-y-2 shadow-lg">
+          <div className="sticky bottom-20 md:bottom-4 border border-teal/30 bg-surface rounded-sm p-2.5 md:p-3 space-y-2 shadow-lg">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono font-semibold text-teal uppercase tracking-wider">
                 {selectedIds.size} selecionada(s)
@@ -426,14 +426,14 @@ export default function NotesPage() {
                 Limpar
               </button>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-wider">Contexto:</span>
+            <div className="grid grid-cols-3 md:flex md:flex-wrap md:items-center gap-1.5">
+              <span className="col-span-3 md:col-span-1 text-[9px] font-mono text-on-surface/40 uppercase tracking-wider">Contexto:</span>
               {(Object.keys(CONTEXT_CONFIG) as Array<keyof typeof CONTEXT_CONFIG>).map((ctx) => (
                 <button
                   key={ctx}
                   onClick={() => handleBulkContext(ctx)}
                   className={cn(
-                    "h-6 px-2 rounded-sm font-mono text-[9px] font-semibold tracking-wider transition-colors",
+                    "h-8 md:h-6 px-1.5 md:px-2 rounded-sm font-mono text-[8px] font-semibold tracking-wider transition-colors",
                     CONTEXT_CONFIG[ctx].bg,
                     CONTEXT_CONFIG[ctx].color,
                     CONTEXT_CONFIG[ctx].border
@@ -443,13 +443,13 @@ export default function NotesPage() {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-wider">PARA:</span>
+            <div className="grid grid-cols-4 md:flex md:flex-wrap md:items-center gap-1.5">
+              <span className="col-span-4 md:col-span-1 text-[9px] font-mono text-on-surface/40 uppercase tracking-wider">PARA:</span>
               {["projects", "areas", "resources", "archive"].map((para) => (
                 <button
                   key={para}
                   onClick={() => handleBulkPara(para)}
-                  className="h-6 px-2 rounded-sm font-mono text-[9px] font-semibold tracking-wider transition-colors text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                  className="h-8 md:h-6 px-1.5 md:px-2 rounded-sm font-mono text-[8px] font-semibold tracking-wider transition-colors text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
                 >
                   {paraLabel[para] || para}
                 </button>
@@ -457,7 +457,7 @@ export default function NotesPage() {
             </div>
             <button
               onClick={handleBulkDelete}
-              className="w-full h-7 bg-danger/10 border border-danger text-danger font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-danger/20 transition-colors"
+              className="w-full h-8 md:h-7 bg-danger/10 border border-danger text-danger font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-danger/20 transition-colors"
             >
               Deletar {selectedIds.size} nota(s)
             </button>
