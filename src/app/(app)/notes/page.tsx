@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useRef, useCallback } from "react"
+import { useState, useMemo, useRef, useCallback, useEffect } from "react"
 import { useTitle } from "@/lib/useTitle"
 import { useNotes, useDeleteNote, useCreateNote } from "@/lib/queries/notes"
 import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
@@ -33,7 +33,27 @@ export default function NotesPage() {
   const [filterTag, setFilterTag] = useState<string | null>(null)
   const [filterPrefix, setFilterPrefix] = useState<string | null>(null)
   const [filterPara, setFilterPara] = useState<string | null>(null)
-  const [filterContext, setFilterContext] = useState<string | null>(null)
+  // Read context from URL on mount
+  const [filterContext, setFilterContext] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      const ctx = params.get("ctx")
+      return ctx ? ctx : null
+    }
+    return null
+  })
+
+  // Sync filterContext to URL
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const url = new URL(window.location.href)
+    if (filterContext) {
+      url.searchParams.set("ctx", filterContext)
+    } else {
+      url.searchParams.delete("ctx")
+    }
+    window.history.replaceState({}, "", url.toString())
+  }, [filterContext])
   const [search, setSearch] = useState("")
   const [showSemanticSearch, setShowSemanticSearch] = useState(false)
   const [highlightNoteId, setHighlightNoteId] = useState<string | null>(null)
