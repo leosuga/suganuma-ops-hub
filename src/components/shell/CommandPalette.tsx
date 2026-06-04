@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useQueryClient } from "@tanstack/react-query"
 import {
@@ -65,11 +65,28 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
     .filter((a) => new Date(a.starts_at) >= new Date())
     .slice(0, 3)
   const activeProjects = projects.filter((p) => p.status === "active").slice(0, 5)
+  const favoritedNotes = notes.filter((n) => n.favorited).slice(0, 3)
   const pinnedNotes = notes.filter((n) => n.pinned).slice(0, 3)
   const upcomingEvents = events
     .filter((e) => e.end_date >= new Date().toISOString().slice(0, 10))
     .sort((a, b) => a.start_date.localeCompare(b.start_date))
     .slice(0, 5)
+
+  // Unique tags from notes (excluding ctx/ tags which have their own group)
+  const allTags = useMemo(() => {
+    const tagCounts: Record<string, number> = {}
+    for (const n of notes) {
+      for (const tag of n.tags ?? []) {
+        if (!tag.startsWith("ctx/")) {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1
+        }
+      }
+    }
+    return Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([tag]) => tag)
+  }, [notes])
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
@@ -117,6 +134,19 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
             </CommandItem>
           ))}
         </CommandGroup>
+
+        {allTags.length > 0 && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Tags">
+              {allTags.map((tag) => (
+                <CommandItem key={`tag-${tag}`} value={`tag ${tag}`} onSelect={() => navigate(`/notes?search=${encodeURIComponent(tag)}`)}>
+                  <span className="flex-1 font-mono text-[12px]">#{tag}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        )}
 
         {onAddTask && (
           <>
@@ -203,6 +233,20 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
                     className="ml-auto w-2 h-2 rounded-full flex-none"
                     style={{ backgroundColor: p.color }}
                   />
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </>
+        )}
+
+        {favoritedNotes.length > 0 && (
+          <>
+            <CommandSeparator />
+            <CommandGroup heading="Notas favoritas">
+              {favoritedNotes.map((n) => (
+                <CommandItem key={n.id} value={`fav ${n.title}`} onSelect={() => navigate("/notes")}>
+                  <span className="flex-1 font-mono text-[12px] truncate">{n.title || "Nota sem título"}</span>
+                  <span className="ml-auto text-[9px] font-mono text-danger">♥</span>
                 </CommandItem>
               ))}
             </CommandGroup>

@@ -92,6 +92,10 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
     return daysSinceReview > 30
   }, [note])
 
+  async function handleToggleFavorited() {
+    await updateNote.mutateAsync({ id: note.id, favorited: !note.favorited })
+  }
+
   async function handleTogglePin() {
     await updateNote.mutateAsync({ id: note.id, pinned: !note.pinned })
   }
@@ -413,6 +417,9 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
               →TASK
             </button>
           )}
+          <button onClick={handleToggleFavorited} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors text-[11px]" title={note.favorited ? "Desfavoritar" : "Favoritar"}>
+            {note.favorited ? "♥" : "♡"}
+          </button>
           <button onClick={handleTogglePin} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-amber transition-colors text-[11px]" title={note.pinned ? "Desafixar" : "Fixar"}>
             {note.pinned ? "★" : "☆"}
           </button>

@@ -370,6 +370,7 @@ export type Database = {
           is_moc: boolean
           last_review: string | null
           project_id: string | null
+          favorited: boolean
           created_at: string
           updated_at: string
         }
@@ -386,6 +387,7 @@ export type Database = {
           is_moc?: boolean
           last_review?: string | null
           project_id?: string | null
+          favorited?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -402,6 +404,7 @@ export type Database = {
           is_moc?: boolean
           last_review?: string | null
           project_id?: string | null
+          favorited?: boolean
           created_at?: string
           updated_at?: string
         }
