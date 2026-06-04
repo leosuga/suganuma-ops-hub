@@ -12,6 +12,7 @@ export interface NoteRow {
   last_review: string | null
   project_id: string | null
   favorited: boolean
+  attachments: unknown | null
   created_at: string
   updated_at: string
 }
@@ -29,6 +30,8 @@ export interface NoteInsert {
   is_moc?: boolean
   last_review?: string | null
   project_id?: string | null
+  favorited?: boolean
+  attachments?: unknown | null
   created_at?: string
   updated_at?: string
 }

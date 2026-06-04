@@ -13,6 +13,8 @@ import { parseWikiLinks, renderWikiLinksToMarkdown } from "@/lib/links"
 import { parseInlineTasks, updateInlineTask } from "@/lib/tasks-inline"
 import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
 import { cn } from "@/lib/utils"
+import { NoteAttachments } from "@/components/notes/NoteAttachments"
+import type { Attachment } from "@/components/notes/NoteAttachments"
 
 const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
 
@@ -54,6 +56,9 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
   const [expanded, setExpanded] = useState(false)
   const [showBacklinks, setShowBacklinks] = useState(false)
   const [showProjectLink, setShowProjectLink] = useState(false)
+  const [attachments, setAttachments] = useState<Attachment[]>(
+    () => (note.attachments as Attachment[] | undefined) ?? []
+  )
 
   useEffect(() => {
     setTitle(note.title)
@@ -135,6 +140,7 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
       content: content.trim() || null,
       tags: tagsFromContent,
       linked_task_id: linkedTaskId || null,
+      attachments: attachments.length > 0 ? attachments : null,
     })
     setEditing(false)
   }
@@ -248,6 +254,13 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
             ))}
           </select>
         </div>
+        <NoteAttachments
+          noteId={note.id}
+          ownerId={note.owner_id}
+          attachments={attachments}
+          onChange={setAttachments}
+          editable
+        />
         <div className="flex justify-end gap-2">
           <button onClick={() => setEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">CANCELAR</button>
           <button onClick={handleSave} disabled={updateNote.isPending || !title.trim()} className="h-7 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors">
@@ -340,6 +353,15 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
             <button onClick={(e) => { e.stopPropagation(); setExpanded(true) }} className="text-[9px] font-mono text-teal/60 hover:text-teal mt-0.5">
               expandir...
             </button>
+          )}
+          {attachments.length > 0 && (
+            <NoteAttachments
+              noteId={note.id}
+              ownerId={note.owner_id}
+              attachments={attachments}
+              onChange={setAttachments}
+              editable={false}
+            />
           )}
           {note.tags && note.tags.length > 0 && (
             <div className="flex gap-1 flex-wrap mt-1.5">

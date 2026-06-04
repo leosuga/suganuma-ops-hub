@@ -371,6 +371,7 @@ export type Database = {
           last_review: string | null
           project_id: string | null
           favorited: boolean
+          attachments: unknown
           created_at: string
           updated_at: string
         }
