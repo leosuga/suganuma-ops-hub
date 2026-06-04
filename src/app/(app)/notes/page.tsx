@@ -9,6 +9,18 @@ import { useUndoToast } from "@/components/UndoToast"
 import { NoteRow } from "@/components/notes/NoteRow"
 import { QuickAddNote } from "@/components/notes/QuickAddNote"
 
+function groupTagsByPrefix(tags: string[]): Map<string, string[]> {
+  const groups = new Map<string, string[]>()
+  for (const tag of tags) {
+    const slashIdx = tag.indexOf("/")
+    const prefix = slashIdx > 0 ? tag.slice(0, slashIdx) : "#"
+    const rest = slashIdx > 0 ? tag.slice(slashIdx + 1) : tag
+    if (!groups.has(prefix)) groups.set(prefix, [])
+    groups.get(prefix)!.push(rest)
+  }
+  return groups
+}
+
 export default function NotesPage() {
   useTitle("Notes · Suganuma Ops Hub")
   const { data: notes = [], isLoading } = useNotes()
@@ -16,6 +28,7 @@ export default function NotesPage() {
   const createNote = useCreateNote()
   const toast = useUndoToast()
   const [filterTag, setFilterTag] = useState<string | null>(null)
+  const [filterPrefix, setFilterPrefix] = useState<string | null>(null)
   const [filterPara, setFilterPara] = useState<string | null>(null)
   const [search, setSearch] = useState("")
 
@@ -27,6 +40,9 @@ export default function NotesPage() {
     return Array.from(set).sort()
   }, [notes])
 
+  const tagGroups = useMemo(() => groupTagsByPrefix(allTags), [allTags])
+  const tagPrefixes = useMemo(() => Array.from(tagGroups.keys()).sort(), [tagGroups])
+
   const allPara = useMemo(() => {
     const set = new Set<string>()
     for (const n of notes) {
@@ -37,6 +53,7 @@ export default function NotesPage() {
 
   const filtered = notes.filter((n) => {
     if (filterTag && (!n.tags || !n.tags.includes(filterTag))) return false
+    if (filterPrefix && (!n.tags || !n.tags.some((t) => t.startsWith(`${filterPrefix}/`)))) return false
     if (filterPara && n.para !== filterPara) return false
     if (search.trim()) {
       const q = search.toLowerCase().trim()
@@ -44,6 +61,10 @@ export default function NotesPage() {
     }
     return true
   })
+
+  const mocs = filtered.filter((n) => n.is_moc)
+  const pinned = filtered.filter((n) => n.pinned && !n.is_moc)
+  const unpinned = filtered.filter((n) => !n.pinned && !n.is_moc)
 
   function handleDelete(id: string) {
     const note = notes.find((n) => n.id === id)
@@ -66,9 +87,6 @@ export default function NotesPage() {
     })
   }
 
-  const pinned = filtered.filter((n) => n.pinned)
-  const unpinned = filtered.filter((n) => !n.pinned)
-
   const paraLabel: Record<string, string> = {
     projects: "PROJ",
     areas: "AREA",
@@ -84,7 +102,7 @@ export default function NotesPage() {
             NOTES
           </h1>
           <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
-            {notes.length} nota{notes.length !== 1 ? "s" : ""}
+            {notes.length} nota{notes.length !== 1 ? "s" : ""} · {mocs.length} MOC{mocs.length !== 1 ? "s" : ""}
           </p>
         </div>
 
@@ -120,33 +138,59 @@ export default function NotesPage() {
           </div>
         )}
 
-        {allTags.length > 0 && (
+        {tagPrefixes.length > 0 && (
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
             <button
-              onClick={() => setFilterTag(null)}
+              onClick={() => { setFilterPrefix(null); setFilterTag(null) }}
               className={cn(
                 "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
-                filterTag === null
+                filterPrefix === null && filterTag === null
                   ? "bg-teal/15 text-teal border border-teal/40"
                   : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
               )}
             >
               ALL
             </button>
-            {allTags.map((tag) => (
-              <button
-                key={tag}
-                onClick={() => setFilterTag(filterTag === tag ? null : tag)}
-                className={cn(
-                  "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
-                  filterTag === tag
-                    ? "bg-teal/15 text-teal border border-teal/40"
-                    : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
-                )}
-              >
-                #{tag}
-              </button>
-            ))}
+            {tagPrefixes.map((prefix) => {
+              const isActive = filterPrefix === prefix
+              const label = prefix === "#" ? "#geral" : `${prefix}/`
+              return (
+                <button
+                  key={prefix}
+                  onClick={() => {
+                    setFilterPrefix(isActive ? null : prefix)
+                    setFilterTag(null)
+                  }}
+                  className={cn(
+                    "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                    isActive
+                      ? "bg-teal/15 text-teal border border-teal/40"
+                      : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                  )}
+                >
+                  {label}
+                </button>
+              )
+            })}
+            {/* Show actual tags when a prefix is selected */}
+            {filterPrefix && tagGroups.get(filterPrefix)?.map((rest) => {
+              const fullTag = `${filterPrefix}/${rest}`
+              const isActive = filterTag === fullTag
+              return (
+                <button
+                  key={fullTag}
+                  onClick={() => setFilterTag(isActive ? null : fullTag)}
+                  className={cn(
+                    "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                    isActive
+                      ? "bg-amber/15 text-amber border border-amber/40"
+                      : "text-on-surface/30 border border-border hover:border-on-surface/30 hover:text-on-surface/50"
+                  )}
+                >
+                  {rest}
+                </button>
+              )
+            })}
           </div>
         )}
 
@@ -174,6 +218,16 @@ export default function NotesPage() {
           </div>
         )}
 
+        {/* MOCs first */}
+        {!isLoading && mocs.length > 0 && (
+          <div className="space-y-3">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-teal uppercase">MAPS OF CONTENT</span>
+            {mocs.map((n) => (
+              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} />
+            ))}
+          </div>
+        )}
+
         {!isLoading && pinned.length > 0 && (
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">FIXADAS</span>
@@ -183,7 +237,7 @@ export default function NotesPage() {
 
         {!isLoading && unpinned.length > 0 && (
           <div className="space-y-3">
-            {pinned.length > 0 && (
+            {(mocs.length > 0 || pinned.length > 0) && (
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOTAS</span>
             )}
             {unpinned.map((n) => <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} />)}

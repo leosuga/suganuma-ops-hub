@@ -67,6 +67,13 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
     return result
   }, [createTask, note.id])
 
+  const isReviewPending = useMemo(() => {
+    if (note.para !== "areas" || note.is_moc) return false
+    if (!note.last_review) return true
+    const daysSinceReview = (Date.now() - new Date(note.last_review).getTime()) / (1000 * 60 * 60 * 24)
+    return daysSinceReview > 30
+  }, [note])
+
   async function handleTogglePin() {
     await updateNote.mutateAsync({ id: note.id, pinned: !note.pinned })
   }
@@ -181,6 +188,16 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
             {note.para && (
               <span className={cn("flex-none text-[7px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0", paraColor[note.para])}>
                 {paraLabel[note.para]}
+              </span>
+            )}
+            {note.is_moc && (
+              <span className="flex-none text-[7px] font-mono font-semibold text-teal uppercase tracking-wider border border-teal/30 rounded-sm px-1 py-0">
+                MOC
+              </span>
+            )}
+            {note.para === "areas" && isReviewPending && (
+              <span className="flex-none text-[7px] font-mono font-semibold text-amber uppercase tracking-wider border border-amber/30 rounded-sm px-1 py-0" title="Revisão pendente">
+                ⚠ REV
               </span>
             )}
             {metadataKeys.length > 0 && (

@@ -15,6 +15,8 @@ type NoteVars = {
   linked_task_id?: string | null
   para?: "projects" | "areas" | "resources" | "archive" | null
   daily_date?: string | null
+  is_moc?: boolean
+  last_review?: string | null
 }
 
 export const noteKeys = {
@@ -22,6 +24,7 @@ export const noteKeys = {
   pinned: ["notes", "pinned"] as const,
   byTask: (taskId: string) => ["notes", "task", taskId] as const,
   daily: (date: string) => ["notes", "daily", date] as const,
+  mocs: ["notes", "mocs"] as const,
 }
 
 const notesOptions = queryOptions({

@@ -367,6 +367,8 @@ export type Database = {
           linked_task_id: string | null
           para: "projects" | "areas" | "resources" | "archive" | null
           daily_date: string | null
+          is_moc: boolean
+          last_review: string | null
           created_at: string
           updated_at: string
         }
@@ -380,6 +382,8 @@ export type Database = {
           linked_task_id?: string | null
           para?: "projects" | "areas" | "resources" | "archive" | null
           daily_date?: string | null
+          is_moc?: boolean
+          last_review?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -393,6 +397,8 @@ export type Database = {
           linked_task_id?: string | null
           para?: "projects" | "areas" | "resources" | "archive" | null
           daily_date?: string | null
+          is_moc?: boolean
+          last_review?: string | null
           created_at?: string
           updated_at?: string
         }

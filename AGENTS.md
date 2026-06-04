@@ -268,33 +268,31 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 
 ---
 
-## Notes Module — Current State (2026-06-03)
+## Notes Module — Current State (2026-06-04)
 
 | Aspecto | Estado |
 |---|---|
-| Schema | `note`: id, owner_id, title, content, tags[], pinned, linked_task_id, created_at, updated_at |
+| Schema | `note`: id, owner_id, title, content, tags[], pinned, linked_task_id, **para**, **daily_date**, **is_moc**, **last_review**, created_at, updated_at |
 | Queries | Full CRUD TanStack Query + optimistic updates + realtime |
 | Editor | Plain textarea 6 rows + react-markdown render (lazy, SSR false) |
 | Task integration | Bidirecional: `→TASK` button; EditTaskDialog shows linked notes |
 | CommandPalette | Shows up to 3 pinned notes; navigates to `/notes` |
-| Markdown | Basic only (remark-gfm removed — no tables, task lists, strikethrough) |
-| Tests | 5 tests passing (fetch, empty, create, optimistic update, optimistic delete) |
-
-### Notes Gaps vs. Full Module
-- No note detail page (`/notes/[id]`) — CommandPalette links to list only
-- No server-side search or global note search from any page
-- No archive/trash system (delete is permanent, undo toast only)
-- No calendar tie-in or daily notes
-- No GFM support (tables, task lists, strikethrough)
-- No rich editor (toolbar, preview, split-pane)
-- No attachments or images
+| PARA | Categories: projects, areas, resources, archive — filterable in NotesPage |
+| Frontmatter | YAML parser `src/lib/frontmatter.ts` — metadata badges in NoteRow |
+| Daily Notes | `daily_date` column + `DayDetailModal` create/edit from calendar |
+| Wiki Links | `[[Note]]` syntax → rendered as links + backlinks section |
+| Inline Tasks | `- [ ]` detected + checkbox sync with task module |
+| MOCs | `is_moc` flag — Maps of Content shown first in NotesPage |
+| Tag Namespaces | Tags with `/` prefix grouped for hierarchical filtering |
+| Templates | QuickAddNote with 6 templates (standard, MOC, daily, project, area, resource) |
+| Review Badge | Areas with `last_review` > 30 days show ⚠ REV warning |
 
 ## Notes Feature Roadmap
 
 | Phase | Features | Complexity | Prerequisite |
 |---|---|---|---|
-| **1 — Foundation** | PARA categorization (`projects`, `areas`, `resources`, `archive`) + Frontmatter YAML parser + Daily Notes | Low | — |
-| **2 — Connectivity** | Bidirectional links `[[Note]]` + Inline tasks `- [ ]` sync | Medium | Phase 1 for metadata |
+| **1 — Foundation** ✅ | PARA categorization + Frontmatter YAML parser + Daily Notes | Low | — |
+| **2 — Connectivity** ✅ | Bidirectional links `[[Note]]` + Inline tasks `- [ ]` sync | Medium | Phase 1 |
 | **3 — Intelligence** | Semantic search (pgvector) + Webhooks for input/output | High | pgvector on Supabase |
 
 ### Implementation Notes
