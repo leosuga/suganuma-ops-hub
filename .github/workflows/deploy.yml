@@ -100,10 +100,17 @@ jobs:
 
             for i in 1 2 3 4 5 6; do
               sleep 10
-              SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null || echo "-")
-              echo "[$i] sw.js: $(echo "$SW" | head -c 50)"
-              # Check for v8 and also verify container is actually new by checking docker ps
-              echo "$SW" | grep -q "v8" && docker ps --format '{{.Image}}' | grep -q "ops-hub:latest" && echo "DEPLOY OK" && exit 0
+              SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null || echo "-ERROR-")
+              echo "[$i] sw.js raw: $SW"
+              echo "[$i] checking v8..."
+              echo "$SW" | grep "v8" && echo "[$i] v8 FOUND"
+              echo "[$i] checking image..."
+              docker ps --format '{{.Image}}' | grep "ops-hub:latest" && echo "[$i] IMAGE FOUND"
+              if echo "$SW" | grep -q "v8" && docker ps --format '{{.Image}}' | grep -q "ops-hub:latest"; then
+                echo "DEPLOY OK"
+                exit 0
+              fi
+              echo "[$i] checks failed, retrying..."
             done
             echo "DEPLOY WARNING: sw.js not reachable or version mismatch"
             echo "Container status:"
