@@ -67,6 +67,36 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
     return result
   }, [createTask, note.id])
 
+  async function handleTogglePin() {
+    await updateNote.mutateAsync({ id: note.id, pinned: !note.pinned })
+  }
+
+  async function handleSave() {
+    if (!title.trim()) return
+    const tagsFromContent = content.match(/#[\w-]+/g)?.map((t) => t.slice(1)) ?? (note.tags ?? [])
+    await updateNote.mutateAsync({
+      id: note.id,
+      title: title.trim(),
+      content: content.trim() || null,
+      tags: tagsFromContent,
+      linked_task_id: linkedTaskId || null,
+    })
+    setEditing(false)
+  }
+
+  async function handleConvertToTask() {
+    const result = await createTask.mutateAsync({
+      title: note.title,
+      notes: note.content ?? undefined,
+      category: "personal",
+      priority: "med",
+      status: "todo",
+    })
+    await updateNote.mutateAsync({ id: note.id, linked_task_id: result.id, pinned: false })
+  }
+
+  const dateStr = new Date(note.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })
+
   if (editing) {
     return (
       <div className="border border-teal/20 bg-surface rounded-sm p-3 space-y-3">
