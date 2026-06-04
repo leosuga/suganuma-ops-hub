@@ -64,7 +64,7 @@ export default function ReviewPage() {
   const [markingDone, setMarkingDone] = useState(false)
 
   const { start: weekStart, end: weekEnd } = getWeekRange()
-  const weekLabel = formatWeekRange(weekStart, weekEnd)
+  const weekLabel = formatWeekLabel(weekStart, weekEnd)
 
   // Notes created this week
   const weekNotes = notes.filter((n) => isWithinWeek(n.created_at, weekStart, weekEnd))
