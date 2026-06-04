@@ -272,11 +272,11 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 
 | Aspecto | Estado |
 |---|---|
-| Schema | `note`: id, owner_id, title, content, tags[], pinned, linked_task_id, **para**, **daily_date**, **is_moc**, **last_review**, **project_id**, created_at, updated_at |
+| Schema | `note`: id, owner_id, title, content, tags[], pinned, linked_task_id, **para**, **daily_date**, **is_moc**, **last_review**, **project_id**, **favorited**, created_at, updated_at |
 | Queries | Full CRUD TanStack Query + optimistic updates + realtime |
 | Editor | Plain textarea 6 rows + react-markdown render (lazy, SSR false) |
 | Task integration | Bidirecional: `→TASK` button; EditTaskDialog shows linked notes |
-| CommandPalette | Shows up to 3 pinned notes; navigates to `/notes` |
+| CommandPalette | Shows up to 3 favorited notes + up to 3 pinned notes; context groups (`ctx/work` etc.); tag search group; navigates to `/notes` |
 | PARA | Categories: projects, areas, resources, archive — filterable in NotesPage |
 | Frontmatter | YAML parser `src/lib/frontmatter.ts` — metadata badges in NoteRow |
 | Daily Notes | `daily_date` column + `DayDetailModal` create/edit from calendar |
