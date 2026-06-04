@@ -7,6 +7,7 @@ import { useUpdateNote } from "@/lib/queries/notes"
 import type { NoteRow as NoteRowType } from "@/lib/queries/notes"
 import { useNotes } from "@/lib/queries/notes"
 import { useTasks, useCreateTask, useUpdateTask, useTasksByNote } from "@/lib/queries/tasks"
+import { useProjects } from "@/lib/queries/projects"
 import { parseFrontmatter } from "@/lib/frontmatter"
 import { parseWikiLinks, renderWikiLinksToMarkdown } from "@/lib/links"
 import { parseInlineTasks, updateInlineTask } from "@/lib/tasks-inline"
@@ -18,6 +19,7 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
   const updateNote = useUpdateNote()
   const { data: tasks = [] } = useTasks()
   const { data: linkedTasks = [] } = useTasksByNote(note.id)
+  const { data: projects = [] } = useProjects()
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()
   const [editing, setEditing] = useState(false)
@@ -27,6 +29,7 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [expanded, setExpanded] = useState(false)
   const [showBacklinks, setShowBacklinks] = useState(false)
+  const [showProjectLink, setShowProjectLink] = useState(false)
 
   useEffect(() => {
     setTitle(note.title)
@@ -159,6 +162,23 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
             {tasks.filter(t => t.status !== "done" && t.status !== "archived").map((t) => (
               <option key={t.id} value={t.id}>
                 {t.title.slice(0, 50)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            Vincular a projeto
+          </span>
+          <select
+            value={note.project_id ?? ""}
+            onChange={(e) => updateNote.mutateAsync({ id: note.id, project_id: e.target.value || null })}
+            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
+          >
+            <option value="">Nenhum</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
               </option>
             ))}
           </select>
@@ -338,6 +358,18 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
           <button onClick={handleTogglePin} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-amber transition-colors text-[11px]" title={note.pinned ? "Desafixar" : "Fixar"}>
             {note.pinned ? "★" : "☆"}
           </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowProjectLink(!showProjectLink) }}
+            className={cn(
+              "flex-none text-[7px] font-mono border rounded-sm px-1 py-0.5 transition-colors",
+              note.project_id
+                ? "text-teal/60 border-teal/30 hover:text-teal"
+                : "text-on-surface/30 hover:text-teal border-on-surface/20 hover:border-teal"
+            )}
+            title={note.project_id ? "Trocar projeto" : "Vincular a projeto"}
+          >
+            {note.project_id ? "PROJ ↗" : "+PROJ"}
+          </button>
           {confirmDelete ? (
             <>
               <button onClick={() => { onDelete(note.id); setConfirmDelete(false) }} className="text-[8px] font-mono text-danger hover:opacity-70 tracking-wider">DEL</button>
@@ -348,6 +380,25 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
           )}
         </div>
       </div>
+      {showProjectLink && (
+        <div className="mt-2">
+          <select
+            value={note.project_id ?? ""}
+            onChange={(e) => {
+              updateNote.mutateAsync({ id: note.id, project_id: e.target.value || null })
+              setShowProjectLink(false)
+            }}
+            className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[11px] font-mono text-on-surface focus:border-teal/40 focus:outline-none"
+          >
+            <option value="">Nenhum projeto</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
       <div className="text-[9px] font-mono text-on-surface/20 mt-2">{dateStr}</div>
     </div>
   )

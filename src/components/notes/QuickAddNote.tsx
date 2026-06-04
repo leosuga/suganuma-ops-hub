@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useCreateNote } from "@/lib/queries/notes"
+import { useProjects } from "@/lib/queries/projects"
 import { injectFrontmatter } from "@/lib/frontmatter"
 import { cn } from "@/lib/utils"
 
@@ -23,6 +24,8 @@ export function QuickAddNote({ onCreated }: { onCreated: () => void }) {
   const [input, setInput] = useState("")
   const [template, setTemplate] = useState<TemplateKey>("standard")
   const [showTemplates, setShowTemplates] = useState(false)
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+  const { data: projects = [] } = useProjects()
   const createNote = useCreateNote()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -30,23 +33,31 @@ export function QuickAddNote({ onCreated }: { onCreated: () => void }) {
     if (!input.trim()) return
 
     const t = TEMPLATES[template]
-    const content = injectFrontmatter("", t.frontmatter)
+    const selectedProject = projects.find((p) => p.id === selectedProjectId)
+    const fm = selectedProject
+      ? { ...t.frontmatter, projeto: selectedProject.name }
+      : t.frontmatter
+    const content = injectFrontmatter("", fm)
 
     await createNote.mutateAsync({
       title: input.trim(),
       content: content || null,
-      tags: [],
+      tags: selectedProject ? [`proj/${selectedProject.name.toLowerCase().replace(/\s+/g, "-")}`] : [],
       pinned: false,
       para: t.para,
       is_moc: t.isMoc,
       daily_date: template === "daily" ? new Date().toISOString().slice(0, 10) : null,
+      project_id: selectedProjectId,
     })
 
     setInput("")
     setTemplate("standard")
+    setSelectedProjectId(null)
     setShowTemplates(false)
     onCreated()
   }
+
+  const showProjectPicker = template === "project" && projects.length > 0
 
   return (
     <form onSubmit={handleSubmit} className="border border-border bg-surface rounded-sm overflow-hidden">
@@ -72,7 +83,10 @@ export function QuickAddNote({ onCreated }: { onCreated: () => void }) {
             <button
               key={k}
               type="button"
-              onClick={() => setTemplate(k)}
+              onClick={() => {
+                setTemplate(k)
+                if (k !== "project") setSelectedProjectId(null)
+              }}
               className={cn(
                 "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
                 template === k
@@ -83,6 +97,23 @@ export function QuickAddNote({ onCreated }: { onCreated: () => void }) {
               {TEMPLATES[k].label}
             </button>
           ))}
+        </div>
+      )}
+
+      {showProjectPicker && (
+        <div className="px-4 py-2 border-b border-border bg-bg">
+          <select
+            value={selectedProjectId ?? ""}
+            onChange={(e) => setSelectedProjectId(e.target.value || null)}
+            className="h-7 px-2 bg-bg border border-border rounded-sm text-[10px] font-mono text-on-surface focus:border-teal/40 focus:outline-none w-full"
+          >
+            <option value="">Selecionar projeto... (opcional)</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} ({p.status === "active" ? "ativo" : p.status === "paused" ? "pausado" : "concluído"})
+              </option>
+            ))}
+          </select>
         </div>
       )}
 
