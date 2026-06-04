@@ -33,6 +33,21 @@ jobs:
             echo NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY >> .env.prod
             echo SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY >> .env.prod
             echo WEBHOOK_SECRET=$WEBHOOK_SECRET >> .env.prod
+            echo OLLAMA_URL=$OLLAMA_URL >> .env.prod
+            echo QDRANT_URL=$QDRANT_URL >> .env.prod
+
+            # Ensure Ollama container is running for embeddings
+            if ! docker ps --format '{{.Names}}' | grep -q "^ollama$"; then
+              docker run -d \
+                --name ollama \
+                --hostname ollama \
+                --network "$NET" \
+                -v ollama:/root/.ollama \
+                --restart unless-stopped \
+                ollama/ollama:latest || echo "WARN: Ollama container start failed"
+              sleep 8
+              docker exec ollama ollama pull nomic-embed-text || echo "WARN: nomic-embed-text pull failed"
+            fi
 
             NET=$(docker inspect caddy_proxy --format '{{json .NetworkSettings.Networks}}' 2>/dev/null | python3 -c "import sys,json; print(list(json.load(sys.stdin).keys())[0])" 2>/dev/null || echo "")
             if [ -z "$NET" ]; then
