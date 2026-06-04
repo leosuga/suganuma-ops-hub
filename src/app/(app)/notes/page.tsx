@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useRef, useCallback, useEffect } from "react"
 import { useTitle } from "@/lib/useTitle"
-import { useNotes, useDeleteNote, useCreateNote } from "@/lib/queries/notes"
+import { useNotes, useDeleteNote, useCreateNote, useUpdateNote } from "@/lib/queries/notes"
 import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
@@ -35,7 +35,9 @@ export default function NotesPage() {
   const [filterPara, setFilterPara] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [showSemanticSearch, setShowSemanticSearch] = useState(false)
-  const [highlightNoteId, setHighlightNoteId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkMode, setBulkMode] = useState(false)
+  const updateNote = useUpdateNote()
 
   // Read context from URL on mount, fallback to localStorage
   const [filterContext, setFilterContext] = useState<string | null>(() => {
@@ -65,9 +67,6 @@ export default function NotesPage() {
   const handleSelectNote = useCallback((note: NoteRowType) => {
     setShowSemanticSearch(false)
     setSearch(note.title)
-    setHighlightNoteId(note.id)
-    // Clear highlight after 3 seconds
-    setTimeout(() => setHighlightNoteId(null), 3000)
   }, [])
 
   const allTags = useMemo(() => {
@@ -137,6 +136,37 @@ export default function NotesPage() {
     })
   }
 
+  const handleToggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const handleBulkContext = useCallback((ctx: string) => {
+    selectedIds.forEach((id) => {
+      const note = notes.find((n) => n.id === id)
+      if (!note) return
+      const base = note.tags?.filter((t) => !t.startsWith("ctx/")) ?? []
+      updateNote.mutate({ id, tags: [...base, `ctx/${ctx}`] })
+    })
+    setSelectedIds(new Set())
+  }, [selectedIds, notes, updateNote])
+
+  const handleBulkDelete = useCallback(() => {
+    selectedIds.forEach((id) => deleteNote.mutate(id))
+    setSelectedIds(new Set())
+  }, [selectedIds, deleteNote])
+
+  const handleBulkPara = useCallback((para: string) => {
+    selectedIds.forEach((id) => {
+      updateNote.mutate({ id, para: para as NoteRowType["para"] })
+    })
+    setSelectedIds(new Set())
+  }, [selectedIds, updateNote])
+
   const paraLabel: Record<string, string> = {
     projects: "PROJ",
     areas: "AREA",
@@ -154,6 +184,23 @@ export default function NotesPage() {
           <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
             {notes.length} nota{notes.length !== 1 ? "s" : ""} · {mocs.length} MOC{mocs.length !== 1 ? "s" : ""}
           </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setBulkMode(!bulkMode); setSelectedIds(new Set()) }}
+            className={cn(
+              "h-6 px-2.5 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors",
+              bulkMode
+                ? "bg-teal/15 text-teal border-teal/40"
+                : "text-on-surface/40 border-border hover:border-on-surface/30 hover:text-on-surface/60"
+            )}
+          >
+            {bulkMode ? "FECHAR SELEÇÃO" : "SELECIONAR"}
+          </button>
+          {bulkMode && selectedIds.size > 0 && (
+            <span className="text-[9px] font-mono text-on-surface/40">{selectedIds.size} selecionada(s)</span>
+          )}
         </div>
 
         <QuickAddNote onCreated={() => {}} />
@@ -319,14 +366,7 @@ export default function NotesPage() {
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-teal uppercase">MAPS OF CONTENT</span>
             {mocs.map((n) => (
-              <div
-                key={n.id}
-                className={cn(
-                  highlightNoteId === n.id && "ring-1 ring-amber/40 rounded-sm"
-                )}
-              >
-                <NoteRow note={n} onDelete={handleDelete} allNotes={notes} />
-              </div>
+              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
             ))}
           </div>
         )}
@@ -335,14 +375,7 @@ export default function NotesPage() {
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">FIXADAS</span>
             {pinned.map((n) => (
-              <div
-                key={n.id}
-                className={cn(
-                  highlightNoteId === n.id && "ring-1 ring-amber/40 rounded-sm"
-                )}
-              >
-                <NoteRow note={n} onDelete={handleDelete} allNotes={notes} />
-              </div>
+              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
             ))}
           </div>
         )}
@@ -353,15 +386,60 @@ export default function NotesPage() {
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOTAS</span>
             )}
             {unpinned.map((n) => (
-              <div
-                key={n.id}
-                className={cn(
-                  highlightNoteId === n.id && "ring-1 ring-amber/40 rounded-sm"
-                )}
-              >
-                <NoteRow note={n} onDelete={handleDelete} allNotes={notes} />
-              </div>
+              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
             ))}
+          </div>
+        )}
+
+        {/* Bulk actions bar */}
+        {bulkMode && selectedIds.size > 0 && (
+          <div className="sticky bottom-4 border border-teal/30 bg-surface rounded-sm p-3 space-y-2 shadow-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-mono font-semibold text-teal uppercase tracking-wider">
+                {selectedIds.size} selecionada(s)
+              </span>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60"
+              >
+                Limpar
+              </button>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-wider">Contexto:</span>
+              {(Object.keys(CONTEXT_CONFIG) as Array<keyof typeof CONTEXT_CONFIG>).map((ctx) => (
+                <button
+                  key={ctx}
+                  onClick={() => handleBulkContext(ctx)}
+                  className={cn(
+                    "h-6 px-2 rounded-sm font-mono text-[9px] font-semibold tracking-wider transition-colors",
+                    CONTEXT_CONFIG[ctx].bg,
+                    CONTEXT_CONFIG[ctx].color,
+                    CONTEXT_CONFIG[ctx].border
+                  )}
+                >
+                  {CONTEXT_CONFIG[ctx].label}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-wider">PARA:</span>
+              {["projects", "areas", "resources", "archive"].map((para) => (
+                <button
+                  key={para}
+                  onClick={() => handleBulkPara(para)}
+                  className="h-6 px-2 rounded-sm font-mono text-[9px] font-semibold tracking-wider transition-colors text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                >
+                  {paraLabel[para] || para}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={handleBulkDelete}
+              className="w-full h-7 bg-danger/10 border border-danger text-danger font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-danger/20 transition-colors"
+            >
+              Deletar {selectedIds.size} nota(s)
+            </button>
           </div>
         )}
       </div>

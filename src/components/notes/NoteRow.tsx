@@ -30,7 +30,16 @@ const paraLabel: Record<string, string> = {
   archive: "ARQ",
 }
 
-export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDelete: (id: string) => void; allNotes?: NoteRowType[] }) {
+interface NoteRowProps {
+  note: NoteRowType
+  onDelete: (id: string) => void
+  allNotes?: NoteRowType[]
+  selected?: boolean
+  onToggleSelect?: (id: string) => void
+  bulkMode?: boolean
+}
+
+export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bulkMode }: NoteRowProps) {
   const updateNote = useUpdateNote()
   const { data: tasks = [] } = useTasks()
   const { data: linkedTasks = [] } = useTasksByNote(note.id)
@@ -115,6 +124,19 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
         : note.tags ?? [],
     })
     await updateNote.mutateAsync({ id: note.id, linked_task_id: result.id, pinned: false })
+  }
+
+  async function handleSave() {
+    if (!title.trim()) return
+    const tagsFromContent = content.match(/#[\w-]+/g)?.map((t) => t.slice(1)) ?? (note.tags ?? [])
+    await updateNote.mutateAsync({
+      id: note.id,
+      title: title.trim(),
+      content: content.trim() || null,
+      tags: tagsFromContent,
+      linked_task_id: linkedTaskId || null,
+    })
+    setEditing(false)
   }
 
   const dateStr = new Date(note.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })
@@ -239,12 +261,26 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
   return (
     <div className={cn(
       "border border-border bg-surface rounded-sm p-3 transition-colors",
-      note.pinned && "border-amber/20",
-      noteContexts.length > 0 && CONTEXT_CONFIG[noteContexts[0]]?.strip,
+      selected && "border-teal/30 bg-teal/5",
+      note.pinned && !selected && "border-amber/20",
+      noteContexts.length > 0 && !selected && CONTEXT_CONFIG[noteContexts[0]]?.strip,
       noteContexts.length > 0 && "border-l-[3px]"
     )}>
       <div className="flex items-start gap-2">
-        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setEditing(true)}>
+        {bulkMode && onToggleSelect && (
+          <button
+            onClick={() => onToggleSelect(note.id)}
+            className={cn(
+              "flex-none w-4 h-4 rounded-sm border flex items-center justify-center text-[8px] transition-colors mt-0.5",
+              selected
+                ? "bg-teal/20 border-teal text-teal"
+                : "border-on-surface/20 hover:border-teal/60"
+            )}
+          >
+            {selected && "✓"}
+          </button>
+        )}
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={() => !bulkMode && setEditing(true)}>
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-[13px] font-mono font-semibold text-on-surface truncate">{note.title}</h3>
             {note.pinned && (
