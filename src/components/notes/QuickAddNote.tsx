@@ -4,20 +4,23 @@ import { useState } from "react"
 import { useCreateNote } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
 import { injectFrontmatter } from "@/lib/frontmatter"
+import { CONTEXT_CONFIG, addContextTag } from "@/lib/contexts"
 import { cn } from "@/lib/utils"
 
 type TemplateKey = "standard" | "moc" | "daily" | "project" | "area" | "resource"
 
+type ContextKey = keyof typeof CONTEXT_CONFIG
+
 const TEMPLATES: Record<
   TemplateKey,
-  { label: string; para: "projects" | "areas" | "resources" | "archive" | null; isMoc: boolean; frontmatter: Record<string, string> }
+  { label: string; para: "projects" | "areas" | "resources" | "archive" | null; isMoc: boolean; frontmatter: Record<string, string>; defaultContext?: ContextKey }
 > = {
   standard: { label: "Padrão", para: null, isMoc: false, frontmatter: {} },
   moc: { label: "MOC (Índice)", para: "projects", isMoc: true, frontmatter: { type: "moc" } },
-  daily: { label: "Nota do dia", para: null, isMoc: false, frontmatter: { type: "daily" } },
-  project: { label: "Projeto", para: "projects", isMoc: false, frontmatter: { status: "ativo" } },
-  area: { label: "Área", para: "areas", isMoc: false, frontmatter: { review: "mensal" } },
-  resource: { label: "Recurso", para: "resources", isMoc: false, frontmatter: { source: "" } },
+  daily: { label: "Nota do dia", para: null, isMoc: false, frontmatter: { type: "daily" }, defaultContext: "pessoal" },
+  project: { label: "Projeto", para: "projects", isMoc: false, frontmatter: { status: "ativo" }, defaultContext: "work" },
+  area: { label: "Área", para: "areas", isMoc: false, frontmatter: { review: "mensal" }, defaultContext: "pessoal" },
+  resource: { label: "Recurso", para: "resources", isMoc: false, frontmatter: { source: "" }, defaultContext: "estudos" },
 }
 
 export function QuickAddNote({ onCreated }: { onCreated: () => void }) {
@@ -25,6 +28,7 @@ export function QuickAddNote({ onCreated }: { onCreated: () => void }) {
   const [template, setTemplate] = useState<TemplateKey>("standard")
   const [showTemplates, setShowTemplates] = useState(false)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
+  const [selectedContext, setSelectedContext] = useState<ContextKey | null>(null)
   const { data: projects = [] } = useProjects()
   const createNote = useCreateNote()
 
@@ -39,10 +43,18 @@ export function QuickAddNote({ onCreated }: { onCreated: () => void }) {
       : t.frontmatter
     const content = injectFrontmatter("", fm)
 
+    let tags: string[] = []
+    if (selectedContext) {
+      tags = addContextTag(null, selectedContext)
+    }
+    if (selectedProject) {
+      tags = [...tags, `proj/${selectedProject.name.toLowerCase().replace(/\s+/g, "-")}`]
+    }
+
     await createNote.mutateAsync({
       title: input.trim(),
       content: content || null,
-      tags: selectedProject ? [`proj/${selectedProject.name.toLowerCase().replace(/\s+/g, "-")}`] : [],
+      tags,
       pinned: false,
       para: t.para,
       is_moc: t.isMoc,
@@ -53,6 +65,7 @@ export function QuickAddNote({ onCreated }: { onCreated: () => void }) {
     setInput("")
     setTemplate("standard")
     setSelectedProjectId(null)
+    setSelectedContext(null)
     setShowTemplates(false)
     onCreated()
   }
@@ -97,6 +110,32 @@ export function QuickAddNote({ onCreated }: { onCreated: () => void }) {
               {TEMPLATES[k].label}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Context selector */}
+      {showTemplates && (
+        <div className="px-4 py-2 border-b border-border bg-bg flex flex-wrap gap-1.5">
+          <span className="w-full text-[8px] font-mono text-on-surface/30 uppercase tracking-wider mb-1">Contexto</span>
+          {(Object.keys(CONTEXT_CONFIG) as ContextKey[]).map((ctx) => {
+            const cfg = CONTEXT_CONFIG[ctx]
+            const isActive = selectedContext === ctx
+            return (
+              <button
+                key={ctx}
+                type="button"
+                onClick={() => setSelectedContext(isActive ? null : ctx)}
+                className={cn(
+                  "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                  isActive
+                    ? cfg.bg + " " + cfg.color + " border " + cfg.border
+                    : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                )}
+              >
+                {cfg.label}
+              </button>
+            )
+          })}
         </div>
       )}
 

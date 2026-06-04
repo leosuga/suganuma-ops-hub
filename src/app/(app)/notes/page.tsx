@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useCallback } from "react"
 import { useTitle } from "@/lib/useTitle"
 import { useNotes, useDeleteNote, useCreateNote } from "@/lib/queries/notes"
+import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
@@ -32,6 +33,7 @@ export default function NotesPage() {
   const [filterTag, setFilterTag] = useState<string | null>(null)
   const [filterPrefix, setFilterPrefix] = useState<string | null>(null)
   const [filterPara, setFilterPara] = useState<string | null>(null)
+  const [filterContext, setFilterContext] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [showSemanticSearch, setShowSemanticSearch] = useState(false)
   const [highlightNoteId, setHighlightNoteId] = useState<string | null>(null)
@@ -63,9 +65,21 @@ export default function NotesPage() {
     return Array.from(set).sort()
   }, [notes])
 
+  const contextCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    for (const n of notes) {
+      const ctxs = parseContextTags(n.tags)
+      for (const c of ctxs) {
+        counts[c] = (counts[c] || 0) + 1
+      }
+    }
+    return counts
+  }, [notes])
+
   const filtered = notes.filter((n) => {
     if (filterTag && (!n.tags || !n.tags.includes(filterTag))) return false
     if (filterPrefix && (!n.tags || !n.tags.some((t) => t.startsWith(`${filterPrefix}/`)))) return false
+    if (filterContext && (!n.tags || !n.tags.some((t) => t === `ctx/${filterContext}`))) return false
     if (filterPara && n.para !== filterPara) return false
     if (search.trim()) {
       const q = search.toLowerCase().trim()
@@ -133,6 +147,38 @@ export default function NotesPage() {
         </button>
 
         {showSemanticSearch && <SemanticSearchPanel onSelectNote={handleSelectNote} />}
+        {/* Context bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          <button
+            onClick={() => setFilterContext(null)}
+            className={cn(
+              "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+              filterContext === null
+                ? "bg-teal/15 text-teal border border-teal/40"
+                : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+            )}
+          >
+            TODOS ({notes.length})
+          </button>
+          {(Object.keys(CONTEXT_CONFIG) as Array<keyof typeof CONTEXT_CONFIG>).map((ctx) => {
+            const cfg = CONTEXT_CONFIG[ctx]
+            const isActive = filterContext === ctx
+            return (
+              <button
+                key={ctx}
+                onClick={() => setFilterContext(isActive ? null : ctx)}
+                className={cn(
+                  "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                  isActive
+                    ? cfg.bg + " " + cfg.color + " border " + cfg.border
+                    : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                )}
+              >
+                {cfg.label} ({contextCounts[ctx] || 0})
+              </button>
+            )
+          })}
+        </div>
 
         {allPara.length > 0 && (
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">

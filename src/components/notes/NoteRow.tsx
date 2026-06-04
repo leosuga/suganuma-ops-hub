@@ -11,6 +11,7 @@ import { useProjects } from "@/lib/queries/projects"
 import { parseFrontmatter } from "@/lib/frontmatter"
 import { parseWikiLinks, renderWikiLinksToMarkdown } from "@/lib/links"
 import { parseInlineTasks, updateInlineTask } from "@/lib/tasks-inline"
+import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
 import { cn } from "@/lib/utils"
 
 const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
@@ -149,6 +150,37 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
         )}
         <div className="flex flex-col gap-1.5">
           <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            Contexto
+          </span>
+          <div className="flex flex-wrap gap-1">
+            {(Object.keys(CONTEXT_CONFIG) as Array<keyof typeof CONTEXT_CONFIG>).map((ctx) => {
+              const cfg = CONTEXT_CONFIG[ctx]
+              const tag = `ctx/${ctx}`
+              const isActive = note.tags?.includes(tag)
+              return (
+                <button
+                  key={ctx}
+                  type="button"
+                  onClick={() => {
+                    const base = note.tags?.filter((t) => !t.startsWith("ctx/")) ?? []
+                    const next = isActive ? base : [...base, tag]
+                    updateNote.mutateAsync({ id: note.id, tags: next })
+                  }}
+                  className={cn(
+                    "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                    isActive
+                      ? cfg.bg + " " + cfg.color + " border " + cfg.border
+                      : "text-on-surface/30 border border-border hover:border-on-surface/30 hover:text-on-surface/50"
+                  )}
+                >
+                  {cfg.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
             PARA
           </span>
           <select
@@ -207,10 +239,14 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
     )
   }
 
+  const noteContexts = parseContextTags(note.tags)
+
   return (
     <div className={cn(
       "border border-border bg-surface rounded-sm p-3 transition-colors",
-      note.pinned && "border-amber/20"
+      note.pinned && "border-amber/20",
+      noteContexts.length > 0 && CONTEXT_CONFIG[noteContexts[0]]?.strip,
+      noteContexts.length > 0 && "border-l-[3px]"
     )}>
       <div className="flex items-start gap-2">
         <div className="flex-1 min-w-0 cursor-pointer" onClick={() => setEditing(true)}>
@@ -219,6 +255,23 @@ export function NoteRow({ note, onDelete, allNotes }: { note: NoteRowType; onDel
             {note.pinned && (
               <span className="flex-none text-[8px] font-mono text-amber uppercase tracking-wider">PIN</span>
             )}
+            {noteContexts.map((ctx) => {
+              const cfg = CONTEXT_CONFIG[ctx]
+              if (!cfg) return null
+              return (
+                <span
+                  key={ctx}
+                  className={cn(
+                    "flex-none text-[7px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0",
+                    cfg.color,
+                    cfg.border,
+                    cfg.bg
+                  )}
+                >
+                  {cfg.label}
+                </span>
+              )
+            })}
             {note.para && (
               <span className={cn("flex-none text-[7px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0", paraColor[note.para])}>
                 {paraLabel[note.para]}

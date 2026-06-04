@@ -287,6 +287,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 | Templates | QuickAddNote with 6 templates (standard, MOC, daily, project, area, resource) |
 | Review Badge | Areas with `last_review` > 30 days show ⚠ REV warning |
 | **Semantic Search** | **Ollama (nomic-embed-text) + Qdrant self-hosted; Busca Semântica panel em NotesPage; embedding auto-sync on note CRUD** |
+| **Contexts** | **6 life contexts (work, pessoal, casa, saude, estudos, financas) with color-coded pills + strip in NoteRow + filter bar in NotesPage + QuickAdd selector + edit mode toggle** |
 
 ## Notes Feature Roadmap
 
