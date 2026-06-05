@@ -63,6 +63,10 @@ jobs:
             ls -la src/app/\(app\)/calendar/year/ || true
             ls -la src/components/annual/ || true
 
+            # Extract expected SW version from source
+            EXPECTED_SW=$(grep 'const CACHE' public/sw.js | sed 's/.*"\(ops-hub-v[0-9]*\)".*/\1/')
+            echo "Expected SW version: $EXPECTED_SW"
+
             echo "Building (2-5 min)..."
             docker build \
               --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
@@ -102,11 +106,11 @@ jobs:
               sleep 10
               SW=$(curl -s --max-time 5 https://ops.suganuma.com.br/sw.js 2>/dev/null || echo "-ERROR-")
               echo "[$i] sw.js raw: $SW"
-              echo "[$i] checking v8..."
-              echo "$SW" | grep "v8" && echo "[$i] v8 FOUND"
+              echo "[$i] checking $EXPECTED_SW..."
+              echo "$SW" | grep "$EXPECTED_SW" && echo "[$i] $EXPECTED_SW FOUND"
               echo "[$i] checking image..."
               docker ps --format '{{.Image}}' | grep "ops-hub:latest" && echo "[$i] IMAGE FOUND"
-              if echo "$SW" | grep -q "v8" && docker ps --format '{{.Image}}' | grep -q "ops-hub:latest"; then
+              if echo "$SW" | grep -q "$EXPECTED_SW" && docker ps --format '{{.Image}}' | grep -q "ops-hub:latest"; then
                 echo "DEPLOY OK"
                 exit 0
               fi
