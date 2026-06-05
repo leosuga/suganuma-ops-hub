@@ -39,7 +39,7 @@ export function TopBar({ user, onOpenCommand }: TopBarProps) {
     : "SG"
 
   return (
-    <header className="h-10 flex items-center justify-between px-4 border-b border-border bg-surface flex-none">
+    <header className="h-10 pt-[env(safe-area-inset-top)] flex items-center justify-between px-4 border-b border-border bg-surface flex-none">
       <span className="text-[10px] font-mono font-semibold tracking-[0.2em] text-on-surface/60 uppercase">
         {pageLabel}
       </span>

@@ -1,9 +1,9 @@
-const CACHE = "ops-hub-v11"
+const CACHE = "ops-hub-v12"
 const OFFLINE_PAGE = "/offline.html"
 const STATIC_ASSETS = "/_next/static/"
 
 self.addEventListener("install", (e) => {
-  console.log("[SW] install v8")
+  console.log("[SW] install", CACHE)
   e.waitUntil(
     caches
       .open(CACHE)
@@ -13,7 +13,7 @@ self.addEventListener("install", (e) => {
 })
 
 self.addEventListener("activate", (e) => {
-  console.log("[SW] activate v6")
+  console.log("[SW] activate", CACHE)
   e.waitUntil(
     caches
       .keys()
@@ -48,24 +48,31 @@ self.addEventListener("fetch", (e) => {
   // API e Supabase: sempre network
   if (isApi(url)) return
 
-  // Assets estáticos do Next.js: CacheFirst
+  // Assets estáticos do Next.js: NetworkFirst (para deploys frequentes)
+  // Sempre busca a rede primeiro; se offline, fallback para cache
   if (isStaticAsset(url)) {
     e.respondWith(
-      caches.match(e.request).then((cached) => {
-        if (cached) return cached
-        return fetch(e.request).then((res) => {
+      fetch(e.request)
+        .then((res) => {
           if (res.ok) {
             const clone = res.clone()
             caches.open(CACHE).then((c) => c.put(e.request, clone))
           }
           return res
         })
-      })
+        .catch(() => {
+          return caches.match(e.request).then((cached) => {
+            if (cached) return cached
+            // Se não está no cache e offline, retorna 503
+            return new Response("Offline", { status: 503, statusText: "Service Unavailable" })
+          })
+        })
     )
     return
   }
 
-  // Navegação (HTML): NetworkFirst com fallback offline
+  // Navegação (HTML): NetworkOnly — NUNCA cachear
+  // O middleware retorna 307 redirect para /login; cachear isso corrompe a experiência
   if (isNavigate(e.request)) {
     e.respondWith(
       fetch(e.request)
@@ -78,7 +85,7 @@ self.addEventListener("fetch", (e) => {
     return
   }
 
-  // Outros assets: StaleWhileRevalidate
+  // Outros assets (fonts, imagens, etc.): StaleWhileRevalidate
   if (isAsset(e.request)) {
     e.respondWith(
       caches.open(CACHE).then((cache) =>
