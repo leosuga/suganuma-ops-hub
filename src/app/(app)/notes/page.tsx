@@ -207,11 +207,11 @@ export default function NotesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => { setBulkMode(!bulkMode); setSelectedIds(new Set()) }}
             className={cn(
-              "h-6 px-2.5 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors",
+              "h-10 md:h-6 px-3 md:px-2.5 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors active:scale-95",
               bulkMode
                 ? "bg-teal/15 text-teal border-teal/40"
                 : "text-on-surface/40 border-border hover:border-on-surface/30 hover:text-on-surface/60"
@@ -229,7 +229,7 @@ export default function NotesPage() {
         <button
           onClick={() => setShowSemanticSearch(!showSemanticSearch)}
           className={cn(
-            "h-7 px-3 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors",
+            "h-11 md:h-7 px-3 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors active:scale-95",
             showSemanticSearch
               ? "bg-teal/15 text-teal border-teal/40"
               : "text-on-surface/30 border-border hover:border-on-surface/30 hover:text-on-surface/50"
@@ -244,7 +244,7 @@ export default function NotesPage() {
           <button
             onClick={() => setFilterContext(null)}
             className={cn(
-              "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+              "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
               filterContext === null
                 ? "bg-teal/15 text-teal border border-teal/40"
                 : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
@@ -260,7 +260,7 @@ export default function NotesPage() {
                 key={ctx}
                 onClick={() => setFilterContext(isActive ? null : ctx)}
                 className={cn(
-                  "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                  "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
                   isActive
                     ? cfg.bg + " " + cfg.color + " border " + cfg.border
                     : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
@@ -277,7 +277,7 @@ export default function NotesPage() {
             <button
               onClick={() => setFilterPara(null)}
               className={cn(
-                "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
                 filterPara === null
                   ? "bg-teal/15 text-teal border border-teal/40"
                   : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
@@ -290,7 +290,7 @@ export default function NotesPage() {
                 key={para}
                 onClick={() => setFilterPara(filterPara === para ? null : para)}
                 className={cn(
-                  "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                  "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
                   filterPara === para
                     ? "bg-teal/15 text-teal border border-teal/40"
                     : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
@@ -307,7 +307,7 @@ export default function NotesPage() {
             <button
               onClick={() => { setFilterPrefix(null); setFilterTag(null) }}
               className={cn(
-                "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
                 filterPrefix === null && filterTag === null
                   ? "bg-teal/15 text-teal border border-teal/40"
                   : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
@@ -326,7 +326,7 @@ export default function NotesPage() {
                     setFilterTag(null)
                   }}
                   className={cn(
-                    "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                    "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
                     isActive
                       ? "bg-teal/15 text-teal border border-teal/40"
                       : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
@@ -345,7 +345,7 @@ export default function NotesPage() {
                   key={fullTag}
                   onClick={() => setFilterTag(isActive ? null : fullTag)}
                   className={cn(
-                    "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
+                    "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
                     isActive
                       ? "bg-amber/15 text-amber border border-amber/40"
                       : "text-on-surface/30 border border-border hover:border-on-surface/30 hover:text-on-surface/50"

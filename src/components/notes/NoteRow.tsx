@@ -284,7 +284,7 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
           <button
             onClick={() => onToggleSelect(note.id)}
             className={cn(
-              "flex-none w-4 h-4 rounded-sm border flex items-center justify-center text-[8px] transition-colors mt-0.5",
+              "flex-none w-4 h-4 md:w-5 md:h-5 rounded-sm border flex items-center justify-center text-[8px] transition-colors mt-0.5 active:scale-95",
               selected
                 ? "bg-teal/20 border-teal text-teal"
                 : "border-on-surface/20 hover:border-teal/60"
@@ -447,31 +447,40 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
           )}
         </div>
 
-        <div className="hidden md:flex items-center gap-0.5 flex-none">
+        <div className="hidden md:flex items-center gap-1 flex-none">
           {linkedTask ? (
-            <Link href={`/tasks?project=${linkedTask.project_id ?? ""}`} onClick={(e) => e.stopPropagation()} title={`Task: ${linkedTask.title}`} className="flex-none text-[8px] font-mono text-teal/60 hover:text-teal border border-teal/30 rounded-sm px-1.5 py-0.5 no-underline">
+            <Link href={`/tasks?project=${linkedTask.project_id ?? ""}`} onClick={(e) => e.stopPropagation()} title={`Task: ${linkedTask.title}`} className="flex-none text-[8px] font-mono text-teal/60 hover:text-teal border border-teal/30 rounded-sm px-1.5 py-1 no-underline active:scale-95">
               TASK ↗
             </Link>
           ) : (
-            <button onClick={(e) => { e.stopPropagation(); handleConvertToTask() }} disabled={createTask.isPending} className="flex-none text-[7px] font-mono text-on-surface/30 hover:text-teal border border-on-surface/20 hover:border-teal rounded-sm px-1 py-0.5 transition-colors" title="Converter em task">→TASK</button>
+            <button onClick={(e) => { e.stopPropagation(); handleConvertToTask() }} disabled={createTask.isPending} className="flex-none text-[7px] font-mono text-on-surface/30 hover:text-teal border border-on-surface/20 hover:border-teal rounded-sm px-1 py-1 transition-colors active:scale-95" title="Converter em task">
+              →TASK
+            </button>
           )}
-          <button onClick={handleToggleFavorited} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors text-[11px]" title={note.favorited ? "Desfavoritar" : "Favoritar"}>
+          <button onClick={handleToggleFavorited} className="w-10 h-10 md:w-5 md:h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors text-[11px] active:scale-95" title={note.favorited ? "Desfavoritar" : "Favoritar"}>
             {note.favorited ? "♥" : "♡"}
           </button>
-          <button onClick={handleTogglePin} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-amber transition-colors text-[11px]" title={note.pinned ? "Desafixar" : "Fixar"}>
+          <button onClick={handleTogglePin} className="w-10 h-10 md:w-5 md:h-5 flex items-center justify-center text-on-surface/20 hover:text-amber transition-colors text-[11px] active:scale-95" title={note.pinned ? "Desafixar" : "Fixar"}>
             {note.pinned ? "★" : "☆"}
           </button>
-          <button onClick={(e) => { e.stopPropagation(); setShowProjectLink(!showProjectLink) }} className={cn("flex-none text-[7px] font-mono border rounded-sm px-1 py-0.5 transition-colors", note.project_id ? "text-teal/60 border-teal/30 hover:text-teal" : "text-on-surface/30 hover:text-teal border-on-surface/20 hover:border-teal")} title={note.project_id ? "Trocar projeto" : "Vincular a projeto"}>
+          <button onClick={(e) => { e.stopPropagation(); setShowProjectLink(!showProjectLink) }} className={cn("flex-none text-[7px] font-mono border rounded-sm px-1 py-1 transition-colors active:scale-95", note.project_id ? "text-teal/60 border-teal/30 hover:text-teal" : "text-on-surface/30 hover:text-teal border-on-surface/20 hover:border-teal")} title={note.project_id ? "Trocar projeto" : "Vincular a projeto"}>
             {note.project_id ? "PROJ ↗" : "+PROJ"}
           </button>
           {confirmDelete ? (
             <>
-              <button onClick={() => { onDelete(note.id); setConfirmDelete(false) }} className="text-[8px] font-mono text-danger hover:opacity-70 tracking-wider">DEL</button>
-              <button onClick={() => setConfirmDelete(false)} className="text-on-surface/30 hover:text-on-surface/60 text-[14px] ml-1">×</button>
+              <button onClick={() => { onDelete(note.id); setConfirmDelete(false) }} className="text-[8px] font-mono text-danger hover:opacity-70 tracking-wider active:scale-95">DEL</button>
+              <button onClick={() => setConfirmDelete(false)} className="text-on-surface/30 hover:text-on-surface/60 text-[14px] ml-1 active:scale-95">×</button>
             </>
           ) : (
-            <button onClick={() => setConfirmDelete(true)} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors">×</button>
+            <button onClick={() => setConfirmDelete(true)} className="w-10 h-10 md:w-5 md:h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors active:scale-95">×</button>
           )}
+        </div>
+        {/* Mobile actions — minimal, large touch targets */}
+        <div className="flex md:hidden items-center gap-0.5 flex-none">
+          <button onClick={handleToggleFavorited} className="w-10 h-10 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors text-[11px] active:scale-95">
+            {note.favorited ? "♥" : "♡"}
+          </button>
+          <button onClick={() => setConfirmDelete(true)} className="w-10 h-10 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors text-[10px] active:scale-95">×</button>
         </div>
         {/* Mobile actions — minimal */}
         <div className="flex md:hidden items-center gap-0.5 flex-none">

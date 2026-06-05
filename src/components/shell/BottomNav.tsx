@@ -65,7 +65,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface/95 backdrop-blur-sm border-t border-border flex items-center justify-around px-1 z-40">
+      <nav className="fixed bottom-0 left-0 right-0 h-16 pb-[env(safe-area-inset-bottom)] bg-surface/95 backdrop-blur-sm border-t border-border flex items-center justify-around px-1 z-40">
         {NAV_ITEMS.map((item) => {
           const active = pathname.startsWith(item.href)
           return (
@@ -74,7 +74,7 @@ export function BottomNav() {
               href={item.href}
               prefetch={item.href === "/dashboard" || item.href === "/tasks"}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 rounded-sm transition-colors",
+                "flex flex-col items-center gap-1 px-4 py-2 rounded-sm transition-colors active:scale-95",
                 active ? "text-teal" : "text-on-surface/30 hover:text-on-surface/60"
               )}
             >
@@ -88,7 +88,7 @@ export function BottomNav() {
         <button
           onClick={() => setHubOpen(true)}
           className={cn(
-            "flex flex-col items-center gap-1 px-3 py-2 rounded-sm transition-colors",
+            "flex flex-col items-center gap-1 px-4 py-2 rounded-sm transition-colors active:scale-95",
             hubActive ? "text-teal" : "text-on-surface/30 hover:text-on-surface/60"
           )}
         >
@@ -113,7 +113,7 @@ export function BottomNav() {
             <div className="p-3 space-y-1">
               <div className="flex items-center justify-between px-1 pb-1.5 border-b border-border mb-1">
                 <span className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">HUB</span>
-                <button onClick={() => setHubOpen(false)} className="text-[10px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">FECHAR</button>
+                <button onClick={() => setHubOpen(false)} className="text-[10px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors active:scale-95">FECHAR</button>
               </div>
               <div className="grid grid-cols-5 gap-1">
                 {HUB_ITEMS.map((item) => {
@@ -124,7 +124,7 @@ export function BottomNav() {
                       href={item.href}
                       onClick={() => setHubOpen(false)}
                       className={cn(
-                        "flex flex-col items-center gap-1 p-2 rounded-sm transition-colors",
+                        "flex flex-col items-center gap-1 p-3 md:p-2 rounded-sm transition-colors active:scale-95",
                         active ? "bg-teal/10 text-teal" : "text-on-surface/50 hover:bg-surface-hover hover:text-on-surface/70"
                       )}
                     >

@@ -54,7 +54,7 @@ export function AppShell({ children, user }: AppShellProps) {
   return (
     <QueryClientProvider client={queryClient}>
     <UndoToastProvider>
-      <div className="flex h-screen overflow-hidden bg-bg">
+      <div className="flex min-h-[100dvh] h-[100dvh] overflow-hidden bg-bg">
         {/* Desktop sidebar */}
         <div className="hidden md:flex flex-none">
           <Sidebar />
