@@ -72,7 +72,7 @@ export function AppShell({ children, user }: AppShellProps) {
   return (
     <QueryClientProvider client={queryClient}>
     <UndoToastProvider>
-      <div className="flex min-h-[100dvh] h-[100dvh] overflow-hidden bg-bg">
+      <div className="flex min-h-[100dvh] bg-bg">
         {/* Desktop sidebar */}
         <div className="hidden md:flex flex-none">
           <Sidebar />
@@ -84,15 +84,13 @@ export function AppShell({ children, user }: AppShellProps) {
 
           <main className="flex-1 overflow-auto">
             {children}
-            {/* Spacer for mobile BottomNav (h-14 + safe area) */}
-            <div className="md:hidden h-14 pb-[env(safe-area-inset-bottom)]" />
           </main>
-        </div>
-      </div>
 
-      {/* Mobile bottom nav — fixed, hidden when keyboard is open */}
-      <div className="md:hidden">
-        <BottomNav hidden={keyboardVisible} />
+          {/* Mobile bottom nav — inside flex flow, no fixed positioning */}
+          <div className="md:hidden">
+            <BottomNav hidden={keyboardVisible} />
+          </div>
+        </div>
       </div>
 
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
