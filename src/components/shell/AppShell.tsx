@@ -31,6 +31,24 @@ export function AppShell({ children, user }: AppShellProps) {
   useNotifications()
   useInitAccent()
 
+  // Detect keyboard visibility on mobile (viewport height changes)
+  const [keyboardVisible, setKeyboardVisible] = useState(false)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const initialHeight = window.visualViewport?.height ?? window.innerHeight
+    const handleResize = () => {
+      const currentHeight = window.visualViewport?.height ?? window.innerHeight
+      const keyboardUp = currentHeight < initialHeight * 0.75
+      setKeyboardVisible(keyboardUp)
+    }
+    window.visualViewport?.addEventListener("resize", handleResize)
+    window.addEventListener("resize", handleResize)
+    return () => {
+      window.visualViewport?.removeEventListener("resize", handleResize)
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [])
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -65,15 +83,15 @@ export function AppShell({ children, user }: AppShellProps) {
           <TopBar user={user} onOpenCommand={() => setCmdOpen(true)} />
 
           {/* Page content — bottom padding for BottomNav + safe area on mobile */}
-          <main className="flex-1 overflow-auto pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+          <main className="flex-1 overflow-auto pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
             {children}
           </main>
         </div>
       </div>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav — hidden when keyboard is open */}
       <div className="md:hidden">
-        <BottomNav />
+        <BottomNav hidden={keyboardVisible} />
       </div>
 
       <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />

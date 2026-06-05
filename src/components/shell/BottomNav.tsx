@@ -57,7 +57,7 @@ const HUB_ITEMS = [
   { href: "/settings", label: "SET", desc: "Ajustes" },
 ]
 
-export function BottomNav() {
+export function BottomNav({ hidden }: { hidden?: boolean }) {
   const pathname = usePathname()
   const [hubOpen, setHubOpen] = useState(false)
 
@@ -65,8 +65,11 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur-sm border-t border-border z-40">
-        <div className="h-16 flex items-center justify-around px-1">
+      <nav className={cn(
+        "fixed left-0 right-0 bg-surface/95 backdrop-blur-sm border-t border-border z-40 transition-transform duration-300",
+        hidden ? "translate-y-full bottom-0" : "translate-y-0 bottom-0"
+      )}>
+        <div className="h-14 flex items-center justify-around px-1">
           {NAV_ITEMS.map((item) => {
             const active = pathname.startsWith(item.href)
             return (
@@ -75,7 +78,7 @@ export function BottomNav() {
                 href={item.href}
                 prefetch={item.href === "/dashboard" || item.href === "/tasks"}
                 className={cn(
-                  "flex flex-col items-center gap-1 px-4 py-2 rounded-sm transition-colors active:scale-95",
+                  "flex flex-col items-center gap-1 px-3 py-1.5 rounded-sm transition-colors active:scale-95",
                   active ? "text-teal" : "text-on-surface/30 hover:text-on-surface/60"
                 )}
               >
@@ -89,7 +92,7 @@ export function BottomNav() {
           <button
             onClick={() => setHubOpen(true)}
             className={cn(
-              "flex flex-col items-center gap-1 px-4 py-2 rounded-sm transition-colors active:scale-95",
+              "flex flex-col items-center gap-1 px-3 py-1.5 rounded-sm transition-colors active:scale-95",
               hubActive ? "text-teal" : "text-on-surface/30 hover:text-on-surface/60"
             )}
           >
@@ -112,7 +115,7 @@ export function BottomNav() {
             className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
             onClick={() => setHubOpen(false)}
           />
-          <div className="fixed bottom-16 left-2 right-2 z-50 bg-surface border border-border rounded-sm shadow-2xl overflow-hidden">
+          <div className="fixed bottom-14 left-2 right-2 z-50 bg-surface border border-border rounded-sm shadow-2xl overflow-hidden">
             <div className="p-3 space-y-1">
               <div className="flex items-center justify-between px-1 pb-1.5 border-b border-border mb-1">
                 <span className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">HUB</span>
