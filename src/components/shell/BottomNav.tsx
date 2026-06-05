@@ -66,7 +66,7 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
   return (
     <>
       <nav className={cn(
-        "bg-surface/95 backdrop-blur-sm border-t border-border z-40",
+        "fixed bottom-0 left-0 right-0 bg-surface/95 border-t border-border z-40",
         hidden ? "hidden" : ""
       )}>
         <div className="h-14 flex items-center justify-around px-1">
