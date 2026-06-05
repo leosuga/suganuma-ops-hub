@@ -120,6 +120,8 @@ export default function NotesPage() {
     return counts
   }, [notes])
 
+  const [showFilters, setShowFilters] = useState(false)
+
   const filtered = notes.filter((n) => {
     if (filterTag && (!n.tags || !n.tags.includes(filterTag))) return false
     if (filterPrefix && (!n.tags || !n.tags.some((t) => t.startsWith(`${filterPrefix}/`)))) return false
@@ -195,170 +197,67 @@ export default function NotesPage() {
     archive: "ARQ",
   }
 
+  const activeFilterCount = [
+    filterPara,
+    filterPrefix,
+    filterTag,
+  ].filter(Boolean).length
+
   return (
     <SectionErrorBoundary label="NOTES">
-      <div className="p-4 space-y-5">
-        <div>
-          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
-            NOTES
-          </h1>
-          <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
-            {notes.length} nota{notes.length !== 1 ? "s" : ""} · {mocs.length} MOC{mocs.length !== 1 ? "s" : ""}
-          </p>
-        </div>
+      <div className="p-4 space-y-3">
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => { setBulkMode(!bulkMode); setSelectedIds(new Set()) }}
-            className={cn(
-              "h-10 md:h-6 px-3 md:px-2.5 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors active:scale-95",
-              bulkMode
-                ? "bg-teal/15 text-teal border-teal/40"
-                : "text-on-surface/40 border-border hover:border-on-surface/30 hover:text-on-surface/60"
-            )}
-          >
-            {bulkMode ? "FECHAR SELEÇÃO" : "SELECIONAR"}
-          </button>
-          {bulkMode && selectedIds.size > 0 && (
-            <span className="text-[9px] font-mono text-on-surface/40">{selectedIds.size} selecionada(s)</span>
-          )}
-        </div>
-
-        <QuickAddNote onCreated={() => {}} />
-
-        <button
-          onClick={() => setShowSemanticSearch(!showSemanticSearch)}
-          className={cn(
-            "h-11 md:h-7 px-3 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors active:scale-95",
-            showSemanticSearch
-              ? "bg-teal/15 text-teal border-teal/40"
-              : "text-on-surface/30 border-border hover:border-on-surface/30 hover:text-on-surface/50"
-          )}
-        >
-          {showSemanticSearch ? "FECHAR BUSCA SEMÂNTICA" : "BUSCA SEMÂNTICA"}
-        </button>
-
-        {showSemanticSearch && <SemanticSearchPanel onSelectNote={handleSelectNote} />}
-        {/* Context bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-          <button
-            onClick={() => setFilterContext(null)}
-            className={cn(
-              "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
-              filterContext === null
-                ? "bg-teal/15 text-teal border border-teal/40"
-                : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
-            )}
-          >
-            TODOS ({notes.length})
-          </button>
-          {(Object.keys(CONTEXT_CONFIG) as Array<keyof typeof CONTEXT_CONFIG>).map((ctx) => {
-            const cfg = CONTEXT_CONFIG[ctx]
-            const isActive = filterContext === ctx
-            return (
+        {/* MOBILE compact toolbar */}
+        <div className="md:hidden space-y-2">
+          {/* Title + icon actions */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">NOTES</h1>
+              <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
+                {notes.length} nota{notes.length !== 1 ? "s" : ""} · {mocs.length} MOC{mocs.length !== 1 ? "s" : ""}
+              </p>
+            </div>
+            <div className="flex items-center gap-1">
+              {/* Bulk toggle icon */}
               <button
-                key={ctx}
-                onClick={() => setFilterContext(isActive ? null : ctx)}
+                onClick={() => { setBulkMode(!bulkMode); setSelectedIds(new Set()) }}
                 className={cn(
-                  "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
-                  isActive
-                    ? cfg.bg + " " + cfg.color + " border " + cfg.border
-                    : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                  "w-9 h-9 flex items-center justify-center rounded-sm border transition-colors active:scale-95",
+                  bulkMode
+                    ? "bg-teal/15 text-teal border-teal/40"
+                    : "text-on-surface/40 border-border hover:border-on-surface/30 hover:text-on-surface/60"
                 )}
+                title={bulkMode ? "Fechar seleção" : "Selecionar"}
               >
-                {cfg.label} ({contextCounts[ctx] || 0})
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="2" y="2" width="5" height="5" rx="1" />
+                  <rect x="9" y="2" width="5" height="5" rx="1" />
+                  <rect x="2" y="9" width="5" height="5" rx="1" />
+                  <rect x="9" y="9" width="5" height="5" rx="1" />
+                </svg>
               </button>
-            )
-          })}
-        </div>
-
-        {allPara.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setFilterPara(null)}
-              className={cn(
-                "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
-                filterPara === null
-                  ? "bg-teal/15 text-teal border border-teal/40"
-                  : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
-              )}
-            >
-              ALL
-            </button>
-            {allPara.map((para) => (
+              {/* Quick add icon */}
+              <QuickAddNote onCreated={() => {}} compact />
+              {/* Semantic search icon */}
               <button
-                key={para}
-                onClick={() => setFilterPara(filterPara === para ? null : para)}
+                onClick={() => setShowSemanticSearch(!showSemanticSearch)}
                 className={cn(
-                  "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
-                  filterPara === para
-                    ? "bg-teal/15 text-teal border border-teal/40"
-                    : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                  "w-9 h-9 flex items-center justify-center rounded-sm border transition-colors active:scale-95",
+                  showSemanticSearch
+                    ? "bg-teal/15 text-teal border-teal/40"
+                    : "text-on-surface/30 border-border hover:border-on-surface/30 hover:text-on-surface/50"
                 )}
+                title="Busca semântica"
               >
-                {paraLabel[para] || para}
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="7" cy="7" r="5" />
+                  <path d="M11 11l3 3" />
+                </svg>
               </button>
-            ))}
+            </div>
           </div>
-        )}
 
-        {tagPrefixes.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => { setFilterPrefix(null); setFilterTag(null) }}
-              className={cn(
-                "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
-                filterPrefix === null && filterTag === null
-                  ? "bg-teal/15 text-teal border border-teal/40"
-                  : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
-              )}
-            >
-              ALL
-            </button>
-            {tagPrefixes.map((prefix) => {
-              const isActive = filterPrefix === prefix
-              const label = prefix === "#" ? "#geral" : `${prefix}/`
-              return (
-                <button
-                  key={prefix}
-                  onClick={() => {
-                    setFilterPrefix(isActive ? null : prefix)
-                    setFilterTag(null)
-                  }}
-                  className={cn(
-                    "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
-                    isActive
-                      ? "bg-teal/15 text-teal border border-teal/40"
-                      : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
-                  )}
-                >
-                  {label}
-                </button>
-              )
-            })}
-            {/* Show actual tags when a prefix is selected */}
-            {filterPrefix && tagGroups.get(filterPrefix)?.map((rest) => {
-              const fullTag = `${filterPrefix}/${rest}`
-              const isActive = filterTag === fullTag
-              return (
-                <button
-                  key={fullTag}
-                  onClick={() => setFilterTag(isActive ? null : fullTag)}
-                  className={cn(
-                    "flex-none h-10 md:h-6 px-3 md:px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
-                    isActive
-                      ? "bg-amber/15 text-amber border border-amber/40"
-                      : "text-on-surface/30 border border-border hover:border-on-surface/30 hover:text-on-surface/50"
-                  )}
-                >
-                  {rest}
-                </button>
-              )
-            })}
-          </div>
-        )}
-
-        {notes.length > 5 && (
+          {/* Search — always visible */}
           <input
             type="text"
             value={search}
@@ -366,7 +265,318 @@ export default function NotesPage() {
             placeholder="Buscar notas..."
             className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
           />
-        )}
+
+          {/* Context bar */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setFilterContext(null)}
+              className={cn(
+                "flex-none h-7 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
+                filterContext === null
+                  ? "bg-teal/15 text-teal border border-teal/40"
+                  : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+              )}
+            >
+              TODOS
+            </button>
+            {(Object.keys(CONTEXT_CONFIG) as Array<keyof typeof CONTEXT_CONFIG>).map((ctx) => {
+              const cfg = CONTEXT_CONFIG[ctx]
+              const isActive = filterContext === ctx
+              return (
+                <button
+                  key={ctx}
+                  onClick={() => setFilterContext(isActive ? null : ctx)}
+                  className={cn(
+                    "flex-none h-7 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
+                    isActive
+                      ? cfg.bg + " " + cfg.color + " border " + cfg.border
+                      : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                  )}
+                >
+                  {cfg.label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* FILTROS toggle (PARA + Tags) */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(
+              "w-full h-7 flex items-center justify-center gap-1.5 rounded-sm font-mono text-[8px] font-semibold tracking-widest border transition-colors active:scale-95",
+              activeFilterCount > 0
+                ? "bg-teal/10 text-teal border-teal/30"
+                : "text-on-surface/30 border-border hover:border-on-surface/30 hover:text-on-surface/50"
+            )}
+          >
+            <span>FILTROS</span>
+            {activeFilterCount > 0 && <span className="text-teal">({activeFilterCount})</span>}
+            <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className={cn("transition-transform", showFilters ? "rotate-180" : "")}>
+              <path d="M4 6l4 4 4-4" />
+            </svg>
+          </button>
+
+          {/* Expandable filter panel */}
+          {showFilters && (
+            <div className="space-y-2 border border-border rounded-sm p-2 bg-surface/50">
+              {allPara.length > 0 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                  <span className="text-[7px] font-mono text-on-surface/30 tracking-wider flex-none">PARA</span>
+                  <button
+                    onClick={() => setFilterPara(null)}
+                    className={cn(
+                      "flex-none h-6 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
+                      filterPara === null
+                        ? "bg-teal/15 text-teal border border-teal/40"
+                        : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                    )}
+                  >
+                    ALL
+                  </button>
+                  {allPara.map((para) => (
+                    <button
+                      key={para}
+                      onClick={() => setFilterPara(filterPara === para ? null : para)}
+                      className={cn(
+                        "flex-none h-6 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
+                        filterPara === para
+                          ? "bg-teal/15 text-teal border border-teal/40"
+                          : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                      )}
+                    >
+                      {paraLabel[para] || para}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {tagPrefixes.length > 0 && (
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                  <span className="text-[7px] font-mono text-on-surface/30 tracking-wider flex-none">TAGS</span>
+                  <button
+                    onClick={() => { setFilterPrefix(null); setFilterTag(null) }}
+                    className={cn(
+                      "flex-none h-6 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
+                      filterPrefix === null && filterTag === null
+                        ? "bg-teal/15 text-teal border border-teal/40"
+                        : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                    )}
+                  >
+                    ALL
+                  </button>
+                  {tagPrefixes.map((prefix) => {
+                    const isActive = filterPrefix === prefix
+                    const label = prefix === "#" ? "#geral" : `${prefix}/`
+                    return (
+                      <button
+                        key={prefix}
+                        onClick={() => {
+                          setFilterPrefix(isActive ? null : prefix)
+                          setFilterTag(null)
+                        }}
+                        className={cn(
+                          "flex-none h-6 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
+                          isActive
+                            ? "bg-teal/15 text-teal border border-teal/40"
+                            : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                        )}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                  {filterPrefix && tagGroups.get(filterPrefix)?.map((rest) => {
+                    const fullTag = `${filterPrefix}/${rest}`
+                    const isActive = filterTag === fullTag
+                    return (
+                      <button
+                        key={fullTag}
+                        onClick={() => setFilterTag(isActive ? null : fullTag)}
+                        className={cn(
+                          "flex-none h-6 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
+                          isActive
+                            ? "bg-amber/15 text-amber border border-amber/40"
+                            : "text-on-surface/30 border border-border hover:border-on-surface/30 hover:text-on-surface/50"
+                        )}
+                      >
+                        {rest}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {showSemanticSearch && <SemanticSearchPanel onSelectNote={handleSelectNote} />}
+        </div>
+
+        {/* DESKTOP full layout */}
+        <div className="hidden md:block space-y-3">
+          <div>
+            <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">NOTES</h1>
+            <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
+              {notes.length} nota{notes.length !== 1 ? "s" : ""} · {mocs.length} MOC{mocs.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => { setBulkMode(!bulkMode); setSelectedIds(new Set()) }}
+              className={cn(
+                "h-6 px-2.5 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors active:scale-95",
+                bulkMode
+                  ? "bg-teal/15 text-teal border-teal/40"
+                  : "text-on-surface/40 border-border hover:border-on-surface/30 hover:text-on-surface/60"
+              )}
+            >
+              {bulkMode ? "FECHAR SELEÇÃO" : "SELECIONAR"}
+            </button>
+            {bulkMode && selectedIds.size > 0 && (
+              <span className="text-[9px] font-mono text-on-surface/40">{selectedIds.size} selecionada(s)</span>
+            )}
+          </div>
+
+          <QuickAddNote onCreated={() => {}} />
+
+          <button
+            onClick={() => setShowSemanticSearch(!showSemanticSearch)}
+            className={cn(
+              "h-7 px-3 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors active:scale-95",
+              showSemanticSearch
+                ? "bg-teal/15 text-teal border-teal/40"
+                : "text-on-surface/30 border-border hover:border-on-surface/30 hover:text-on-surface/50"
+            )}
+          >
+            {showSemanticSearch ? "FECHAR BUSCA SEMÂNTICA" : "BUSCA SEMÂNTICA"}
+          </button>
+
+          {showSemanticSearch && <SemanticSearchPanel onSelectNote={handleSelectNote} />}
+
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setFilterContext(null)}
+              className={cn(
+                "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
+                filterContext === null
+                  ? "bg-teal/15 text-teal border border-teal/40"
+                  : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+              )}
+            >
+              TODOS ({notes.length})
+            </button>
+            {(Object.keys(CONTEXT_CONFIG) as Array<keyof typeof CONTEXT_CONFIG>).map((ctx) => {
+              const cfg = CONTEXT_CONFIG[ctx]
+              const isActive = filterContext === ctx
+              return (
+                <button
+                  key={ctx}
+                  onClick={() => setFilterContext(isActive ? null : ctx)}
+                  className={cn(
+                    "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
+                    isActive
+                      ? cfg.bg + " " + cfg.color + " border " + cfg.border
+                      : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                  )}
+                >
+                  {cfg.label} ({contextCounts[ctx] || 0})
+                </button>
+              )
+            })}
+          </div>
+
+          {allPara.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => setFilterPara(null)}
+                className={cn(
+                  "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
+                  filterPara === null
+                    ? "bg-teal/15 text-teal border border-teal/40"
+                    : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                )}
+              >
+                ALL
+              </button>
+              {allPara.map((para) => (
+                <button
+                  key={para}
+                  onClick={() => setFilterPara(filterPara === para ? null : para)}
+                  className={cn(
+                    "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
+                    filterPara === para
+                      ? "bg-teal/15 text-teal border border-teal/40"
+                      : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                  )}
+                >
+                  {paraLabel[para] || para}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {tagPrefixes.length > 0 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+              <button
+                onClick={() => { setFilterPrefix(null); setFilterTag(null) }}
+                className={cn(
+                  "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
+                  filterPrefix === null && filterTag === null
+                    ? "bg-teal/15 text-teal border border-teal/40"
+                    : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                )}
+              >
+                ALL
+              </button>
+              {tagPrefixes.map((prefix) => {
+                const isActive = filterPrefix === prefix
+                const label = prefix === "#" ? "#geral" : `${prefix}/`
+                return (
+                  <button
+                    key={prefix}
+                    onClick={() => {
+                      setFilterPrefix(isActive ? null : prefix)
+                      setFilterTag(null)
+                    }}
+                    className={cn(
+                      "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
+                      isActive
+                        ? "bg-teal/15 text-teal border border-teal/40"
+                        : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                    )}
+                  >
+                    {label}
+                  </button>
+                )
+              })}
+              {filterPrefix && tagGroups.get(filterPrefix)?.map((rest) => {
+                const fullTag = `${filterPrefix}/${rest}`
+                const isActive = filterTag === fullTag
+                return (
+                  <button
+                    key={fullTag}
+                    onClick={() => setFilterTag(isActive ? null : fullTag)}
+                    className={cn(
+                      "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
+                      isActive
+                        ? "bg-amber/15 text-amber border border-amber/40"
+                        : "text-on-surface/30 border border-border hover:border-on-surface/30 hover:text-on-surface/50"
+                    )}
+                  >
+                    {rest}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar notas..."
+            className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+          />
+        </div>
 
         {isLoading && (
           <div className="space-y-3">
