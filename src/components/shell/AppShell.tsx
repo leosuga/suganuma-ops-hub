@@ -64,8 +64,8 @@ export function AppShell({ children, user }: AppShellProps) {
         <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
           <TopBar user={user} onOpenCommand={() => setCmdOpen(true)} />
 
-          {/* Page content — add bottom padding on mobile for BottomNav */}
-          <main className="flex-1 overflow-auto pb-16 md:pb-0">
+          {/* Page content — bottom padding for BottomNav + safe area on mobile */}
+          <main className="flex-1 overflow-auto pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
             {children}
           </main>
         </div>
