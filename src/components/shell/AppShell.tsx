@@ -79,17 +79,18 @@ export function AppShell({ children, user }: AppShellProps) {
         </div>
 
         {/* Main area */}
-        <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
+        <div className="flex flex-1 flex-col min-w-0">
           <TopBar user={user} onOpenCommand={() => setCmdOpen(true)} />
 
-          {/* Page content — bottom padding for BottomNav + safe area on mobile */}
-          <main className="flex-1 overflow-auto pb-[calc(3.5rem+env(safe-area-inset-bottom))] md:pb-0">
+          <main className="flex-1 overflow-auto">
             {children}
+            {/* Spacer for mobile BottomNav (h-14 + safe area) */}
+            <div className="md:hidden h-14 pb-[env(safe-area-inset-bottom)]" />
           </main>
         </div>
       </div>
 
-      {/* Mobile bottom nav — hidden when keyboard is open */}
+      {/* Mobile bottom nav — fixed, hidden when keyboard is open */}
       <div className="md:hidden">
         <BottomNav hidden={keyboardVisible} />
       </div>

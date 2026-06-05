@@ -66,8 +66,8 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
   return (
     <>
       <nav className={cn(
-        "fixed left-0 right-0 bg-surface/95 backdrop-blur-sm border-t border-border z-40 transition-transform duration-300",
-        hidden ? "translate-y-full bottom-0" : "translate-y-0 bottom-0"
+        "bg-surface/95 backdrop-blur-sm border-t border-border z-40",
+        hidden ? "hidden" : ""
       )}>
         <div className="h-14 flex items-center justify-around px-1">
           {NAV_ITEMS.map((item) => {
