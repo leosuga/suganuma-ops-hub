@@ -1,25 +1,27 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
 export default function CallbackPage() {
   const router = useRouter()
-  const [status, setStatus] = useState("Verificando autenticação...")
+  const searchParams = useSearchParams()
+  const [status, setStatus] = useState("Verificando...")
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
+    const token = searchParams.get("token")
+    const type = searchParams.get("type")
 
-    async function handleAuth() {
+    async function handleCallback() {
       try {
-        // Check hash fragment (magic link / OAuth)
+        // Supabase magic link uses hash fragments (#access_token=...)
+        // Next.js doesn't parse hash, so we check both
         const hash = window.location.hash
-        const hasAuthParams = hash.includes("access_token") || hash.includes("refresh_token")
-
-        if (hasAuthParams) {
-          // Supabase automatically handles hash in getSession
+        if (hash && hash.includes("access_token")) {
+          // Let Supabase handle the hash
           const { data, error } = await supabase.auth.getSession()
           if (error) throw error
           if (data.session) {
@@ -29,21 +31,7 @@ export default function CallbackPage() {
           }
         }
 
-        // Fallback: check query params for code/token
-        const params = new URLSearchParams(window.location.search)
-        const code = params.get("code")
-        const token = params.get("token")
-        const type = params.get("type")
-
-        if (code) {
-          // PKCE code exchange
-          const { error } = await supabase.auth.exchangeCodeForSession(code)
-          if (error) throw error
-          setStatus("Autenticado! Redirecionando...")
-          router.replace("/dashboard")
-          return
-        }
-
+        // Fallback: check for token in query params
         if (token && type) {
           const { error } = await supabase.auth.verifyOtp({
             token_hash: token,
@@ -55,23 +43,24 @@ export default function CallbackPage() {
           return
         }
 
-        // Last resort: check if already logged in
-        const { data } = await supabase.auth.getSession()
+        // Last resort: try getting session
+        const { data, error } = await supabase.auth.getSession()
+        if (error) throw error
         if (data.session) {
+          setStatus("Autenticado! Redirecionando...")
           router.replace("/dashboard")
           return
         }
 
-        throw new Error("Nenhuma sessão encontrada. O link pode ter expirado ou já foi usado.")
+        throw new Error("Nenhuma sessão encontrada. Tente fazer login novamente.")
       } catch (err: any) {
-        console.error("[callback] error:", err)
         setError(err.message || "Erro na autenticação")
         setStatus("Falhou")
       }
     }
 
-    handleAuth()
-  }, [router])
+    handleCallback()
+  }, [router, searchParams])
 
   return (
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">
