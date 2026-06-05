@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -60,34 +60,16 @@ const HUB_ITEMS = [
 export function BottomNav({ hidden }: { hidden?: boolean }) {
   const pathname = usePathname()
   const [hubOpen, setHubOpen] = useState(false)
-  const [bottomOffset, setBottomOffset] = useState(0)
 
   const hubActive = HUB_ITEMS.some((i) => pathname.startsWith(i.href))
-
-  useEffect(() => {
-    const update = () => {
-      const vv = window.visualViewport
-      if (!vv) return
-      const offset = window.innerHeight - vv.height - vv.offsetTop
-      setBottomOffset(Math.max(0, offset))
-    }
-    window.visualViewport?.addEventListener("resize", update)
-    window.visualViewport?.addEventListener("scroll", update)
-    update()
-    return () => {
-      window.visualViewport?.removeEventListener("resize", update)
-      window.visualViewport?.removeEventListener("scroll", update)
-    }
-  }, [])
 
   return (
     <>
       <nav
         className={cn(
-          "fixed left-0 right-0 bg-surface/95 border-t border-border z-40 pb-[env(safe-area-inset-bottom)]",
+          "fixed bottom-0 left-0 right-0 bg-surface/95 border-t border-border z-40 pb-[env(safe-area-inset-bottom)]",
           hidden ? "hidden" : ""
         )}
-        style={{ bottom: bottomOffset }}
       >
         <div className="h-14 flex items-center justify-around px-1">
           {NAV_ITEMS.map((item) => {

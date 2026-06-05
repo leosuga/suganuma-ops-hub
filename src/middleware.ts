@@ -17,6 +17,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request })
   }
 
+  // Allow callback route for magic link auth
+  if (pathname === "/callback") {
+    return NextResponse.next({ request })
+  }
+
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
