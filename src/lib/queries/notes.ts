@@ -44,7 +44,7 @@ const notesOptions = queryOptions({
 })
 
 export function useNotes() {
-  useRealtimeTable("note", noteKeys.all)
+  useRealtimeTable("note")
   return useQuery(notesOptions)
 }
 
@@ -135,7 +135,7 @@ export function useDeleteNote() {
 }
 
 export function useDailyNote(date: string) {
-  useRealtimeTable("note", noteKeys.daily(date))
+  useRealtimeTable("note")
   return useQuery({
     queryKey: noteKeys.daily(date),
     queryFn: async (): Promise<NoteRow | null> => {

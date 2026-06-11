@@ -33,7 +33,7 @@ export const projectsOptions = queryOptions({
 })
 
 export function useProjects() {
-  useRealtimeTable("project", projectKeys.all)
+  useRealtimeTable("project")
   return useQuery(projectsOptions)
 }
 

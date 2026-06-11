@@ -3,14 +3,10 @@
 import { useState, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { uploadNoteAttachment, deleteNoteAttachment } from "@/lib/storage"
+import { logger } from "@/lib/logger"
+import type { Attachment } from "@/lib/types/note"
 
-export interface Attachment {
-  url: string
-  path: string
-  name: string
-  type: string
-  size: number
-}
+export { type Attachment } from "@/lib/types/note"
 
 interface NoteAttachmentsProps {
   noteId: string
@@ -34,7 +30,7 @@ export function NoteAttachments({ noteId, ownerId, attachments, onChange, editab
     try {
       for (const file of Array.from(files)) {
         if (file.size > 10 * 1024 * 1024) {
-          console.warn(`File ${file.name} too large (max 10MB)`)
+          logger.warn("NoteAttachments", "File too large", { name: file.name, size: file.size })
           continue
         }
         const result = await uploadNoteAttachment(file, noteId, ownerId)
@@ -42,7 +38,7 @@ export function NoteAttachments({ noteId, ownerId, attachments, onChange, editab
       }
       onChange([...attachments, ...newAttachments])
     } catch (err) {
-      console.error("Upload failed:", err)
+      logger.error("NoteAttachments", "Upload failed", { error: String(err) })
     } finally {
       setUploading(false)
       if (inputRef.current) inputRef.current.value = ""
@@ -58,7 +54,7 @@ export function NoteAttachments({ noteId, ownerId, attachments, onChange, editab
       next.splice(index, 1)
       onChange(next)
     } catch (err) {
-      console.error("Delete failed:", err)
+      logger.error("NoteAttachments", "Delete failed", { error: String(err) })
     }
   }
 

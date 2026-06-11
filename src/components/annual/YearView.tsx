@@ -149,8 +149,7 @@ export function YearView() {
     })
   }, [allEvents, updateEvent])
 
-  useRealtimeTable("annual_event", annualEventKeys.year(year))
-  useRealtimeTable("annual_event", annualEventKeys.year(year + 1))
+  useRealtimeTable("annual_event")
 
   const { show: showToast } = useUndoToast()
 

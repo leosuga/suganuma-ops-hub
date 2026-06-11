@@ -1,3 +1,25 @@
+export interface Attachment {
+  url: string
+  path: string
+  name: string
+  type: string
+  size: number
+}
+
+export function parseAttachments(value: unknown): Attachment[] {
+  if (!value || !Array.isArray(value)) return []
+  return value.filter(
+    (a): a is Attachment =>
+      typeof a === "object" &&
+      a !== null &&
+      typeof (a as Record<string, unknown>).url === "string" &&
+      typeof (a as Record<string, unknown>).path === "string" &&
+      typeof (a as Record<string, unknown>).name === "string" &&
+      typeof (a as Record<string, unknown>).type === "string" &&
+      typeof (a as Record<string, unknown>).size === "number"
+  )
+}
+
 export interface NoteRow {
   id: string
   owner_id: string

@@ -5,16 +5,15 @@ import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useUpdateNote } from "@/lib/queries/notes"
 import type { NoteRow as NoteRowType } from "@/lib/queries/notes"
-import { useNotes } from "@/lib/queries/notes"
 import { useTasks, useCreateTask, useUpdateTask, useTasksByNote } from "@/lib/queries/tasks"
 import { useProjects } from "@/lib/queries/projects"
 import { parseFrontmatter } from "@/lib/frontmatter"
 import { parseWikiLinks, renderWikiLinksToMarkdown } from "@/lib/links"
 import { parseInlineTasks, updateInlineTask } from "@/lib/tasks-inline"
 import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
+import { parseAttachments, type Attachment } from "@/lib/types/note"
 import { cn } from "@/lib/utils"
 import { NoteAttachments } from "@/components/notes/NoteAttachments"
-import type { Attachment } from "@/components/notes/NoteAttachments"
 
 const ReactMarkdown = dynamic(() => import("react-markdown"), { ssr: false })
 
@@ -57,7 +56,7 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
   const [showBacklinks, setShowBacklinks] = useState(false)
   const [showProjectLink, setShowProjectLink] = useState(false)
   const [attachments, setAttachments] = useState<Attachment[]>(
-    () => (note.attachments as Attachment[] | undefined) ?? []
+    () => parseAttachments(note.attachments)
   )
 
   useEffect(() => {

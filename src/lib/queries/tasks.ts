@@ -46,7 +46,7 @@ export const tasksOptions = queryOptions({
 })
 
 export function useTasks() {
-  useRealtimeTable("task", taskKeys.all)
+  useRealtimeTable("task")
   return useQuery(tasksOptions)
 }
 
@@ -124,7 +124,7 @@ export function useDeleteTask() {
 }
 
 export function useTasksByNote(noteId: string) {
-  useRealtimeTable("task", taskKeys.byNote(noteId))
+  useRealtimeTable("task")
   return useQuery({
     queryKey: taskKeys.byNote(noteId),
     queryFn: async (): Promise<TaskRow[]> => {

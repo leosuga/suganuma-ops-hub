@@ -36,7 +36,7 @@ const accountsOptions = queryOptions({
 })
 
 export function useAccounts() {
-  useRealtimeTable("account", financeKeys.accounts)
+  useRealtimeTable("account")
   return useQuery(accountsOptions)
 }
 
@@ -127,7 +127,7 @@ export function transactionsOptions(filters?: TransactionFilters) {
 }
 
 export function useTransactions(filters?: TransactionFilters) {
-  useRealtimeTable("transaction", financeKeys.all)
+  useRealtimeTable("transaction")
   return useQuery(transactionsOptions(filters))
 }
 

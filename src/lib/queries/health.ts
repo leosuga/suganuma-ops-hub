@@ -33,7 +33,7 @@ export function healthLogsOptions(kind?: string) {
 }
 
 export function useHealthLogs(kind?: string) {
-  useRealtimeTable("health_log", healthKeys.logs())
+  useRealtimeTable("health_log")
   return useQuery(healthLogsOptions(kind))
 }
 

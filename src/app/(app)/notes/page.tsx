@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo, useRef, useCallback, useEffect } from "react"
+import { useState, useMemo, useRef, useCallback, useEffect, Suspense } from "react"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { useTitle } from "@/lib/useTitle"
 import { useNotes, useDeleteNote, useCreateNote, useUpdateNote } from "@/lib/queries/notes"
 import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
@@ -26,6 +27,9 @@ function groupTagsByPrefix(tags: string[]): Map<string, string[]> {
 
 export default function NotesPage() {
   useTitle("Notes · Suganuma Ops Hub")
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { data: notes = [], isLoading } = useNotes()
   const deleteNote = useDeleteNote()
   const createNote = useCreateNote()
@@ -39,49 +43,27 @@ export default function NotesPage() {
   const [bulkMode, setBulkMode] = useState(false)
   const updateNote = useUpdateNote()
 
-  // Read context from URL on mount, fallback to localStorage
-  const [filterContext, setFilterContext] = useState<string | null>(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search)
-      const ctx = params.get("ctx")
-      if (ctx) return ctx
-      const saved = localStorage.getItem("lastNotesContext")
-      if (saved) return saved
-    }
-    return null
-  })
+  const filterContext = searchParams.get("ctx")
 
-  // Sync filterContext to URL and localStorage
-  useEffect(() => {
-    if (typeof window === "undefined") return
-    const url = new URL(window.location.href)
-    if (filterContext) {
-      url.searchParams.set("ctx", filterContext)
-      localStorage.setItem("lastNotesContext", filterContext)
+  function setFilterContext(ctx: string | null) {
+    const params = new URLSearchParams(searchParams.toString())
+    if (ctx) {
+      params.set("ctx", ctx)
+      localStorage.setItem("lastNotesContext", ctx)
     } else {
-      url.searchParams.delete("ctx")
+      params.delete("ctx")
+      localStorage.removeItem("lastNotesContext")
     }
-    window.history.replaceState({}, "", url.toString())
-  }, [filterContext])
+    const qs = params.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+  }
 
-  // Listen for external URL changes (e.g., from sidebar CTX toggles)
   useEffect(() => {
-    if (typeof window === "undefined") return
-    let lastSearch = window.location.search
-    const update = () => {
-      const s = window.location.search
-      if (s !== lastSearch) {
-        lastSearch = s
-        const params = new URLSearchParams(s)
-        const ctx = params.get("ctx")
-        setFilterContext(ctx)
+    if (!filterContext) {
+      const saved = localStorage.getItem("lastNotesContext")
+      if (saved && saved !== filterContext) {
+        setFilterContext(saved)
       }
-    }
-    const interval = setInterval(update, 200)
-    window.addEventListener("popstate", update)
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener("popstate", update)
     }
   }, [])
 

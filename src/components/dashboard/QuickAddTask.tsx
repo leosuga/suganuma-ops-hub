@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { useCreateTask } from "@/lib/queries/tasks"
 import { useProjects } from "@/lib/queries/projects"
@@ -11,7 +11,7 @@ export function QuickAddTask() {
   const createTask = useCreateTask()
   const { data: projects = [] } = useProjects()
 
-  const parsed = parseTitle(input, projects)
+  const parsed = useMemo(() => parseTitle(input, projects), [input, projects])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

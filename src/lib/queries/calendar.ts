@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeTable } from "@/lib/realtime"
 
 export interface AppointmentCal {
   id: string; title: string; starts_at: string; kind: string | null; location: string | null
@@ -17,6 +18,9 @@ export const calendarKeys = {
 }
 
 export function useCalendarData(from: string, to: string) {
+  useRealtimeTable("appointment")
+  useRealtimeTable("task")
+
   return useQuery({
     queryKey: calendarKeys.range(from, to),
     queryFn: async () => {

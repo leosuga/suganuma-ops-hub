@@ -25,7 +25,7 @@ const mealsOptions = queryOptions({
 })
 
 export function useMeals() {
-  useRealtimeTable("meal", mealKeys.all)
+  useRealtimeTable("meal")
   return useQuery(mealsOptions)
 }
 
@@ -79,7 +79,7 @@ export function mealPlansOptions(weekStart: string) {
 }
 
 export function useMealPlans(weekStart: string) {
-  useRealtimeTable("meal_plan", mealKeys.plans(weekStart))
+  useRealtimeTable("meal_plan")
   return useQuery(mealPlansOptions(weekStart))
 }
 

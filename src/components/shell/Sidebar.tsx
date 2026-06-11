@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { Suspense } from "react"
 import Link from "next/link"
+import { usePathname, useSearchParams } from "next/navigation"
 import { CONTEXT_CONFIG } from "@/lib/contexts"
 import { cn } from "@/lib/utils"
 
@@ -122,65 +123,16 @@ const NAV_ITEMS = [
   },
 ]
 
-export function Sidebar() {
-  const [pathname, setPathname] = useState(typeof window !== "undefined" ? window.location.pathname : "")
-  const [search, setSearch] = useState(typeof window !== "undefined" ? window.location.search : "")
-
-  useEffect(() => {
-    let lastPath = window.location.pathname
-    let lastSearch = window.location.search
-
-    const update = () => {
-      const p = window.location.pathname
-      const s = window.location.search
-      if (p !== lastPath || s !== lastSearch) {
-        lastPath = p
-        lastSearch = s
-        setPathname(p)
-        setSearch(s)
-      }
-    }
-
-    // 1. Poll every 100ms for snappy detection
-    const interval = setInterval(update, 100)
-
-    // 2. Detect ALL clicks and check if URL changed after a short delay
-    //    This catches Next.js Link before the URL actually changes
-    const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      const anchor = target.closest("a")
-      if (anchor && anchor.href) {
-        // Delay to let Next.js finish navigation
-        setTimeout(update, 100)
-        setTimeout(update, 300)
-      }
-    }
-    document.addEventListener("click", handleClick)
-
-    // 3. Popstate for browser back/forward
-    window.addEventListener("popstate", update)
-
-    // 4. Hash changes
-    window.addEventListener("hashchange", update)
-
-    return () => {
-      clearInterval(interval)
-      document.removeEventListener("click", handleClick)
-      window.removeEventListener("popstate", update)
-      window.removeEventListener("hashchange", update)
-    }
-  }, [])
-
-  const searchParams = new URLSearchParams(search)
+function SidebarInner() {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
 
   return (
     <aside className="w-14 flex flex-col bg-surface border-r border-border h-full">
-      {/* Logo mark */}
       <div className="h-10 flex items-center justify-center border-b border-border flex-none">
         <span className="text-teal font-mono font-bold text-[11px] tracking-[0.2em]">S</span>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 flex flex-col items-center py-3 gap-1">
         {NAV_ITEMS.map((item) => {
           const active = pathname.startsWith(item.href)
@@ -204,7 +156,6 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Context shortcuts (only on Notes page) */}
       {pathname.startsWith("/notes") && (
         <div className="flex-none flex flex-col items-center gap-1 pb-2 border-t border-border pt-2">
           <span className="text-[6px] font-mono text-on-surface/20 tracking-wider mb-1">CTX</span>
@@ -233,7 +184,6 @@ export function Sidebar() {
         </div>
       )}
 
-      {/* Settings at bottom */}
       <div className="flex-none pb-3 flex flex-col items-center">
         <Link
           href="/settings"
@@ -259,5 +209,19 @@ export function Sidebar() {
         </Link>
       </div>
     </aside>
+  )
+}
+
+export function Sidebar() {
+  return (
+    <Suspense fallback={
+      <aside className="w-14 flex flex-col bg-surface border-r border-border h-full">
+        <div className="h-10 flex items-center justify-center border-b border-border flex-none">
+          <span className="text-teal font-mono font-bold text-[11px] tracking-[0.2em]">S</span>
+        </div>
+      </aside>
+    }>
+      <SidebarInner />
+    </Suspense>
   )
 }

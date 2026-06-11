@@ -27,7 +27,7 @@ const habitsOptions = queryOptions({
 })
 
 export function useHabits() {
-  useRealtimeTable("habit_track", habitKeys.all)
+  useRealtimeTable("habit_track")
   return useQuery(habitsOptions)
 }
 
@@ -100,7 +100,7 @@ export function habitEntriesOptions(habitId?: string) {
 }
 
 export function useHabitEntries(habitId?: string) {
-  useRealtimeTable("habit_entry", habitKeys.entries(habitId))
+  useRealtimeTable("habit_entry")
   return useQuery(habitEntriesOptions(habitId))
 }
 
