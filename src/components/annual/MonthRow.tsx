@@ -120,6 +120,33 @@ interface TooltipEvent extends AnnualEventRow {
   clientY: number
 }
 
+function makeTooltipEvent(
+  e: Partial<Pick<AnnualEventRow, "title" | "start_date" | "end_date" | "recurrence" | "project_id" | "project_name">>,
+  clientX: number,
+  clientY: number
+): TooltipEvent {
+  return {
+    id: "",
+    owner_id: "",
+    title: e.title ?? "",
+    start_date: e.start_date ?? "",
+    end_date: e.end_date ?? "",
+    start_time: null,
+    end_time: null,
+    is_all_day: true,
+    color: "",
+    recurrence: e.recurrence ?? "none",
+    project_id: e.project_id ?? null,
+    series_id: null,
+    project_name: e.project_name,
+    location: null,
+    created_at: "",
+    updated_at: "",
+    clientX,
+    clientY,
+  }
+}
+
 export function MonthRow({
   year,
   month,
@@ -337,11 +364,10 @@ export function MonthRow({
                       borderRight: "4px solid transparent",
                       borderBottom: `6px solid ${apptColor}`,
                     }}
-                    onMouseEnter={(e) => setHoveredEvent({
-                      ...appt as any,
-                      clientX: e.clientX,
-                      clientY: e.clientY,
-                    })}
+                    onMouseEnter={(e) => setHoveredEvent(makeTooltipEvent({
+                      title: appt.title,
+                      start_date: appt.starts_at.slice(0, 10),
+                    }, e.clientX, e.clientY))}
                     onMouseLeave={() => setHoveredEvent(null)}
                     onClick={(e) => {
                       e.stopPropagation()
@@ -591,11 +617,11 @@ export function MonthRow({
                       opacity: isDone ? 0.4 : isUrgent ? 1 : 0.7,
                       border: isUrgent && !isDone ? `1px solid ${taskColor}` : "none",
                     }}
-                    onMouseEnter={(e) => setHoveredEvent({
-                      ...task as any,
-                      clientX: e.clientX,
-                      clientY: e.clientY,
-                    })}
+                    onMouseEnter={(e) => setHoveredEvent(makeTooltipEvent({
+                      title: task.title,
+                      start_date: task.due_at,
+                      end_date: task.due_at,
+                    }, e.clientX, e.clientY))}
                     onMouseLeave={() => setHoveredEvent(null)}
                     onClick={(e) => {
                       e.stopPropagation()

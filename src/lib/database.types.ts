@@ -371,7 +371,7 @@ export type Database = {
           last_review: string | null
           project_id: string | null
           favorited: boolean
-          attachments: unknown
+          attachments: Json | null
           created_at: string
           updated_at: string
         }
@@ -389,6 +389,7 @@ export type Database = {
           last_review?: string | null
           project_id?: string | null
           favorited?: boolean
+          attachments?: Json | null
           created_at?: string
           updated_at?: string
         }
@@ -406,6 +407,60 @@ export type Database = {
           last_review?: string | null
           project_id?: string | null
           favorited?: boolean
+          attachments?: Json | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      annual_event: {
+        Row: {
+          id: string
+          owner_id: string
+          title: string
+          start_date: string
+          end_date: string
+          color: string
+          start_time: string | null
+          end_time: string | null
+          is_all_day: boolean
+          recurrence: string
+          project_id: string | null
+          series_id: string | null
+          location: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          owner_id: string
+          title: string
+          start_date: string
+          end_date: string
+          color?: string
+          start_time?: string | null
+          end_time?: string | null
+          is_all_day?: boolean
+          recurrence?: string
+          project_id?: string | null
+          series_id?: string | null
+          location?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          owner_id?: string
+          title?: string
+          start_date?: string
+          end_date?: string
+          color?: string
+          start_time?: string | null
+          end_time?: string | null
+          is_all_day?: boolean
+          recurrence?: string
+          project_id?: string | null
+          series_id?: string | null
+          location?: string | null
           created_at?: string
           updated_at?: string
         }

@@ -11,6 +11,8 @@ export const annualEventKeys = {
   appointments: (year: number) => ["annual-event-appointments", year] as const,
 }
 
+type AnnualEventQueryRow = AnnualEventRow & { project?: { name?: string | null } | null }
+
 export function annualEventsOptions(year: number) {
   return queryOptions({
     queryKey: annualEventKeys.year(year),
@@ -27,7 +29,7 @@ export function annualEventsOptions(year: number) {
         .order("start_date", { ascending: true })
 
       if (error) throw error
-      const rows = (data ?? []).map((row: any) => ({
+      const rows = (data ?? []).map((row) => ({
         ...row,
         project_name: row.project?.name || null,
       }))
@@ -61,7 +63,7 @@ export function upcomingEventsOptions(limit: number = 10) {
         .limit(limit)
 
       if (error) throw error
-      const rows = (data ?? []).map((row: any) => ({
+      const rows = (data ?? []).map((row) => ({
         ...row,
         project_name: row.project?.name || null,
       }))
