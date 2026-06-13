@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef } from "react"
-import { cn } from "@/lib/utils"
+import { dateStr, addDays } from "@/lib/date"
 import { isHoliday } from "@/lib/holidays"
+import { cn } from "@/lib/utils"
 import type { AnnualEventRow } from "@/lib/types"
 import type { AnnualTaskRow, AnnualAppointmentRow } from "@/lib/queries/annual"
 
@@ -240,8 +241,8 @@ export function MonthRow({
           newEnd.setDate(origEnd.getDate() + delta)
         }
 
-        const newStartStr = newStart.toISOString().slice(0, 10)
-        const newEndStr = newEnd.toISOString().slice(0, 10)
+        const newStartStr = dateStr(newStart)
+        const newEndStr = dateStr(newEnd)
 
         if (newStartStr !== drag.originalStartDate || newEndStr !== drag.originalEndDate) {
           onUpdateEvent(drag.eventId, newStartStr, newEndStr)

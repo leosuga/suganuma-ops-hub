@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { dateStr, addDays } from "@/lib/date"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -72,14 +73,13 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
 
   function shiftDate(dateStr: string, days: number): string {
     const d = new Date(dateStr + "T00:00:00")
-    d.setDate(d.getDate() + days)
-    return d.toISOString().slice(0, 10)
+    return dateStr(addDays(d, days))
   }
 
   function shiftMonth(dateStr: string, months: number): string {
     const d = new Date(dateStr + "T00:00:00")
     d.setMonth(d.getMonth() + months)
-    return d.toISOString().slice(0, 10)
+    return dateStr(d)
   }
 
   function handleShift(days: number) {
@@ -88,9 +88,8 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
     const newStart = shiftDate(start, days)
     const newStartDate = new Date(newStart + "T00:00:00")
     const newEndDate = new Date(newStartDate.getTime() + duration)
-    const newEnd = newEndDate.toISOString().slice(0, 10)
     setStart(newStart)
-    setEnd(newEnd)
+    setEnd(dateStr(newEndDate))
   }
 
   function handleShiftMonth(months: number) {
@@ -99,9 +98,8 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
     const newStart = shiftMonth(start, months)
     const newStartDate = new Date(newStart + "T00:00:00")
     const newEndDate = new Date(newStartDate.getTime() + duration)
-    const newEnd = newEndDate.toISOString().slice(0, 10)
     setStart(newStart)
-    setEnd(newEnd)
+    setEnd(dateStr(newEndDate))
   }
 
   function handleSubmit(e: React.FormEvent) {

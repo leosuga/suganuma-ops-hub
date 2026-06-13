@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useProtocols, useCreateProtocol, useLogProtocolEntry, useProtocolEntries, useUpdateProtocol, useDeleteProtocol } from "@/lib/queries/health"
 import { cn } from "@/lib/utils"
+import { today, addDays, dateStr } from "@/lib/date"
 
 interface AddProtocolDialogProps {
   open: boolean
@@ -57,8 +58,8 @@ function ProtocolRow({ protocol }: { protocol: { id: string; name: string; activ
   const logEntry = useLogProtocolEntry()
   const updateProtocol = useUpdateProtocol()
   const deleteProtocol = useDeleteProtocol()
-  const today = new Date().toISOString().slice(0, 10)
-  const doneToday = entries.some((e) => e.done_on === today)
+  const todayStr = today()
+  const doneToday = entries.some((e) => e.done_on === todayStr)
 
   const [editing, setEditing] = useState(false)
   const [editName, setEditName] = useState(protocol.name)
@@ -66,13 +67,13 @@ function ProtocolRow({ protocol }: { protocol: { id: string; name: string; activ
 
   const sortedDates = entries
     .map((e) => e.done_on)
-    .filter((d) => d <= today)
+    .filter((d) => d <= todayStr)
     .sort((a, b) => b.localeCompare(a))
 
   let streak = 0
-  const checkDate = new Date(today + "T12:00:00")
+  const checkDate = new Date(todayStr + "T12:00:00")
   for (const d of sortedDates) {
-    const expected = checkDate.toISOString().slice(0, 10)
+    const expected = dateStr(checkDate)
     if (d === expected) {
       streak++
       checkDate.setDate(checkDate.getDate() - 1)
@@ -83,7 +84,7 @@ function ProtocolRow({ protocol }: { protocol: { id: string; name: string; activ
 
   async function handleCheck() {
     if (doneToday) return
-    await logEntry.mutateAsync({ protocol_id: protocol.id, done_on: today, notes: null })
+    await logEntry.mutateAsync({ protocol_id: protocol.id, done_on: todayStr, notes: null })
   }
 
   async function handleSaveEdit() {

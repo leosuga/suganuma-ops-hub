@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useCreateTransaction } from "@/lib/queries/finance"
+import { today } from "@/lib/date"
 
 export function QuickAddExpense() {
   const [amount, setAmount] = useState("")
@@ -18,7 +19,7 @@ export function QuickAddExpense() {
       amount: value,
       currency: "BRL",
       description: desc.trim(),
-      occurred_on: new Date().toISOString().slice(0, 10),
+      occurred_on: today(),
       category: null,
       account_id: null,
     })

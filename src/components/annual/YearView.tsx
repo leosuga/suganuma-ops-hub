@@ -8,6 +8,7 @@ import { WeekView } from "./WeekView"
 import { MonthView } from "./MonthView"
 import { exportToICal, importFromICal } from "@/lib/ical"
 import { cn } from "@/lib/utils"
+import { dateStr } from "@/lib/date"
 import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, useUpdateAnnualEventSeries, useDeleteAnnualEventSeries, useAnnualTasks, useAnnualAppointments, annualEventKeys } from "@/lib/queries/annual"
 import { useRealtimeTable } from "@/lib/realtime"
 import { useUndoToast } from "@/components/UndoToast"
@@ -144,8 +145,8 @@ export function YearView() {
     const newEnd = new Date(start.getTime() + duration)
     updateEvent.mutate({
       id,
-      start_date: start.toISOString().slice(0, 10),
-      end_date: newEnd.toISOString().slice(0, 10),
+      start_date: dateStr(start),
+      end_date: dateStr(newEnd),
     })
   }, [allEvents, updateEvent])
 

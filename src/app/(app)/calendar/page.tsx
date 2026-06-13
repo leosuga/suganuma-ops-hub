@@ -8,6 +8,8 @@ import { useCreateTask } from "@/lib/queries/tasks"
 import { useCreateHealthLog } from "@/lib/queries/health"
 import { useSetMealPlan } from "@/lib/queries/meals"
 import { cn } from "@/lib/utils"
+import { today } from "@/lib/date"
+import { fmtShortTime } from "@/lib/format"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { DayDetailModal } from "@/components/calendar/DayDetailModal"
 
@@ -38,7 +40,7 @@ export default function CalendarPage() {
 
   const { from, to, days, firstDow } = useMemo(() => getMonthRange(year, month), [year, month])
   const { data, isLoading } = useCalendarData(from, to)
-  const today = new Date().toISOString().slice(0, 10)
+  const todayStr = today()
 
   const dayMap = useMemo(() => {
     const map = new Map<string, { appts: { title: string; time: string; kind?: string }[]; tasks: { title: string; priority: string }[]; meals: string[] }>()
@@ -47,7 +49,7 @@ export default function CalendarPage() {
       const d = a.starts_at.slice(0, 10)
       if (!map.has(d)) map.set(d, { appts: [], tasks: [], meals: [] })
       const t = new Date(a.starts_at)
-      map.get(d)!.appts.push({ title: a.title, time: t.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }), kind: a.kind ?? undefined })
+      map.get(d)!.appts.push({ title: a.title, time: fmtShortTime(t), kind: a.kind ?? undefined })
     }
 
     for (const t of data?.tasks ?? []) {
@@ -132,7 +134,7 @@ export default function CalendarPage() {
                 if (day === 0) return <div key={`e${i}`} className="border-b border-r border-border p-1 min-h-[80px] bg-surface-hover" />
                 const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`
                 const entries = dayMap.get(dateStr)
-                const isToday = dateStr === today
+                const isToday = dateStr === todayStr
                 const isSelected = dateStr === selectedDay
 
                 return (
