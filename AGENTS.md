@@ -187,8 +187,9 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
   - Necessário porque `jsdom`/`happy-dom` travam no Node.js **v25.6.0** local
   - Testes unitários puros (schemas, parsers, contexts) rodam em milissegundos
 - Config DOM: `vitest.dom.config.ts` — ambiente `happy-dom` para testes de componente React
-  - Ainda não funciona no Node v25; investigar atualização do Node ou Vitest
-- Comando: `npm test` → `vitest --no-watch`
+  - Só funciona dentro do container Docker (`node:22-alpine`); localmente trava no Node v25
+- Comando: `npm test` → `vitest --no-watch` (só testes node)
+- Comando: `npm run test:docker` → builda imagem Docker e roda **todos** os testes com happy-dom
 
 ### Testes atuais
 | Suite | Arquivo | Testes |
@@ -196,12 +197,23 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 | Zod schemas | `tests/schemas.test.ts` | 38 |
 | Task parser | `src/lib/parse-title.test.ts` | 12 |
 | Context tags | `src/lib/contexts.test.ts` | 12 |
-| **Total unitários** | | **62** |
+| Queries React | `tests/queries/*.test.tsx` | 45 |
+| Smoke | `tests/queries/smoke.test.ts` | 1 |
+| **Total** | | **108** |
+
+### Execução
+```bash
+# Testes unitários locais (Node env)
+npm test
+
+# Todos os testes, incluindo componentes React (requer Docker)
+npm run test:docker
+```
 
 ### Boas práticas
 - Mocks Supabase: `vi.mock("@/lib/supabase/client")` + função `chain()` fluente
 - Mocks Realtime: `vi.mock("@/lib/realtime")` → `useRealtimeTable` no-op
-- Não adicionar `jsdom` de volta sem testar no Node v25; `happy-dom` é a alternativa preferida
+- Não adicionar `jsdom` de volta sem testar no Node v25; `happy-dom` + Docker é a alternativa estável
 
 ## Performance — regras e aprendizados (2026-05-20)
 

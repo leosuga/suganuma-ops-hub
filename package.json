@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest --no-watch",
+    "test:docker": "docker build -f Dockerfile.test -t ops-hub-test . && docker run --rm ops-hub-test",
     "types:supabase": "supabase gen types typescript --linked > src/lib/database.types.ts"
   },
   "dependencies": {
