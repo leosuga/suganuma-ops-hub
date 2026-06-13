@@ -3,6 +3,8 @@
 import { useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { RealtimeChannel } from "@supabase/supabase-js"
+import { today } from "@/lib/date"
+import { fmtShortTime } from "@/lib/format"
 
 const NOTIFIED_KEY = "ops_hub_notified_ts"
 const CHECK_INTERVAL = 5 * 60 * 1000
@@ -38,14 +40,14 @@ async function checkAndNotify() {
       .lt("starts_at", new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString())
       .order("starts_at", { ascending: true })
       .limit(3),
-    supabase
-      .from("annual_event")
-      .select("id, title, start_date")
-      .eq("owner_id", user.id)
-      .gte("start_date", now.toISOString().slice(0, 10))
-      .lte("start_date", new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
-      .order("start_date", { ascending: true })
-      .limit(5),
+      supabase
+        .from("annual_event")
+        .select("id, title, start_date")
+        .eq("owner_id", user.id)
+        .gte("start_date", today())
+        .lte("start_date", new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
+        .order("start_date", { ascending: true })
+        .limit(5),
   ])
 
   const overdue = overdueRes.data
@@ -72,7 +74,7 @@ async function checkAndNotify() {
   if (upcoming && upcoming.length > 0) {
     const names = upcoming.map((a) => {
       const t = new Date(a.starts_at)
-      return `${t.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} ${a.title}`
+      return `${fmtShortTime(t)} ${a.title}`
     }).join(", ")
     try {
       new Notification("Consulta hoje ou amanhã", {
@@ -112,6 +114,7 @@ async function checkAndNotify() {
 
 export function useTaskNotifications() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const channelsRef = useRef<RealtimeChannel[]>([])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -125,12 +128,12 @@ export function useTaskNotifications() {
     intervalRef.current = setInterval(checkAndNotify, CHECK_INTERVAL)
 
     const supabase = createClient()
+    let mounted = true
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return
+      if (!mounted || !session) return
 
       const userId = session.user.id
-
       const channels: RealtimeChannel[] = []
 
       channels.push(
@@ -176,13 +179,16 @@ export function useTaskNotifications() {
           .subscribe()
       )
 
-      return () => {
-        for (const ch of channels) supabase.removeChannel(ch)
-      }
+      channelsRef.current = channels
     })
 
     return () => {
+      mounted = false
       if (intervalRef.current) clearInterval(intervalRef.current)
+      for (const ch of channelsRef.current) {
+        supabase.removeChannel(ch)
+      }
+      channelsRef.current = []
     }
   }, [])
 }
