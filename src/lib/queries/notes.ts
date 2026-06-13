@@ -1,41 +1,27 @@
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
-import type { Note } from "@/lib/schemas/note"
-import type { NoteRow } from "@/lib/types"
 import { useRealtimeTable } from "@/lib/realtime"
-import { syncNoteEmbedding, deleteNoteEmbedding } from "@/lib/actions/semantic-search"
+import { deleteNoteEmbedding } from "@/lib/actions/semantic-search"
+import type { NoteRow } from "@/lib/types/note"
 
 export type { NoteRow }
 
-type NoteVars = {
-  id?: string
-  title?: string
-  content?: string | null
-  tags?: string[] | null
-  pinned?: boolean
-  linked_task_id?: string | null
-  para?: "projects" | "areas" | "resources" | "archive" | null
-  daily_date?: string | null
-  is_moc?: boolean
-  last_review?: string | null
-  project_id?: string | null
-}
-
 export const noteKeys = {
   all: ["notes"] as const,
-  pinned: ["notes", "pinned"] as const,
-  byTask: (taskId: string) => ["notes", "task", taskId] as const,
   daily: (date: string) => ["notes", "daily", date] as const,
-  mocs: ["notes", "mocs"] as const,
 }
 
 const notesOptions = queryOptions({
   queryKey: noteKeys.all,
+  staleTime: 60_000,
   queryFn: async (): Promise<NoteRow[]> => {
     const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
     const { data, error } = await supabase
       .from("note")
       .select("*")
+      .eq("owner_id", user.id)
       .order("pinned", { ascending: false })
       .order("updated_at", { ascending: false })
     if (error) throw error
@@ -48,61 +34,74 @@ export function useNotes() {
   return useQuery(notesOptions)
 }
 
+export function dailyNoteOptions(date: string) {
+  return queryOptions({
+    queryKey: noteKeys.daily(date),
+    queryFn: async (): Promise<NoteRow | null> => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+      const { data, error } = await supabase
+        .from("note")
+        .select("*")
+        .eq("owner_id", user.id)
+        .eq("daily_date", date)
+        .maybeSingle()
+      if (error) throw error
+      return (data ?? null) as NoteRow | null
+    },
+  })
+}
+
+export function useDailyNote(date: string) {
+  useRealtimeTable("note")
+  return useQuery(dailyNoteOptions(date))
+}
+
 export function useCreateNote() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (note: Omit<Note, "id">) => {
+    mutationFn: async (note: Omit<NoteRow, "id" | "created_at" | "updated_at" | "owner_id">) => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
       const { data, error } = await supabase
         .from("note")
         .insert({ ...note, owner_id: user.id })
-        .select()
-        .single()
+        .select().single()
       if (error) throw error
       return data as NoteRow
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: noteKeys.all })
-      // Sync embedding async — fire-and-forget, failure is non-blocking
-      syncNoteEmbedding(data.id).catch(() => null)
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: noteKeys.all }),
   })
 }
 
 export function useUpdateNote() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (vars: NoteVars & { id: string }) => {
-      const { id, ...updates } = vars
+    mutationFn: async ({ id, ...updates }: { id: string } & Partial<NoteRow>) => {
       const supabase = createClient()
       const { data, error } = await supabase
         .from("note")
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(updates)
         .eq("id", id)
-        .select()
-        .single()
+        .select().single()
       if (error) throw error
       return data as NoteRow
     },
-    onMutate: async (vars) => {
+    onMutate: async ({ id, ...updates }) => {
       await queryClient.cancelQueries({ queryKey: noteKeys.all })
       const prev = queryClient.getQueryData<NoteRow[]>(noteKeys.all)
       queryClient.setQueryData<NoteRow[]>(noteKeys.all, (old) =>
-        (old ?? []).map((n) =>
-          n.id === vars.id ? { ...n, ...vars } : n
-        )
+        (old ?? []).map((n) => (n.id === id ? { ...n, ...updates } : n))
       )
       return { prev }
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(noteKeys.all, ctx.prev)
     },
-    onSettled: (_data, _err, vars) => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: noteKeys.all })
-      // Sync embedding async — fire-and-forget
-      syncNoteEmbedding(vars.id).catch(() => null)
     },
   })
 }
@@ -130,26 +129,6 @@ export function useDeleteNote() {
       queryClient.invalidateQueries({ queryKey: noteKeys.all })
       // Delete embedding async
       deleteNoteEmbedding(id).catch(() => null)
-    },
-  })
-}
-
-export function useDailyNote(date: string) {
-  useRealtimeTable("note")
-  return useQuery({
-    queryKey: noteKeys.daily(date),
-    queryFn: async (): Promise<NoteRow | null> => {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error("Not authenticated")
-      const { data, error } = await supabase
-        .from("note")
-        .select("*")
-        .eq("owner_id", user.id)
-        .eq("daily_date", date)
-        .maybeSingle()
-      if (error) throw error
-      return (data ?? null) as NoteRow | null
     },
   })
 }
