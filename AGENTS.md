@@ -33,7 +33,7 @@ Cada módulo segue este pipeline:
 ## Domínios
 
 | Módulo | Rota | Migration | Queries | Página | Testes |
-|--------|------|-----------|---------|--------|--------|
+|---|---|---|---|---|---|
 | Dashboard | `/dashboard` | — | tasks+finance+health+meals+notes+projects+budget | `dashboard/page.tsx` | — |
 | Tasks | `/tasks` | 0001 | `tasks.ts` | `tasks/page.tsx` | 7 |
 | Finance | `/finance` | 0002 | `finance.ts` | `finance/page.tsx` | 6 |
@@ -46,8 +46,9 @@ Cada módulo segue este pipeline:
 | Budget | (dashboard) | 0016 | `budget.ts` | (BudgetCard no Dashboard) | — |
 | Reports | `/reports` | — | `reports.ts` | `reports/page.tsx` | — |
 | Settings | `/settings` | — | — | `settings/page.tsx` | — |
+| Shared | — | — | `parse-title.ts`, `contexts.ts` | — | 24 |
 
-Schemas testados: `tests/schemas.test.ts` (27 testes Zod)
+Schemas testados: `tests/schemas.test.ts` (38 testes Zod)
 
 ## Features e comportamentos
 
@@ -177,6 +178,30 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side admin
 - `WEBHOOK_SECRET` — HMAC webhooks
 - `COOLIFY_TOKEN` — token API Coolify (opcional, não mais usado no pipeline atual)
+
+## Testes — Vitest
+
+### Configuração
+- Framework: **Vitest 4.1.5**
+- Config padrão: `vitest.config.ts` — ambiente `node`, pool `forks`, `singleFork: true`
+  - Necessário porque `jsdom`/`happy-dom` travam no Node.js **v25.6.0** local
+  - Testes unitários puros (schemas, parsers, contexts) rodam em milissegundos
+- Config DOM: `vitest.dom.config.ts` — ambiente `happy-dom` para testes de componente React
+  - Ainda não funciona no Node v25; investigar atualização do Node ou Vitest
+- Comando: `npm test` → `vitest --no-watch`
+
+### Testes atuais
+| Suite | Arquivo | Testes |
+|---|---|---|
+| Zod schemas | `tests/schemas.test.ts` | 38 |
+| Task parser | `src/lib/parse-title.test.ts` | 12 |
+| Context tags | `src/lib/contexts.test.ts` | 12 |
+| **Total unitários** | | **62** |
+
+### Boas práticas
+- Mocks Supabase: `vi.mock("@/lib/supabase/client")` + função `chain()` fluente
+- Mocks Realtime: `vi.mock("@/lib/realtime")` → `useRealtimeTable` no-op
+- Não adicionar `jsdom` de volta sem testar no Node v25; `happy-dom` é a alternativa preferida
 
 ## Performance — regras e aprendizados (2026-05-20)
 
