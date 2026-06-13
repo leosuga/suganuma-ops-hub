@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useTitle } from "@/lib/useTitle"
 import { useReports } from "@/lib/queries/reports"
 import type { ReportsData } from "@/lib/queries/reports"
@@ -171,7 +171,7 @@ export default function ReportsPage() {
     )
   }
 
-  const m = computeMetrics(data, period)
+  const m = useMemo(() => computeMetrics(data, period), [data, period])
 
   return (
     <SectionErrorBoundary label="REPORTS">

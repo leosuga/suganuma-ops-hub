@@ -43,7 +43,7 @@ export async function syncNoteEmbedding(noteId: string) {
 
     return { ok: true }
   } catch (err) {
-    logger.error({ action: "syncNoteEmbedding", noteId }, "Failed", err)
+    logger.error("syncNoteEmbedding", "Failed", { noteId, error: (err as Error).message })
     return { ok: false, error: (err as Error).message }
   }
 }
@@ -56,7 +56,7 @@ export async function deleteNoteEmbedding(noteId: string) {
     await deleteNoteVector(noteId)
     return { ok: true }
   } catch (err) {
-    logger.error({ action: "deleteNoteEmbedding", noteId }, "Failed", err)
+    logger.error("deleteNoteEmbedding", "Failed", { noteId, error: (err as Error).message })
     return { ok: false, error: (err as Error).message }
   }
 }
@@ -99,7 +99,7 @@ export async function semanticSearchNotes(query: string, limit: number = 10) {
 
     return { ok: true, results: ordered }
   } catch (err) {
-    logger.error({ action: "semanticSearchNotes", query }, "Failed", err)
+    logger.error("semanticSearchNotes", "Failed", { query, error: (err as Error).message })
     return { ok: false, error: (err as Error).message, results: [] }
   }
 }

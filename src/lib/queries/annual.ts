@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { generateRecurringEvents } from "@/lib/recurrence"
+import { useRealtimeTable } from "@/lib/realtime"
 import type { AnnualEventRow, AnnualEventInsert, AnnualEventUpdate } from "@/lib/types"
 
 export const annualEventKeys = {
@@ -37,6 +38,7 @@ export function annualEventsOptions(year: number) {
 }
 
 export function useAnnualEvents(year: number) {
+  useRealtimeTable("annual_event")
   return useQuery(annualEventsOptions(year))
 }
 
@@ -70,6 +72,7 @@ export function upcomingEventsOptions(limit: number = 10) {
 }
 
 export function useUpcomingEvents(limit: number = 10) {
+  useRealtimeTable("annual_event")
   return useQuery(upcomingEventsOptions(limit))
 }
 

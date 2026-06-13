@@ -74,6 +74,7 @@ const pregnancyOptions = queryOptions({
 })
 
 export function usePregnancy() {
+  useRealtimeTable("pregnancy")
   return useQuery(pregnancyOptions)
 }
 
@@ -111,6 +112,7 @@ const appointmentsOptions = queryOptions({
 })
 
 export function useAppointments() {
+  useRealtimeTable("appointment")
   return useQuery(appointmentsOptions)
 }
 
@@ -161,6 +163,7 @@ const protocolsOptions = queryOptions({
 })
 
 export function useProtocols() {
+  useRealtimeTable("protocol")
   return useQuery(protocolsOptions)
 }
 
@@ -236,6 +239,7 @@ export function protocolEntriesOptions(protocolId?: string) {
 }
 
 export function useProtocolEntries(protocolId?: string) {
+  useRealtimeTable("protocol_entry")
   return useQuery(protocolEntriesOptions(protocolId))
 }
 

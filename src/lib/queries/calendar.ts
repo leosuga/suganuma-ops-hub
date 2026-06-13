@@ -20,6 +20,7 @@ export const calendarKeys = {
 export function useCalendarData(from: string, to: string) {
   useRealtimeTable("appointment")
   useRealtimeTable("task")
+  useRealtimeTable("meal_plan")
 
   return useQuery({
     queryKey: calendarKeys.range(from, to),

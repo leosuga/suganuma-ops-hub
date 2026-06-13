@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { useTasks } from "@/lib/queries/tasks"
 import { useTransactions } from "@/lib/queries/finance"
@@ -10,7 +10,7 @@ import { useMealPlans } from "@/lib/queries/meals"
 import { useNotes } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
 import { useUpcomingEvents } from "@/lib/queries/annual"
-import { CONTEXT_CONFIG, parseContextTags } from "@/lib/contexts"
+import { parseContextTags } from "@/lib/contexts"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { StatCard } from "@/components/dashboard/StatCard"
 import { ProtocolsSummary } from "@/components/dashboard/ProtocolsSummary"
@@ -24,7 +24,6 @@ import { WeeklyReview } from "@/components/dashboard/WeeklyReview"
 import { BudgetCard } from "@/components/dashboard/BudgetCard"
 import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents"
 import { ContextNotesWidget } from "@/components/dashboard/ContextNotesWidget"
-import type { TaskRow } from "@/lib/queries/tasks"
 
 function weeksFromDueDate(dueDate: string): number {
   const due = new Date(dueDate)
@@ -43,6 +42,8 @@ function fmt(n: number) {
   return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
 }
 
+const TASK_CATEGORIES = ["finance", "logistics", "personal", "health"] as const
+
 export default function DashboardPage() {
   useTitle("Dashboard · Suganuma Ops Hub")
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
@@ -51,44 +52,84 @@ export default function DashboardPage() {
   const { data: pregnancy } = usePregnancy()
   const createHealthLog = useCreateHealthLog()
   const { data: notes = [] } = useNotes()
-  const uncategorizedCount = notes.filter((n) => parseContextTags(n.tags).length === 0).length
   const { data: mealPlans = [] } = useMealPlans(currentMonth())
   const { data: projects = [] } = useProjects()
 
   const [weightInput, setWeightInput] = useState("")
 
-  const pending = tasks.filter((t) => t.status === "todo" || t.status === "doing")
-  const done = tasks.filter((t) => t.status === "done")
-  const urgent = pending.filter((t) => t.priority === "urgent")
-  const overdue = pending.filter((t) => t.due_at && new Date(t.due_at) < new Date())
-  const needsAttention = urgent.length > 0 ? urgent : overdue.length > 0 ? overdue : pending.slice(0, 3)
+  const {
+    pending,
+    done,
+    urgent,
+    overdue,
+    needsAttention,
+    tasksByCategory,
+    activeProjectsWithProgress,
+  } = useMemo(() => {
+    const pending = tasks.filter((t) => t.status === "todo" || t.status === "doing")
+    const done = tasks.filter((t) => t.status === "done")
+    const urgent = pending.filter((t) => t.priority === "urgent")
+    const now = new Date()
+    const overdue = pending.filter((t) => t.due_at && new Date(t.due_at) < now)
+    const needsAttention = urgent.length > 0 ? urgent : overdue.length > 0 ? overdue : pending.slice(0, 3)
 
-  const income = transactions.filter((t) => t.kind === "income").reduce((s, t) => s + Number(t.amount), 0)
-  const expense = transactions.filter((t) => t.kind === "expense" || t.kind === "tax").reduce((s, t) => s + Number(t.amount), 0)
-  const balance = income - expense
+    const tasksByCategory = TASK_CATEGORIES.map((cat) => ({
+      cat,
+      count: pending.filter((t) => t.category === cat).length,
+    }))
 
-        const now = new Date()
-        const upcomingAppts = appointments
-          .filter((a) => new Date(a.starts_at) >= now)
-          .slice(0, 3)
+    const activeProjectsWithProgress = projects
+      .filter((p) => p.status === "active")
+      .map((project) => {
+        const projectTasks = tasks.filter((t) => t.project_id === project.id)
+        const total = projectTasks.length
+        const doneTasks = projectTasks.filter((t) => t.status === "done").length
+        const pct = total > 0 ? Math.round((doneTasks / total) * 100) : 0
+        return { project, total, doneTasks, pct }
+      })
 
-        const todayStr = new Date().toISOString().slice(0, 10)
-        const todayMeals = mealPlans.filter((mp) => mp.date === todayStr)
-        const todayNotes = notes.filter((n) => n.pinned).slice(0, 2)
-        const todayAppts = appointments.filter((a) => a.starts_at.slice(0, 10) === todayStr)
+    return { pending, done, urgent, overdue, needsAttention, tasksByCategory, activeProjectsWithProgress }
+  }, [tasks, projects])
 
-        const tomorrow = new Date(now)
-        tomorrow.setDate(tomorrow.getDate() + 1)
-        const tomorrowStr = tomorrow.toISOString().slice(0, 10)
+  const { income, expense, balance } = useMemo(() => {
+    const income = transactions.filter((t) => t.kind === "income").reduce((s, t) => s + Number(t.amount), 0)
+    const expense = transactions.filter((t) => t.kind === "expense" || t.kind === "tax").reduce((s, t) => s + Number(t.amount), 0)
+    return { income, expense, balance: income - expense }
+  }, [transactions])
 
-        const { data: allEvents = [] } = useUpcomingEvents(20)
-        const eventsForAttention = allEvents.filter((e) =>
-          e.start_date <= tomorrowStr && e.end_date >= todayStr
-        )
-        const appointmentsForAttention = appointments.filter((a) => {
-          const d = a.starts_at.slice(0, 10)
-          return d === todayStr || d === tomorrowStr
-        })
+  const uncategorizedCount = useMemo(
+    () => notes.filter((n) => parseContextTags(n.tags).length === 0).length,
+    [notes]
+  )
+
+  const { todayStr, tomorrowStr, todayMeals, todayNotes, todayAppts, upcomingAppts, appointmentsForAttention } = useMemo(() => {
+    const now = new Date()
+    const todayStr = now.toISOString().slice(0, 10)
+
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10)
+
+    return {
+      todayStr,
+      tomorrowStr,
+      todayMeals: mealPlans.filter((mp) => mp.date === todayStr),
+      todayNotes: notes.filter((n) => n.pinned).slice(0, 2),
+      todayAppts: appointments.filter((a) => a.starts_at.slice(0, 10) === todayStr),
+      upcomingAppts: appointments
+        .filter((a) => new Date(a.starts_at) >= now)
+        .slice(0, 3),
+      appointmentsForAttention: appointments.filter((a) => {
+        const d = a.starts_at.slice(0, 10)
+        return d === todayStr || d === tomorrowStr
+      }),
+    }
+  }, [appointments, mealPlans, notes])
+
+  const { data: allEvents = [] } = useUpcomingEvents(20)
+  const eventsForAttention = useMemo(() => {
+    return allEvents.filter((e) => e.start_date <= tomorrowStr && e.end_date >= todayStr)
+  }, [allEvents, todayStr, tomorrowStr])
 
   const isLoading = tasksLoading || financeLoading
 
@@ -242,7 +283,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {projects.filter((p) => p.status === "active").length > 0 && (
+        {activeProjectsWithProgress.length > 0 && (
           <div className="border border-border bg-surface rounded-sm">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
@@ -253,10 +294,7 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="divide-y divide-border">
-              {projects.filter((p) => p.status === "active").map((project) => {
-                const total = tasks.filter((t) => t.project_id === project.id).length
-                const doneTasks = tasks.filter((t) => t.project_id === project.id && t.status === "done").length
-                const pct = total > 0 ? Math.round((doneTasks / total) * 100) : 0
+              {activeProjectsWithProgress.map(({ project, total, pct }) => {
                 return (
                   <div key={project.id} className="px-4 py-2.5 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -290,8 +328,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           <div className="divide-y divide-border">
-            {(["finance", "logistics", "personal", "health"] as const).map((cat) => {
-              const count = pending.filter((t) => t.category === cat).length
+            {tasksByCategory.map(({ cat, count }) => {
               return (
                 <div key={cat} className="px-4 py-2.5 flex items-center justify-between">
                   <span className="text-[11px] font-mono text-on-surface/60 uppercase tracking-wider">{cat}</span>

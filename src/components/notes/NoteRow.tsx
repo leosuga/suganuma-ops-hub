@@ -481,13 +481,6 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
           </button>
           <button onClick={() => setConfirmDelete(true)} className="w-10 h-10 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors text-[10px] active:scale-95">×</button>
         </div>
-        {/* Mobile actions — minimal */}
-        <div className="flex md:hidden items-center gap-0.5 flex-none">
-          <button onClick={handleToggleFavorited} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors text-[11px]">
-            {note.favorited ? "♥" : "♡"}
-          </button>
-          <button onClick={() => setConfirmDelete(true)} className="w-4 h-4 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors text-[10px]">×</button>
-        </div>
       </div>
       {showProjectLink && (
         <div className="mt-2">
