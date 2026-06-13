@@ -20,11 +20,6 @@ const RevenueChart = dynamic(() => import("@/components/finance/RevenueChart").t
 })
 const CSVImportDialog = dynamic(() => import("@/components/finance/CSVImportDialog").then(m => ({ default: m.CSVImportDialog })), { ssr: false })
 
-function currentMonth() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-}
-
 export default function FinancePage() {
   useTitle("Finance · Suganuma Ops Hub")
   const [addOpen, setAddOpen] = useState(false)
