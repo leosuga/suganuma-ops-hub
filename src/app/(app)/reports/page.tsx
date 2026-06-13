@@ -4,6 +4,8 @@ import { useState, useMemo } from "react"
 import { useTitle } from "@/lib/useTitle"
 import { useReports } from "@/lib/queries/reports"
 import type { ReportsData } from "@/lib/queries/reports"
+import { addDays, startOfWeek, isoWeekKey } from "@/lib/date"
+import { fmtCurrency } from "@/lib/format"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { PeriodFilter } from "@/components/reports/PeriodFilter"
 import { ReportsKPIs } from "@/components/reports/ReportsKPIs"
@@ -11,25 +13,7 @@ import { TaskTrendSection, FinanceTrendSection } from "@/components/reports/Tren
 import { HabitHeatmap } from "@/components/reports/HabitHeatmap"
 
 function fmt(n: number) {
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-}
-
-function addDays(d: Date, days: number) {
-  const r = new Date(d)
-  r.setDate(r.getDate() + days)
-  return r
-}
-
-function startOfWeek(d: Date) {
-  const date = new Date(d)
-  const day = date.getDay()
-  const diff = date.getDate() - day + (day === 0 ? -6 : 1)
-  return new Date(date.setDate(diff))
-}
-
-function isoWeekKey(d: Date) {
-  const s = startOfWeek(d)
-  return `${String(s.getDate()).padStart(2, "0")}/${String(s.getMonth() + 1).padStart(2, "0")}`
+  return fmtCurrency(n)
 }
 
 function buildEntryKey(habitId: string, dateStr: string) {

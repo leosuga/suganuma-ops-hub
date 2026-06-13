@@ -11,6 +11,8 @@ import { useNotes } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
 import { useUpcomingEvents } from "@/lib/queries/annual"
 import { parseContextTags } from "@/lib/contexts"
+import { addDays, today } from "@/lib/date"
+import { fmtCurrency } from "@/lib/format"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { StatCard } from "@/components/dashboard/StatCard"
 import { ProtocolsSummary } from "@/components/dashboard/ProtocolsSummary"
@@ -33,13 +35,8 @@ function weeksFromDueDate(dueDate: string): number {
   return Math.max(0, Math.round(40 - weeksLeft))
 }
 
-function currentMonth() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-}
-
 function fmt(n: number) {
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
+  return fmtCurrency(n, { maximumFractionDigits: 0 })
 }
 
 const TASK_CATEGORIES = ["finance", "logistics", "personal", "health"] as const
@@ -104,11 +101,9 @@ export default function DashboardPage() {
 
   const { todayStr, tomorrowStr, todayMeals, todayNotes, todayAppts, upcomingAppts, appointmentsForAttention } = useMemo(() => {
     const now = new Date()
-    const todayStr = now.toISOString().slice(0, 10)
+    const todayStr = today()
 
-    const tomorrow = new Date(now)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    const tomorrowStr = tomorrow.toISOString().slice(0, 10)
+    const tomorrowStr = addDays(now, 1).toISOString().slice(0, 10)
 
     return {
       todayStr,

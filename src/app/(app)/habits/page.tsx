@@ -5,17 +5,16 @@ import { useTitle } from "@/lib/useTitle"
 import { useHabits, useCreateHabit, useUpdateHabit, useDeleteHabit, useHabitEntries, useLogHabitEntry, useDeleteHabitEntry } from "@/lib/queries/habits"
 import type { HabitTrackRow } from "@/lib/queries/habits"
 import { cn } from "@/lib/utils"
+import { today, dateStr, addDays } from "@/lib/date"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
 import { HabitStats } from "@/components/habits/HabitStats"
 
 function getLast7Days() {
   const days: string[] = []
-  const today = new Date()
+  const base = new Date()
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(today)
-    d.setDate(d.getDate() - i)
-    days.push(d.toISOString().slice(0, 10))
+    days.push(dateStr(addDays(base, -i)))
   }
   return days
 }
@@ -32,8 +31,8 @@ function HabitRow({ habit, weekDays }: { habit: HabitTrackRow; weekDays: string[
   const [editName, setEditName] = useState(habit.name)
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const today = new Date().toISOString().slice(0, 10)
-  const doneToday = entries.some((e) => e.done_on === today)
+  const todayStr = today()
+  const doneToday = entries.some((e) => e.done_on === todayStr)
 
   const daySet = new Set(entries.map((e) => e.done_on))
 

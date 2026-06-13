@@ -5,6 +5,7 @@ import { useTitle } from "@/lib/useTitle"
 import { useMeals, useCreateMeal, useDeleteMeal, useMealPlans, useSetMealPlan } from "@/lib/queries/meals"
 import type { MealRow } from "@/lib/queries/meals"
 import { cn } from "@/lib/utils"
+import { startOfWeek, addDays, dateStr } from "@/lib/date"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
 
@@ -17,16 +18,10 @@ const MEAL_TYPES = [
 ]
 
 function getWeekDates() {
-  const now = new Date()
-  const day = now.getDay()
-  const diff = now.getDate() - day
-  const monday = new Date(now)
-  monday.setDate(diff + 1)
+  const monday = startOfWeek(new Date())
   const dates: Date[] = []
   for (let i = 0; i < 7; i++) {
-    const d = new Date(monday)
-    d.setDate(monday.getDate() + i)
-    dates.push(d)
+    dates.push(addDays(monday, i))
   }
   return dates
 }
@@ -102,7 +97,7 @@ export default function MealsPage() {
   const weekStart = useMemo(() => {
     const d = new Date(weekDates[0])
     d.setDate(d.getDate() - (d.getDay() === 0 ? 6 : d.getDay() - 1))
-    return d.toISOString().slice(0, 10)
+    return dateStr(d)
   }, [weekDates])
 
   const { data: plans = [] } = useMealPlans(weekStart)
@@ -178,7 +173,7 @@ export default function MealsPage() {
                       {type.label}
                     </td>
                     {weekDates.map((d, j) => {
-                      const dateKey = d.toISOString().slice(0, 10)
+                      const dateKey = dateStr(d)
                       const planKey = `${dateKey}|${type.key}`
                       const mealId = planMap.get(planKey)
                       const meal = mealId ? mealsByName.get(mealId) : null

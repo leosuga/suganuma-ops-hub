@@ -11,6 +11,7 @@ import { AddTransactionDialog } from "@/components/finance/AddTransactionDialog"
 import { EditTransactionDialog } from "@/components/finance/EditTransactionDialog"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
+import { currentMonth, addMonths } from "@/lib/date"
 import type { TransactionRow } from "@/lib/queries/finance"
 
 const RevenueChart = dynamic(() => import("@/components/finance/RevenueChart").then(m => ({ default: m.RevenueChart })), {
@@ -42,12 +43,12 @@ export default function FinancePage() {
 
   function prevMonth() {
     const [y, m] = month.split("-").map(Number)
-    const d = new Date(y, m - 2, 1)
+    const d = addMonths(new Date(y, m - 1, 1), -1)
     setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`)
   }
   function nextMonth() {
     const [y, m] = month.split("-").map(Number)
-    const d = new Date(y, m, 1)
+    const d = addMonths(new Date(y, m - 1, 1), 1)
     setMonth(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`)
   }
 

@@ -2,14 +2,11 @@
 
 import { useState, useEffect } from "react"
 import { useBudget, useUpdateBudget } from "@/lib/queries/budget"
-
-function currentMonth() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`
-}
+import { currentMonth } from "@/lib/date"
+import { fmtCurrency } from "@/lib/format"
 
 function fmt(n: number) {
-  return n.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 })
+  return fmtCurrency(n, { maximumFractionDigits: 0 })
 }
 
 interface BudgetCardProps {
