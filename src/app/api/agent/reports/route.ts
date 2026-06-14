@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       .eq("owner_id", ownerId),
     supabase
       .from("habit_track")
-      .select("id, name, active, emoji, color")
+      .select("id, name, active, created_at")
       .eq("owner_id", ownerId),
     supabase
       .from("habit_entry")
