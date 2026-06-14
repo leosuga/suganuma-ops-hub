@@ -4,6 +4,7 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js"
 import { createMcpServer } from "@/lib/mcp/server"
 import { validateMcpAuth, McpAuthError, corsHeaders, isAllowedOrigin, validateHostHeader } from "@/lib/mcp/auth"
+import { checkMcpRateLimit } from "@/lib/mcp/rate-limit"
 
 // In-memory session store. In multi-instance deployments this would need a shared store;
 // for a single Docker container behind Caddy this is sufficient for Fase 1.
@@ -22,6 +23,27 @@ async function handleMcpRequest(req: NextRequest): Promise<Response> {
   const sessionId = req.headers.get("mcp-session-id") ?? undefined
 
   validateHostHeader(req)
+
+  // Rate limiting por IP (Caddy X-Forwarded-For ou remoteAddress)
+  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.ip ?? "unknown"
+  const rateLimit = checkMcpRateLimit(clientIp)
+  if (!rateLimit.allowed) {
+    return new NextResponse(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        error: { code: -32000, message: `Rate limit exceeded: ${rateLimit.retryAfter}s` },
+        id: null,
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(rateLimit.retryAfter),
+          ...corsHeaders(origin),
+        },
+      }
+    )
+  }
 
   let body: unknown | undefined
   if (req.method === "POST") {
