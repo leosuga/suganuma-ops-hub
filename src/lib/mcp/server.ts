@@ -7,7 +7,7 @@ export function createMcpServer(ctx: McpToolContext): McpServer {
   const server = new McpServer(
     {
       name: "ops-hub",
-      version: "0.2.0",
+      version: "0.3.0",
     },
     {
       capabilities: {

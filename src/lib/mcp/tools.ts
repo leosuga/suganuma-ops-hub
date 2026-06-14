@@ -9,6 +9,7 @@ import { healthLogSchema, appointmentSchema } from "@/lib/schemas/health"
 import { noteSchema } from "@/lib/schemas/note"
 import { mealSchema, mealPlanSchema } from "@/lib/schemas/meal"
 import { habitTrackSchema, habitEntrySchema } from "@/lib/schemas/habit"
+import { projectSchema } from "@/lib/schemas/project"
 
 // ---------- Schemas for tool inputs (pick/omit from canonical schemas) ----------
 
@@ -24,6 +25,11 @@ const tasksCreateSchema = taskSchema.pick({
   category: true,
   priority: true,
   due_at: true,
+})
+
+const tasksCreateParsedSchema = z.object({
+  title: z.string().min(1).describe("Titulo com sintaxe parseTitle: >Projeto #categoria !prioridade ^data @delegado *recorrencia +importante #tags"),
+  notes: z.string().optional(),
 })
 
 const tasksUpdateSchema = z.object({
@@ -46,6 +52,8 @@ const financeSummarySchema = z.object({
 
 const financeAddTransactionSchema = transactionSchema.omit({ id: true })
 
+const accountsListSchema = z.object({}).optional()
+
 const healthLogBiometricSchema = healthLogSchema.omit({ id: true })
 
 const healthBiometricsSchema = z.object({
@@ -64,6 +72,13 @@ const healthCreateAppointmentSchema = appointmentSchema.omit({ id: true })
 const notesListSchema = z.object({
   limit: z.number().int().min(1).max(200).optional(),
 })
+
+const notesSearchSchema = z.object({
+  query: z.string().min(1).describe("Texto da busca semantica em notas"),
+  limit: z.number().int().min(1).max(50).optional().describe("Maximo de resultados (default 10)"),
+})
+
+const notesTagsSchema = z.object({})
 
 const notesCreateSchema = noteSchema.pick({
   title: true,
@@ -112,6 +127,30 @@ const habitsListEntriesSchema = z.object({
   limit: z.number().int().min(1).max(500).optional(),
 })
 
+const projectsListSchema = z.object({
+  limit: z.number().int().min(1).max(500).optional(),
+})
+
+const projectsCreateSchema = projectSchema.omit({ id: true })
+
+const projectsUpdateSchema = z.object({
+  id: z.string().uuid(),
+}).merge(projectSchema.omit({ id: true }).partial())
+
+const projectByIdSchema = z.object({ id: z.string().uuid() })
+
+const budgetSchema = z.object({
+  month: z.string().regex(/^\d{4}-\d{2}$/).describe("YYYY-MM"),
+  target: z.number().positive().describe("Valor da meta orçamentaria para o mes"),
+})
+
+const calendarSchema = z.object({
+  from: z.string().datetime().describe("Inicio do periodo ISO"),
+  to: z.string().datetime().describe("Fim do periodo ISO"),
+})
+
+const reportsSchema = z.object({})
+
 const dashboardSchema = z.object({
   month: z.string().regex(/^\d{4}-\d{2}$/).optional().describe("YYYY-MM, default current month"),
 })
@@ -154,11 +193,21 @@ export function createTools(): McpToolDefinition[] {
     },
     {
       name: "tasks_create",
-      description: "Cria uma nova task.",
+      description: "Cria uma nova task com campos explicitos.",
       inputSchema: tasksCreateSchema,
       handler: async (args, ctx) => {
         const body = tasksCreateSchema.parse(args)
         const result = await agentApi(ctx.token, "POST", "/api/agent/tasks", body)
+        return formatResult(result)
+      },
+    },
+    {
+      name: "tasks_create_parsed",
+      description: "Cria uma nova task usando parseTitle: >Projeto #categoria !prioridade ^data @delegado *recorrencia +importante #tags. Ex: '>Reforma #finance !urgent ^2026-06-20 pagar fornecedor'.",
+      inputSchema: tasksCreateParsedSchema,
+      handler: async (args, ctx) => {
+        const body = tasksCreateParsedSchema.parse(args)
+        const result = await agentApi(ctx.token, "POST", "/api/agent/tasks/parse", body)
         return formatResult(result)
       },
     },
@@ -204,6 +253,16 @@ export function createTools(): McpToolDefinition[] {
         const result = await agentApi(ctx.token, "POST", "/api/agent/finance/transactions", body)
         return formatResult(result)
       },
+    },
+    {
+      name: "finance_accounts_list",
+      description: "Lista contas financeiras cadastradas.",
+      inputSchema: accountsListSchema,
+      handler: async (_args, ctx) => {
+        const result = await agentApi(ctx.token, "GET", "/api/agent/accounts")
+        return formatResult(result)
+      },
+      annotations: { readOnlyHint: true },
     },
 
     // Health
@@ -267,6 +326,30 @@ export function createTools(): McpToolDefinition[] {
         const result = await agentApi(ctx.token, "GET", "/api/agent/notes", undefined, {
           limit: limit?.toString(),
         })
+        return formatResult(result)
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "notes_search_semantic",
+      description: "Busca semantica por similaridade nas notas (Ollama + Qdrant).",
+      inputSchema: notesSearchSchema,
+      handler: async (args, ctx) => {
+        const { query, limit } = notesSearchSchema.parse(args)
+        const result = await agentApi(ctx.token, "GET", "/api/agent/search/notes", undefined, {
+          q: query,
+          limit: limit?.toString(),
+        })
+        return formatResult(result)
+      },
+      annotations: { readOnlyHint: true, openWorldHint: true },
+    },
+    {
+      name: "notes_tags",
+      description: "Lista todas as tags usadas nas notas.",
+      inputSchema: notesTagsSchema,
+      handler: async (_args, ctx) => {
+        const result = await agentApi(ctx.token, "GET", "/api/agent/notes/tags")
         return formatResult(result)
       },
       annotations: { readOnlyHint: true },
@@ -392,6 +475,100 @@ export function createTools(): McpToolDefinition[] {
         const result = await agentApi(ctx.token, "GET", `/api/agent/habits/${habit_id}/entries`, undefined, {
           limit: limit?.toString(),
         })
+        return formatResult(result)
+      },
+      annotations: { readOnlyHint: true },
+    },
+
+    // Projects
+    {
+      name: "projects_list",
+      description: "Lista projetos do usuario.",
+      inputSchema: projectsListSchema,
+      handler: async (args, ctx) => {
+        const { limit } = projectsListSchema.parse(args)
+        const result = await agentApi(ctx.token, "GET", "/api/agent/projects", undefined, {
+          limit: limit?.toString(),
+        })
+        return formatResult(result)
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "projects_create",
+      description: "Cria um novo projeto.",
+      inputSchema: projectsCreateSchema,
+      handler: async (args, ctx) => {
+        const body = projectsCreateSchema.parse(args)
+        const result = await agentApi(ctx.token, "POST", "/api/agent/projects", body)
+        return formatResult(result)
+      },
+    },
+    {
+      name: "projects_update",
+      description: "Atualiza um projeto pelo ID.",
+      inputSchema: projectsUpdateSchema,
+      handler: async (args, ctx) => {
+        const { id, ...body } = projectsUpdateSchema.parse(args)
+        const result = await agentApi(ctx.token, "PATCH", "/api/agent/projects", { id, ...body })
+        return formatResult(result)
+      },
+    },
+    {
+      name: "projects_delete",
+      description: "Exclui um projeto pelo ID.",
+      inputSchema: projectByIdSchema,
+      handler: async (args, ctx) => {
+        const { id } = projectByIdSchema.parse(args)
+        await agentApi(ctx.token, "DELETE", `/api/agent/projects/${id}`)
+        return `Projeto ${id} excluido com sucesso.`
+      },
+      annotations: { destructiveHint: true },
+    },
+
+    // Budget
+    {
+      name: "budget_get",
+      description: "Retorna a meta orcamentaria de um mes (YYYY-MM).",
+      inputSchema: z.object({ month: z.string().regex(/^\d{4}-\d{2}$/).optional() }),
+      handler: async (args, ctx) => {
+        const { month } = z.object({ month: z.string().regex(/^\d{4}-\d{2}$/).optional() }).parse(args)
+        const result = await agentApi(ctx.token, "GET", "/api/agent/budget", undefined, { month })
+        return formatResult(result)
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "budget_set",
+      description: "Define a meta orcamentaria de um mes (YYYY-MM).",
+      inputSchema: budgetSchema,
+      handler: async (args, ctx) => {
+        const body = budgetSchema.parse(args)
+        const result = await agentApi(ctx.token, "POST", "/api/agent/budget", body)
+        return formatResult(result)
+      },
+    },
+
+    // Calendar
+    {
+      name: "calendar_get",
+      description: "Retorna eventos do calendario (consultas, tasks, plano de refeicoes) em um periodo ISO.",
+      inputSchema: calendarSchema,
+      handler: async (args, ctx) => {
+        const { from, to } = calendarSchema.parse(args)
+        const result = await agentApi(ctx.token, "GET", "/api/agent/calendar", undefined, { from, to })
+        return formatResult(result)
+      },
+      annotations: { readOnlyHint: true },
+    },
+
+    // Reports
+    {
+      name: "reports_get",
+      description: "Retorna relatorio consolidado: tasks, finance por mes, habitos.",
+      inputSchema: reportsSchema,
+      handler: async (_args, ctx) => {
+        const result = await agentApi(ctx.token, "GET", "/api/agent/reports")
         return formatResult(result)
       },
       annotations: { readOnlyHint: true },
