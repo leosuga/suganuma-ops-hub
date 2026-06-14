@@ -10,28 +10,34 @@ type ChangePayload = RealtimePostgresChangesPayload<Record<string, unknown>>
 const activeChannels = new Map<string, { channel: RealtimeChannel; refCount: number }>()
 
 const TABLE_QUERY_PREFIX: Record<string, string[]> = {
-  task: ["tasks"],
+  task: ["tasks", "calendar"],
   note: ["notes"],
   transaction: ["finance"],
   account: ["finance"],
   health_log: ["health"],
-  appointment: ["health"],
+  appointment: ["health", "calendar"],
   pregnancy: ["health"],
   protocol: ["health"],
   protocol_entry: ["health"],
   project: ["projects"],
   meal: ["meals"],
-  meal_plan: ["meals"],
+  meal_plan: ["meals", "calendar"],
   habit_track: ["habits"],
   habit_entry: ["habits"],
   budget: ["budget"],
   annual_event: ["annual-event"],
 }
 
+function invalidatePrefixes(queryClient: ReturnType<typeof useQueryClient>, prefixes: string[]) {
+  for (const prefix of prefixes) {
+    queryClient.invalidateQueries({ queryKey: [prefix], exact: false })
+  }
+}
+
 function invalidateTable(queryClient: ReturnType<typeof useQueryClient>, table: string) {
-  const prefix = TABLE_QUERY_PREFIX[table]
-  if (prefix) {
-    queryClient.invalidateQueries({ queryKey: prefix, exact: false })
+  const prefixes = TABLE_QUERY_PREFIX[table]
+  if (prefixes) {
+    invalidatePrefixes(queryClient, prefixes)
   } else {
     queryClient.invalidateQueries()
   }
