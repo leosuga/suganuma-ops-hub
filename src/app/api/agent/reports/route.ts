@@ -26,7 +26,6 @@ export async function GET(req: NextRequest) {
     supabase
       .from("habit_entry")
       .select("habit_id, done_on")
-      .eq("owner_id", ownerId)
       .limit(500),
   ])
 
