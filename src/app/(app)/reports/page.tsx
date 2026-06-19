@@ -136,7 +136,7 @@ function computeMetrics(data: ReportsData, period: number | "all") {
 export default function ReportsPage() {
   useTitle("Reports \u00b7 Suganuma Ops Hub")
   const [period, setPeriod] = useState<number | "all">(30)
-  const { data, isLoading } = useReports()
+  const { data, isLoading } = useReports(period)
 
   if (isLoading || !data) {
     return (

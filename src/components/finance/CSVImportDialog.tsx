@@ -5,7 +5,7 @@ import Papa from "papaparse"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useImportCSV } from "@/lib/queries/finance"
 import { cn } from "@/lib/utils"
-import type { Transaction } from "@/lib/schemas/finance"
+import { transactionSchema, type Transaction } from "@/lib/schemas/finance"
 
 interface CSVImportDialogProps {
   open: boolean
@@ -91,7 +91,19 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
       currency: "BRL",
     }))
 
-    await importCSV.mutateAsync({ rows: txns, filename })
+    // Validate all rows against the canonical Zod schema before sending to DB
+    const valid: Omit<Transaction, "id">[] = []
+    for (const txn of txns) {
+      const parsed = transactionSchema.omit({ id: true }).safeParse(txn)
+      if (parsed.success) {
+        valid.push(parsed.data as Omit<Transaction, "id">)
+      }
+    }
+    if (valid.length === 0) {
+      return
+    }
+
+    await importCSV.mutateAsync({ rows: valid, filename })
     setRows([])
     setStep("upload")
     onOpenChange(false)
