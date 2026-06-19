@@ -10,7 +10,7 @@ const BYPASS = [
   /\.(svg|png|jpg|jpeg|gif|webp|ico)$/,
 ]
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   if (BYPASS.some((r) => r.test(pathname))) {
