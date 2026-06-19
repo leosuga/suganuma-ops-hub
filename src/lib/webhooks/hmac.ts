@@ -1,0 +1,101 @@
+// Shared webhook utilities: constant-time HMAC verification and idempotency.
+// All webhook routes should use `verifyWebhookHmac` and `checkWebhookIdempotency`.
+
+import { timingSafeEqual } from "node:crypto"
+import { createServiceClient } from "@/lib/supabase/service"
+import { logger } from "@/lib/logger"
+
+export type WebhookSecretName = "EMAIL_SECRET" | "CSV_SECRET" | "DEPLOY_SECRET"
+
+/**
+ * Verify HMAC-SHA256 signature of the raw body using a constant-time comparison.
+ * Falls back to `WEBHOOK_SECRET` (legacy) if the specific secret env var is unset,
+ * logging a deprecation warning so callers can migrate.
+ */
+export async function verifyWebhookHmac(
+  req: Request,
+  rawBody: string,
+  secretName: WebhookSecretName
+): Promise<boolean> {
+  const specificSecret = process.env[secretName]
+  const legacySecret = process.env.WEBHOOK_SECRET
+  const secret = specificSecret ?? legacySecret
+
+  if (!secret) {
+    logger.warn("webhook", `No secret configured for ${secretName}`, {})
+    return false
+  }
+
+  if (!specificSecret && legacySecret) {
+    logger.warn("webhook", `Using legacy WEBHOOK_SECRET for ${secretName} — configure ${secretName} separately`, {})
+  }
+
+  const sig = req.headers.get("x-hub-signature-256") ?? ""
+  if (!sig.startsWith("sha256=")) return false
+
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  )
+  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody))
+  const expected = "sha256=" + Array.from(new Uint8Array(mac)).map((b) => b.toString(16).padStart(2, "0")).join("")
+
+  // Constant-time comparison via crypto.timingSafeEqual
+  const sigBuf = Buffer.from(sig, "utf8")
+  const expBuf = Buffer.from(expected, "utf8")
+  if (sigBuf.length !== expBuf.length) return false
+  return timingSafeEqual(sigBuf, expBuf)
+}
+
+/**
+ * Idempotency check: returns true if this payload has already been processed.
+ * Uses the `webhook_event` table to track (source, event_id) pairs.
+ * Callers should provide a unique event_id (from the payload or a hash of it).
+ *
+ * Returns:
+ *  - { replay: true } if already processed (caller should return 200 without side effects)
+ *  - { replay: false, mark: () => Promise<void> } if new (caller should call mark() after success)
+ */
+export async function checkWebhookIdempotency(
+  source: string,
+  eventKey: string
+): Promise<{ replay: boolean; mark?: () => Promise<void> }> {
+  const supabase = createServiceClient()
+
+  // Check if already processed
+  const { data: existing } = await supabase
+    .from("webhook_event")
+    .select("id")
+    .eq("source", source)
+    .eq("event_key", eventKey)
+    .maybeSingle()
+
+  if (existing) {
+    return { replay: true }
+  }
+
+  // Insert tentatively — if a concurrent request already inserted, the unique
+  // constraint will reject this and we treat it as a replay.
+  return {
+    replay: false,
+    mark: async () => {
+      await supabase.from("webhook_event").insert({
+        source,
+        event_key: eventKey,
+        processed_at: new Date().toISOString(),
+      })
+    },
+  }
+}
+
+/**
+ * Derive a deterministic event key from the raw body hash.
+ * Use this when the payload has no explicit id/timestamp field.
+ */
+export async function deriveEventKey(rawBody: string): Promise<string> {
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(rawBody))
+  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("")
+}

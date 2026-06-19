@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
+import { verifyWebhookHmac, checkWebhookIdempotency, deriveEventKey } from "@/lib/webhooks/hmac"
 import { logger } from "@/lib/logger"
 
 const bodySchema = z.object({
@@ -7,32 +8,13 @@ const bodySchema = z.object({
   status: z.enum(["success", "failure", "started"]),
   message: z.string().optional(),
   timestamp: z.string().optional(),
+  run_id: z.string().optional(),
 })
-
-async function verifyHmac(req: NextRequest, rawBody: string): Promise<boolean> {
-  const secret = process.env.WEBHOOK_SECRET
-  if (!secret) return false
-
-  const sig = req.headers.get("x-hub-signature-256") ?? ""
-  if (!sig.startsWith("sha256=")) return false
-
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  )
-  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody))
-  const expected = "sha256=" + Array.from(new Uint8Array(mac)).map((b) => b.toString(16).padStart(2, "0")).join("")
-
-  return sig === expected
-}
 
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
 
-  if (!(await verifyHmac(req, rawBody))) {
+  if (!(await verifyWebhookHmac(req, rawBody, "DEPLOY_SECRET"))) {
     return NextResponse.json({ error: "Assinatura inválida" }, { status: 401 })
   }
 
@@ -41,6 +23,14 @@ export async function POST(req: NextRequest) {
     parsed = bodySchema.parse(JSON.parse(rawBody))
   } catch {
     return NextResponse.json({ error: "Payload inválido" }, { status: 400 })
+  }
+
+  // Idempotency: use run_id if provided, otherwise hash the raw body
+  const eventKey = parsed.run_id ?? (await deriveEventKey(rawBody))
+  const idempotency = await checkWebhookIdempotency("deploy-status", eventKey)
+  if (idempotency.replay) {
+    logger.info("webhook", "deploy-status replay ignored", { eventKey })
+    return NextResponse.json({ ok: true, replay: true })
   }
 
   const emoji = parsed.status === "success" ? "✓" : parsed.status === "failure" ? "✗" : "→"
@@ -69,5 +59,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  await idempotency.mark?.()
   return NextResponse.json({ ok: true })
 }
