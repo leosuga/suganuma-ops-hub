@@ -4,11 +4,17 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js"
 import { createMcpServer } from "@/lib/mcp/server"
 import { validateMcpAuth, McpAuthError, corsHeaders, isAllowedOrigin, validateHostHeader } from "@/lib/mcp/auth"
-import { checkMcpRateLimit } from "@/lib/mcp/rate-limit"
+import { checkMcpRateLimit, cleanupStaleRateLimitBuckets } from "@/lib/mcp/rate-limit"
 
 // In-memory session store. In multi-instance deployments this would need a shared store;
 // for a single Docker container behind Caddy this is sufficient for Fase 1.
 const transports = new Map<string, WebStandardStreamableHTTPServerTransport>()
+
+// Periodic cleanup of stale rate-limit buckets to prevent memory growth in long-running containers.
+// Runs every 5 minutes; buckets older than 10 minutes past their reset window are evicted.
+if (typeof setInterval !== "undefined") {
+  setInterval(() => cleanupStaleRateLimitBuckets(10 * 60_000), 5 * 60_000).unref?.()
+}
 
 function cleanupSession(sessionId: string) {
   const t = transports.get(sessionId)

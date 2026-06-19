@@ -34,36 +34,60 @@ import {
 
 const BASE_URL = process.env.OPS_HUB_URL ?? "https://ops.suganuma.com.br"
 const TOKEN = process.env.OPS_HUB_TOKEN ?? ""
+const MAX_RETRIES = Number(process.env.OPS_HUB_MAX_RETRIES ?? "5")
+const BASE_DELAY_MS = 1000
 
 if (!TOKEN) {
   process.stderr.write("ERROR: OPS_HUB_TOKEN env var is required\n")
   process.exit(1)
 }
 
-async function main() {
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function connectWithRetry(): Promise<Client> {
   const url = new URL("/api/mcp", BASE_URL)
 
-  const transport = new StreamableHTTPClientTransport(url, {
-    requestInit: {
-      headers: {
-        Authorization: `Bearer ${TOKEN}`,
-        Origin: "https://ops.suganuma.com.br",
-      },
-    },
-  })
+  let lastError: Error | null = null
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const transport = new StreamableHTTPClientTransport(url, {
+        requestInit: {
+          headers: {
+            Authorization: `Bearer ${TOKEN}`,
+            Origin: "https://ops.suganuma.com.br",
+          },
+        },
+      })
 
-  const client = new Client(
-    { name: "ops-hub-stdio-proxy", version: "0.3.0" },
-    { capabilities: {} }
-  )
+      const client = new Client(
+        { name: "ops-hub-stdio-proxy", version: "0.3.1" },
+        { capabilities: {} }
+      )
 
-  await client.connect(transport)
+      await client.connect(transport)
+      process.stderr.write(`ops-hub stdio proxy connected (attempt ${attempt})\n`)
+      return client
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err))
+      const delay = BASE_DELAY_MS * Math.pow(2, attempt - 1)
+      process.stderr.write(`Connect attempt ${attempt}/${MAX_RETRIES} failed: ${lastError.message}; retrying in ${delay}ms\n`)
+      if (attempt < MAX_RETRIES) {
+        await sleep(delay)
+      }
+    }
+  }
 
-  // Cache tools to avoid repeated remote calls for listTools
+  throw lastError ?? new Error("Failed to connect after retries")
+}
+
+async function main() {
+  let client = await connectWithRetry()
   let cachedTools: Tool[] | undefined
 
   const server = new Server(
-    { name: "ops-hub", version: "0.3.0" },
+    { name: "ops-hub", version: "0.3.1" },
     { capabilities: { tools: {} } }
   )
 
@@ -81,11 +105,24 @@ async function main() {
       const result = await client.callTool({ name, arguments: args ?? {} })
       return result
     } catch (err) {
+      // If the error suggests the connection was lost, attempt a reconnect
+      const errMsg = err instanceof Error ? err.message : String(err)
+      if (errMsg.includes("disconnect") || errMsg.includes("closed") || errMsg.includes("transport")) {
+        process.stderr.write(`Connection lost during tool call '${name}': ${errMsg}; attempting reconnect...\n`)
+        try {
+          client = await connectWithRetry()
+          cachedTools = undefined
+          const result = await client.callTool({ name, arguments: args ?? {} })
+          return result
+        } catch (reconnectErr) {
+          process.stderr.write(`Reconnect failed: ${reconnectErr instanceof Error ? reconnectErr.message : String(reconnectErr)}\n`)
+        }
+      }
       return {
         content: [
           {
             type: "text",
-            text: `Erro na tool ${name}: ${err instanceof Error ? err.message : String(err)}`,
+            text: `Erro na tool ${name}: ${errMsg}`,
           },
         ],
         isError: true,
@@ -96,7 +133,7 @@ async function main() {
   const stdio = new StdioServerTransport()
   await server.connect(stdio)
 
-  process.stderr.write(`ops-hub stdio proxy connected to ${url.toString()}\n`)
+  process.stderr.write(`ops-hub stdio proxy ready\n`)
 }
 
 main().catch((err) => {
