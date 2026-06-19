@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeTable } from "@/lib/realtime"
-import { deleteNoteEmbedding } from "@/lib/actions/semantic-search"
+import { syncNoteEmbedding, deleteNoteEmbedding } from "@/lib/actions/semantic-search"
 import type { NoteRow } from "@/lib/types/note"
 
 export type { NoteRow }
@@ -73,6 +73,9 @@ export function useCreateNote() {
       return data as NoteRow
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: noteKeys.all }),
+    onSettled: (data) => {
+      if (data?.id) syncNoteEmbedding(data.id).catch(() => null)
+    },
   })
 }
 
@@ -100,8 +103,9 @@ export function useUpdateNote() {
     onError: (_err, _vars, ctx) => {
       if (ctx?.prev) queryClient.setQueryData(noteKeys.all, ctx.prev)
     },
-    onSettled: () => {
+    onSettled: (data) => {
       queryClient.invalidateQueries({ queryKey: noteKeys.all })
+      if (data?.id) syncNoteEmbedding(data.id).catch(() => null)
     },
   })
 }
