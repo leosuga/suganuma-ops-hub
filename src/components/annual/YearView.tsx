@@ -40,9 +40,11 @@ export function YearView() {
   const updateSeries = useUpdateAnnualEventSeries()
   const deleteSeries = useDeleteAnnualEventSeries()
 
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingEvent, setEditingEvent] = useState<AnnualEventRow | null>(null)
-  const [newDate, setNewDate] = useState<string | null>(null)
+  const [dialog, setDialog] = useState<{ open: boolean; editingEvent: AnnualEventRow | null; newDate: string | null }>({
+    open: false,
+    editingEvent: null,
+    newDate: null,
+  })
 
   const allEvents = useMemo(() => {
     if (!dualYear) return eventsYear1
@@ -90,47 +92,35 @@ export function YearView() {
   }
 
   function handleNewEvent(dateStr: string) {
-    setEditingEvent(null)
-    setNewDate(dateStr)
-    setDialogOpen(true)
+    setDialog({ open: true, editingEvent: null, newDate: dateStr })
   }
 
   function handleEditEvent(event: AnnualEventRow) {
-    setEditingEvent(event)
-    setNewDate(null)
-    setDialogOpen(true)
+    setDialog({ open: true, editingEvent: event, newDate: null })
   }
 
   function handleSave(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean, location: string | null) {
-    if (editingEvent) {
-      updateEvent.mutate({ id: editingEvent.id, title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay, location })
-    } else if (newDate) {
+    if (dialog.editingEvent) {
+      updateEvent.mutate({ id: dialog.editingEvent.id, title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay, location })
+    } else if (dialog.newDate) {
       createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay, location })
     }
-    setDialogOpen(false)
-    setEditingEvent(null)
-    setNewDate(null)
+    setDialog({ open: false, editingEvent: null, newDate: null })
   }
 
   function handleClone(title: string, start: string, end: string, color: string, recurrence: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean, location: string | null) {
     createEvent.mutate({ title, start_date: start, end_date: end, color, recurrence, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay, location })
-    setDialogOpen(false)
-    setEditingEvent(null)
-    setNewDate(null)
+    setDialog({ open: false, editingEvent: null, newDate: null })
   }
 
   function handleSaveSeries(seriesId: string, title: string, start: string, end: string, color: string, projectId: string | null, startTime: string | null, endTime: string | null, isAllDay: boolean, location: string | null) {
     updateSeries.mutate({ seriesId, title, color, project_id: projectId, start_time: startTime, end_time: endTime, is_all_day: isAllDay, location })
-    setDialogOpen(false)
-    setEditingEvent(null)
-    setNewDate(null)
+    setDialog({ open: false, editingEvent: null, newDate: null })
   }
 
   function handleDeleteSeries(seriesId: string) {
     deleteSeries.mutate(seriesId)
-    setDialogOpen(false)
-    setEditingEvent(null)
-    setNewDate(null)
+    setDialog({ open: false, editingEvent: null, newDate: null })
   }
 
   const handleMoveToMonth = useCallback((id: string, fromMonth: number, toMonth: number) => {
@@ -152,12 +142,10 @@ export function YearView() {
   const { show: showToast } = useUndoToast()
 
   function handleDeleteEvent() {
-    if (editingEvent) {
-      const snapshot = { ...editingEvent }
-      deleteEvent.mutate(editingEvent.id)
-      setDialogOpen(false)
-      setEditingEvent(null)
-      setNewDate(null)
+    if (dialog.editingEvent) {
+      const snapshot = { ...dialog.editingEvent }
+      deleteEvent.mutate(dialog.editingEvent.id)
+      setDialog({ open: false, editingEvent: null, newDate: null })
       showToast({
         label: `Evento "${snapshot.title}" excluído`,
         onUndo: () => {
@@ -405,10 +393,10 @@ export function YearView() {
       </div>
 
       <EventDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        initialEvent={editingEvent}
-        initialDate={newDate}
+        open={dialog.open}
+        onOpenChange={(v) => setDialog((d) => ({ ...d, open: v }))}
+        initialEvent={dialog.editingEvent}
+        initialDate={dialog.newDate}
         onSave={handleSave}
         onDelete={handleDeleteEvent}
         onClone={handleClone}

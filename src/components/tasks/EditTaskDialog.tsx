@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useReducer, useEffect } from "react"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useUpdateTask, useDeleteTask } from "@/lib/queries/tasks"
@@ -40,19 +40,51 @@ interface EditTaskDialogProps {
   task: TaskRow | null
 }
 
+interface FormState {
+  title: string
+  taskNotes: string
+  category: Category
+  priority: Priority
+  status: Status
+  dueAt: string
+  projectId: string
+  delegatedTo: string
+  important: boolean
+  recurrence: string
+  tagsInput: string
+  confirmDelete: boolean
+}
+
+type Action =
+  | { type: "field"; key: keyof FormState; value: string | boolean }
+  | { type: "reset"; state: FormState }
+
+function reducer(state: FormState, action: Action): FormState {
+  switch (action.type) {
+    case "field":
+      return { ...state, [action.key]: action.value }
+    case "reset":
+      return action.state
+  }
+}
+
+const initialState: FormState = {
+  title: "",
+  taskNotes: "",
+  category: "personal",
+  priority: "med",
+  status: "todo",
+  dueAt: "",
+  projectId: "",
+  delegatedTo: "",
+  important: false,
+  recurrence: "",
+  tagsInput: "",
+  confirmDelete: false,
+}
+
 export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps) {
-  const [title, setTitle] = useState("")
-  const [taskNotes, setTaskNotes] = useState("")
-  const [category, setCategory] = useState<Category>("personal")
-  const [priority, setPriority] = useState<Priority>("med")
-  const [status, setStatus] = useState<Status>("todo")
-  const [dueAt, setDueAt] = useState("")
-  const [projectId, setProjectId] = useState("")
-  const [delegatedTo, setDelegatedTo] = useState("")
-  const [important, setImportant] = useState(false)
-  const [recurrence, setRecurrence] = useState("")
-  const [tagsInput, setTagsInput] = useState("")
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [state, dispatch] = useReducer(reducer, initialState)
 
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
@@ -64,29 +96,29 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
 
   useEffect(() => {
     if (task) {
-      setTitle(task.title ?? "")
-      setTaskNotes(task.notes ?? "")
-      setCategory(task.category as Category)
-      setPriority(task.priority as Priority)
-      setStatus(task.status as Status)
-      if (task.due_at) {
-        const d = new Date(task.due_at)
-        setDueAt(d.toISOString().slice(0, 16))
-      } else {
-        setDueAt("")
-      }
-      setProjectId(task.project_id ?? "")
-      setDelegatedTo(task.delegated_to ?? "")
-      setImportant(task.important ?? false)
-      setRecurrence(task.recurrence ?? "")
-      setTagsInput((task.tags ?? []).join(" "))
-      setConfirmDelete(false)
+      dispatch({
+        type: "reset",
+        state: {
+          title: task.title ?? "",
+          taskNotes: task.notes ?? "",
+          category: task.category as Category,
+          priority: task.priority as Priority,
+          status: task.status as Status,
+          dueAt: task.due_at ? new Date(task.due_at).toISOString().slice(0, 16) : "",
+          projectId: task.project_id ?? "",
+          delegatedTo: task.delegated_to ?? "",
+          important: task.important ?? false,
+          recurrence: task.recurrence ?? "",
+          tagsInput: (task.tags ?? []).join(" "),
+          confirmDelete: false,
+        },
+      })
     }
   }, [task])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!task || !title.trim()) return
+    if (!task || !state.title.trim()) return
 
     const updates: {
       id: string
@@ -104,22 +136,22 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       tags?: string[] | null
     } = {
       id: task.id,
-      title: title.trim(),
-      notes: taskNotes.trim() || undefined,
-      category,
-      priority,
-      status,
-      due_at: dueAt ? new Date(dueAt).toISOString() : undefined,
-      project_id: projectId || null,
-      delegated_to: delegatedTo.trim() || null,
-      important,
-      recurrence: recurrence || null,
-      tags: tagsInput.trim() ? tagsInput.trim().split(/\s+/).filter(Boolean) : null,
+      title: state.title.trim(),
+      notes: state.taskNotes.trim() || undefined,
+      category: state.category,
+      priority: state.priority,
+      status: state.status,
+      due_at: state.dueAt ? new Date(state.dueAt).toISOString() : undefined,
+      project_id: state.projectId || null,
+      delegated_to: state.delegatedTo.trim() || null,
+      important: state.important,
+      recurrence: state.recurrence || null,
+      tags: state.tagsInput.trim() ? state.tagsInput.trim().split(/\s+/).filter(Boolean) : null,
     }
 
-    if (status === "done" && task.status !== "done") {
+    if (state.status === "done" && task.status !== "done") {
       updates.completed_at = new Date().toISOString()
-    } else if (status !== "done" && task.status === "done") {
+    } else if (state.status !== "done" && task.status === "done") {
       updates.completed_at = null
     }
 
@@ -150,8 +182,8 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               Título
             </span>
             <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={state.title}
+              onChange={(e) => dispatch({ type: "field", key: "title", value: e.target.value })}
               placeholder="Título da task"
               autoFocus
               className={inputClass}
@@ -163,8 +195,8 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               Notas
             </span>
             <textarea
-              value={taskNotes}
-              onChange={(e) => setTaskNotes(e.target.value)}
+              value={state.taskNotes}
+              onChange={(e) => dispatch({ type: "field", key: "taskNotes", value: e.target.value })}
               placeholder="Notas, links, contexto..."
               rows={3}
               className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors resize-none"
@@ -196,8 +228,8 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
             </span>
             <input
               type="datetime-local"
-              value={dueAt}
-              onChange={(e) => setDueAt(e.target.value)}
+              value={state.dueAt}
+              onChange={(e) => dispatch({ type: "field", key: "dueAt", value: e.target.value })}
               className={inputClass}
             />
           </div>
@@ -211,10 +243,10 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => setCategory(opt.value)}
+                  onClick={() => dispatch({ type: "field", key: "category", value: opt.value })}
                   className={cn(
                     "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
-                    category === opt.value
+                    state.category === opt.value
                       ? "bg-teal/15 text-teal border-teal/40"
                       : "text-on-surface/40 border-border hover:border-on-surface/30"
                   )}
@@ -230,8 +262,8 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               Projeto
             </span>
             <select
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
+              value={state.projectId}
+              onChange={(e) => dispatch({ type: "field", key: "projectId", value: e.target.value })}
               className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
             >
               <option value="">Sem projeto</option>
@@ -248,8 +280,8 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               Delegado para
             </span>
             <input
-              value={delegatedTo}
-              onChange={(e) => setDelegatedTo(e.target.value)}
+              value={state.delegatedTo}
+              onChange={(e) => dispatch({ type: "field", key: "delegatedTo", value: e.target.value })}
               placeholder="@Nome"
               className={inputClass}
             />
@@ -262,8 +294,8 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={important}
-                onChange={(e) => setImportant(e.target.checked)}
+                checked={state.important}
+                onChange={(e) => dispatch({ type: "field", key: "important", value: e.target.checked })}
                 className="w-3.5 h-3.5 rounded-[3px] border border-on-surface/30 bg-bg checked:bg-amber checked:border-amber focus:outline-none cursor-pointer"
               />
               <span className="text-[11px] font-mono text-on-surface/50">
@@ -281,10 +313,10 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => setRecurrence(opt.value)}
+                  onClick={() => dispatch({ type: "field", key: "recurrence", value: opt.value })}
                   className={cn(
                     "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
-                    recurrence === opt.value
+                    state.recurrence === opt.value
                       ? "bg-teal/15 text-teal border-teal/40"
                       : "text-on-surface/40 border-border hover:border-on-surface/30"
                   )}
@@ -300,8 +332,8 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               Tags
             </span>
             <input
-              value={tagsInput}
-              onChange={(e) => setTagsInput(e.target.value)}
+              value={state.tagsInput}
+              onChange={(e) => dispatch({ type: "field", key: "tagsInput", value: e.target.value })}
               placeholder="#casa #trabalho — separar por espaços"
               className={inputClass}
             />
@@ -316,10 +348,10 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => setStatus(opt.value)}
+                  onClick={() => dispatch({ type: "field", key: "status", value: opt.value })}
                   className={cn(
                     "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
-                    status === opt.value
+                    state.status === opt.value
                       ? "bg-teal/15 text-teal border-teal/40"
                       : "text-on-surface/40 border-border hover:border-on-surface/30"
                   )}
@@ -339,10 +371,10 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => setPriority(opt.value)}
+                  onClick={() => dispatch({ type: "field", key: "priority", value: opt.value })}
                   className={cn(
                     "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
-                    priority === opt.value
+                    state.priority === opt.value
                       ? "bg-teal/15 text-teal border-teal/40"
                       : "text-on-surface/40 border-border hover:border-on-surface/30"
                   )}
@@ -354,7 +386,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           </div>
 
           <div className="flex items-center justify-between pt-1">
-            {confirmDelete ? (
+            {state.confirmDelete ? (
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-mono text-danger">Confirmar exclusão?</span>
                 <button
@@ -366,7 +398,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 </button>
                 <button
                   type="button"
-                  onClick={() => setConfirmDelete(false)}
+                  onClick={() => dispatch({ type: "field", key: "confirmDelete", value: false })}
                   className="h-7 px-3 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors"
                 >
                   NÃO
@@ -375,7 +407,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
             ) : (
               <button
                 type="button"
-                onClick={() => setConfirmDelete(true)}
+                onClick={() => dispatch({ type: "field", key: "confirmDelete", value: true })}
                 className="h-7 px-3 text-[9px] font-mono text-on-surface/20 hover:text-danger transition-colors"
               >
                 DELETAR TASK
@@ -392,7 +424,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               </button>
               <button
                 type="submit"
-                disabled={!title.trim() || updateTask.isPending}
+                disabled={!state.title.trim() || updateTask.isPending}
                 className="h-8 px-4 bg-teal/10 border border-teal text-teal font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors"
               >
                 {updateTask.isPending ? "SALVANDO..." : "SALVAR →"}

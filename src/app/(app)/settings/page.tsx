@@ -40,11 +40,19 @@ export default function SettingsPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [tokens, setTokens] = useState<AgentToken[]>([])
-  const [newTokenName, setNewTokenName] = useState("")
-  const [createdToken, setCreatedToken] = useState<string | null>(null)
-  const [creating, setCreating] = useState(false)
-  const [revoking, setRevoking] = useState<string | null>(null)
-  const [copied, setCopied] = useState(false)
+  const [tokenUi, setTokenUi] = useState<{
+    newTokenName: string
+    createdToken: string | null
+    creating: boolean
+    revoking: string | null
+    copied: boolean
+  }>({
+    newTokenName: "",
+    createdToken: null,
+    creating: false,
+    revoking: null,
+    copied: false,
+  })
   const [accent, setAccentState] = useState<Accent>("teal")
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
@@ -68,34 +76,34 @@ export default function SettingsPage() {
   }
 
   async function handleCreateToken() {
-    if (!newTokenName.trim()) return
-    setCreating(true)
+    if (!tokenUi.newTokenName.trim()) return
+    setTokenUi((s) => ({ ...s, creating: true }))
     const res = await fetch("/api/agent/tokens", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newTokenName.trim() }),
+      body: JSON.stringify({ name: tokenUi.newTokenName.trim() }),
     })
     if (res.ok) {
       const json = await res.json()
-      setCreatedToken(json.token)
-      setNewTokenName("")
+      setTokenUi((s) => ({ ...s, createdToken: json.token, newTokenName: "", creating: false }))
       loadTokens()
+    } else {
+      setTokenUi((s) => ({ ...s, creating: false }))
     }
-    setCreating(false)
   }
 
   async function handleRevoke(id: string) {
-    setRevoking(id)
+    setTokenUi((s) => ({ ...s, revoking: id }))
     await fetch(`/api/agent/tokens/${id}`, { method: "DELETE" })
     loadTokens()
-    setRevoking(null)
+    setTokenUi((s) => ({ ...s, revoking: null }))
   }
 
   async function handleCopy() {
-    if (!createdToken) return
-    await navigator.clipboard.writeText(createdToken)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    if (!tokenUi.createdToken) return
+    await navigator.clipboard.writeText(tokenUi.createdToken)
+    setTokenUi((s) => ({ ...s, copied: true }))
+    setTimeout(() => setTokenUi((s) => ({ ...s, copied: false })), 2000)
   }
 
   function handleAccentChange(a: Accent) {
@@ -192,37 +200,37 @@ export default function SettingsPage() {
         <div className="px-4 py-3 border-b border-border flex items-center gap-2">
           <input
             type="text"
-            value={newTokenName}
-            onChange={(e) => setNewTokenName(e.target.value)}
+            value={tokenUi.newTokenName}
+            onChange={(e) => setTokenUi((s) => ({ ...s, newTokenName: e.target.value }))}
             onKeyDown={(e) => { if (e.key === "Enter") handleCreateToken() }}
             placeholder="Nome do token (ex: Claude Desktop)"
             className="flex-1 h-7 px-2 text-[11px] font-mono bg-bg border border-border rounded-sm text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal/60"
           />
           <button
             onClick={handleCreateToken}
-            disabled={creating || !newTokenName.trim()}
+            disabled={tokenUi.creating || !tokenUi.newTokenName.trim()}
             className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-teal text-teal hover:bg-teal/10 rounded-sm disabled:opacity-30 transition-colors"
           >
-            {creating ? "..." : "+ GERAR"}
+            {tokenUi.creating ? "..." : "+ GERAR"}
           </button>
         </div>
-        {createdToken && (
+        {tokenUi.createdToken && (
           <div className="px-4 py-3 border-b border-border bg-teal/5">
             <p className="text-[9px] font-mono text-teal mb-2 uppercase tracking-wider">
               Token gerado — copie agora, não será mostrado novamente
             </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 text-[10px] font-mono text-on-surface bg-bg border border-border rounded-sm px-2 py-1.5 truncate select-all">
-                {createdToken}
+                {tokenUi.createdToken}
               </code>
               <button onClick={handleCopy} className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/50 hover:border-teal hover:text-teal rounded-sm transition-colors">
-                {copied ? "✓ COPIADO" : "COPIAR"}
+                {tokenUi.copied ? "✓ COPIADO" : "COPIAR"}
               </button>
-              <button onClick={() => setCreatedToken(null)} className="h-7 w-7 flex items-center justify-center text-on-surface/30 hover:text-on-surface/60 transition-colors">×</button>
+              <button onClick={() => setTokenUi((s) => ({ ...s, createdToken: null }))} className="h-7 w-7 flex items-center justify-center text-on-surface/30 hover:text-on-surface/60 transition-colors">×</button>
             </div>
           </div>
         )}
-        {active.length === 0 && !createdToken ? (
+        {active.length === 0 && !tokenUi.createdToken ? (
           <div className="px-4 py-6 text-center">
             <span className="text-[11px] font-mono text-on-surface/20">Nenhum token ativo</span>
           </div>
@@ -237,8 +245,8 @@ export default function SettingsPage() {
                     {t.last_used_at ? ` · Usado ${fmtDate(t.last_used_at)}` : " · Nunca usado"}
                   </p>
                 </div>
-                <button onClick={() => handleRevoke(t.id)} disabled={revoking === t.id} className={cn("h-6 px-2 text-[8px] font-mono font-semibold tracking-wider border rounded-sm transition-colors", "border-danger/30 text-danger/50 hover:border-danger hover:text-danger disabled:opacity-30")}>
-                  {revoking === t.id ? "..." : "REVOGAR"}
+                <button onClick={() => handleRevoke(t.id)} disabled={tokenUi.revoking === t.id} className={cn("h-6 px-2 text-[8px] font-mono font-semibold tracking-wider border rounded-sm transition-colors", "border-danger/30 text-danger/50 hover:border-danger hover:text-danger disabled:opacity-30")}>
+                  {tokenUi.revoking === t.id ? "..." : "REVOGAR"}
                 </button>
               </div>
             ))}
