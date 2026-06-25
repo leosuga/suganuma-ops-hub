@@ -84,6 +84,7 @@ Schemas testados: `tests/schemas.test.ts` (38 testes Zod)
 - **`UndoToast`** (`src/components/UndoToast.tsx`) — provider global no AppShell, toast com botão DESFAZER (5s timeout). Todos os deletes (task, transaction, note, meal, habit) disparam `toast.show()` com snapshot para `onUndo`
 - **`VirtualizedList`** (`src/components/VirtualizedList.tsx`) — wrapper `@tanstack/react-virtual`, ativa com >50 itens. TasksPage e TransactionTable já usam
 - **`CommandPalette`** (`src/components/shell/CommandPalette.tsx`) — `Cmd+K` global, navegação + busca de tasks/transações/appointments do cache
+- **`NoteRow`** (`src/components/notes/NoteRow.tsx`) — envolvido em `React.memo()`. Computações pesadas (frontmatter, wiki links, backlinks, markdown, inline tasks, context tags) memoizadas com `useMemo`
 
 ## Mock do Supabase nos testes
 Usar `vi.mock("@/lib/supabase/client")` + `vi.mock("@/lib/realtime")` antes dos imports.
@@ -97,10 +98,12 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - Realtime Postgres Changes em `task` table dispara re-check
 - `requireInteraction: true` para não sumir automaticamente
 
-## Export/Import (2026-05-20)
+## Export/Import (2026-06-19)
 - `exportAllData()` / `importAllData(json)` em `src/lib/export-import.ts`
-- Exporta **15 tabelas**: task, project, account, transaction, health_log, pregnancy, appointment, protocol, protocol_entry, note, meal, meal_plan, habit_track, habit_entry, budget
-- Import total: substitui `owner_id` pelo usuário atual e insere em batch
+- Exporta **16 tabelas**: task, project, account, transaction, health_log, pregnancy, appointment, protocol, protocol_entry, note, meal, meal_plan, habit_track, habit_entry, budget, annual_event
+- Import total: substitui `owner_id` pelo usuário atual, stripa `id`/`created_at`/`updated_at`, **stripa FKs cross-tabela** (`project_id`, `linked_task_id`, `account_id`, `meal_id`, `habit_id`, `protocol_id`, `pregnancy_id`, `series_id`) para evitar dangling references
+- Import em ordem parent-first (project, account, meal, habit_track, protocol, pregnancy, annual_event, ...)
+- Export version: `0.2.0`
 - **Import seletivo** (`src/components/settings/SelectiveImportDialog.tsx`): dialog que lista tabelas do JSON com contagem de linhas, permite selecionar quais importar
 - UI na página Settings com 3 botões: Exportar backup, Importar seletivo, Importar tudo
 
@@ -145,9 +148,11 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 
 ### Service Worker (`public/sw.js`)
 - ⚠️ **Navegação HTML**: usar **NetworkOnly** (NUNCA cachear). O middleware retorna 307 redirect para `/login` quando não autenticado — cachear isso corrompe a experiência com "This page couldn't load"
-- **Assets Next.js** (`_next/static/`): CacheFirst (imutáveis, só cachear com status 200)
+- **Assets Next.js** (`_next/static/`): NetworkFirst (busca rede primeiro, fallback cache se offline)
 - **Outros assets** (scripts, imagens, fonts): StaleWhileRevalidate com validação status 200
-- Cache bucket versionado (`"ops-hub-v4"`, incrementar a cada mudança estrutural no SW)
+- Cache bucket versionado (`"ops-hub-v15"`, incrementar a cada mudança estrutural no SW)
+- **Background sync**: handler é no-op placeholder (`Promise.resolve()`). Não tenta reenviar mutations falhadas
+- **Sem `console.log` em produção**: logs de install/activate/sync foram removidos
 
 ### GitHub Actions deploy.yml — anti-padrões
 - ⚠️ **NUNCA usar `python3 -c "..."` com aspas duplas** em YAML `script: |`. O Python usa `\n` e aspas escapadas que conflitam com YAML. Usar heredoc `<< 'PYEOF'` com delimitador em single quotes.
@@ -176,8 +181,15 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` — acesso SSH ao VPS
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase client
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side admin
-- `WEBHOOK_SECRET` — HMAC webhooks
+- `WEBHOOK_SECRET` — HMAC webhooks (legado, fallback)
+- `EMAIL_SECRET` — webhook email-to-task (HMAC separado)
+- `CSV_SECRET` — webhook csv-from-bank (HMAC separado)
+- `DEPLOY_SECRET` — webhook deploy-status (HMAC separado)
 - `COOLIFY_TOKEN` — token API Coolify (opcional, não mais usado no pipeline atual)
+
+### Deploy troubleshooting
+- **`rm -rf ~/ops-hub` falha com "Permission denied"**: `node_modules` criado pelo Docker build fica com owner `root`. Rodar `sudo rm -rf ~/ops-hub` antes do próximo deploy
+- **GitHub Actions SSH falha instantaneamente**: geralmente causado pelo item acima (rm falha → git clone falha → script aborta). Limpar `~/ops-hub` no VPS resolve
 
 ## Testes — Vitest
 
@@ -200,6 +212,8 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 | Queries React | `tests/queries/*.test.tsx` | 45 |
 | Smoke | `tests/queries/smoke.test.ts` | 1 |
 | **Total** | | **108** |
+
+> ⚠️ Testes DOM/componentes (`.test.tsx`) travam no Node v25 local. Usar `npm run test:docker` (node:22-alpine). Testes unitários (`npm test`) funcionam localmente.
 
 ### Execução
 ```bash
@@ -280,12 +294,14 @@ npm run test:docker
 - `@base-ui/react` — Dialog, Checkbox, Button (NÃO Radix)
 - `@tanstack/react-query` + devtools
 - `@tanstack/react-virtual` — virtualização de listas (>50 itens)
-- `recharts` — gráficos (RevenueChart, WeightChart, BloodPressureChart)
+- `recharts` — gráficos (RevenueChart, WeightChart, BloodPressureChart). Sempre lazy-load
 - `react-markdown` — renderização de markdown nas notas (`remark-gfm` removido)
 - `papaparse` — import CSV de extratos bancários
 - `cmdk` — command palette
 - `next-themes` — dark/light mode
 - `serwist` — removido do bundle; SW é manual (`public/sw.js`)
+- `@modelcontextprotocol/sdk` — MCP server (Streamable HTTP) e stdio proxy. Versão 1.29+
+- `zod` — v4.3.6. Tem `toJSONSchema()` nativo, mas MCP SDK já suporta Zod diretamente
 
 ## Pontos de atenção
 - **`@tailwindcss/typography` instalado (2026-05-09)**: Versão `0.5.0-alpha.3` (tag `next`) funciona com Tailwind v4 via `@plugin "@tailwindcss/typography"` no `globals.css`.
@@ -294,14 +310,56 @@ npm run test:docker
 - **Workflow**: 1 job único (sem typecheck paralelo). Job `typecheck` removido em 2026-05-20 — nunca completava (~70 arquivos TS strict).
 - BottomNav mobile máximo 5 itens (DASH, CAL, TASKS, FIN, HUB)
 - `due_at` é `string | null` no DB mas `string | undefined` no Zod schema — usar `undefined` nos mutations
-- **Realtime**: tabelas adicionadas à `supabase_realtime` publication: task, account, transaction, note, meal, meal_plan, habit_track, habit_entry, project, budget
+- **Realtime**: tabelas adicionadas à `supabase_realtime` publication: task, account, transaction, note, meal, meal_plan, habit_track, habit_entry, project, budget, appointment, health_log, pregnancy, protocol, protocol_entry, annual_event
+- **Realtime debounce**: invalidações são debounce por 300ms por prefixo (`pendingInvalidations` Map em `realtime.ts`). Múltiplas mudanças simultâneas (ex: 3 tabelas invalidando `calendar`) resultam em 1 refetch em vez de 3
+- **`TABLE_QUERY_PREFIX`** mapeia tabelas DB → prefixes de query key: `task→["tasks","calendar"]`, `appointment→["health","calendar"]`, `meal_plan→["meals","calendar"]`, etc. Tabelas podem invalidar múltiplos prefixes
 - **Tipos planos** (`src/lib/types/*.ts`): 9 arquivos (task, project, finance, health, note, meal, habit, budget, index). Substituem `database.types.ts` para type checking
-- **Migrations SQL executadas manualmente** via Supabase SQL editor (0010-0016). NÃO são executadas automaticamente pelo deploy
+- **Migrations SQL executadas manualmente** via Supabase SQL editor (0010-0031). NÃO são executadas automaticamente pelo deploy
+- **Migration 0030**: `mcp_audit_log` — audit log para MCP tool calls
+- **Migration 0031**: `webhook_event` — idempotency tracking para webhooks
 - **`queryOptions` API TanStack v5**: Todas as queries exportam `queryOptions`. `staleTime` e `gcTime` configurados por query (ver seção Performance). `refetchOnWindowFocus: false` global
-- **`sw.js`**: versão `v5`. Estratégia: `_next/static` CacheFirst, navegação NetworkOnly
+- **`sw.js`**: versão `v15`. Estratégia: `_next/static` NetworkFirst, navegação NetworkOnly
 - **Coolify no VPS**: instalado mas **não gerencia deploys**. Deploy manual via GitHub Actions SSH
-- **Next.js 16 `next.config.ts`**: `reactCompiler: true` em root (não `experimental`). `typedRoutes` quebra build com BottomNav strings
+- **Next.js 16 `next.config.ts`**: `reactCompiler: true` em root (não `experimental`). `typedRoutes` quebra build com BottomNav strings. `headers()` com `source: "/:path*"` funciona (sintaxe simples); `headers()` com regex `/icon-:size*` quebra Turbopack
+- **Security headers** (2026-06-19): HSTS, CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy configurados via `headers()` em `next.config.ts`
 - **Escaping de caracteres no write tool**: `\u00cd` e outros escapes Unicode podem aparecer em vez de caracteres acentuados ao usar o `write` tool. Sempre revisar arquivos escritos e corrigir acentos manualmente
+
+## Webhooks (2026-06-19)
+- **3 webhooks**: `email-to-task`, `csv-from-bank`, `deploy-status` — cada um com seu próprio secret HMAC
+- HMAC centralizado em `src/lib/webhooks/hmac.ts` com `crypto.timingSafeEqual` (constant-time comparison)
+- **Idempotência**: tabela `webhook_event` com unique constraint `(source, event_key)`. Cada webhook verifica replay antes de processar
+- **Secrets separados**: `EMAIL_SECRET`, `CSV_SECRET`, `DEPLOY_SECRET` (com fallback para `WEBHOOK_SECRET` legado)
+- **Payload schemas**: `email-to-task` aceita `message_id`, `csv-from-bank` aceita `import_id`, `deploy-status` aceita `run_id` para event keys explícitos
+
+## MCP Server (2026-06-19)
+- **Endpoint**: `/api/mcp` (Streamable HTTP, spec 2025-06-18)
+- **Auth**: Bearer token (`ops_...`) validado contra `agent_token` table
+- **35 tools**: tasks, finance, health, notes, meals, habits, projects, budget, calendar, reports, dashboard, semantic search
+- **Rate limiting**: 120 req/min por IP, bloqueio 60s. Cleanup automático a cada 5min via `setInterval`
+- **Audit log**: tabela `mcp_audit_log` registra toda tool call com `tool_name`, `success`, `duration_ms`, `args`
+- **API timeout**: `agentApi` usa `AbortController` com 30s timeout (`MCP_API_TIMEOUT_MS` env override)
+- **stdio proxy** (`mcp-server/src/index.ts`): conecta ao remote `/api/mcp` via StreamableHTTP, expõe tools via stdio. Reconexao exponencial (5 retries) + retry em tool calls com erro de transporte
+- **Type safety**: schemas Zod passados direto ao `registerTool` (SDK suporta Zod v3/v4 nativamente via `zod-json-schema-compat`)
+- **Docs**: `docs/openclaw-mcp.md` (remote HTTP), `docs/claude-hermes-mcp.md` (stdio proxy)
+
+## Semantic Search (2026-06-19)
+- **Ollama** (`nomic-embed-text`) + **Qdrant** self-hosted
+- `syncNoteEmbedding(noteId)` é server action em `src/lib/actions/semantic-search.ts`
+- **Chamada em**: `useCreateNote.onSettled`, `useUpdateNote.onSettled`, `useDeleteNote.onSettled` (delete via `deleteNoteEmbedding`)
+- **Fire-and-forget**: `.catch(() => null)` — falhas não bloqueiam a UI
+- Busca via `semanticSearchNotes(query, limit)` → embed query → Qdrant search → fetch full notes from Supabase
+
+## Data Safety (2026-06-19)
+- **Reports query bounded**: `useReports(period)` filtra por data no DB (30/90/365 dias). Tasks limit 500, transactions limit 1000, habit entries limit 1000. `period="all"` não filtra mas ainda limita
+- **CSV import Zod validation**: cada row do CSV é validada contra `transactionSchema` antes de inserir no DB. Rows inválidas são silenciadas
+- **Export/Import FK sanitization**: import stripa FKs cross-tabela para evitar dangling references ao importar dados de outro usuário
+- **JSON column validators**: `parseAttachments` (notes), `parseWeightValue`/`parseBloodPressureValue`/`parseGlucoseValue`/`parseHealthLogValue` (health_log.value) — substituem casts `as Type`
+
+## Component Patterns (2026-06-19)
+- **`React.memo`**: `NoteRow` envolvido em `memo()` — previne re-render quando parent re-renderiza sem mudar props
+- **`useReducer`**: `EditTaskDialog` usa 1 `useReducer` (12 campos de formulário) em vez de 12 `useState`
+- **Grouped state objects**: `YearView` (dialog state) e `SettingsPage` (token UI state) usam 1 `useState` agrupado em vez de múltiplos independentes
+- **Lazy queries**: `useProjects({ enabled })` e `useUpcomingEvents(limit, { enabled })` aceitam option `enabled` para deferring. Dashboard usa `deferredReady` state para adiar queries below-the-fold
 
 ---
 
@@ -323,7 +381,7 @@ npm run test:docker
 | Tag Namespaces | Tags with `/` prefix grouped for hierarchical filtering |
 | Templates | QuickAddNote with 6 templates (standard, MOC, daily, project, area, resource) |
 | Review Badge | Areas with `last_review` > 30 days show ⚠ REV warning |
-| **Semantic Search** | **Ollama (nomic-embed-text) + Qdrant self-hosted; Busca Semântica panel em NotesPage; embedding auto-sync on note CRUD** |
+| **Semantic Search** | **Ollama (nomic-embed-text) + Qdrant self-hosted; Busca Semântica panel em NotesPage; embedding auto-sync on note CRUD (create/update/delete via `syncNoteEmbedding`/`deleteNoteEmbedding` server actions)** |
 | **Contexts** | **6 life contexts (work, pessoal, casa, saude, estudos, financas) with color-coded pills + strip in NoteRow + filter bar in NotesPage + QuickAdd selector + edit mode toggle** |
 
 ## Notes Feature Roadmap
@@ -360,3 +418,8 @@ npm run test:docker
 | 2026-06-18 | **Caddyfile MUST use container name (`suganuma-ops-hub:3000`), NOT hardcoded IP**. Container IPs change on every recreation (`docker run`); Caddy 2.11 resolves container name via Docker DNS and falls back to IPv4 automatically when IPv6 fails (Next.js doesn't listen on IPv6). Hardcoded IP caused 502 after deploy because bind-mounted Caddyfile wasn't synced into `caddy_proxy` container without full `docker restart caddy_proxy`. Container name DNS eliminates the problem entirely | 502 outage |
 | 2026-06-19 | **`proxy.ts` convention breaks Next.js 16.2.6 build** (`ENOENT: middleware.js.nft.json`). The `proxy` file convention is documented as the replacement for `middleware`, but 16.2.6 still expects `middleware.js.nft.json` in the standalone output step. Keep `middleware.ts` until Next.js fixes this bug. The deprecation warning is harmless | Build failure |
 | 2026-06-19 | **`rm -rf ~/ops-hub` fails when `node_modules` has root-owned files** from Docker build. The deploy script's `rm -rf ops-hub` can fail with "Permission denied" on `node_modules/` files created by Docker. Fix: `sudo rm -rf ~/ops-hub` before re-running deploy, or use `docker run --rm -v ...` to avoid creating root-owned files in the host `node_modules` | Deploy failure |
+| 2026-06-19 | **`headers()` com `source: "/:path*"` funciona no Next.js 16** — ao contrário de `/icon-:size*` que quebra o Turbopack. Sintaxe simples de path matching é segura | Security headers |
+| 2026-06-19 | **Zod 4 tem `toJSONSchema()` nativo** (`import { toJSONSchema } from "zod"`), mas o MCP SDK já suporta schemas Zod diretamente em `registerTool` via `zod-json-schema-compat`. Não é necessário converter manualmente | MCP type safety |
+| 2026-06-19 | **`syncNoteEmbedding` era dead code** — definida mas nunca chamada. Notas criadas/atualizadas não eram indexadas no Qdrant. Wire no `onSettled` das mutations resolve | Semantic search bug |
+| 2026-06-19 | **MCP SDK aceita Zod schemas v3 e v4 diretamente** como `inputSchema` em `registerTool`. O `as any` cast era desnecessário — o tipo `AnySchema = z3.ZodTypeAny \| z4.$ZodType` cobre ambos | MCP type safety |
+| 2026-06-19 | **Caddy bind mount não sincroniza Caddyfile ao vivo** — o arquivo dentro do container pode divergir do host. `docker restart caddy_proxy` força releitura. Usar nome de container no Caddyfile elimina a necessidade de editar após cada deploy | Caddy proxy |
