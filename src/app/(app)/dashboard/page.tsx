@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import { useTasks } from "@/lib/queries/tasks"
 import { useTransactions } from "@/lib/queries/finance"
@@ -50,7 +50,18 @@ export default function DashboardPage() {
   const createHealthLog = useCreateHealthLog()
   const { data: notes = [] } = useNotes()
   const { data: mealPlans = [] } = useMealPlans(currentMonth())
-  const { data: projects = [] } = useProjects()
+
+  // Deferred queries: load after first paint to reduce initial waterfall.
+  // These power below-the-fold sections (Eisenhower matrix, projects list, events).
+  const [deferredReady, setDeferredReady] = useState(false)
+  useEffect(() => {
+    // Activate deferred queries on the next tick after mount
+    const id = setTimeout(() => setDeferredReady(true), 0)
+    return () => clearTimeout(id)
+  }, [])
+
+  const { data: projects = [] } = useProjects({ enabled: deferredReady })
+  const { data: allEvents = [] } = useUpcomingEvents(20, { enabled: deferredReady })
 
   const [weightInput, setWeightInput] = useState("")
 
@@ -121,7 +132,6 @@ export default function DashboardPage() {
     }
   }, [appointments, mealPlans, notes])
 
-  const { data: allEvents = [] } = useUpcomingEvents(20)
   const eventsForAttention = useMemo(() => {
     return allEvents.filter((e) => e.start_date <= tomorrowStr && e.end_date >= todayStr)
   }, [allEvents, todayStr, tomorrowStr])

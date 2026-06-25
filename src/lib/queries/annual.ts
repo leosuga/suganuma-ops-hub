@@ -73,9 +73,9 @@ export function upcomingEventsOptions(limit: number = 10) {
   })
 }
 
-export function useUpcomingEvents(limit: number = 10) {
+export function useUpcomingEvents(limit: number = 10, opts?: { enabled?: boolean }) {
   useRealtimeTable("annual_event")
-  return useQuery(upcomingEventsOptions(limit))
+  return useQuery({ ...upcomingEventsOptions(limit), enabled: opts?.enabled ?? true })
 }
 
 export function useAnnualTasks(year: number) {

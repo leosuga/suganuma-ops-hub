@@ -32,9 +32,9 @@ export const projectsOptions = queryOptions({
   },
 })
 
-export function useProjects() {
+export function useProjects(opts?: { enabled?: boolean }) {
   useRealtimeTable("project")
-  return useQuery(projectsOptions)
+  return useQuery({ ...projectsOptions, enabled: opts?.enabled ?? true })
 }
 
 export function useCreateProject() {
