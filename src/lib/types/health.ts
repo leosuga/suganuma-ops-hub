@@ -43,3 +43,65 @@ export interface ProtocolEntryRow {
   notes: string | null
   created_at: string
 }
+
+// ---------- Runtime validators for JSON columns ----------
+
+export interface WeightValue {
+  kg: number
+}
+
+export interface BloodPressureValue {
+  systolic: number
+  diastolic: number
+}
+
+export interface GlucoseValue {
+  mgdl: number
+  fasting?: boolean
+}
+
+/**
+ * Safely parse a health_log.value JSON column as a weight value.
+ * Returns null if the shape doesn't match.
+ */
+export function parseWeightValue(value: unknown): WeightValue | null {
+  if (typeof value !== "object" || value === null) return null
+  const obj = value as Record<string, unknown>
+  if (typeof obj.kg === "number") return { kg: obj.kg }
+  return null
+}
+
+/**
+ * Safely parse a health_log.value JSON column as a blood pressure value.
+ * Returns null if the shape doesn't match.
+ */
+export function parseBloodPressureValue(value: unknown): BloodPressureValue | null {
+  if (typeof value !== "object" || value === null) return null
+  const obj = value as Record<string, unknown>
+  if (typeof obj.systolic === "number" && typeof obj.diastolic === "number") {
+    return { systolic: obj.systolic, diastolic: obj.diastolic }
+  }
+  return null
+}
+
+/**
+ * Safely parse a health_log.value JSON column as a glucose value.
+ * Returns null if the shape doesn't match.
+ */
+export function parseGlucoseValue(value: unknown): GlucoseValue | null {
+  if (typeof value !== "object" || value === null) return null
+  const obj = value as Record<string, unknown>
+  if (typeof obj.mgdl === "number") {
+    return { mgdl: obj.mgdl, fasting: typeof obj.fasting === "boolean" ? obj.fasting : undefined }
+  }
+  return null
+}
+
+/**
+ * Generic safe parser for health_log.value — returns the value as a
+ * Record<string, unknown> if it's an object, or null otherwise.
+ */
+export function parseHealthLogValue(value: unknown): Record<string, unknown> | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null
+  return value as Record<string, unknown>
+}

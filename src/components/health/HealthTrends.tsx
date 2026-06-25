@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
 } from "recharts"
 import type { HealthLogRow } from "@/lib/queries/health"
+import { parseWeightValue, parseBloodPressureValue } from "@/lib/types/health"
 
 interface HealthTrendsProps {
   logs: HealthLogRow[]
@@ -23,8 +24,8 @@ function extractWeightData(logs: HealthLogRow[]) {
   return logs
     .filter((l) => l.kind === "weight")
     .map((l) => {
-      const val = l.value as { kg?: number }
-      return { date: formatDate(l.logged_at), kg: val.kg ?? 0, rawDate: l.logged_at }
+      const val = parseWeightValue(l.value)
+      return { date: formatDate(l.logged_at), kg: val?.kg ?? 0, rawDate: l.logged_at }
     })
     .sort((a, b) => a.rawDate.localeCompare(b.rawDate))
     .slice(-30)
@@ -34,11 +35,11 @@ function extractBpData(logs: HealthLogRow[]) {
   return logs
     .filter((l) => l.kind === "blood_pressure")
     .map((l) => {
-      const val = l.value as { systolic?: number; diastolic?: number }
+      const val = parseBloodPressureValue(l.value)
       return {
         date: formatDate(l.logged_at),
-        systolic: val.systolic ?? 0,
-        diastolic: val.diastolic ?? 0,
+        systolic: val?.systolic ?? 0,
+        diastolic: val?.diastolic ?? 0,
         rawDate: l.logged_at,
       }
     })

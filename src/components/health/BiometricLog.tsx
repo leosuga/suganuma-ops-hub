@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useHealthLogs, useCreateHealthLog } from "@/lib/queries/health"
 import type { HealthLogKind } from "@/lib/schemas/health"
+import { parseHealthLogValue } from "@/lib/types/health"
 import { cn } from "@/lib/utils"
 
 const KINDS: Array<{ value: HealthLogKind; label: string; unit: string; fields: Array<{ key: string; placeholder: string }> }> = [
@@ -153,7 +154,7 @@ export function BiometricList() {
                 {kind?.label ?? log.kind}
               </span>
               <span className="flex-1 text-[12px] font-mono text-health tabular-nums">
-                {formatValue(log.kind, log.value as Record<string, unknown>)}
+                {formatValue(log.kind, parseHealthLogValue(log.value) ?? {})}
               </span>
               <span className="text-[10px] font-mono text-on-surface/30 w-24 text-right">{dateStr}</span>
             </div>
