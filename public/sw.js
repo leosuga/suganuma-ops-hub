@@ -3,7 +3,6 @@ const OFFLINE_PAGE = "/offline.html"
 const STATIC_ASSETS = "/_next/static/"
 
 self.addEventListener("install", (e) => {
-  console.log("[SW] install", CACHE)
   e.waitUntil(
     caches
       .open(CACHE)
@@ -13,7 +12,6 @@ self.addEventListener("install", (e) => {
 })
 
 self.addEventListener("activate", (e) => {
-  console.log("[SW] activate", CACHE)
   e.waitUntil(
     caches
       .keys()
@@ -106,12 +104,7 @@ self.addEventListener("fetch", (e) => {
 // Background sync para re-tentar requests de API que falharam
 self.addEventListener("sync", (e) => {
   if (e.tag === "api-sync") {
-    e.waitUntil(
-      new Promise((resolve) => {
-        console.log("[SW] background sync triggered")
-        resolve(undefined)
-      })
-    )
+    e.waitUntil(Promise.resolve())
   }
 })
 

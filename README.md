@@ -174,7 +174,7 @@ O token de agente é gerado em **Settings → Agent Tokens** dentro do app.
 
 ## PWA
 
-- `public/manifest.webmanifest` — app instalável
+- `src/app/manifest.ts` — app instalável (gerado pelo Next.js em `/manifest.webmanifest`)
 - `public/sw.js` — Service Worker manual (serwist) v4
 - Navegação: **NetworkOnly** (nunca cachear HTML)
 - Assets Next.js (`_next/static/`): **CacheFirst**

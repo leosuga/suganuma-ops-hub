@@ -10,7 +10,6 @@ import { exportToICal, importFromICal } from "@/lib/ical"
 import { cn } from "@/lib/utils"
 import { dateStr } from "@/lib/date"
 import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, useUpdateAnnualEventSeries, useDeleteAnnualEventSeries, useAnnualTasks, useAnnualAppointments, annualEventKeys } from "@/lib/queries/annual"
-import { useRealtimeTable } from "@/lib/realtime"
 import { useUndoToast } from "@/components/UndoToast"
 import { useState, useRef, useEffect, useMemo, useCallback } from "react"
 import type { AnnualEventRow } from "@/lib/types"
@@ -149,8 +148,6 @@ export function YearView() {
       end_date: dateStr(newEnd),
     })
   }, [allEvents, updateEvent])
-
-  useRealtimeTable("annual_event")
 
   const { show: showToast } = useUndoToast()
 

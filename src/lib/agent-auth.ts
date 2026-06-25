@@ -34,6 +34,7 @@ export async function validateAgentToken(req: NextRequest): Promise<string> {
     .update({ last_used_at: new Date().toISOString() })
     .eq("id", data.id)
     .then(() => {})
+    .catch(() => {})
 
   return data.owner_id
 }
