@@ -28,9 +28,22 @@ const TABLE_QUERY_PREFIX: Record<string, string[]> = {
   annual_event: ["annual-event"],
 }
 
+// Debounce realtime invalidations: when multiple changes arrive in quick succession
+// (e.g. bulk insert, or 3 tables invalidating "calendar" simultaneously),
+// batch them into a single refetch after 300ms.
+const pendingInvalidations = new Map<string, ReturnType<typeof setTimeout>>()
+const INVALIDATION_DEBOUNCE_MS = 300
+
 function invalidatePrefixes(queryClient: ReturnType<typeof useQueryClient>, prefixes: string[]) {
   for (const prefix of prefixes) {
-    queryClient.invalidateQueries({ queryKey: [prefix], exact: false })
+    // Clear any pending invalidation for this prefix and set a new one
+    const existing = pendingInvalidations.get(prefix)
+    if (existing) clearTimeout(existing)
+    const timer = setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: [prefix], exact: false })
+      pendingInvalidations.delete(prefix)
+    }, INVALIDATION_DEBOUNCE_MS)
+    pendingInvalidations.set(prefix, timer)
   }
 }
 

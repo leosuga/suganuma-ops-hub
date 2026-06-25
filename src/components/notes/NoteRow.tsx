@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useUpdateNote } from "@/lib/queries/notes"
@@ -40,7 +40,7 @@ interface NoteRowProps {
   bulkMode?: boolean
 }
 
-export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bulkMode }: NoteRowProps) {
+export const NoteRow = memo(function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bulkMode }: NoteRowProps) {
   const updateNote = useUpdateNote()
   const { data: tasks = [] } = useTasks()
   const { data: linkedTasks = [] } = useTasksByNote(note.id)
@@ -65,10 +65,10 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
     setLinkedTaskId(note.linked_task_id ?? "")
   }, [note])
 
-  const linkedTask = linkedTaskId ? tasks.find(t => t.id === linkedTaskId) : null
+  const linkedTask = useMemo(() => linkedTaskId ? tasks.find(t => t.id === linkedTaskId) : null, [linkedTaskId, tasks])
 
   const frontmatter = useMemo(() => parseFrontmatter(note.content ?? ""), [note.content])
-  const metadataKeys = Object.keys(frontmatter.metadata)
+  const metadataKeys = useMemo(() => Object.keys(frontmatter.metadata), [frontmatter.metadata])
 
   const wikiLinks = useMemo(() => parseWikiLinks(note.content ?? ""), [note.content])
   const backlinks = useMemo(() => {
@@ -113,7 +113,7 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
     await updateNote.mutateAsync({ id: note.id, pinned: !note.pinned })
   }
 
-  const noteContexts = parseContextTags(note.tags)
+  const noteContexts = useMemo(() => parseContextTags(note.tags), [note.tags])
 
   async function handleConvertToTask() {
     const result = await createTask.mutateAsync({
@@ -144,7 +144,7 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
     setEditing(false)
   }
 
-  const dateStr = new Date(note.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })
+  const dateStr = useMemo(() => new Date(note.updated_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" }), [note.updated_at])
 
   if (editing) {
     return (
@@ -504,4 +504,4 @@ export function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bu
       <div className="text-[9px] font-mono text-on-surface/20 mt-2">{dateStr}</div>
     </div>
   )
-}
+})
