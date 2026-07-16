@@ -316,7 +316,6 @@ npm run test:docker
 - **Migration 0031**: `webhook_event` — idempotency tracking para webhooks
 - **`queryOptions` API TanStack v5**: Todas as queries exportam `queryOptions`. `staleTime` e `gcTime` configurados por query (ver seção Performance). `refetchOnWindowFocus: false` global
 - **`sw.js`**: versão `v16`. Estratégia: `_next/static` NetworkFirst, navegação NetworkOnly. Sem background sync (removido placeholder no-op)
-- **Coolify no VPS**: instalado mas **não gerencia deploys**. Deploy manual via GitHub Actions SSH
 - **Next.js 16 `next.config.ts`**: `reactCompiler: true` em root (não `experimental`). `typedRoutes` quebra build com BottomNav strings. `headers()` com `source: "/:path*"` funciona (sintaxe simples); `headers()` com regex `/icon-:size*` quebra Turbopack
 - **Security headers** (2026-06-19): HSTS, CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy configurados via `headers()` em `next.config.ts`
 - **Escaping de caracteres no write tool**: `\u00cd` e outros escapes Unicode podem aparecer em vez de caracteres acentuados ao usar o `write` tool. Sempre revisar arquivos escritos e corrigir acentos manualmente
@@ -331,9 +330,11 @@ npm run test:docker
 - **Endpoint**: `/api/mcp` (Streamable HTTP, spec 2025-06-18)
 - **Auth**: Bearer token (`ops_...`) validado contra `agent_token` table
 - **35 tools**: tasks, finance, health, notes, meals, habits, projects, budget, calendar, reports, dashboard, semantic search
-- **Rate limiting**: 120 req/min por IP, bloqueio 60s. Cleanup automático a cada 5min via `setInterval`
+- **Rate limiting**: 120 req/min por IP (namespace `mcp`), bloqueio 60s. Cleanup automático a cada 5min via `setInterval`
+- **Agent API rate limiting**: 60 req/min por IP (namespace `agent`) aplicado via `middleware.ts` em `/api/agent/*` (25 rotas)
 - **Audit log**: tabela `mcp_audit_log` registra toda tool call com `tool_name`, `success`, `duration_ms`, `args`
 - **API timeout**: `agentApi` usa `AbortController` com 30s timeout (`MCP_API_TIMEOUT_MS` env override)
+- **Input validation**: rotas agent validam query params (`parseMonthParam`, `validateIsoDateTime`, `validateHealthKind`, `parseLimitParam`) e path params (`validateUuidParam`) via helpers em `agent-auth.ts`
 - **stdio proxy** (`mcp-server/src/index.ts`): conecta ao remote `/api/mcp` via StreamableHTTP, expõe tools via stdio. Reconexao exponencial (5 retries) + retry em tool calls com erro de transporte
 - **Type safety**: schemas Zod passados direto ao `registerTool` (SDK suporta Zod v3/v4 nativamente via `zod-json-schema-compat`)
 - **Docs**: `docs/openclaw-mcp.md` (remote HTTP), `docs/claude-hermes-mcp.md` (stdio proxy)
@@ -350,6 +351,9 @@ npm run test:docker
 - **CSV import Zod validation**: cada row do CSV é validada contra `transactionSchema` antes de inserir no DB. Rows inválidas são silenciadas
 - **Export/Import FK sanitization**: import stripa FKs cross-tabela para evitar dangling references ao importar dados de outro usuário
 - **JSON column validators**: `parseAttachments` (notes), `parseWeightValue`/`parseBloodPressureValue`/`parseGlucoseValue`/`parseHealthLogValue` (health_log.value) — substituem casts `as Type`
+- **`.error` checked em todos `Promise.all`**: calendar.ts (3 queries), reports.ts (4 queries), budget.ts (maybeSingle lookup), meals.ts (meal_plan lookup). Ignorar `.error` causava linhas duplicadas em upserts e perda silenciosa de dados
+- **Reports tem realtime**: `useReports` chama `useRealtimeTable("task")`, `useRealtimeTable("transaction")`, `useRealtimeTable("habit_entry")`. `TABLE_QUERY_PREFIX` mapeia essas tabelas para `reports` prefix
+- **Sem useEffect+Supabase direto**: HabitStats e WeeklyReview migrados para TanStack Query (`useAllHabitEntries`, `useHabits`). Componentes que fazem query em useEffect sem `.catch()` travam em loading infinito se a rede falha
 
 ## Component Patterns (2026-06-19)
 - **`React.memo`**: `NoteRow` envolvido em `memo()` — previne re-render quando parent re-renderiza sem mudar props
@@ -419,3 +423,9 @@ npm run test:docker
 | 2026-06-19 | **`syncNoteEmbedding` era dead code** — definida mas nunca chamada. Notas criadas/atualizadas não eram indexadas no Qdrant. Wire no `onSettled` das mutations resolve | Semantic search bug |
 | 2026-06-19 | **MCP SDK aceita Zod schemas v3 e v4 diretamente** como `inputSchema` em `registerTool`. O `as any` cast era desnecessário — o tipo `AnySchema = z3.ZodTypeAny \| z4.$ZodType` cobre ambos | MCP type safety |
 | 2026-06-19 | **Caddy bind mount não sincroniza Caddyfile ao vivo** — o arquivo dentro do container pode divergir do host. `docker restart caddy_proxy` força releitura. Usar nome de container no Caddyfile elimina a necessidade de editar após cada deploy | Caddy proxy |
+| 2026-07-16 | **SSH key está no Nextcloud, NÃO no OneDrive** — `~/Library/CloudStorage/Nextcloud-leonardo@nextcloud․suga․com․br/Resources/Chave_Leo`. O `~/.ssh/config` aponta para OneDrive (stale). Usar caminho Nextcloud para SSH | SSH connection |
+| 2026-07-16 | **WEBHOOK_SECRET precisa de deploy para entrar no container** — adicionar o secret no GitHub Actions NÃO atualiza o container em execução. O `.env.prod` só é reescrito no próximo deploy. Commit vazio (`git commit --allow-empty`) força novo deploy | Webhook auth |
+| 2026-07-16 | **Rate limiting via middleware é mais eficiente que por-rota** — aplicar `checkAgentRateLimit` em `/api/agent/*` no `middleware.ts` protege 25 rotas com 1 interceptador, sem modificar cada route handler | Agent API security |
+| 2026-07-16 | **Ignorar `.error` em `maybeSingle()` causa linhas duplicadas** — budget e meal_plan faziam lookup antes de insert/update. Se o lookup falhava (DB transitório), `.error` era ignorado, `existing` era `null`, e o código fazia INSERT em vez de UPDATE. Sempre checar `.error` | Data corruption bug |
+| 2026-07-16 | **useEffect + Supabase sem `.catch()` trava componente para sempre** — HabitStats e WeeklyReview faziam queries em `useEffect([])` sem error handling. Se a rede falhava, `loaded` nunca virava `true`. Migrar para TanStack Query resolve (error/loading automáticos) | UX bug |
+| 2026-07-16 | **`useEffect(..., [note])` com objeto causa reset desnecessário** — `note` muda de identidade a cada re-render do parent (array TanStack Query). Depender de `[note.id, note.title, note.content, note.linked_task_id]` evita reset de estado local | React perf |
