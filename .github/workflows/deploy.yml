@@ -20,9 +20,6 @@ jobs:
             export NEXT_PUBLIC_SUPABASE_ANON_KEY="${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}"
             export SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
             export WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}"
-            export EMAIL_SECRET="${{ secrets.EMAIL_SECRET || secrets.WEBHOOK_SECRET }}"
-            export CSV_SECRET="${{ secrets.CSV_SECRET || secrets.WEBHOOK_SECRET }}"
-            export DEPLOY_SECRET="${{ secrets.DEPLOY_SECRET || secrets.WEBHOOK_SECRET }}"
             export OLLAMA_URL="${{ secrets.OLLAMA_URL || 'http://ollama:11434' }}"
             export QDRANT_URL="${{ secrets.QDRANT_URL || 'http://qdrant:6333' }}"
 
@@ -36,9 +33,6 @@ jobs:
             echo NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY >> .env.prod
             echo SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY >> .env.prod
             echo WEBHOOK_SECRET=$WEBHOOK_SECRET >> .env.prod
-            echo EMAIL_SECRET=$EMAIL_SECRET >> .env.prod
-            echo CSV_SECRET=$CSV_SECRET >> .env.prod
-            echo DEPLOY_SECRET=$DEPLOY_SECRET >> .env.prod
             echo OLLAMA_URL=$OLLAMA_URL >> .env.prod
             echo QDRANT_URL=$QDRANT_URL >> .env.prod
 

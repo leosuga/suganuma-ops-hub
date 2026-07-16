@@ -16,7 +16,7 @@ const bodySchema = z.object({
 export async function POST(req: NextRequest) {
   const rawBody = await req.text()
 
-  if (!(await verifyWebhookHmac(req, rawBody, "EMAIL_SECRET"))) {
+  if (!(await verifyWebhookHmac(req, rawBody))) {
     return NextResponse.json({ error: "Assinatura inválida" }, { status: 401 })
   }
 

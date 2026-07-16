@@ -151,7 +151,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - **Assets Next.js** (`_next/static/`): NetworkFirst (busca rede primeiro, fallback cache se offline)
 - **Outros assets** (scripts, imagens, fonts): StaleWhileRevalidate com validação status 200
 - Cache bucket versionado (`"ops-hub-v15"`, incrementar a cada mudança estrutural no SW)
-- **Background sync**: handler é no-op placeholder (`Promise.resolve()`). Não tenta reenviar mutations falhadas
+- **Background sync**: removido (era no-op placeholder). O app é 100% client-side com realtime WebSocket — sem conexão, não há mutations para retentar
 - **Sem `console.log` em produção**: logs de install/activate/sync foram removidos
 
 ### GitHub Actions deploy.yml — anti-padrões
@@ -181,10 +181,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` — acesso SSH ao VPS
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase client
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side admin
-- `WEBHOOK_SECRET` — HMAC webhooks (legado, fallback)
-- `EMAIL_SECRET` — webhook email-to-task (HMAC separado)
-- `CSV_SECRET` — webhook csv-from-bank (HMAC separado)
-- `DEPLOY_SECRET` — webhook deploy-status (HMAC separado)
+- `WEBHOOK_SECRET` — HMAC webhooks (único secret para todos os 3 webhooks)
 - `COOLIFY_TOKEN` — token API Coolify (opcional, não mais usado no pipeline atual)
 
 ### Deploy troubleshooting
@@ -318,17 +315,16 @@ npm run test:docker
 - **Migration 0030**: `mcp_audit_log` — audit log para MCP tool calls
 - **Migration 0031**: `webhook_event` — idempotency tracking para webhooks
 - **`queryOptions` API TanStack v5**: Todas as queries exportam `queryOptions`. `staleTime` e `gcTime` configurados por query (ver seção Performance). `refetchOnWindowFocus: false` global
-- **`sw.js`**: versão `v15`. Estratégia: `_next/static` NetworkFirst, navegação NetworkOnly
+- **`sw.js`**: versão `v16`. Estratégia: `_next/static` NetworkFirst, navegação NetworkOnly. Sem background sync (removido placeholder no-op)
 - **Coolify no VPS**: instalado mas **não gerencia deploys**. Deploy manual via GitHub Actions SSH
 - **Next.js 16 `next.config.ts`**: `reactCompiler: true` em root (não `experimental`). `typedRoutes` quebra build com BottomNav strings. `headers()` com `source: "/:path*"` funciona (sintaxe simples); `headers()` com regex `/icon-:size*` quebra Turbopack
 - **Security headers** (2026-06-19): HSTS, CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy configurados via `headers()` em `next.config.ts`
 - **Escaping de caracteres no write tool**: `\u00cd` e outros escapes Unicode podem aparecer em vez de caracteres acentuados ao usar o `write` tool. Sempre revisar arquivos escritos e corrigir acentos manualmente
 
 ## Webhooks (2026-06-19)
-- **3 webhooks**: `email-to-task`, `csv-from-bank`, `deploy-status` — cada um com seu próprio secret HMAC
+- **3 webhooks**: `email-to-task`, `csv-from-bank`, `deploy-status` — todos usam `WEBHOOK_SECRET` único
 - HMAC centralizado em `src/lib/webhooks/hmac.ts` com `crypto.timingSafeEqual` (constant-time comparison)
 - **Idempotência**: tabela `webhook_event` com unique constraint `(source, event_key)`. Cada webhook verifica replay antes de processar
-- **Secrets separados**: `EMAIL_SECRET`, `CSV_SECRET`, `DEPLOY_SECRET` (com fallback para `WEBHOOK_SECRET` legado)
 - **Payload schemas**: `email-to-task` aceita `message_id`, `csv-from-bank` aceita `import_id`, `deploy-status` aceita `run_id` para event keys explícitos
 
 ## MCP Server (2026-06-19)

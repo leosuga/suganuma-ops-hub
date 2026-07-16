@@ -1,4 +1,4 @@
-const CACHE = "ops-hub-v15"
+const CACHE = "ops-hub-v16"
 const OFFLINE_PAGE = "/offline.html"
 const STATIC_ASSETS = "/_next/static/"
 
@@ -98,13 +98,6 @@ self.addEventListener("fetch", (e) => {
         })
       )
     )
-  }
-})
-
-// Background sync para re-tentar requests de API que falharam
-self.addEventListener("sync", (e) => {
-  if (e.tag === "api-sync") {
-    e.waitUntil(Promise.resolve())
   }
 })
 

@@ -5,29 +5,18 @@ import { timingSafeEqual } from "node:crypto"
 import { createServiceClient } from "@/lib/supabase/service"
 import { logger } from "@/lib/logger"
 
-export type WebhookSecretName = "EMAIL_SECRET" | "CSV_SECRET" | "DEPLOY_SECRET"
-
 /**
  * Verify HMAC-SHA256 signature of the raw body using a constant-time comparison.
- * Falls back to `WEBHOOK_SECRET` (legacy) if the specific secret env var is unset,
- * logging a deprecation warning so callers can migrate.
+ * Uses `WEBHOOK_SECRET` env var for all webhook routes.
  */
 export async function verifyWebhookHmac(
   req: Request,
-  rawBody: string,
-  secretName: WebhookSecretName
+  rawBody: string
 ): Promise<boolean> {
-  const specificSecret = process.env[secretName]
-  const legacySecret = process.env.WEBHOOK_SECRET
-  const secret = specificSecret ?? legacySecret
-
+  const secret = process.env.WEBHOOK_SECRET
   if (!secret) {
-    logger.warn("webhook", `No secret configured for ${secretName}`, {})
+    logger.warn("webhook", "No WEBHOOK_SECRET configured", {})
     return false
-  }
-
-  if (!specificSecret && legacySecret) {
-    logger.warn("webhook", `Using legacy WEBHOOK_SECRET for ${secretName} — configure ${secretName} separately`, {})
   }
 
   const sig = req.headers.get("x-hub-signature-256") ?? ""
