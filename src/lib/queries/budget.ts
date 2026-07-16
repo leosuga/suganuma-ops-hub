@@ -33,12 +33,13 @@ export function useUpdateBudget() {
   return useMutation({
     mutationFn: async ({ month, target }: { id?: string; month: string; target: number }) => {
       const supabase = createClient()
-      const { data: existing } = await supabase.from("budget").select("id").eq("month", month).maybeSingle()
+      const { data: existing, error: lookupError } = await supabase.from("budget").select("id").eq("month", month).maybeSingle()
+      if (lookupError) throw lookupError
       if (existing) {
         const { data, error } = await supabase
           .from("budget")
           .update({ target, updated_at: new Date().toISOString() })
-          .eq("id", (existing as any).id)
+          .eq("id", existing.id)
           .select()
           .single()
         if (error) throw error

@@ -63,7 +63,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, allNotes, selecte
     setTitle(note.title)
     setContent(note.content ?? "")
     setLinkedTaskId(note.linked_task_id ?? "")
-  }, [note])
+  }, [note.id, note.title, note.content, note.linked_task_id])
 
   const linkedTask = useMemo(() => linkedTaskId ? tasks.find(t => t.id === linkedTaskId) : null, [linkedTaskId, tasks])
 

@@ -91,13 +91,15 @@ export function useSetMealPlan() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")
 
-      const { data: existing } = await supabase
+      const { data: existing, error: lookupError } = await supabase
         .from("meal_plan")
         .select("id")
         .eq("owner_id", user.id)
         .eq("date", plan.date)
         .eq("meal_type", plan.meal_type)
         .maybeSingle()
+
+      if (lookupError) throw lookupError
 
       if (existing) {
         const { data, error } = await supabase

@@ -104,6 +104,23 @@ export function useHabitEntries(habitId?: string) {
   return useQuery(habitEntriesOptions(habitId))
 }
 
+export function useAllHabitEntries(limit = 400) {
+  useRealtimeTable("habit_entry")
+  return useQuery({
+    queryKey: ["habits", "entries", "all", limit] as const,
+    queryFn: async (): Promise<HabitEntryRow[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("habit_entry")
+        .select("habit_id, done_on")
+        .order("done_on", { ascending: false })
+        .limit(limit)
+      if (error) throw error
+      return (data ?? []) as HabitEntryRow[]
+    },
+  })
+}
+
 export function useLogHabitEntry() {
   const queryClient = useQueryClient()
   return useMutation({

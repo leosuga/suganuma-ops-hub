@@ -1,6 +1,5 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 
 interface DayHeaderProps {
@@ -43,23 +42,4 @@ export function DayHeader({ maxDays, dayWidth }: DayHeaderProps) {
       </div>
     </div>
   )
-}
-
-export function useDynamicDayWidth(maxDays: number) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [dayWidth, setDayWidth] = useState(24)
-
-  useEffect(() => {
-    function calc() {
-      if (ref.current) {
-        const available = ref.current.clientWidth - 36 // subtract label
-        setDayWidth(Math.max(16, Math.floor(available / maxDays)))
-      }
-    }
-    calc()
-    window.addEventListener("resize", calc)
-    return () => window.removeEventListener("resize", calc)
-  }, [maxDays])
-
-  return { ref, dayWidth }
 }

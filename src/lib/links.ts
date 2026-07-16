@@ -25,10 +25,3 @@ export function renderWikiLinksToMarkdown(content: string): string {
     return `[${label}](/notes?search=${encodeURIComponent(target.trim())})`
   })
 }
-
-export function findBacklinks(targetTitle: string, allNotes: { id: string; title: string; content: string | null }[]): { id: string; title: string }[] {
-  const normalizedTarget = targetTitle.toLowerCase().trim()
-  return allNotes
-    .filter((n) => n.id !== targetTitle && (n.content?.toLowerCase().includes(`[[${normalizedTarget}]]`) || n.content?.toLowerCase().includes(`[[${normalizedTarget}|`)))
-    .map((n) => ({ id: n.id, title: n.title }))
-}

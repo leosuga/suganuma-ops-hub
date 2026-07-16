@@ -1,5 +1,6 @@
 import { queryOptions, useQuery } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeTable } from "@/lib/realtime"
 
 export interface ReportsData {
   tasks: { id: string; completed_at: string | null; due_at: string | null; created_at: string }[]
@@ -59,6 +60,12 @@ export function reportsOptions(period: number | "all" = 30) {
               .limit(1000)
           : supabase.from("habit_entry").select("habit_id, done_on").limit(1000),
       ])
+
+      if (t.error) throw t.error
+      if (tr.error) throw tr.error
+      if (h.error) throw h.error
+      if (e.error) throw e.error
+
       return {
         tasks: (t.data ?? []) as ReportsData["tasks"],
         transactions: (tr.data ?? []) as ReportsData["transactions"],
@@ -70,5 +77,8 @@ export function reportsOptions(period: number | "all" = 30) {
 }
 
 export function useReports(period: number | "all" = 30) {
+  useRealtimeTable("task")
+  useRealtimeTable("transaction")
+  useRealtimeTable("habit_entry")
   return useQuery(reportsOptions(period))
 }

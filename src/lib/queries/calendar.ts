@@ -52,10 +52,16 @@ export function calendarOptions(from: string, to: string) {
           .order("date", { ascending: true }),
       ])
 
+      if (appointments.error) throw appointments.error
+      if (tasks.error) throw tasks.error
+      if (mealPlans.error) throw mealPlans.error
+
+      type RawMealPlan = { id: string; date: string; meal_type: string; meal_id: string | null; meal: { id: string; name: string; kind: string; tags: string[] | null } | null }
+
       return {
         appointments: (appointments.data ?? []) as AppointmentCal[],
         tasks: (tasks.data ?? []) as TaskCal[],
-        mealPlans: (mealPlans.data ?? []) as unknown as MealPlanCal[],
+        mealPlans: (mealPlans.data ?? []) as RawMealPlan[] as MealPlanCal[],
       }
     },
   })

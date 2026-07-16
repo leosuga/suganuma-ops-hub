@@ -1,8 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import type { HabitTrackRow } from "@/lib/queries/habits"
+import { useAllHabitEntries } from "@/lib/queries/habits"
 import { cn } from "@/lib/utils"
 
 function startOfWeek(d: Date) {
@@ -19,18 +18,9 @@ interface HabitStatsProps {
 }
 
 export function HabitStats({ habits }: HabitStatsProps) {
-  const [entries, setEntries] = useState<any[]>([])
-  const [loaded, setLoaded] = useState(false)
+  const { data: entries = [], isLoading } = useAllHabitEntries(400)
 
-  useEffect(() => {
-    const supabase = createClient()
-    supabase.from("habit_entry").select("habit_id, done_on").limit(400).then((res) => {
-      setEntries(res.data ?? [])
-      setLoaded(true)
-    })
-  }, [])
-
-  if (!loaded || habits.length === 0) return null
+  if (isLoading || habits.length === 0) return null
 
   const active = habits.filter((h) => h.active)
   const now = new Date()

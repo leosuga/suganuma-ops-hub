@@ -41,7 +41,3 @@ export function injectFrontmatter(content: string, metadata: Record<string, stri
   const frontmatter = `---\n${lines.join("\n")}\n---\n\n`
   return frontmatter + existing.body
 }
-
-export function stripFrontmatter(content: string): string {
-  return parseFrontmatter(content).body
-}

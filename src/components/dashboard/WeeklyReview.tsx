@@ -1,18 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
 import type { TaskRow } from "@/lib/queries/tasks"
+import { useHabits, useAllHabitEntries } from "@/lib/queries/habits"
 
 function startOfWeek(d: Date) {
   const date = new Date(d)
   const day = date.getDay()
   const diff = date.getDate() - day + (day === 0 ? -6 : 1)
   return new Date(date.setDate(diff))
-}
-
-function dayLabel(d: Date) {
-  return d.toLocaleDateString("pt-BR", { weekday: "short" }).replace(".", "").substring(0, 3)
 }
 
 const DAY_NAMES = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"]
@@ -22,21 +17,8 @@ interface WeeklyReviewProps {
 }
 
 export function WeeklyReview({ tasks }: WeeklyReviewProps) {
-  const [habitTracks, setHabitTracks] = useState<any[]>([])
-  const [entries, setEntries] = useState<any[]>([])
-  const [loaded, setLoaded] = useState(false)
-
-  useEffect(() => {
-    const supabase = createClient()
-    Promise.all([
-      supabase.from("habit_track").select("id, name, emoji, color, active"),
-      supabase.from("habit_entry").select("habit_id, done_on").limit(300),
-    ]).then(([h, e]) => {
-      setHabitTracks((h.data ?? []).filter((x: any) => x.active))
-      setEntries(e.data ?? [])
-      setLoaded(true)
-    })
-  }, [])
+  const { data: allHabits = [] } = useHabits()
+  const { data: entries = [], isLoading } = useAllHabitEntries(300)
 
   const now = new Date()
   now.setHours(0, 0, 0, 0)
@@ -64,8 +46,9 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
 
   const pendingNow = tasks.filter((t) => t.status === "todo" || t.status === "doing").length
 
-  if (!loaded) return null
+  if (isLoading) return null
 
+  const habitTracks = allHabits.filter((h) => h.active)
   const activeHabits = habitTracks.length
   const activeDays = weekDays.filter((day) => day <= now).length
 

@@ -10,9 +10,9 @@ type ChangePayload = RealtimePostgresChangesPayload<Record<string, unknown>>
 const activeChannels = new Map<string, { channel: RealtimeChannel; refCount: number }>()
 
 const TABLE_QUERY_PREFIX: Record<string, string[]> = {
-  task: ["tasks", "calendar"],
+  task: ["tasks", "calendar", "reports"],
   note: ["notes"],
-  transaction: ["finance"],
+  transaction: ["finance", "reports"],
   account: ["finance"],
   health_log: ["health"],
   appointment: ["health", "calendar"],
@@ -22,8 +22,8 @@ const TABLE_QUERY_PREFIX: Record<string, string[]> = {
   project: ["projects"],
   meal: ["meals"],
   meal_plan: ["meals", "calendar"],
-  habit_track: ["habits"],
-  habit_entry: ["habits"],
+  habit_track: ["habits", "reports"],
+  habit_entry: ["habits", "reports"],
   budget: ["budget"],
   annual_event: ["annual-event"],
 }

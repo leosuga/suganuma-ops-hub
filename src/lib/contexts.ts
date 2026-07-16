@@ -39,7 +39,3 @@ export function removeContextTag(tags: string[] | null, context: string): string
   const tag = `ctx/${context}`
   return (tags ?? []).filter((t) => t !== tag)
 }
-
-export function formatContextTag(context: string): string {
-  return `ctx/${context}`
-}

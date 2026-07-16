@@ -32,8 +32,3 @@ export function useInitAccent() {
     setAccent(getAccent())
   }, [])
 }
-
-export function useAccent() {
-  useInitAccent()
-  return { getAccent, setAccent, accents: ACCENTS }
-}
