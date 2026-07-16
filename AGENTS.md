@@ -309,7 +309,7 @@ npm run test:docker
 - `due_at` é `string | null` no DB mas `string | undefined` no Zod schema — usar `undefined` nos mutations
 - **Realtime**: tabelas adicionadas à `supabase_realtime` publication: task, account, transaction, note, meal, meal_plan, habit_track, habit_entry, project, budget, appointment, health_log, pregnancy, protocol, protocol_entry, annual_event
 - **Realtime debounce**: invalidações são debounce por 300ms por prefixo (`pendingInvalidations` Map em `realtime.ts`). Múltiplas mudanças simultâneas (ex: 3 tabelas invalidando `calendar`) resultam em 1 refetch em vez de 3
-- **`TABLE_QUERY_PREFIX`** mapeia tabelas DB → prefixes de query key: `task→["tasks","calendar"]`, `appointment→["health","calendar"]`, `meal_plan→["meals","calendar"]`, etc. Tabelas podem invalidar múltiplos prefixes
+- **`TABLE_QUERY_PREFIX`** mapeia tabelas DB → prefixes de query key: `task→["tasks","calendar","reports"]`, `appointment→["health","calendar"]`, `meal_plan→["meals","calendar"]`, `transaction→["finance","reports"]`, `habit_entry→["habits","reports"]`, etc. Tabelas podem invalidar múltiplos prefixes
 - **Tipos planos** (`src/lib/types/*.ts`): 9 arquivos (task, project, finance, health, note, meal, habit, budget, index). Substituem `database.types.ts` para type checking
 - **Migrations SQL executadas manualmente** via Supabase SQL editor (0010-0031). NÃO são executadas automaticamente pelo deploy
 - **Migration 0030**: `mcp_audit_log` — audit log para MCP tool calls
@@ -386,7 +386,7 @@ npm run test:docker
 |---|---|---|---|
 | **1 — Foundation** ✅ | PARA categorization + Frontmatter YAML parser + Daily Notes | Low | — |
 | **2 — Connectivity** ✅ | Bidirectional links `[[Note]]` + Inline tasks `- [ ]` sync | Medium | Phase 1 |
-| **3 — Intelligence** | Semantic search (pgvector) + Webhooks for input/output | High | pgvector on Supabase |
+| **3 — Intelligence** ✅ | Semantic search (Ollama + Qdrant) + Embedding auto-sync on CRUD | High | Ollama + Qdrant on VPS |
 
 ### Implementation Notes
 - **Frontmatter**: Parse `---\nkey: value\n---` from top of `content` column; no schema migration needed for metadata
@@ -394,7 +394,7 @@ npm run test:docker
 - **Daily Notes**: Query by title pattern `YYYY-MM-DD` OR add `daily_date` column; link from calendar
 - **Bidirectional links**: Regex `\[\[(.*?)\]\]` in content; use `title` as temporary key (no slugs yet); backlinks via `content LIKE '%[[title]]%'`
 - **Inline tasks**: Detect `- [ ]` / `- [x]` in content; sync creates/updates tasks via `linked_note_id` on task table
-- **Semantic search**: Requires `pgvector` extension + `embedding` column; generate via OpenAI API on insert/update
+- **Semantic search**: Implemented with Ollama (nomic-embed-text) + Qdrant self-hosted. Embeddings auto-synced via `syncNoteEmbedding`/`deleteNoteEmbedding` server actions on note CRUD
 
 ## Deploy Critical Lessons — Session History (Cumulative)
 
