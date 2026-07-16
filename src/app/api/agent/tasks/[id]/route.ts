@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { validateAgentToken, unauthorized, badRequest, serverError } from "@/lib/agent-auth"
+import { validateAgentToken, unauthorized, badRequest, serverError, validateUuidParam } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
 import { z } from "zod"
 
@@ -22,6 +22,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!parsed.success) return badRequest(JSON.stringify(parsed.error.flatten().fieldErrors))
 
   const { id } = await params
+  if (!validateUuidParam(id)) return badRequest("ID inválido")
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from("task")

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { validateAgentToken, unauthorized, badRequest, serverError } from "@/lib/agent-auth"
+import { validateAgentToken, unauthorized, badRequest, serverError, validateUuidParam, parseLimitParam } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
 import { z } from "zod"
 
@@ -14,7 +14,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   try { ownerId = await validateAgentToken(req) } catch { return unauthorized() }
 
   const { id } = await params
-  const limit = Math.min(Number(req.nextUrl.searchParams.get("limit") ?? "90"), 500)
+  if (!validateUuidParam(id)) return badRequest("ID inválido")
+  const limit = parseLimitParam(req.nextUrl.searchParams.get("limit"), 90, 500)
 
   const supabase = createServiceClient()
   const { data, error } = await supabase
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try { ownerId = await validateAgentToken(req) } catch { return unauthorized() }
 
   const { id } = await params
+  if (!validateUuidParam(id)) return badRequest("ID inválido")
   const body = await req.json().catch(() => ({}))
   const parsed = entrySchema.safeParse(body)
   if (!parsed.success) return badRequest(JSON.stringify(parsed.error.flatten().fieldErrors))

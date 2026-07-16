@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateAgentToken, unauthorized, badRequest, serverError } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
+import { z } from "zod"
 import { parseTitle } from "@/lib/parse-title"
+
+const parseBodySchema = z.object({
+  title: z.string().min(1).max(500),
+  notes: z.string().optional(),
+})
 
 // POST /api/agent/tasks/parse
 // Cria task usando o parser inteligente do QuickAdd (projetos, categoria, prioridade, due_at, tags, delegado, recorrência, importante)
@@ -10,8 +16,9 @@ export async function POST(req: NextRequest) {
   try { ownerId = await validateAgentToken(req) } catch { return unauthorized() }
 
   const body = await req.json().catch(() => ({}))
-  const raw = typeof body.title === "string" ? body.title : ""
-  if (!raw.trim()) return badRequest("title é obrigatório")
+  const parsedBody = parseBodySchema.safeParse(body)
+  if (!parsedBody.success) return badRequest(JSON.stringify(parsedBody.error.flatten().fieldErrors))
+  const raw = parsedBody.data.title
 
   const supabase = createServiceClient()
 
@@ -29,7 +36,7 @@ export async function POST(req: NextRequest) {
     .insert({
       owner_id: ownerId,
       title: parsed.title,
-      notes: body.notes ?? parsed.notes ?? "",
+      notes: parsedBody.data.notes ?? parsed.notes ?? "",
       category: parsed.category ?? "personal",
       priority: parsed.priority ?? "med",
       due_at: parsed.due_at ?? null,

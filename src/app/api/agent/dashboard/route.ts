@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { validateAgentToken, unauthorized, serverError } from "@/lib/agent-auth"
+import { validateAgentToken, unauthorized, serverError, parseMonthParam } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
 
 // GET /api/agent/dashboard — agregado cross-domain
@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
   let ownerId: string
   try { ownerId = await validateAgentToken(req) } catch { return unauthorized() }
 
-  const month = req.nextUrl.searchParams.get("month") ?? new Date().toISOString().slice(0, 7)
+  const month = parseMonthParam(req.nextUrl.searchParams.get("month"))
   const [year, mon] = month.split("-").map(Number)
   const from = `${year}-${String(mon).padStart(2, "0")}-01`
   const to = new Date(year, mon, 0).toISOString().slice(0, 10)

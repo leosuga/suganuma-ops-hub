@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/service"
+import { z } from "zod"
 
 async function sha256hex(str: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str))
@@ -28,7 +29,6 @@ export async function validateAgentToken(req: NextRequest): Promise<string> {
     throw new AgentAuthError("Token não encontrado ou revogado")
   }
 
-  // Fire-and-forget — não bloqueia a resposta
   supabase
     .from("agent_token")
     .update({ last_used_at: new Date().toISOString() })
@@ -51,4 +51,39 @@ export function badRequest(msg: string) {
 
 export function serverError(msg = "Erro interno") {
   return NextResponse.json({ error: msg }, { status: 500 })
+}
+
+// ── Query param & path param validation helpers ──
+
+const uuidSchema = z.string().uuid()
+
+export function validateUuidParam(value: string): boolean {
+  return uuidSchema.safeParse(value).success
+}
+
+const monthSchema = z.string().regex(/^\d{4}-\d{2}$/, "Formato YYYY-MM")
+const isoDateTimeSchema = z.string().datetime()
+const healthKindSchema = z.enum(["weight", "blood_pressure", "glucose", "heart_rate", "sleep", "medication", "symptom", "note"])
+
+export function parseMonthParam(value: string | null): string {
+  const fallback = new Date().toISOString().slice(0, 7)
+  if (!value) return fallback
+  const parsed = monthSchema.safeParse(value)
+  return parsed.success ? value : fallback
+}
+
+export function validateIsoDateTime(value: string | null): string | null {
+  if (!value) return null
+  return isoDateTimeSchema.safeParse(value).success ? value : null
+}
+
+export function validateHealthKind(value: string | null): string | null {
+  if (!value) return null
+  return healthKindSchema.safeParse(value).success ? value : null
+}
+
+export function parseLimitParam(value: string | null, fallback: number, max: number): number {
+  const n = Number(value ?? String(fallback))
+  if (isNaN(n) || n < 1) return fallback
+  return Math.min(n, max)
 }

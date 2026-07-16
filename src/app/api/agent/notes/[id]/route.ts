@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { validateAgentToken, unauthorized, badRequest, serverError } from "@/lib/agent-auth"
+import { validateAgentToken, unauthorized, badRequest, serverError, validateUuidParam } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
 import { z } from "zod"
 
@@ -20,6 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!parsed.success) return badRequest(JSON.stringify(parsed.error.flatten().fieldErrors))
 
   const { id } = await params
+  if (!validateUuidParam(id)) return badRequest("ID inválido")
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from("note")
@@ -40,6 +41,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   try { ownerId = await validateAgentToken(req) } catch { return unauthorized() }
 
   const { id } = await params
+  if (!validateUuidParam(id)) return badRequest("ID inválido")
   const supabase = createServiceClient()
   const { error } = await supabase
     .from("note")

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { validateAgentToken, unauthorized, serverError } from "@/lib/agent-auth"
+import { validateAgentToken, unauthorized, serverError, validateHealthKind, validateIsoDateTime, parseLimitParam } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
 
 // GET /api/agent/health/biometrics?kind=&since=&limit=
@@ -8,9 +8,9 @@ export async function GET(req: NextRequest) {
   try { ownerId = await validateAgentToken(req) } catch { return unauthorized() }
 
   const { searchParams } = req.nextUrl
-  const kind = searchParams.get("kind")
-  const since = searchParams.get("since") // ISO datetime
-  const limit = Math.min(Number(searchParams.get("limit") ?? "100"), 500)
+  const kind = validateHealthKind(searchParams.get("kind"))
+  const since = validateIsoDateTime(searchParams.get("since"))
+  const limit = parseLimitParam(searchParams.get("limit"), 100, 500)
 
   const supabase = createServiceClient()
   let query = supabase
