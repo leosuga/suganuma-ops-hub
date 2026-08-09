@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, Suspense } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -11,7 +11,6 @@ import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
 import { useProjects } from "@/lib/queries/projects"
 import { CategoryChips } from "@/components/tasks/CategoryChips"
 import { TaskRow } from "@/components/tasks/TaskRow"
-import { QuickAddDialog } from "@/components/tasks/QuickAddDialog"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { VirtualizedList } from "@/components/VirtualizedList"
 import { useUndoToast } from "@/components/UndoToast"
@@ -19,10 +18,11 @@ import { useUndoToast } from "@/components/UndoToast"
 const EditTaskDialog = dynamic(() => import("@/components/tasks/EditTaskDialog").then(m => ({ default: m.EditTaskDialog })), {
   loading: () => <div className="fixed inset-0 z-50 bg-black/50 animate-pulse" />,
 })
+const QuickAddDialog = dynamic(() => import("@/components/tasks/QuickAddDialog").then(m => ({ default: m.QuickAddDialog })), { ssr: false })
 
 type Category = "finance" | "logistics" | "personal" | "health"
 
-export default function TasksPage() {
+function TasksPageInner() {
   useTitle("Tasks · Suganuma Ops Hub")
   const searchParams = useSearchParams()
   const [category, setCategory] = useState<Category | null>(null)
@@ -40,7 +40,7 @@ export default function TasksPage() {
   const toast = useUndoToast()
   const createNote = useCreateNote()
 
-  function handleCreateNote(task: TaskRowType) {
+  const handleCreateNote = useCallback((task: TaskRowType) => {
     const ctxFromTags = task.tags?.filter((t) => t.startsWith("ctx/")) ?? []
     createNote.mutate({
       title: task.title,
@@ -49,7 +49,7 @@ export default function TasksPage() {
       tags: ctxFromTags.length > 0 ? ctxFromTags : undefined,
       pinned: false,
     })
-  }
+  }, [createNote])
 
   const projectFilter = searchParams.get("project")
   const projectFilterName = projectFilter
@@ -83,7 +83,7 @@ export default function TasksPage() {
     {} as Partial<Record<Category, number>>
   )
 
-  function handleToggle(id: string, currentStatus: string) {
+  const handleToggle = useCallback((id: string, currentStatus: string) => {
     const isDone = currentStatus === "done"
     const task = tasks.find((t) => t.id === id)
     updateTask.mutate({
@@ -109,14 +109,14 @@ export default function TasksPage() {
         due_at: nextDue.toISOString(),
         recurrence: task.recurrence,
         project_id: task.project_id ?? undefined,
-         delegated_to: task.delegated_to ?? undefined,
+        delegated_to: task.delegated_to ?? undefined,
         important: task.important,
         tags: task.tags,
       })
     }
-  }
+  }, [tasks, updateTask, createTask])
 
-  function handleDelete(id: string) {
+  const handleDelete = useCallback((id: string) => {
     const task = tasks.find((t) => t.id === id)
     if (!task) return
     deleteTask.mutate(id, {
@@ -136,20 +136,21 @@ export default function TasksPage() {
         })
       },
     })
-  }
+  }, [tasks, deleteTask, createTask, toast])
 
   const renderTaskRow = useCallback((index: number) => {
     const task = filtered[index]
     return (
       <TaskRow
+        key={task.id}
         task={task}
-        onToggle={() => handleToggle(task.id, task.status)}
-        onEdit={() => setEditingTask(task)}
-        onDelete={() => handleDelete(task.id)}
-        onCreateNote={() => handleCreateNote(task)}
+        onToggle={handleToggle}
+        onEdit={setEditingTask}
+        onDelete={handleDelete}
+        onCreateNote={handleCreateNote}
       />
     )
-  }, [filtered, handleToggle])
+  }, [filtered, handleToggle, handleDelete, handleCreateNote])
 
   const useVirtual = filtered.length > 50
 
@@ -252,12 +253,12 @@ export default function TasksPage() {
               {filtered.map((task) => (
                 <TaskRow
                   key={task.id}
-        task={task}
-        onToggle={() => handleToggle(task.id, task.status)}
-        onEdit={() => setEditingTask(task)}
-        onDelete={() => handleDelete(task.id)}
-        onCreateNote={() => handleCreateNote(task)}
-      />
+                  task={task}
+                  onToggle={handleToggle}
+                  onEdit={setEditingTask}
+                  onDelete={handleDelete}
+                  onCreateNote={handleCreateNote}
+                />
               ))}
             </div>
           )
@@ -272,5 +273,13 @@ export default function TasksPage() {
       />
     </div>
     </SectionErrorBoundary>
+  )
+}
+
+export default function TasksPage() {
+  return (
+    <Suspense fallback={<div className="h-32 animate-pulse" />}>
+      <TasksPageInner />
+    </Suspense>
   )
 }

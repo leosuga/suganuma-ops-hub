@@ -55,13 +55,15 @@ function contextBar(counts: Record<string, number>, total: number) {
 
 export default function ReviewPage() {
   useTitle("Review · Suganuma Ops Hub")
-  const { data: notes = [] } = useNotes()
-  const { data: tasks = [] } = useTasks()
-  const { data: transactions = [] } = useTransactions()
-  const { data: healthLogs = [] } = useHealthLogs()
-  const { data: appointments = [] } = useAppointments()
+  const { data: notes = [], isLoading: notesLoading } = useNotes()
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks()
+  const { data: transactions = [], isLoading: txLoading } = useTransactions()
+  const { data: healthLogs = [], isLoading: healthLoading } = useHealthLogs()
+  const { data: appointments = [], isLoading: apptLoading } = useAppointments()
   const updateNote = useUpdateNote()
   const [markingDone, setMarkingDone] = useState(false)
+
+  const loading = notesLoading || tasksLoading || txLoading || healthLoading || apptLoading
 
   const { start: weekStart, end: weekEnd } = getWeekRange()
   const weekLabel = formatWeekLabel(weekStart, weekEnd)
@@ -150,6 +152,22 @@ export default function ReviewPage() {
   ]
 
   const hasAnyData = weekNotes.length > 0 || weekTasksDone.length > 0 || weekTransactions.length > 0 || weekAppointments.length > 0 || !!latestWeight
+
+  if (loading) {
+    return (
+      <SectionErrorBoundary label="WEEKLY REVIEW">
+        <div className="p-4 space-y-6 max-w-3xl mx-auto animate-pulse">
+          <div className="h-3 bg-surface rounded-sm w-40" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-20 bg-surface rounded-sm border border-border" />
+            ))}
+          </div>
+          <div className="h-44 bg-surface rounded-sm border border-border" />
+        </div>
+      </SectionErrorBoundary>
+    )
+  }
 
   return (
     <SectionErrorBoundary label="WEEKLY REVIEW">

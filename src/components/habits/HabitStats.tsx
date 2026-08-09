@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import type { HabitTrackRow } from "@/lib/queries/habits"
 import { useAllHabitEntries } from "@/lib/queries/habits"
 import { cn } from "@/lib/utils"
@@ -20,56 +21,64 @@ interface HabitStatsProps {
 export function HabitStats({ habits }: HabitStatsProps) {
   const { data: entries = [], isLoading } = useAllHabitEntries(400)
 
-  if (isLoading || habits.length === 0) return null
+  const stats = useMemo(() => {
+    if (isLoading || habits.length === 0) return null
 
-  const active = habits.filter((h) => h.active)
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  const weekStart = startOfWeek(new Date())
-  const weekEnd = new Date(weekStart)
-  weekEnd.setDate(weekEnd.getDate() + 7)
+    const active = habits.filter((h) => h.active)
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const weekStart = startOfWeek(new Date())
+    const weekEnd = new Date(weekStart)
+    weekEnd.setDate(weekEnd.getDate() + 7)
 
-  const weekDays: Date[] = []
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(weekStart)
-    d.setDate(d.getDate() + i)
-    weekDays.push(d)
-  }
-  const activeDays = weekDays.filter((day) => day <= now).length
-
-  const entrySet = new Set<string>()
-  for (const e of entries) {
-    entrySet.add(`${e.habit_id}::${new Date(e.done_on).toDateString()}`)
-  }
-
-  let bestStreak = 0
-  let bestStreakName = ""
-  for (const h of active) {
-    const days = new Set(
-      entries
-        .filter((e) => e.habit_id === h.id)
-        .map((e) => new Date(e.done_on).toDateString())
-    )
-    let streak = 0
-    let check = new Date(now)
-    while (days.has(check.toDateString())) {
-      streak++
-      check.setDate(check.getDate() - 1)
+    const weekDays: Date[] = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart)
+      d.setDate(d.getDate() + i)
+      weekDays.push(d)
     }
-    if (streak > bestStreak) {
-      bestStreak = streak
-      bestStreakName = h.name
-    }
-  }
+    const activeDays = weekDays.filter((day) => day <= now).length
 
-  const totalChecks = weekDays.slice(0, activeDays).reduce((count, day) => {
+    const entrySet = new Set<string>()
+    for (const e of entries) {
+      entrySet.add(`${e.habit_id}::${new Date(e.done_on).toDateString()}`)
+    }
+
+    let bestStreak = 0
+    let bestStreakName = ""
     for (const h of active) {
-      if (entrySet.has(`${h.id}::${day.toDateString()}`)) count++
+      const days = new Set(
+        entries
+          .filter((e) => e.habit_id === h.id)
+          .map((e) => new Date(e.done_on).toDateString())
+      )
+      let streak = 0
+      let check = new Date(now)
+      while (days.has(check.toDateString())) {
+        streak++
+        check.setDate(check.getDate() - 1)
+      }
+      if (streak > bestStreak) {
+        bestStreak = streak
+        bestStreakName = h.name
+      }
     }
-    return count
-  }, 0)
-  const maxChecks = active.length * activeDays
-  const weekRate = maxChecks > 0 ? Math.round((totalChecks / maxChecks) * 100) : 0
+
+    const totalChecks = weekDays.slice(0, activeDays).reduce((count, day) => {
+      for (const h of active) {
+        if (entrySet.has(`${h.id}::${day.toDateString()}`)) count++
+      }
+      return count
+    }, 0)
+    const maxChecks = active.length * activeDays
+    const weekRate = maxChecks > 0 ? Math.round((totalChecks / maxChecks) * 100) : 0
+
+    return { active, now, weekDays, activeDays, entrySet, bestStreak, bestStreakName, weekRate }
+  }, [habits, entries, isLoading])
+
+  if (!stats) return null
+
+  const { active, now, weekDays, activeDays, entrySet, bestStreak, bestStreakName, weekRate } = stats
 
   return (
     <div className="p-4 space-y-4">

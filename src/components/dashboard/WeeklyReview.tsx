@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import type { TaskRow } from "@/lib/queries/tasks"
 import { useHabits, useAllHabitEntries } from "@/lib/queries/habits"
 
@@ -20,42 +21,47 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
   const { data: allHabits = [] } = useHabits()
   const { data: entries = [], isLoading } = useAllHabitEntries(300)
 
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  const weekStart = startOfWeek(new Date())
-  const weekEnd = new Date(weekStart)
-  weekEnd.setDate(weekEnd.getDate() + 7)
+  const { completedThisWeek, createdThisWeek, pendingNow, entrySet, habitTracks, weekDays, activeDays } = useMemo(() => {
+    const now = new Date()
+    now.setHours(0, 0, 0, 0)
+    const ws = startOfWeek(new Date())
+    const we = new Date(ws)
+    we.setDate(we.getDate() + 7)
 
-  const weekDays: Date[] = []
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(weekStart)
-    d.setDate(d.getDate() + i)
-    weekDays.push(d)
-  }
+    const days: Date[] = []
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(ws)
+      d.setDate(d.getDate() + i)
+      days.push(d)
+    }
 
-  const completedThisWeek = tasks.filter((t) => {
-    if (!t.completed_at) return false
-    const d = new Date(t.completed_at)
-    return d >= weekStart && d < weekEnd
-  }).length
+    const completed = tasks.filter((t) => {
+      if (!t.completed_at) return false
+      const d = new Date(t.completed_at)
+      return d >= ws && d < we
+    }).length
 
-  const createdThisWeek = tasks.filter((t) => {
-    const d = new Date(t.created_at)
-    return d >= weekStart && d < weekEnd
-  }).length
+    const created = tasks.filter((t) => {
+      const d = new Date(t.created_at)
+      return d >= ws && d < we
+    }).length
 
-  const pendingNow = tasks.filter((t) => t.status === "todo" || t.status === "doing").length
+    const pending = tasks.filter((t) => t.status === "todo" || t.status === "doing").length
+
+    const eSet = new Set<string>()
+    for (const e of entries) {
+      eSet.add(`${e.habit_id}::${new Date(e.done_on).toDateString()}`)
+    }
+
+    const tracks = allHabits.filter((h) => h.active)
+    const aDays = days.filter((day) => day <= now).length
+
+    return { completedThisWeek: completed, createdThisWeek: created, pendingNow: pending, entrySet: eSet, habitTracks: tracks, weekDays: days, activeDays: aDays }
+  }, [tasks, entries, allHabits])
 
   if (isLoading) return null
 
-  const habitTracks = allHabits.filter((h) => h.active)
   const activeHabits = habitTracks.length
-  const activeDays = weekDays.filter((day) => day <= now).length
-
-  const entrySet = new Set<string>()
-  for (const e of entries) {
-    entrySet.add(`${e.habit_id}::${new Date(e.done_on).toDateString()}`)
-  }
 
   return (
     <div className="border border-border bg-surface rounded-sm">

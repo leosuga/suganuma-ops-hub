@@ -138,7 +138,9 @@ export default function ReportsPage() {
   const [period, setPeriod] = useState<number | "all">(30)
   const { data, isLoading } = useReports(period)
 
-  if (isLoading || !data) {
+  const m = useMemo(() => (data ? computeMetrics(data, period) : null), [data, period])
+
+  if (isLoading || !data || !m) {
     return (
       <SectionErrorBoundary label="REPORTS">
         <div className="p-4 space-y-6 animate-pulse">
@@ -154,8 +156,6 @@ export default function ReportsPage() {
       </SectionErrorBoundary>
     )
   }
-
-  const m = useMemo(() => computeMetrics(data, period), [data, period])
 
   return (
     <SectionErrorBoundary label="REPORTS">

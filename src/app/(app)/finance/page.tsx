@@ -7,8 +7,6 @@ import { useAccounts, useTransactions, useDeleteTransaction, useCreateTransactio
 import { FinanceKPIs } from "@/components/finance/FinanceKPIs"
 import { TransactionTable } from "@/components/finance/TransactionTable"
 import { AccountManager } from "@/components/finance/AccountManager"
-import { AddTransactionDialog } from "@/components/finance/AddTransactionDialog"
-import { EditTransactionDialog } from "@/components/finance/EditTransactionDialog"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
 import { currentMonth, addMonths } from "@/lib/date"
@@ -19,6 +17,8 @@ const RevenueChart = dynamic(() => import("@/components/finance/RevenueChart").t
   loading: () => <div className="h-48 animate-pulse rounded-sm bg-surface border border-border" />,
 })
 const CSVImportDialog = dynamic(() => import("@/components/finance/CSVImportDialog").then(m => ({ default: m.CSVImportDialog })), { ssr: false })
+const AddTransactionDialog = dynamic(() => import("@/components/finance/AddTransactionDialog").then(m => ({ default: m.AddTransactionDialog })), { ssr: false })
+const EditTransactionDialog = dynamic(() => import("@/components/finance/EditTransactionDialog").then(m => ({ default: m.EditTransactionDialog })), { ssr: false })
 
 export default function FinancePage() {
   useTitle("Finance · Suganuma Ops Hub")

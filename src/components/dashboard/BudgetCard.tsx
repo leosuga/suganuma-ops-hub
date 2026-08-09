@@ -23,7 +23,7 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
 
   useEffect(() => {
     if (budget) setTarget(String(budget.target))
-  }, [budget])
+  }, [budget?.target])
 
   const budgetTarget = budget?.target ?? 0
   const pct = budgetTarget > 0 ? Math.min(100, Math.round((expense / budgetTarget) * 100)) : 0

@@ -1,20 +1,22 @@
 "use client"
 
-import { useProtocols, useProtocolEntries } from "@/lib/queries/health"
+import { useMemo } from "react"
+import { useProtocols, useAllProtocolEntries } from "@/lib/queries/health"
 
 export function ProtocolsSummary() {
   const { data: protocols = [] } = useProtocols()
-  const active = protocols.filter((p) => p.active)
+  const { data: entries = [] } = useAllProtocolEntries()
   const today = new Date().toISOString().slice(0, 10)
 
-  const checks = active.map((p) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { data: entries = [] } = useProtocolEntries(p.id)
-    return entries.some((e) => e.done_on === today)
-  })
-
-  const doneCount = checks.filter(Boolean).length
-  const total = active.length
+  const { doneCount, total } = useMemo(() => {
+    const activeIds = new Set(protocols.filter((p) => p.active).map((p) => p.id))
+    const doneSet = new Set(
+      entries
+        .filter((e) => e.done_on === today && activeIds.has(e.protocol_id))
+        .map((e) => e.protocol_id)
+    )
+    return { doneCount: doneSet.size, total: activeIds.size }
+  }, [protocols, entries, today])
 
   if (total === 0) return null
 

@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useCallback, useEffect, Suspense } from "rea
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { useTitle } from "@/lib/useTitle"
 import { useNotes, useDeleteNote, useCreateNote, useUpdateNote } from "@/lib/queries/notes"
+import { useTasks } from "@/lib/queries/tasks"
 import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
@@ -25,12 +26,13 @@ function groupTagsByPrefix(tags: string[]): Map<string, string[]> {
   return groups
 }
 
-export default function NotesPage() {
+function NotesPageInner() {
   useTitle("Notes · Suganuma Ops Hub")
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { data: notes = [], isLoading } = useNotes()
+  const { data: tasks = [] } = useTasks()
   const deleteNote = useDeleteNote()
   const createNote = useCreateNote()
   const toast = useUndoToast()
@@ -579,7 +581,7 @@ export default function NotesPage() {
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-teal uppercase">MAPS OF CONTENT</span>
             {mocs.map((n) => (
-              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
+              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} tasks={tasks} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
             ))}
           </div>
         )}
@@ -588,7 +590,7 @@ export default function NotesPage() {
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">FIXADAS</span>
             {pinned.map((n) => (
-              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
+              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} tasks={tasks} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
             ))}
           </div>
         )}
@@ -599,7 +601,7 @@ export default function NotesPage() {
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOTAS</span>
             )}
             {unpinned.map((n) => (
-              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
+              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} tasks={tasks} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
             ))}
           </div>
         )}
@@ -657,5 +659,13 @@ export default function NotesPage() {
         )}
       </div>
     </SectionErrorBoundary>
+  )
+}
+
+export default function NotesPage() {
+  return (
+    <Suspense fallback={<div className="h-32 animate-pulse" />}>
+      <NotesPageInner />
+    </Suspense>
   )
 }

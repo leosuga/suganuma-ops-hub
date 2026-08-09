@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import {
   BarChart,
   Bar,
@@ -51,13 +52,13 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export function RevenueChart({ transactions, isLoading }: RevenueChartProps) {
+  const data = useMemo(() => groupByDay(transactions), [transactions])
+
   if (isLoading) {
     return (
       <div className="border border-border bg-surface rounded-sm p-4 h-48 animate-pulse" />
     )
   }
-
-  const data = groupByDay(transactions)
 
   if (data.length === 0) {
     return (

@@ -114,7 +114,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
         },
       })
     }
-  }, [task])
+  }, [task?.id, task?.title, task?.notes, task?.category, task?.priority, task?.status, task?.due_at, task?.project_id, task?.delegated_to, task?.important, task?.recurrence, task?.tags])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

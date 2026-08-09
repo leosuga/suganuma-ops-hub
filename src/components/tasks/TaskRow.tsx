@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef, useCallback, memo } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
 import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
@@ -23,13 +23,13 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 interface TaskRowProps {
   task: TaskRowType
-  onToggle: () => void
-  onEdit?: () => void
-  onDelete?: () => void
-  onCreateNote?: () => void
+  onToggle: (id: string, status: string) => void
+  onEdit?: (task: TaskRowType) => void
+  onDelete?: (id: string) => void
+  onCreateNote?: (task: TaskRowType) => void
 }
 
-export function TaskRow({ task, onToggle, onEdit, onDelete, onCreateNote }: TaskRowProps) {
+export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete, onCreateNote }: TaskRowProps) {
   const isDone = task.status === "done"
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [swipeX, setSwipeX] = useState(0)
@@ -71,15 +71,15 @@ export function TaskRow({ task, onToggle, onEdit, onDelete, onCreateNote }: Task
     }
 
     if (swipeX < -70 && onDelete) {
-      onDelete()
+      onDelete(task.id)
     } else if (swipeX > 70) {
-      onToggle()
+      onToggle(task.id, task.status)
     }
 
     setTouchStart(null)
     setSwipeX(0)
     swipingRef.current = false
-  }, [swipeX, onDelete, onToggle])
+  }, [swipeX, onDelete, onToggle, task.id, task.status])
 
   return (
     <div
@@ -119,7 +119,7 @@ export function TaskRow({ task, onToggle, onEdit, onDelete, onCreateNote }: Task
       >
         {/* Checkbox */}
         <button
-          onClick={onToggle}
+          onClick={() => onToggle(task.id, task.status)}
           aria-label={isDone ? "Marcar como pendente" : "Marcar como concluída"}
           className={cn(
             "flex-none w-3.5 h-3.5 rounded-[3px] border transition-colors",
@@ -214,7 +214,7 @@ export function TaskRow({ task, onToggle, onEdit, onDelete, onCreateNote }: Task
 
         {onCreateNote && (
           <button
-            onClick={(e) => { e.stopPropagation(); onCreateNote() }}
+            onClick={(e) => { e.stopPropagation(); onCreateNote(task) }}
             className="flex-none w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-teal transition-colors rounded-sm text-[11px]"
             aria-label={`Criar nota para: ${task.title}`}
           >
@@ -224,7 +224,7 @@ export function TaskRow({ task, onToggle, onEdit, onDelete, onCreateNote }: Task
 
         {onEdit && (
           <button
-            onClick={(e) => { e.stopPropagation(); onEdit() }}
+            onClick={(e) => { e.stopPropagation(); onEdit(task) }}
             className="flex-none w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-teal transition-colors rounded-sm text-[11px]"
             aria-label={`Editar task: ${task.title}`}
           >
@@ -234,4 +234,4 @@ export function TaskRow({ task, onToggle, onEdit, onDelete, onCreateNote }: Task
       </div>
     </div>
   )
-}
+})

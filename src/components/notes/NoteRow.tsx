@@ -5,7 +5,8 @@ import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useUpdateNote } from "@/lib/queries/notes"
 import type { NoteRow as NoteRowType } from "@/lib/queries/notes"
-import { useTasks, useCreateTask, useUpdateTask, useTasksByNote } from "@/lib/queries/tasks"
+import { useCreateTask, useUpdateTask, useTasksByNote } from "@/lib/queries/tasks"
+import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
 import { useProjects } from "@/lib/queries/projects"
 import { parseFrontmatter } from "@/lib/frontmatter"
 import { parseWikiLinks, renderWikiLinksToMarkdown } from "@/lib/links"
@@ -38,11 +39,11 @@ interface NoteRowProps {
   selected?: boolean
   onToggleSelect?: (id: string) => void
   bulkMode?: boolean
+  tasks?: TaskRowType[]
 }
 
-export const NoteRow = memo(function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bulkMode }: NoteRowProps) {
+export const NoteRow = memo(function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bulkMode, tasks = [] }: NoteRowProps) {
   const updateNote = useUpdateNote()
-  const { data: tasks = [] } = useTasks()
   const { data: linkedTasks = [] } = useTasksByNote(note.id)
   const { data: projects = [] } = useProjects()
   const createTask = useCreateTask()

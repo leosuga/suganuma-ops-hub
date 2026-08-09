@@ -243,6 +243,23 @@ export function useProtocolEntries(protocolId?: string) {
   return useQuery(protocolEntriesOptions(protocolId))
 }
 
+export function useAllProtocolEntries(limit = 200) {
+  useRealtimeTable("protocol_entry")
+  return useQuery({
+    queryKey: ["health", "protocol_entries", "all", limit] as const,
+    queryFn: async (): Promise<ProtocolEntryRow[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("protocol_entry")
+        .select("protocol_id, done_on")
+        .order("done_on", { ascending: false })
+        .limit(limit)
+      if (error) throw error
+      return (data ?? []) as ProtocolEntryRow[]
+    },
+  })
+}
+
 export function useLogProtocolEntry() {
   const queryClient = useQueryClient()
   return useMutation({

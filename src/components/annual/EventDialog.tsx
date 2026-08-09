@@ -69,7 +69,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
       setProjectId(null)
       setLocation(null)
     }
-  }, [initialEvent, initialDate, open])
+  }, [initialEvent?.id, initialDate, open])
 
   function shiftDate(dateStr: string, days: number): string {
     const d = new Date(dateStr + "T00:00:00")

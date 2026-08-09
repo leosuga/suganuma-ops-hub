@@ -37,6 +37,7 @@ export function useNotes() {
 export function dailyNoteOptions(date: string) {
   return queryOptions({
     queryKey: noteKeys.daily(date),
+    enabled: !!date,
     queryFn: async (): Promise<NoteRow | null> => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()

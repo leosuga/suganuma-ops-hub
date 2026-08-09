@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import Link from "next/link"
 import type { TaskRow } from "@/lib/queries/tasks"
 import type { ProjectRow } from "@/lib/queries/projects"
@@ -10,18 +11,22 @@ interface EisenhowerMatrixProps {
 }
 
 export function EisenhowerMatrix({ pending, projects }: EisenhowerMatrixProps) {
-  if (pending.length === 0) return null
+  const quadrants = useMemo(() => {
+    if (pending.length === 0) return null
 
-  const q1 = pending.filter((t) => t.important && (t.priority === "urgent" || (t.due_at && new Date(t.due_at) < new Date())))
-  const q2 = pending.filter((t) => t.important && t.priority !== "urgent" && (!t.due_at || new Date(t.due_at) >= new Date()))
-  const q3 = pending.filter((t) => !t.important && (t.priority === "urgent" || (t.due_at && new Date(t.due_at) < new Date())))
-  const q4 = pending.filter((t) => !t.important && t.priority !== "urgent" && (!t.due_at || new Date(t.due_at) >= new Date()))
-  const quadrants = [
-    { label: "URGENTE + IMPORTANTE", tasks: q1, color: "text-danger" },
-    { label: "IMPORTANTE · NÃO URG", tasks: q2, color: "text-amber" },
-    { label: "URGENTE · NÃO IMPORT", tasks: q3, color: "text-teal" },
-    { label: "NEM URG · NEM IMPORT", tasks: q4, color: "text-on-surface/30" },
-  ]
+    const q1 = pending.filter((t) => t.important && (t.priority === "urgent" || (t.due_at && new Date(t.due_at) < new Date())))
+    const q2 = pending.filter((t) => t.important && t.priority !== "urgent" && (!t.due_at || new Date(t.due_at) >= new Date()))
+    const q3 = pending.filter((t) => !t.important && (t.priority === "urgent" || (t.due_at && new Date(t.due_at) < new Date())))
+    const q4 = pending.filter((t) => !t.important && t.priority !== "urgent" && (!t.due_at || new Date(t.due_at) >= new Date()))
+    return [
+      { label: "URGENTE + IMPORTANTE", tasks: q1, color: "text-danger" },
+      { label: "IMPORTANTE · NÃO URG", tasks: q2, color: "text-amber" },
+      { label: "URGENTE · NÃO IMPORT", tasks: q3, color: "text-teal" },
+      { label: "NEM URG · NEM IMPORT", tasks: q4, color: "text-on-surface/30" },
+    ]
+  }, [pending])
+
+  if (!quadrants) return null
 
   return (
     <div className="border border-border bg-surface rounded-sm">

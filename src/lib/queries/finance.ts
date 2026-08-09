@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, queryOptions, keepPreviousData } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { Account, Transaction } from "@/lib/schemas/finance"
 import type { AccountRow, TransactionRow } from "@/lib/types"
@@ -106,6 +106,7 @@ export function transactionsOptions(filters?: TransactionFilters) {
   return queryOptions({
     queryKey: financeKeys.transactions(filters),
     staleTime: 30_000,
+    placeholderData: keepPreviousData,
     queryFn: async (): Promise<TransactionRow[]> => {
       const supabase = createClient()
       let q = supabase.from("transaction").select("*")

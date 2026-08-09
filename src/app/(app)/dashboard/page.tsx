@@ -149,6 +149,19 @@ export default function DashboardPage() {
   return (
     <SectionErrorBoundary label="DASHBOARD">
       <div className="p-4 space-y-5">
+        {isLoading && (
+          <div className="space-y-5 animate-pulse">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-20 bg-surface rounded-sm border border-border" />
+              ))}
+            </div>
+            <div className="h-44 bg-surface rounded-sm border border-border" />
+            <div className="h-44 bg-surface rounded-sm border border-border" />
+          </div>
+        )}
+        {!isLoading && (
+        <div className="space-y-5">
         <div>
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
             SUGANUMA OPS HUB
@@ -346,7 +359,9 @@ export default function DashboardPage() {
             })}
           </div>
         </div>
+        </div>
       </div>
+      )}
     </SectionErrorBoundary>
   )
 }

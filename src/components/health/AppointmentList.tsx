@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useAppointments, useCreateAppointment, useDeleteAppointment } from "@/lib/queries/health"
 import { cn } from "@/lib/utils"
@@ -60,10 +60,14 @@ export function AddAppointmentDialog({ open, onOpenChange }: AddAppointmentDialo
 export function AppointmentList() {
   const { data: appointments = [], isLoading } = useAppointments()
   const deleteAppt = useDeleteAppointment()
-  const now = new Date()
 
-  const upcoming = appointments.filter((a) => new Date(a.starts_at) >= now)
-  const past = appointments.filter((a) => new Date(a.starts_at) < now)
+  const { upcoming, past } = useMemo(() => {
+    const now = new Date()
+    return {
+      upcoming: appointments.filter((a) => new Date(a.starts_at) >= now),
+      past: appointments.filter((a) => new Date(a.starts_at) < now),
+    }
+  }, [appointments])
 
   if (isLoading) return <div className="border border-border bg-surface rounded-sm h-32 animate-pulse" />
 

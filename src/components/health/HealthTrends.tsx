@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import {
   LineChart,
   Line,
@@ -78,7 +79,7 @@ function BpTooltip({ active, payload, label }: any) {
 }
 
 export function WeightChart({ logs }: HealthTrendsProps) {
-  const data = extractWeightData(logs)
+  const data = useMemo(() => extractWeightData(logs), [logs])
 
   if (data.length < 2) {
     return (
@@ -124,7 +125,7 @@ export function WeightChart({ logs }: HealthTrendsProps) {
 }
 
 export function BloodPressureChart({ logs }: HealthTrendsProps) {
-  const data = extractBpData(logs)
+  const data = useMemo(() => extractBpData(logs), [logs])
 
   if (data.length < 2) {
     return (

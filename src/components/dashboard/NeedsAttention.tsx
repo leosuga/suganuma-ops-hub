@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import type { TaskRow } from "@/lib/queries/tasks"
@@ -131,7 +132,7 @@ function getLabel(item: AttentionItem) {
 }
 
 export function NeedsAttention({ tasks, urgentCount, events = [], appointments = [] }: NeedsAttentionProps) {
-  const items = buildItems(tasks, events, appointments)
+  const items = useMemo(() => buildItems(tasks, events, appointments), [tasks, events, appointments])
   if (items.length === 0) return null
 
   const hasUrgent = urgentCount > 0

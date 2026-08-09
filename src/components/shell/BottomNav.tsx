@@ -66,7 +66,7 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
   return (
     <>
       <nav className={cn("bg-surface/95 border-t border-border z-40", hidden ? "hidden" : "")}>
-        <div className="h-14 flex items-center justify-around px-1">
+        <div className="h-14 flex items-center justify-around px-1 pb-[env(safe-area-inset-bottom)]">
           {NAV_ITEMS.map((item) => {
             const active = pathname.startsWith(item.href)
             return (

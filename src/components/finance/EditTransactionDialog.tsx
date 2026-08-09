@@ -39,7 +39,7 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, account
       setAccountId(transaction.account_id ?? "")
       setOccurredOn(transaction.occurred_on)
     }
-  }, [transaction])
+  }, [transaction?.id, transaction?.kind, transaction?.amount, transaction?.description, transaction?.category, transaction?.account_id, transaction?.occurred_on])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

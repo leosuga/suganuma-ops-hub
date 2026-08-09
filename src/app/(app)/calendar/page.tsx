@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import dynamic from "next/dynamic"
 import { useTitle } from "@/lib/useTitle"
 import Link from "next/link"
 import { useCalendarData } from "@/lib/queries/calendar"
@@ -11,7 +12,8 @@ import { cn } from "@/lib/utils"
 import { today } from "@/lib/date"
 import { fmtShortTime } from "@/lib/format"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
-import { DayDetailModal } from "@/components/calendar/DayDetailModal"
+
+const DayDetailModal = dynamic(() => import("@/components/calendar/DayDetailModal").then(m => ({ default: m.DayDetailModal })), { ssr: false })
 
 const MONTHS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
 const DAY_NAMES = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]

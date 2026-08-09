@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import type { NoteRow } from "@/lib/queries/notes"
 import type { ProjectRow } from "@/lib/queries/projects"
 import { NoteRow as NoteRowComponent } from "@/components/notes/NoteRow"
+import { useTasks } from "@/lib/queries/tasks"
 import { injectFrontmatter } from "@/lib/frontmatter"
 import { cn } from "@/lib/utils"
 
@@ -20,6 +21,7 @@ interface ProjectNotesDialogProps {
 export function ProjectNotesDialog({ open, onOpenChange, project, notes, onDeleteNote, onCreateNote }: ProjectNotesDialogProps) {
   const [newTitle, setNewTitle] = useState("")
   const [creating, setCreating] = useState(false)
+  const { data: tasks = [] } = useTasks()
 
   const projectNotes = useMemo(() => {
     if (!project) return []
@@ -90,6 +92,7 @@ export function ProjectNotesDialog({ open, onOpenChange, project, notes, onDelet
                   note={note}
                   onDelete={onDeleteNote}
                   allNotes={notes}
+                  tasks={tasks}
                 />
               ))}
             </div>

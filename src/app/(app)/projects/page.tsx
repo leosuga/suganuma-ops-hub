@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useCallback } from "react"
+import dynamic from "next/dynamic"
 import { useTitle } from "@/lib/useTitle"
 import { useProjects, useUpdateProject, useDeleteProject, useCreateProject } from "@/lib/queries/projects"
 import type { ProjectRow } from "@/lib/queries/projects"
@@ -9,9 +10,10 @@ import type { TaskRow } from "@/lib/queries/tasks"
 import { useNotes, useDeleteNote, useCreateNote } from "@/lib/queries/notes"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
-import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog"
 import { ProjectCard } from "@/components/projects/ProjectCard"
-import { ProjectNotesDialog } from "@/components/projects/ProjectNotesDialog"
+
+const CreateProjectDialog = dynamic(() => import("@/components/projects/CreateProjectDialog").then(m => ({ default: m.CreateProjectDialog })), { ssr: false })
+const ProjectNotesDialog = dynamic(() => import("@/components/projects/ProjectNotesDialog").then(m => ({ default: m.ProjectNotesDialog })), { ssr: false })
 
 function calcProgress(projectId: string, tasks: TaskRow[]) {
   const projectTasks = tasks.filter((t) => t.project_id === projectId)

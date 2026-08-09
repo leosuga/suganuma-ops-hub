@@ -4,14 +4,17 @@ import { useState } from "react"
 import dynamic from "next/dynamic"
 import { useTitle } from "@/lib/useTitle"
 import { PregnancyCard } from "@/components/health/PregnancyCard"
-import { BiometricList, BiometricLogDialog } from "@/components/health/BiometricLog"
-import { AppointmentList, AddAppointmentDialog } from "@/components/health/AppointmentList"
-import { ProtocolList, AddProtocolDialog } from "@/components/health/ProtocolList"
+import { BiometricList } from "@/components/health/BiometricLog"
+import { AppointmentList } from "@/components/health/AppointmentList"
+import { ProtocolList } from "@/components/health/ProtocolList"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 
 const HealthCharts = dynamic(() => import("@/components/health/HealthCharts"), {
   loading: () => <div className="h-64 animate-pulse rounded-xl bg-surface" />,
 })
+const BiometricLogDialog = dynamic(() => import("@/components/health/BiometricLog").then(m => ({ default: m.BiometricLogDialog })), { ssr: false })
+const AddAppointmentDialog = dynamic(() => import("@/components/health/AppointmentList").then(m => ({ default: m.AddAppointmentDialog })), { ssr: false })
+const AddProtocolDialog = dynamic(() => import("@/components/health/ProtocolList").then(m => ({ default: m.AddProtocolDialog })), { ssr: false })
 
 export default function HealthPage() {
   useTitle("Health · Suganuma Ops Hub")

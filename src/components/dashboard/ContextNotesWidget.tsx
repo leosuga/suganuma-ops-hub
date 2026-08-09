@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo } from "react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { CONTEXT_CONFIG, parseContextTags } from "@/lib/contexts"
@@ -10,16 +11,21 @@ interface ContextNotesWidgetProps {
 }
 
 export function ContextNotesWidget({ notes }: ContextNotesWidgetProps) {
-  const recentByContext: Record<string, NoteRow[]> = {}
-  for (const note of notes) {
-    const ctxs = parseContextTags(note.tags)
-    for (const ctx of ctxs) {
-      if (!recentByContext[ctx]) recentByContext[ctx] = []
-      if (recentByContext[ctx].length < 2) {
-        recentByContext[ctx].push(note)
+  const { recentByContext, counts } = useMemo(() => {
+    const recent: Record<string, NoteRow[]> = {}
+    const cnt: Record<string, number> = {}
+    for (const note of notes) {
+      const ctxs = parseContextTags(note.tags)
+      for (const ctx of ctxs) {
+        cnt[ctx] = (cnt[ctx] ?? 0) + 1
+        if (!recent[ctx]) recent[ctx] = []
+        if (recent[ctx].length < 2) {
+          recent[ctx].push(note)
+        }
       }
     }
-  }
+    return { recentByContext: recent, counts: cnt }
+  }, [notes])
 
   const activeContexts = Object.keys(recentByContext)
   if (activeContexts.length === 0) return null
@@ -39,9 +45,7 @@ export function ContextNotesWidget({ notes }: ContextNotesWidgetProps) {
           const cfg = CONTEXT_CONFIG[ctx]
           if (!cfg) return null
           const ctxNotes = recentByContext[ctx] || []
-          const count = notes.filter((n) =>
-            parseContextTags(n.tags).includes(ctx)
-          ).length
+          const count = counts[ctx] ?? 0
 
           return (
             <div key={ctx} className="p-3">
