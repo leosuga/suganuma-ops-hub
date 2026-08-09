@@ -184,8 +184,8 @@ export default function MealsPage() {
           </div>
         )}
       </div>
-      </div>
       )}
+      </div>
     </SectionErrorBoundary>
   )
 }
