@@ -1,0 +1,182 @@
+"use server"
+
+import { chatCompletion } from "@/lib/ollama"
+import { embedText } from "@/lib/ollama"
+import { ensureCollection, searchNotes } from "@/lib/qdrant"
+import { createClient } from "@/lib/supabase/server"
+import { logger } from "@/lib/logger"
+
+export interface TriageResult {
+  suggested_type: "task" | "note" | "idea" | "reminder" | "multiple"
+  suggested_project_id: string | null
+  suggested_project_name: string | null
+  suggested_priority: "low" | "med" | "high" | "urgent"
+  suggested_tags: string[]
+  suggested_category: "finance" | "logistics" | "personal" | "health" | null
+  action_items: string[]
+  summary: string
+  duplicates: Array<{ id: string; title: string; score: number; type: string }>
+}
+
+const SYSTEM_PROMPT = `Você é um assistente de triagem cognitiva para um sistema de produtividade pessoal (Suganuma Ops Hub).
+Sua tarefa é analisar um pensamento bruto capturado no Inbox e sugerir como ele deve ser organizado.
+
+Regras:
+1. Detecte se o conteúdo é uma Tarefa (ação física executável), Ideia (conceito para explorar), Anotação (informação para registrar), Lembrete (algo para não esquecer), ou Múltiplos itens (vários pensamentos misturados).
+2. Se for vago (ex: "preciso resolver a viagem"), quebre em ações físicas acionáveis (ex: "Pesquisar passagens", "Definir datas", "Reservar hotel").
+3. Sugira a categoria mais provável: finance, logistics, personal, ou health.
+4. Sugira a prioridade: low, med, high, ou urgent.
+5. Sugira tags curtas (1-2 palavras, sem #).
+6. Escreva um resumo de 1 linha.
+
+Responda APENAS em JSON válido com este schema:
+{
+  "suggested_type": "task" | "note" | "idea" | "reminder" | "multiple",
+  "suggested_category": "finance" | "logistics" | "personal" | "health" | null,
+  "suggested_priority": "low" | "med" | "high" | "urgent",
+  "suggested_tags": ["tag1", "tag2"],
+  "action_items": ["ação 1", "ação 2"],
+  "summary": "resumo de 1 linha"
+}`
+
+export async function triageInboxItem(itemId: string): Promise<{ ok: boolean; result?: TriageResult; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    const { data: item, error } = await supabase
+      .from("inbox_item")
+      .select("*")
+      .eq("id", itemId)
+      .eq("owner_id", user.id)
+      .single()
+    if (error || !item) throw new Error("Inbox item not found")
+
+    const { data: projects } = await supabase
+      .from("project")
+      .select("id, name")
+      .eq("owner_id", user.id)
+      .eq("status", "active")
+      .order("name")
+
+    const projectList = projects?.map((p) => `- ${p.name} (id: ${p.id})`).join("\n") ?? ""
+
+    const userPrompt = `Pensamento capturado: "${item.content}"
+
+Projetos ativos do usuário:
+${projectList || "(nenhum projeto ativo)"}
+
+Analise e responda em JSON:`
+
+    const raw = await chatCompletion(
+      [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userPrompt },
+      ],
+      { format: "json", temperature: 0.2 }
+    )
+
+    let parsed: Partial<TriageResult>
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      logger.warn("triageInboxItem", "LLM returned invalid JSON, attempting extraction", { raw: raw.slice(0, 200) })
+      const jsonMatch = raw.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) throw new Error("LLM did not return valid JSON")
+      parsed = JSON.parse(jsonMatch[0])
+    }
+
+    let suggestedProjectId: string | null = null
+    let suggestedProjectName: string | null = null
+    if (parsed.suggested_type && projects) {
+      const contentLower = item.content.toLowerCase()
+      const match = projects.find((p) => contentLower.includes(p.name.toLowerCase()))
+      if (match) {
+        suggestedProjectId = match.id
+        suggestedProjectName = match.name
+      }
+    }
+
+    let duplicates: TriageResult["duplicates"] = []
+    try {
+      const embedding = await embedText(item.content)
+      await ensureCollection()
+      const results = await searchNotes(user.id, embedding, 3, 0.75)
+      if (results.length > 0) {
+        const noteIds = results.map((r) => r.id)
+        const { data: notes } = await supabase
+          .from("note")
+          .select("id, title")
+          .in("id", noteIds)
+          .eq("owner_id", user.id)
+        const notesById = new Map(notes?.map((n) => [n.id, n]) ?? [])
+        duplicates = results
+          .map((r) => {
+            const note = notesById.get(r.id)
+            if (!note) return null
+            return { id: r.id, title: note.title, score: r.score, type: "note" }
+          })
+          .filter(Boolean) as TriageResult["duplicates"]
+      }
+    } catch (dupErr) {
+      logger.warn("triageInboxItem", "Duplicate detection failed (non-blocking)", { error: (dupErr as Error).message })
+    }
+
+    const result: TriageResult = {
+      suggested_type: parsed.suggested_type ?? "task",
+      suggested_project_id: suggestedProjectId,
+      suggested_project_name: suggestedProjectName,
+      suggested_priority: parsed.suggested_priority ?? "med",
+      suggested_tags: parsed.suggested_tags ?? [],
+      suggested_category: parsed.suggested_category ?? null,
+      action_items: parsed.action_items ?? [],
+      summary: parsed.summary ?? item.content.slice(0, 80),
+      duplicates,
+    }
+
+    const { error: updateError } = await supabase
+      .from("inbox_item")
+      .update({ ai_payload: result as unknown as Record<string, unknown> })
+      .eq("id", itemId)
+      .eq("owner_id", user.id)
+    if (updateError) throw updateError
+
+    return { ok: true, result }
+  } catch (err) {
+    logger.error("triageInboxItem", "Failed", { itemId, error: (err as Error).message })
+    return { ok: false, error: (err as Error).message }
+  }
+}
+
+export async function triageAllPending(): Promise<{ ok: boolean; triaged: number; errors: number }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    const { data: pending, error } = await supabase
+      .from("inbox_item")
+      .select("id")
+      .eq("owner_id", user.id)
+      .eq("status", "unprocessed")
+      .is("ai_payload", null)
+      .order("created_at", { ascending: false })
+      .limit(20)
+
+    if (error) throw error
+
+    let triaged = 0
+    let errors = 0
+    for (const item of pending ?? []) {
+      const result = await triageInboxItem(item.id)
+      if (result.ok) triaged++
+      else errors++
+    }
+
+    return { ok: true, triaged, errors }
+  } catch (err) {
+    logger.error("triageAllPending", "Failed", { error: (err as Error).message })
+    return { ok: false, triaged: 0, errors: 0 }
+  }
+}

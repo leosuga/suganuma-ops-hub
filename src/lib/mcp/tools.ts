@@ -621,5 +621,17 @@ export function createTools(): McpToolDefinition[] {
       },
       annotations: { readOnlyHint: true },
     },
+
+    // Daily Cockpit
+    {
+      name: "get_daily_cockpit",
+      description: "Retorna o cockpit do dia: inbox pendente, tasks urgentes/atrasadas, quick wins, proximas consultas e eventos. Use para briefing matinal.",
+      inputSchema: z.object({}),
+      handler: async (_args, ctx) => {
+        const result = await agentApi(ctx.token, "GET", "/api/agent/inbox/cockpit")
+        return formatResult(result)
+      },
+      annotations: { readOnlyHint: true },
+    },
   ]
 }
