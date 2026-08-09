@@ -19,12 +19,11 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: "/notes",
-    label: "NOTES",
+    href: "/inbox",
+    label: "INBX",
     icon: (
       <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-        <path d="M3 2.5h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.2" />
-        <path d="M5 5.5h6M5 8h4M5 10.5h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M2 7l2-5h8l2 5M2 7v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7M2 7h3l1 2h4l1-2h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -50,6 +49,7 @@ const NAV_ITEMS = [
 ]
 
 const HUB_ITEMS = [
+  { href: "/notes", label: "NOTES", desc: "Notas" },
   { href: "/projects", label: "PROJ", desc: "Projetos" },
   { href: "/calendar", label: "CAL", desc: "Calendário" },
   { href: "/review", label: "REV", desc: "Revisão" },
@@ -116,7 +116,7 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
                 <span className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">HUB</span>
                 <button onClick={() => setHubOpen(false)} className="text-[10px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors active:scale-95">FECHAR</button>
               </div>
-              <div className="grid grid-cols-5 gap-1">
+              <div className="grid grid-cols-3 gap-1">
                 {HUB_ITEMS.map((item) => {
                   const active = pathname.startsWith(item.href)
                   return (

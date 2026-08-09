@@ -26,6 +26,7 @@ const TABLE_QUERY_PREFIX: Record<string, string[]> = {
   habit_entry: ["habits", "reports"],
   budget: ["budget"],
   annual_event: ["annual-event"],
+  inbox_item: ["inbox"],
 }
 
 // Debounce realtime invalidations: when multiple changes arrive in quick succession

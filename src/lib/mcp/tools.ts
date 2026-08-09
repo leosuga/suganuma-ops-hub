@@ -586,5 +586,40 @@ export function createTools(): McpToolDefinition[] {
       },
       annotations: { readOnlyHint: true },
     },
+
+    // Inbox
+    {
+      name: "capture_thought",
+      description: "Captura um pensamento, ideia ou lembrete no Inbox com atrito zero. Nao e necessario categorizar — a triagem acontece depois. Use para qualquer pensamento solto que o usuario quer registrar mas ainda nao sabe se vira task, nota ou projeto.",
+      inputSchema: z.object({
+        content: z.string().min(1).max(5000),
+        source: z.enum(["manual", "telegram", "audio", "email", "webhook"]).optional(),
+      }),
+      handler: async (args, ctx) => {
+        const { content, source } = args as { content: string; source?: string }
+        const result = await agentApi(ctx.token, "POST", "/api/agent/inbox", {
+          content,
+          source: source ?? "mcp",
+        })
+        return formatResult(result)
+      },
+    },
+    {
+      name: "inbox_list",
+      description: "Lista itens do Inbox. Filtre por status: unprocessed (pendentes de triagem), triaged, archived, ou all.",
+      inputSchema: z.object({
+        status: z.enum(["unprocessed", "triaged", "archived", "all"]).optional(),
+        limit: z.number().min(1).max(200).optional(),
+      }),
+      handler: async (args, ctx) => {
+        const { status, limit } = args as { status?: string; limit?: number }
+        const result = await agentApi(ctx.token, "GET", "/api/agent/inbox", undefined, {
+          status,
+          limit: limit?.toString(),
+        })
+        return formatResult(result)
+      },
+      annotations: { readOnlyHint: true },
+    },
   ]
 }

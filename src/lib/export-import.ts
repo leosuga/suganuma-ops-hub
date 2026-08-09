@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/client"
 import { logger } from "@/lib/logger"
 
-const TABLES = ["task", "project", "account", "transaction", "health_log", "pregnancy", "appointment", "protocol", "protocol_entry", "note", "meal", "meal_plan", "habit_track", "habit_entry", "budget", "annual_event"] as const
+const TABLES = ["task", "project", "account", "transaction", "health_log", "pregnancy", "appointment", "protocol", "protocol_entry", "note", "meal", "meal_plan", "habit_track", "habit_entry", "budget", "annual_event", "inbox_item"] as const
 
 // FK columns that reference other user-owned tables.
 // These are stripped on import to prevent dangling references when importing
@@ -37,6 +37,7 @@ const IMPORT_ORDER = [
   "meal_plan",
   "habit_entry",
   "budget",
+  "inbox_item",
 ] as const
 
 interface ExportData {
@@ -62,7 +63,7 @@ export async function exportAllData(): Promise<string> {
   }
 
   const exportData: ExportData = {
-    version: "0.2.0",
+    version: "0.3.0",
     exported_at: new Date().toISOString(),
     tables,
   }
