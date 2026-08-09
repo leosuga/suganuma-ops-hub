@@ -356,10 +356,22 @@ npm run test:docker
 - **Sem useEffect+Supabase direto**: HabitStats e WeeklyReview migrados para TanStack Query (`useAllHabitEntries`, `useHabits`). Componentes que fazem query em useEffect sem `.catch()` travam em loading infinito se a rede falha
 
 ## Component Patterns (2026-06-19)
-- **`React.memo`**: `NoteRow` envolvido em `memo()` — previne re-render quando parent re-renderiza sem mudar props
+- **`React.memo` + stable callbacks**: `NoteRow` e `TaskRow` envolvidos em `memo()`. TaskRow aceita callbacks com args (`onToggle: (id, status) => void`) em vez de closures, permitindo que o parent passe `useCallback` estáveis. **Padrão obrigatório para componentes em lista**: passar callbacks com args, não closures `() => handler(item.id)`
 - **`useReducer`**: `EditTaskDialog` usa 1 `useReducer` (12 campos de formulário) em vez de 12 `useState`
 - **Grouped state objects**: `YearView` (dialog state) e `SettingsPage` (token UI state) usam 1 `useState` agrupado em vez de múltiplos independentes
 - **Lazy queries**: `useProjects({ enabled })` e `useUpcomingEvents(limit, { enabled })` aceitam option `enabled` para deferring. Dashboard usa `deferredReady` state para adiar queries below-the-fold
+- **`useMemo` para computações pesadas**: NeedsAttention, ContextNotesWidget, WeeklyReview, EisenhowerMatrix, HabitStats, RevenueChart, HealthTrends, AppointmentList. **Sempre memoizar**: filtering, sorting, Set construction, O(n²) loops
+- **`useEffect` com deps primitivas**: NUNCA usar `[task]` ou `[transaction]` como dep — usar `[task?.id, task?.title, ...]`. Objeto de TanStack Query muda de identidade a cada refetch, causando reset desnecessário de estado local
+- **Suspense em `useSearchParams()`**: Next.js 16 exige `<Suspense>` boundary. Padrão: extrair body em `XxxPageInner`, default export envelopa em `<Suspense fallback={...}>`
+- **Lazy-load dialogs via `dynamic()`**: diálogos só abrem por interação — usar `dynamic(() => import(...).then(m => ({ default: m.X })), { ssr: false })`. Já lazy: EditTaskDialog, QuickAddDialog, AddTransactionDialog, EditTransactionDialog, BiometricLogDialog, AddAppointmentDialog, AddProtocolDialog, CreateProjectDialog, ProjectNotesDialog, DayDetailModal
+- **Loading skeletons**: Dashboard, Meals, Review — `{isLoading && <skeleton/>}` + `{!isLoading && <content/>}`. Previne layout shift (CLS)
+- **`useAllProtocolEntries` pattern**: quando múltiplos componentes precisam de entries de protocols diferentes, usar 1 query `useAllProtocolEntries()` no parent e passar via props. NUNCA chamar hooks em `.map()`
+- **`useAllHabitEntries` pattern**: mesmo padrão para habits. HabitStats e WeeklyReview usam `useAllHabitEntries` em vez de N queries por habit
+- **NoteRow `tasks` prop**: `useTasks()` chamado no parent (NotesPage, ProjectNotesDialog) e passado via prop. Elimina N subscrições `useRealtimeTable("task")` (uma por NoteRow)
+- **`keepPreviousData` em paginação**: `transactionsOptions` usa `placeholderData: keepPreviousData` para transições suaves entre meses no Finance
+- **`enabled` flag em queries condicionais**: `dailyNoteOptions` tem `enabled: !!date` — previne fetch quando DayDetailModal está fechado
+- **BottomNav `safe-area-inset-bottom`**: `pb-[env(safe-area-inset-bottom)]` no inner div — previne home indicator overlapping em iPhones
+- **Componentes extraídos de pages**: HabitRow, AddMealForm, MealRow extraídos de `habits/page.tsx` e `meals/page.tsx`. Componentes inline em páginas impedem tree-shaking — sempre extrair para `src/components/X/`
 
 ---
 
@@ -429,3 +441,8 @@ npm run test:docker
 | 2026-07-16 | **Ignorar `.error` em `maybeSingle()` causa linhas duplicadas** — budget e meal_plan faziam lookup antes de insert/update. Se o lookup falhava (DB transitório), `.error` era ignorado, `existing` era `null`, e o código fazia INSERT em vez de UPDATE. Sempre checar `.error` | Data corruption bug |
 | 2026-07-16 | **useEffect + Supabase sem `.catch()` trava componente para sempre** — HabitStats e WeeklyReview faziam queries em `useEffect([])` sem error handling. Se a rede falhava, `loaded` nunca virava `true`. Migrar para TanStack Query resolve (error/loading automáticos) | UX bug |
 | 2026-07-16 | **`useEffect(..., [note])` com objeto causa reset desnecessário** — `note` muda de identidade a cada re-render do parent (array TanStack Query). Depender de `[note.id, note.title, note.content, note.linked_task_id]` evita reset de estado local | React perf |
+| 2026-08-09 | **Rules of Hooks: `useMemo` após `return` condicional quebra em runtime** — `reports/page.tsx` chamava `useMemo` depois de `if (isLoading) return ...`. Quando `isLoading` transitava de true→false, a ordem de hooks mudava. Mover `useMemo` antes do early return com guard `data ? compute(data) : null` | React crash |
+| 2026-08-09 | **Hooks em `.map()` viola Rules of Hooks** — `ProtocolsSummary` chamava `useProtocolEntries(p.id)` dentro de `active.map()`. Se o número de protocols ativos mudava entre renders, React crashava. Solução: query única `useAllProtocolEntries()` + filtragem no `useMemo` | React crash |
+| 2026-08-09 | **`React.memo` quebrado por callbacks instáveis** — `TaskRow` tinha `memo()` mas o parent passava `() => handleToggle(task.id, task.status)` (nova closure a cada render). Solução: callbacks com args `onToggle: (id, status) => void` + `useCallback` no parent. O memo só funciona se TODAS as props são estáveis | React perf |
+| 2026-08-09 | **JSX `)}` fora de ordem em skeleton wrappers quebra build SWC** — ao envolver conteúdo em `{!isLoading && (<div>...</div>)}`, o `)}` deve vir ANTES do `</div>` do wrapper externo. Ordem correta: `</div>` (interno) → `)}` (condicional) → `</div>` (externo). Balance check de `()` e `{}` não pega este erro — usar `ts.createSourceFile` para validar | Build failure |
+| 2026-08-09 | **`useSearchParams()` sem `<Suspense>` falha no prerender do Next.js 16** — build warning → erro em standalone output. Padrão: extrair body em `XxxPageInner()`, default export envelopa em `<Suspense fallback={<div className="h-32 animate-pulse" />}>` | Build failure |
