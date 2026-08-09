@@ -6,7 +6,7 @@ import { EventDialog } from "./EventDialog"
 import { ColorLegend } from "./ColorLegend"
 import { WeekView } from "./WeekView"
 import { MonthView } from "./MonthView"
-import { exportToICal, importFromICal } from "@/lib/ical"
+
 import { cn } from "@/lib/utils"
 import { dateStr } from "@/lib/date"
 import { useAnnualEvents, useCreateAnnualEvent, useUpdateAnnualEvent, useDeleteAnnualEvent, useUpdateAnnualEventSeries, useDeleteAnnualEventSeries, useAnnualTasks, useAnnualAppointments, annualEventKeys } from "@/lib/queries/annual"
@@ -177,7 +177,8 @@ export function YearView() {
     }, 100)
   }
 
-  function handleExportICal() {
+  async function handleExportICal() {
+    const { exportToICal } = await import("@/lib/ical")
     const ics = exportToICal(filteredEvents)
     const blob = new Blob([ics], { type: "text/calendar" })
     const url = URL.createObjectURL(blob)
@@ -194,9 +195,10 @@ export function YearView() {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       const content = ev.target?.result as string
       if (!content) return
+      const { importFromICal } = await import("@/lib/ical")
       const imported = importFromICal(content)
       for (const event of imported) createEvent.mutate(event)
     }

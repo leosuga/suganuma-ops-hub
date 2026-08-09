@@ -70,7 +70,7 @@ function CallbackInner() {
   }, [router, searchParams])
 
   return (
-    <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+    <div className="min-h-[100dvh] bg-bg flex items-center justify-center p-4">
       <div className="text-center space-y-3">
         <div className="w-2 h-2 rounded-full bg-teal animate-pulse mx-auto" />
         <p className="text-[12px] font-mono text-on-surface">{status}</p>
@@ -93,7 +93,7 @@ function CallbackInner() {
 export default function CallbackPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-bg flex items-center justify-center p-4">
+      <div className="min-h-[100dvh] bg-bg flex items-center justify-center p-4">
         <div className="text-center space-y-3">
           <div className="w-2 h-2 rounded-full bg-teal animate-pulse mx-auto" />
           <p className="text-[12px] font-mono text-on-surface">Verificando autenticação...</p>

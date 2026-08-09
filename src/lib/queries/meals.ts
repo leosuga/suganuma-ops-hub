@@ -13,6 +13,7 @@ export const mealKeys = {
 
 const mealsOptions = queryOptions({
   queryKey: mealKeys.all,
+  staleTime: 5 * 60_000,
   queryFn: async (): Promise<MealRow[]> => {
     const supabase = createClient()
     const { data, error } = await supabase
@@ -62,6 +63,7 @@ export function useDeleteMeal() {
 export function mealPlansOptions(weekStart: string) {
   return queryOptions({
     queryKey: mealKeys.plans(weekStart),
+    staleTime: 5 * 60_000,
     queryFn: async (): Promise<MealPlanRow[]> => {
       const supabase = createClient()
       const endDate = new Date(weekStart)

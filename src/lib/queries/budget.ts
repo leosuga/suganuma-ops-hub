@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeTable } from "@/lib/realtime"
 import type { BudgetRow } from "@/lib/types"
 
 export const budgetKeys = {
@@ -25,6 +26,7 @@ export function budgetOptions(month: string) {
 }
 
 export function useBudget(month: string) {
+  useRealtimeTable("budget")
   return useQuery(budgetOptions(month))
 }
 

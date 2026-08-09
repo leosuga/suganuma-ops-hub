@@ -21,6 +21,7 @@ export const healthKeys = {
 export function healthLogsOptions(kind?: string) {
   return queryOptions({
     queryKey: healthKeys.logs(kind),
+    staleTime: 5 * 60_000,
     queryFn: async (): Promise<HealthLogRow[]> => {
       const supabase = createClient()
       let q = supabase.from("health_log").select("*").order("logged_at", { ascending: false })
@@ -100,6 +101,7 @@ export function useUpsertPregnancy() {
 
 const appointmentsOptions = queryOptions({
   queryKey: healthKeys.appointments,
+  staleTime: 5 * 60_000,
   queryFn: async (): Promise<AppointmentRow[]> => {
     const supabase = createClient()
     const { data, error } = await supabase

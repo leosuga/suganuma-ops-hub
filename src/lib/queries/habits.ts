@@ -14,6 +14,7 @@ export const habitKeys = {
 
 const habitsOptions = queryOptions({
   queryKey: habitKeys.all,
+  staleTime: 5 * 60_000,
   queryFn: async (): Promise<HabitTrackRow[]> => {
     const supabase = createClient()
     const { data, error } = await supabase

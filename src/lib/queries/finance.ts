@@ -24,6 +24,7 @@ export interface TransactionFilters {
 
 const accountsOptions = queryOptions({
   queryKey: financeKeys.accounts,
+  staleTime: 5 * 60_000,
   queryFn: async (): Promise<AccountRow[]> => {
     const supabase = createClient()
     const { data, error } = await supabase

@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: process.env.SKIP_TSC === "1" },
   reactCompiler: true,
   experimental: {
-    optimizePackageImports: ["recharts", "cmdk"],
+    optimizePackageImports: ["recharts", "cmdk", "@supabase/supabase-js", "@tanstack/react-query", "react-markdown", "papaparse"],
   },
   async headers() {
     return [

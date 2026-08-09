@@ -8,7 +8,6 @@ import { createClient } from "@/lib/supabase/client"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { cn } from "@/lib/utils"
 import { getAccent, setAccent, type Accent } from "@/lib/theme"
-import { exportAllData, importAllData } from "@/lib/export-import"
 
 const SelectiveImportDialog = dynamic(() => import("@/components/settings/SelectiveImportDialog").then(m => ({ default: m.SelectiveImportDialog })), {
   loading: () => <div className="fixed inset-0 z-50 bg-black/50 animate-pulse" />,
@@ -114,6 +113,7 @@ export default function SettingsPage() {
   async function handleExport() {
     setExporting(true)
     try {
+      const { exportAllData } = await import("@/lib/export-import")
       const json = await exportAllData()
       const blob = new Blob([json], { type: "application/json" })
       const url = URL.createObjectURL(blob)
@@ -138,6 +138,7 @@ export default function SettingsPage() {
       setImporting(true)
       try {
         const text = await file.text()
+        const { importAllData } = await import("@/lib/export-import")
         const count = await importAllData(text)
         alert(`${count} registros importados com sucesso`)
       } catch {

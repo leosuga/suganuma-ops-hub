@@ -21,6 +21,7 @@ export const calendarKeys = {
 export function calendarOptions(from: string, to: string) {
   return queryOptions({
     queryKey: calendarKeys.range(from, to),
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
