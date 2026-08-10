@@ -332,7 +332,7 @@ export function createTools(): McpToolDefinition[] {
     },
     {
       name: "notes_search_semantic",
-      description: "Busca semantica por similaridade nas notas (Ollama + Qdrant).",
+      description: "Busca híbrida nas notas: combina similaridade vetorial (Qdrant/Ollama) com palavras-chave (FTS/PostgreSQL) usando Reciprocal Rank Fusion. Encontra tanto por significado quanto por termos exatos (nomes de projetos, tags).",
       inputSchema: notesSearchSchema,
       handler: async (args, ctx) => {
         const { query, limit } = notesSearchSchema.parse(args)

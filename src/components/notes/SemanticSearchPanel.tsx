@@ -46,7 +46,7 @@ export function SemanticSearchPanel({ onSelectNote }: SemanticSearchPanelProps) 
       {hasSearched && results.length > 0 && (
         <div className="px-4 pb-3 space-y-1">
           <span className="text-[9px] font-mono text-on-surface/30">
-            {results.length} resultado{results.length !== 1 ? "s" : ""} semântico{results.length !== 1 ? "s" : ""}
+            {results.length} resultado{results.length !== 1 ? "s" : ""} híbrido{results.length !== 1 ? "s" : ""}
           </span>
           {results.map((note) => (
             <button
@@ -63,6 +63,11 @@ export function SemanticSearchPanel({ onSelectNote }: SemanticSearchPanelProps) 
                     {(note.score as number).toFixed(2)}
                   </span>
                 )}
+                {"source" in note && (
+                  <span className="flex-none text-[7px] font-mono text-on-surface/30 border border-on-surface/10 rounded-sm px-1 py-0.5">
+                    {(note.source as string).toUpperCase()}
+                  </span>
+                )}
               </div>
               {note.content && (
                 <p className="text-[10px] font-mono text-on-surface/40 mt-0.5 line-clamp-2">
@@ -76,7 +81,7 @@ export function SemanticSearchPanel({ onSelectNote }: SemanticSearchPanelProps) 
 
       {hasSearched && !isLoading && results.length === 0 && (
         <div className="px-4 pb-3">
-          <p className="text-[11px] font-mono text-on-surface/30">Nenhuma nota semanticamente similar encontrada</p>
+          <p className="text-[11px] font-mono text-on-surface/30">Nenhuma nota similar encontrada</p>
         </div>
       )}
     </div>

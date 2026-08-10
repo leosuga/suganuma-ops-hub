@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateAgentToken, unauthorized, badRequest, serverError } from "@/lib/agent-auth"
-import { semanticSearchNotes } from "@/lib/actions/semantic-search"
+import { hybridSearchNotes } from "@/lib/actions/hybrid-search"
 import { z } from "zod"
 
 const querySchema = z.object({
@@ -23,9 +23,9 @@ export async function GET(req: NextRequest) {
   const { q, limit } = parsed.data
 
   try {
-    const results = await semanticSearchNotes(q, limit)
+    const results = await hybridSearchNotes(q, limit)
     return NextResponse.json({ query: q, results })
   } catch (err) {
-    return serverError(err instanceof Error ? err.message : "Erro na busca semântica")
+    return serverError(err instanceof Error ? err.message : "Erro na busca híbrida")
   }
 }
