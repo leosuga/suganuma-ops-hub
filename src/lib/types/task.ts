@@ -14,6 +14,7 @@ export interface TaskRow {
   recurrence: string | null
   tags: string[] | null
   linked_note_id: string | null
+  energy_level: "low" | "med" | "high" | null
   created_at: string
   updated_at: string
 }
@@ -34,6 +35,7 @@ export interface TaskInsert {
   recurrence?: string | null
   tags?: string[] | null
   linked_note_id?: string | null
+  energy_level?: "low" | "med" | "high" | null
   created_at?: string
   updated_at?: string
 }
@@ -54,6 +56,7 @@ export interface TaskUpdate {
   recurrence?: string | null
   tags?: string[] | null
   linked_note_id?: string | null
+  energy_level?: "low" | "med" | "high" | null
   created_at?: string
   updated_at?: string
 }

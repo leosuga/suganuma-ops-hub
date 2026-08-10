@@ -21,6 +21,7 @@ type TaskVars = {
   recurrence?: string | null
   tags?: string[] | null
   linked_note_id?: string | null
+  energy_level?: string | null
 }
 
 export const taskKeys = {

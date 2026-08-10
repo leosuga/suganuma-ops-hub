@@ -183,6 +183,18 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
           </span>
         )}
 
+        {/* Energy level badge */}
+        {task.energy_level && (
+          <span className={cn(
+            "flex-none text-[7px] font-mono px-1 py-0.5 border rounded-sm",
+            task.energy_level === "high" && "text-purple-400 border-purple-400/30",
+            task.energy_level === "med" && "text-on-surface/40 border-border",
+            task.energy_level === "low" && "text-teal/60 border-teal/30"
+          )}>
+            {task.energy_level === "high" ? "DEEP" : task.energy_level === "low" ? "QUICK" : "MED"}
+          </span>
+        )}
+
         {/* Tags */}
         {task.tags && task.tags.length > 0 && task.tags.map((tag) => (
           <span key={tag} className="flex-none text-[7px] font-mono text-teal px-1 py-0.5 border border-teal/30 rounded-sm">

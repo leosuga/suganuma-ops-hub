@@ -18,6 +18,7 @@ interface ParsedTitle {
   important?: boolean
   recurrence?: string | null
   tags?: string[]
+  energy_level?: "low" | "med" | "high"
 }
 
 export function parseTitle(raw: string, projects: ProjectLike[]): ParsedTitle {
@@ -30,6 +31,7 @@ export function parseTitle(raw: string, projects: ProjectLike[]): ParsedTitle {
   let important: boolean | undefined
   let recurrence: string | null | undefined
   let tags: string[] | undefined
+  let energy_level: "low" | "med" | "high" | undefined
 
   // *diario *semanal *mensal (recurrence)
   const recMatch = title.match(/\*(diari[oa]|semanal|mensal)/i)
@@ -110,5 +112,12 @@ export function parseTitle(raw: string, projects: ProjectLike[]): ParsedTitle {
     title = title.replace(dueMatch[0], "").trim()
   }
 
-  return { title, category, priority, due_at, project_id, delegated_to, important, recurrence, tags }
+  // ~low ~med ~high (energy level)
+  const energyMatch = title.match(/~(low|med|high)/i)
+  if (energyMatch) {
+    energy_level = energyMatch[1].toLowerCase() as "low" | "med" | "high"
+    title = title.replace(energyMatch[0], "").trim()
+  }
+
+  return { title, category, priority, due_at, project_id, delegated_to, important, recurrence, tags, energy_level }
 }

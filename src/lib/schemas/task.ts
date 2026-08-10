@@ -15,6 +15,7 @@ export const taskSchema = z.object({
   recurrence: z.enum(["daily", "weekly", "monthly"]).optional().nullable(),
   tags: z.array(z.string()).optional().nullable(),
   linked_note_id: z.string().uuid().optional().nullable(),
+  energy_level: z.enum(["low", "med", "high"]).optional().nullable(),
 })
 
 export type Task = z.infer<typeof taskSchema>

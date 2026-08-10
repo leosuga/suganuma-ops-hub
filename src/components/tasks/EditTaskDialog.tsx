@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils"
 type Category = "finance" | "logistics" | "personal" | "health"
 type Priority = "low" | "med" | "high" | "urgent"
 type Status = "todo" | "doing" | "done" | "archived"
+type EnergyLevel = "low" | "med" | "high"
 
 const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
   { value: "personal", label: "PERSONAL" },
@@ -34,6 +35,12 @@ const STATUS_OPTIONS: { value: Status; label: string }[] = [
   { value: "archived", label: "ARCHIVED" },
 ]
 
+const ENERGY_OPTIONS: { value: EnergyLevel; label: string }[] = [
+  { value: "low", label: "LOW" },
+  { value: "med", label: "MED" },
+  { value: "high", label: "HIGH" },
+]
+
 interface EditTaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -52,6 +59,7 @@ interface FormState {
   important: boolean
   recurrence: string
   tagsInput: string
+  energyLevel: string
   confirmDelete: boolean
 }
 
@@ -80,6 +88,7 @@ const initialState: FormState = {
   important: false,
   recurrence: "",
   tagsInput: "",
+  energyLevel: "",
   confirmDelete: false,
 }
 
@@ -110,11 +119,12 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           important: task.important ?? false,
           recurrence: task.recurrence ?? "",
           tagsInput: (task.tags ?? []).join(" "),
+          energyLevel: task.energy_level ?? "",
           confirmDelete: false,
         },
       })
     }
-  }, [task?.id, task?.title, task?.notes, task?.category, task?.priority, task?.status, task?.due_at, task?.project_id, task?.delegated_to, task?.important, task?.recurrence, task?.tags])
+  }, [task?.id, task?.title, task?.notes, task?.category, task?.priority, task?.status, task?.due_at, task?.project_id, task?.delegated_to, task?.important, task?.recurrence, task?.tags, task?.energy_level])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -134,6 +144,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       important?: boolean
       recurrence?: string | null
       tags?: string[] | null
+      energy_level?: string | null
     } = {
       id: task.id,
       title: state.title.trim(),
@@ -147,6 +158,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       important: state.important,
       recurrence: state.recurrence || null,
       tags: state.tagsInput.trim() ? state.tagsInput.trim().split(/\s+/).filter(Boolean) : null,
+      energy_level: state.energyLevel || null,
     }
 
     if (state.status === "done" && task.status !== "done") {
@@ -376,6 +388,29 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                     "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
                     state.priority === opt.value
                       ? "bg-teal/15 text-teal border-teal/40"
+                      : "text-on-surface/40 border-border hover:border-on-surface/30"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+              Energia
+            </span>
+            <div className="flex gap-1.5 flex-wrap">
+              {ENERGY_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => dispatch({ type: "field", key: "energyLevel", value: state.energyLevel === opt.value ? "" : opt.value })}
+                  className={cn(
+                    "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
+                    state.energyLevel === opt.value
+                      ? "bg-purple-400/15 text-purple-400 border-purple-400/40"
                       : "text-on-surface/40 border-border hover:border-on-surface/30"
                   )}
                 >
