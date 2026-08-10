@@ -62,8 +62,10 @@ Schemas testados: `tests/schemas.test.ts` (38 testes Zod)
   - `@Nome` — delegação (campo `delegated_to`)
   - `+importante` — toggle boolean `important` (Eisenhower)
   - `*diario|*semanal|*mensal` — recorrência (coluna `recurrence`)
+  - `~low|med|high` — energia necessária (coluna `energy_level`). `~high` = deep work, `~low` = quick win
 - **Recorrência** (`0014_recurrence.sql`): ao concluir task com `recurrence`, o sistema auto-cria a próxima task (due_at = +1d/+7d/+1m). A nova task herda: título, categoria, prioridade, projeto, delegado, importante, tags
 - **Tags** (`0015_tags.sql`): coluna `tags text[]` na task. Exibidas como pills `#tag` no TaskRow. Filtro por tag na TasksPage
+- **Energy level** (`0034_task_energy_level.sql`): coluna `energy_level` (low/med/high). Badge no TaskRow: DEEP (high/purple), MED (med/neutral), QUICK (low/teal). EditTaskDialog tem seletor toggle
 - **Notas vinculadas**: tasks podem ter notas vinculadas (`linked_task_id` em note, FK com `on delete set null`). EditTaskDialog mostra lista de notas vinculadas
 - **Matriz de Eisenhower**: Dashboard exibe quadrantes (Urg+Imp / Imp+NãoUrg / Urg+NãoImp / NemUrgNemImp) filtrados por `important` e `priority`/`due_at`
 
@@ -316,6 +318,7 @@ npm run test:docker
 - **Migration 0031**: `webhook_event` — idempotency tracking para webhooks
 - **Migration 0032**: `inbox_item` — captura de atrito zero com triagem posterior
 - **Migration 0033**: `search_vector` tsvector + GIN em note/task — Hybrid RAG (FTS + Vector + RRF)
+- **Migration 0034**: `energy_level` em task (low/med/high) — filtro de energia disponível
 - **`queryOptions` API TanStack v5**: Todas as queries exportam `queryOptions`. `staleTime` e `gcTime` configurados por query (ver seção Performance). `refetchOnWindowFocus: false` global
 - **`sw.js`**: versão `v16`. Estratégia: `_next/static` NetworkFirst, navegação NetworkOnly. Sem background sync (removido placeholder no-op)
 - **Next.js 16 `next.config.ts`**: `reactCompiler: true` em root (não `experimental`). `typedRoutes` quebra build com BottomNav strings. `headers()` com `source: "/:path*"` funciona (sintaxe simples); `headers()` com regex `/icon-:size*` quebra Turbopack
@@ -468,3 +471,5 @@ npm run test:docker
 | 2026-08-10 | **Ollama Cloud usa API idêntica ao local** — mesmo `/api/chat` com `format: "json"`, mas com header `Authorization: Bearer $OLLAMA_API_KEY`. Fallback: se key ausente ou cloud falhar, cair para local `llama3.2` — nada quebra | Architecture |
 | 2026-08-10 | **GitHub Secrets só entram no container no próximo deploy** — adicionar `OLLAMA_API_KEY` ao GitHub Actions NÃO atualiza o container em execução. Commit vazio (`git commit --allow-empty`) força novo deploy | Deploy |
 | 2026-08-10 | **MCP Resources exigem `resources` capability no `McpServer`** — sem `resources: { listChanged: false }` no constructor options, `registerResource` não é anunciado ao client. Adicionar capability + registrar handlers com `ctx.ownerId` para scoping | MCP |
+| 2026-08-10 | **`energy_level` em tasks: token `~low\|med\|high` no parseTitle** — novo token adicionado após `^date`. Sintaxe completa: `>projeto #cat !pri ^date @del +imp *rec ~energy`. Badge no TaskRow: DEEP (high/purple), MED (med/neutral), QUICK (low/teal) | Feature |
+| 2026-08-10 | **`triageAllPending` server action precisa de hook + botão UI** — a função existia mas não estava wired na UI. Hook `useTriageAllPending` + botão "TRIAR TUDO" no header do /inbox resolve. Processa até 20 items sem `ai_payload` | Inbox |
