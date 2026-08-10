@@ -49,6 +49,7 @@ const NAV_ITEMS = [
 ]
 
 const HUB_ITEMS = [
+  { href: "/cockpit", label: "COCK", desc: "Cockpit" },
   { href: "/notes", label: "NOTES", desc: "Notas" },
   { href: "/projects", label: "PROJ", desc: "Projetos" },
   { href: "/calendar", label: "CAL", desc: "Calendário" },

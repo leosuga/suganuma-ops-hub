@@ -100,10 +100,10 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 
 ## Export/Import (2026-06-19)
 - `exportAllData()` / `importAllData(json)` em `src/lib/export-import.ts`
-- Exporta **16 tabelas**: task, project, account, transaction, health_log, pregnancy, appointment, protocol, protocol_entry, note, meal, meal_plan, habit_track, habit_entry, budget, annual_event
+- Exporta **17 tabelas**: task, project, account, transaction, health_log, pregnancy, appointment, protocol, protocol_entry, note, meal, meal_plan, habit_track, habit_entry, budget, annual_event, **inbox_item**
 - Import total: substitui `owner_id` pelo usuário atual, stripa `id`/`created_at`/`updated_at`, **stripa FKs cross-tabela** (`project_id`, `linked_task_id`, `account_id`, `meal_id`, `habit_id`, `protocol_id`, `pregnancy_id`, `series_id`) para evitar dangling references
 - Import em ordem parent-first (project, account, meal, habit_track, protocol, pregnancy, annual_event, ...)
-- Export version: `0.2.0`
+- Export version: `0.3.0`
 - **Import seletivo** (`src/components/settings/SelectiveImportDialog.tsx`): dialog que lista tabelas do JSON com contagem de linhas, permite selecionar quais importar
 - UI na página Settings com 3 botões: Exportar backup, Importar seletivo, Importar tudo
 
@@ -305,15 +305,17 @@ npm run test:docker
 - Node.js v25.6.0 local, **v22-alpine em produção** — vitest 4.1.5 funciona mas pode ter instabilidades. Usar `--no-watch`.
 - **Build**: `SKIP_TSC=1` no Dockerfile (permanente). Build no VPS ~60s via SWC. Type checking via VSCode local, NÃO no deploy.
 - **Workflow**: 1 job único (sem typecheck paralelo). Job `typecheck` removido em 2026-05-20 — nunca completava (~70 arquivos TS strict).
-- BottomNav mobile máximo 5 itens (DASH, CAL, TASKS, FIN, HUB)
+- BottomNav mobile máximo 5 itens (DASH, INBX, TASKS, FIN, HUB). HUB menu: COCK, NOTES, PROJ, CAL, REV, HLTH, SET
 - `due_at` é `string | null` no DB mas `string | undefined` no Zod schema — usar `undefined` nos mutations
-- **Realtime**: tabelas adicionadas à `supabase_realtime` publication: task, account, transaction, note, meal, meal_plan, habit_track, habit_entry, project, budget, appointment, health_log, pregnancy, protocol, protocol_entry, annual_event
+- **Realtime**: tabelas adicionadas à `supabase_realtime` publication: task, account, transaction, note, meal, meal_plan, habit_track, habit_entry, project, budget, appointment, health_log, pregnancy, protocol, protocol_entry, annual_event, **inbox_item**
 - **Realtime debounce**: invalidações são debounce por 300ms por prefixo (`pendingInvalidations` Map em `realtime.ts`). Múltiplas mudanças simultâneas (ex: 3 tabelas invalidando `calendar`) resultam em 1 refetch em vez de 3
-- **`TABLE_QUERY_PREFIX`** mapeia tabelas DB → prefixes de query key: `task→["tasks","calendar","reports"]`, `appointment→["health","calendar"]`, `meal_plan→["meals","calendar"]`, `transaction→["finance","reports"]`, `habit_entry→["habits","reports"]`, etc. Tabelas podem invalidar múltiplos prefixes
+- **`TABLE_QUERY_PREFIX`** mapeia tabelas DB → prefixes de query key: `task→["tasks","calendar","reports"]`, `appointment→["health","calendar"]`, `meal_plan→["meals","calendar"]`, `transaction→["finance","reports"]`, `habit_entry→["habits","reports"]`, `inbox_item→["inbox"]`, etc. Tabelas podem invalidar múltiplos prefixes
 - **Tipos planos** (`src/lib/types/*.ts`): 9 arquivos (task, project, finance, health, note, meal, habit, budget, index). Substituem `database.types.ts` para type checking
-- **Migrations SQL executadas manualmente** via Supabase SQL editor (0010-0031). NÃO são executadas automaticamente pelo deploy
+- **Migrations SQL executadas manualmente** via Supabase SQL editor (0010-0033). NÃO são executadas automaticamente pelo deploy
 - **Migration 0030**: `mcp_audit_log` — audit log para MCP tool calls
 - **Migration 0031**: `webhook_event` — idempotency tracking para webhooks
+- **Migration 0032**: `inbox_item` — captura de atrito zero com triagem posterior
+- **Migration 0033**: `search_vector` tsvector + GIN em note/task — Hybrid RAG (FTS + Vector + RRF)
 - **`queryOptions` API TanStack v5**: Todas as queries exportam `queryOptions`. `staleTime` e `gcTime` configurados por query (ver seção Performance). `refetchOnWindowFocus: false` global
 - **`sw.js`**: versão `v16`. Estratégia: `_next/static` NetworkFirst, navegação NetworkOnly. Sem background sync (removido placeholder no-op)
 - **Next.js 16 `next.config.ts`**: `reactCompiler: true` em root (não `experimental`). `typedRoutes` quebra build com BottomNav strings. `headers()` com `source: "/:path*"` funciona (sintaxe simples); `headers()` com regex `/icon-:size*` quebra Turbopack
@@ -329,7 +331,8 @@ npm run test:docker
 ## MCP Server (2026-06-19)
 - **Endpoint**: `/api/mcp` (Streamable HTTP, spec 2025-06-18)
 - **Auth**: Bearer token (`ops_...`) validado contra `agent_token` table
-- **35 tools**: tasks, finance, health, notes, meals, habits, projects, budget, calendar, reports, dashboard, semantic search
+- **38 tools**: tasks, finance, health, notes, meals, habits, projects, budget, calendar, reports, dashboard, semantic search, **inbox (capture_thought, inbox_list)**, **get_daily_cockpit**
+- **Resources** (2026-08-10): `brain://active_projects` e `brain://inbox/unprocessed` — contexto read-only para AI clients (Claude Desktop). Scoped por `ctx.ownerId`
 - **Rate limiting**: 120 req/min por IP (namespace `mcp`), bloqueio 60s. Cleanup automático a cada 5min via `setInterval`
 - **Agent API rate limiting**: 60 req/min por IP (namespace `agent`) aplicado via `middleware.ts` em `/api/agent/*` (25 rotas)
 - **Audit log**: tabela `mcp_audit_log` registra toda tool call com `tool_name`, `success`, `duration_ms`, `args`
@@ -339,12 +342,27 @@ npm run test:docker
 - **Type safety**: schemas Zod passados direto ao `registerTool` (SDK suporta Zod v3/v4 nativamente via `zod-json-schema-compat`)
 - **Docs**: `docs/openclaw-mcp.md` (remote HTTP), `docs/claude-hermes-mcp.md` (stdio proxy)
 
-## Semantic Search (2026-06-19)
-- **Ollama** (`nomic-embed-text`) + **Qdrant** self-hosted
-- `syncNoteEmbedding(noteId)` é server action em `src/lib/actions/semantic-search.ts`
-- **Chamada em**: `useCreateNote.onSettled`, `useUpdateNote.onSettled`, `useDeleteNote.onSettled` (delete via `deleteNoteEmbedding`)
-- **Fire-and-forget**: `.catch(() => null)` — falhas não bloqueiam a UI
-- Busca via `semanticSearchNotes(query, limit)` → embed query → Qdrant search → fetch full notes from Supabase
+## Inbox & Auto-Triage (2026-08-09)
+- **Tabela `inbox_item`** (migration 0032): content, source (manual/telegram/audio/email/webhook/mcp), ai_payload (jsonb), status (unprocessed/triaged/archived), triaged_at. RLS + realtime
+- **Captura de atrito zero**: UI `/inbox` (Omni-Capture Bar) + MCP `capture_thought` + Agent API `POST /api/agent/inbox`
+- **LLM Auto-Triage** (`src/lib/actions/inbox-triage.ts`): server action que chama Ollama Cloud (`gpt-oss:20b`) com JSON mode. Extrai: tipo (task/note/idea/reminder/multiple), categoria, prioridade, tags, action_items (quebra pensamentos vagos em ações físicas), summary. Salva em `ai_payload`
+- **Detecção de duplicatas**: embed do conteúdo → Qdrant search (threshold 0.75) → lista notas similares no `ai_payload.duplicates`
+- **Batch triage**: `triageAllPending()` processa até 20 items sem `ai_payload`. Botão "TRIAR TUDO" na UI
+- **Conversão**: 1 toque → TASK (usa action_items[0] + categoria/prioridade/tags sugeridas) ou NOTE (usa summary + tags). Teclado: J/K navegar, T task, N note, I triar IA, A arquivar
+- **Daily Cockpit**: página `/cockpit` (UI) + `GET /api/agent/inbox/cockpit` (API) + MCP `get_daily_cockpit` (tool). Briefing: inbox pendente, urgentes, atrasadas, quick wins, consultas, eventos
+
+## Ollama — Embeddings local + Chat Cloud (2026-08-10)
+- **Embeddings**: `nomic-embed-text` no Ollama local do VPS (768-dim). Usado por Qdrant sync, busca semântica, detecção de duplicatas. Latência baixa, privado, zero custo
+- **Chat**: Ollama Cloud (`https://ollama.com`) com `OLLAMA_API_KEY` (Bearer). Modelo `gpt-oss:20b` (default, `OLLAMA_CHAT_MODEL`). Usado pela auto-triage
+- **Fallback**: se `OLLAMA_API_KEY` não estiver setada ou cloud falhar, `chatCompletion()` cai para o Ollama local (`llama3.2`). Nada quebra
+- **Env vars**: `OLLAMA_URL` (local), `OLLAMA_CLOUD_URL`, `OLLAMA_API_KEY`, `OLLAMA_CHAT_MODEL` — todas no deploy.yml
+
+## Semantic Search — Hybrid RAG (2026-08-10)
+- **Migration 0033**: `search_vector` tsvector + GIN index + triggers em `note` e `task` (title weight A, content weight B, config `portuguese`)
+- **`hybridSearchNotes()`** (`src/lib/actions/hybrid-search.ts`): combina Qdrant vector (threshold 0.5) + PostgreSQL FTS (`textSearch`) com **Reciprocal Rank Fusion** (k=60). Resultados em ambas as fontes sobem no ranking
+- **source**: `vector` | `fts` | `hybrid` — badge na UI (SemanticSearchPanel)
+- **Fallbacks**: se Qdrant falhar → só FTS; se FTS falhar → só vector. Nunca quebra
+- **MCP**: `notes_search_semantic` usa hybrid search
 
 ## Data Safety (2026-06-19)
 - **Reports query bounded**: `useReports(period)` filtra por data no DB (30/90/365 dias). Tasks limit 500, transactions limit 1000, habit entries limit 1000. `period="all"` não filtra mas ainda limita
@@ -446,3 +464,7 @@ npm run test:docker
 | 2026-08-09 | **`React.memo` quebrado por callbacks instáveis** — `TaskRow` tinha `memo()` mas o parent passava `() => handleToggle(task.id, task.status)` (nova closure a cada render). Solução: callbacks com args `onToggle: (id, status) => void` + `useCallback` no parent. O memo só funciona se TODAS as props são estáveis | React perf |
 | 2026-08-09 | **JSX `)}` fora de ordem em skeleton wrappers quebra build SWC** — ao envolver conteúdo em `{!isLoading && (<div>...</div>)}`, o `)}` deve vir ANTES do `</div>` do wrapper externo. Ordem correta: `</div>` (interno) → `)}` (condicional) → `</div>` (externo). Balance check de `()` e `{}` não pega este erro — usar `ts.createSourceFile` para validar | Build failure |
 | 2026-08-09 | **`useSearchParams()` sem `<Suspense>` falha no prerender do Next.js 16** — build warning → erro em standalone output. Padrão: extrair body em `XxxPageInner()`, default export envelopa em `<Suspense fallback={<div className="h-32 animate-pulse" />}>` | Build failure |
+| 2026-08-10 | **Ollama Cloud não tem modelos de embedding** — `https://ollama.com/api/tags` lista apenas modelos de chat (gpt-oss, deepseek-v4, glm, etc.). Embeddings devem continuar locais (nomic-embed-text no VPS). Separar `OLLAMA_URL` (embeddings local) de `OLLAMA_CLOUD_URL` (chat cloud) | Architecture |
+| 2026-08-10 | **Ollama Cloud usa API idêntica ao local** — mesmo `/api/chat` com `format: "json"`, mas com header `Authorization: Bearer $OLLAMA_API_KEY`. Fallback: se key ausente ou cloud falhar, cair para local `llama3.2` — nada quebra | Architecture |
+| 2026-08-10 | **GitHub Secrets só entram no container no próximo deploy** — adicionar `OLLAMA_API_KEY` ao GitHub Actions NÃO atualiza o container em execução. Commit vazio (`git commit --allow-empty`) força novo deploy | Deploy |
+| 2026-08-10 | **MCP Resources exigem `resources` capability no `McpServer`** — sem `resources: { listChanged: false }` no constructor options, `registerResource` não é anunciado ao client. Adicionar capability + registrar handlers com `ctx.ownerId` para scoping | MCP |

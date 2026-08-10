@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeTable } from "@/lib/realtime"
-import { triageInboxItem } from "@/lib/actions/inbox-triage"
+import { triageInboxItem, triageAllPending } from "@/lib/actions/inbox-triage"
 import type { InboxItemRow } from "@/lib/types"
 
 export const inboxKeys = {
@@ -127,6 +127,20 @@ export function useTriageWithAI() {
       const result = await triageInboxItem(itemId)
       if (!result.ok) throw new Error(result.error ?? "Triagem falhou")
       return result.result
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: inboxKeys.all, exact: false })
+    },
+  })
+}
+
+export function useTriageAllPending() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async () => {
+      const result = await triageAllPending()
+      if (!result.ok) throw new Error("Triagem em lote falhou")
+      return result
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: inboxKeys.all, exact: false })

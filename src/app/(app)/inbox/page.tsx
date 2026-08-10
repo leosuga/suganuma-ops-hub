@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react"
 import { useTitle } from "@/lib/useTitle"
-import { useInbox, useCreateInboxItem, useTriageInboxItem, useArchiveInboxItem, useDeleteInboxItem, useTriageWithAI } from "@/lib/queries/inbox"
+import { useInbox, useCreateInboxItem, useTriageInboxItem, useArchiveInboxItem, useDeleteInboxItem, useTriageWithAI, useTriageAllPending } from "@/lib/queries/inbox"
 import { useCreateTask } from "@/lib/queries/tasks"
 import { useCreateNote } from "@/lib/queries/notes"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
@@ -72,6 +72,7 @@ function InboxPageInner() {
   const archiveInboxItem = useArchiveInboxItem()
   const deleteInboxItem = useDeleteInboxItem()
   const triageWithAI = useTriageWithAI()
+  const triageAll = useTriageAllPending()
   const createTask = useCreateTask()
   const createNote = useCreateNote()
 
@@ -138,6 +139,10 @@ function InboxPageInner() {
     }
   }, [triageWithAI])
 
+  const handleTriageAll = useCallback(async () => {
+    await triageAll.mutateAsync()
+  }, [triageAll])
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return
@@ -193,9 +198,18 @@ function InboxPageInner() {
             )}
           </div>
           {pendingWithoutAI > 0 && (
-            <span className="text-[8px] font-mono text-on-surface/20">
-              {pendingWithoutAI} sem triagem IA
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[8px] font-mono text-on-surface/20">
+                {pendingWithoutAI} sem triagem IA
+              </span>
+              <button
+                onClick={handleTriageAll}
+                disabled={triageAll.isPending}
+                className="h-6 px-2 bg-purple-400/10 border border-purple-400/40 text-purple-400 font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-purple-400/20 disabled:opacity-30 transition-colors"
+              >
+                {triageAll.isPending ? "TRIANDO..." : "TRIAR TUDO"}
+              </button>
+            </div>
           )}
         </div>
 
