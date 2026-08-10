@@ -21,6 +21,9 @@ jobs:
             export SUPABASE_SERVICE_ROLE_KEY="${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}"
             export WEBHOOK_SECRET="${{ secrets.WEBHOOK_SECRET }}"
             export OLLAMA_URL="${{ secrets.OLLAMA_URL || 'http://ollama:11434' }}"
+            export OLLAMA_CLOUD_URL="${{ secrets.OLLAMA_CLOUD_URL || 'https://ollama.com' }}"
+            export OLLAMA_API_KEY="${{ secrets.OLLAMA_API_KEY || '' }}"
+            export OLLAMA_CHAT_MODEL="${{ secrets.OLLAMA_CHAT_MODEL || 'gpt-oss:20b' }}"
             export QDRANT_URL="${{ secrets.QDRANT_URL || 'http://qdrant:6333' }}"
 
             bash << 'RUNDEPLOY'
@@ -34,6 +37,9 @@ jobs:
             echo SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY >> .env.prod
             echo WEBHOOK_SECRET=$WEBHOOK_SECRET >> .env.prod
             echo OLLAMA_URL=$OLLAMA_URL >> .env.prod
+            echo OLLAMA_CLOUD_URL=$OLLAMA_CLOUD_URL >> .env.prod
+            echo OLLAMA_API_KEY=$OLLAMA_API_KEY >> .env.prod
+            echo OLLAMA_CHAT_MODEL=$OLLAMA_CHAT_MODEL >> .env.prod
             echo QDRANT_URL=$QDRANT_URL >> .env.prod
 
             NET=$(docker inspect caddy_proxy --format '{{json .NetworkSettings.Networks}}' 2>/dev/null | python3 -c "import sys,json; print(list(json.load(sys.stdin).keys())[0])" 2>/dev/null || echo "")
