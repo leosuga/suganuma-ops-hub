@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateAgentToken, unauthorized, badRequest, serverError } from "@/lib/agent-auth"
-import { hybridSearchNotes } from "@/lib/actions/hybrid-search"
+import { hybridSearchCore } from "@/lib/hybrid-search-core"
 import { z } from "zod"
 
 const querySchema = z.object({
@@ -23,8 +23,9 @@ export async function GET(req: NextRequest) {
   const { q, limit } = parsed.data
 
   try {
-    const results = await hybridSearchNotes(q, limit)
-    return NextResponse.json({ query: q, results })
+    const res = await hybridSearchCore(ownerId, q, limit)
+    if (!res.ok) return serverError("error" in res ? res.error : "Erro na busca híbrida")
+    return NextResponse.json({ query: q, ok: true, results: res.results })
   } catch (err) {
     return serverError(err instanceof Error ? err.message : "Erro na busca híbrida")
   }
