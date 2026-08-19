@@ -127,7 +127,7 @@ export function MonthView({ year, month, events, onNewEvent, onEditEvent }: Mont
                           </div>
                         ))}
                         {dayEvents.length > 3 && (
-                          <span className="text-[7px] font-mono text-on-surface/30 px-1">
+                          <span className="text-[7px] font-mono text-on-surface/40 px-1">
                             +{dayEvents.length - 3}
                           </span>
                         )}

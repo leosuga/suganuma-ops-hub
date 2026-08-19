@@ -27,7 +27,7 @@ export class SectionErrorBoundary extends Component<Props, State> {
               ERRO
             </span>
             {this.props.label && (
-              <span className="text-[9px] font-mono text-on-surface/30">{this.props.label}</span>
+              <span className="text-[9px] font-mono text-on-surface/40">{this.props.label}</span>
             )}
           </div>
           <pre className="text-[10px] font-mono text-danger/70 whitespace-pre-wrap break-all">

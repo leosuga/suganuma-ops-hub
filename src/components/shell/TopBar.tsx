@@ -56,7 +56,7 @@ export function TopBar({ user, onOpenCommand }: TopBarProps) {
           <button
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
             aria-label={theme === "dark" ? "Mudar para tema claro" : "Mudar para tema escuro"}
-            className="w-6 h-6 flex items-center justify-center text-on-surface/30 hover:text-on-surface/70 transition-colors text-[13px]"
+            className="flex items-center justify-center text-on-surface/40 hover:text-on-surface/70 transition-colors text-[13px] p-3.5 -m-3.5"
           >
             {theme === "dark" ? "☀" : "◑"}
           </button>
@@ -66,7 +66,7 @@ export function TopBar({ user, onOpenCommand }: TopBarProps) {
         <button
           onClick={onOpenCommand}
           aria-label="Abrir paleta de comandos (Cmd+K)"
-          className="hidden md:flex items-center gap-1.5 h-6 px-2 border border-border rounded-sm text-on-surface/30 hover:text-on-surface/60 hover:border-on-surface/30 transition-colors"
+          className="hidden md:flex items-center gap-1.5 h-6 px-2 border border-border rounded-sm text-on-surface/40 hover:text-on-surface/60 hover:border-on-surface/30 transition-colors"
         >
           <span className="text-[9px] font-mono tracking-wider">CMD</span>
           <kbd className="text-[9px] font-mono">+K</kbd>

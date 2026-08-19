@@ -135,7 +135,7 @@ function TasksPageInner() {
           <span className="text-[10px] font-mono font-semibold tracking-[0.2em] text-on-surface/40 uppercase">
             TASK ENGINE
           </span>
-          <span className="text-[10px] font-mono text-on-surface/20">
+          <span className="text-[10px] font-mono text-on-surface/40">
             {tasks.filter((t) => t.status !== "done").length} pendentes
           </span>
         </div>
@@ -143,7 +143,7 @@ function TasksPageInner() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowDone(!showDone)}
-            className="text-[9px] font-mono tracking-wider text-on-surface/30 hover:text-on-surface/50 transition-colors"
+            className="text-[9px] font-mono tracking-wider text-on-surface/40 hover:text-on-surface/50 transition-colors"
           >
             {showDone ? "OCULTAR DONE" : "VER DONE"}
           </button>
@@ -159,11 +159,11 @@ function TasksPageInner() {
       {/* Project filter chip */}
       {projectFilterName && (
         <div className="px-4 py-2 border-b border-border flex items-center gap-2">
-          <span className="text-[9px] font-mono text-on-surface/30 uppercase tracking-wider">PROJETO:</span>
+          <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-wider">PROJETO:</span>
           <span className="text-[10px] font-mono font-semibold text-teal uppercase tracking-wider">
             {projectFilterName}
           </span>
-          <Link href="/tasks" className="text-[10px] font-mono text-on-surface/30 hover:text-danger transition-colors ml-auto">
+          <Link href="/tasks" className="text-[10px] font-mono text-on-surface/40 hover:text-danger transition-colors ml-auto">
             × LIMPAR
           </Link>
         </div>
@@ -179,7 +179,7 @@ function TasksPageInner() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar tasks..."
-          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
         />
       </div>
 
@@ -201,7 +201,7 @@ function TasksPageInner() {
 
         {!isLoading && !isError && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center h-32 gap-2">
-            <p className="text-[11px] font-mono text-on-surface/30">
+            <p className="text-[11px] font-mono text-on-surface/40">
               Nenhuma task encontrada
             </p>
             <button

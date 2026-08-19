@@ -84,7 +84,7 @@ export function WeightChart({ logs }: HealthTrendsProps) {
   if (data.length < 2) {
     return (
       <div className="border border-border bg-surface rounded-sm p-4 h-48 flex items-center justify-center">
-        <span className="text-[11px] font-mono text-on-surface/20">
+        <span className="text-[11px] font-mono text-on-surface/40">
           Dados insuficientes para gráfico
         </span>
       </div>
@@ -130,7 +130,7 @@ export function BloodPressureChart({ logs }: HealthTrendsProps) {
   if (data.length < 2) {
     return (
       <div className="border border-border bg-surface rounded-sm p-4 h-48 flex items-center justify-center">
-        <span className="text-[11px] font-mono text-on-surface/20">
+        <span className="text-[11px] font-mono text-on-surface/40">
           Dados insuficientes para gráfico
         </span>
       </div>

@@ -21,7 +21,7 @@ export function PeriodFilter({
           className={`text-[9px] font-mono font-semibold tracking-wider px-2 py-1 rounded-sm transition-colors ${
             value === opt.value
               ? "bg-teal/20 text-teal border border-teal/40"
-              : "text-on-surface/30 hover:text-on-surface/60 border border-transparent"
+              : "text-on-surface/40 hover:text-on-surface/60 border border-transparent"
           }`}
         >
           {opt.label}

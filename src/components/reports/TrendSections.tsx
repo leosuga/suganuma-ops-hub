@@ -19,7 +19,7 @@ function TrendSection({ title, data, keys, colors, labels }: TrendSectionProps) 
       </div>
       <div className="flex gap-4 justify-center">
         {labels.map((label, i) => (
-          <span key={label} className="text-[9px] font-mono text-on-surface/30 flex items-center gap-1">
+          <span key={label} className="text-[9px] font-mono text-on-surface/40 flex items-center gap-1">
             <span className="inline-block w-2 h-2 rounded-sm" style={{ backgroundColor: colors[i] }} /> {label}
           </span>
         ))}

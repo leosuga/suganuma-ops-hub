@@ -131,7 +131,7 @@ export function CreateProjectDialog({
                         <span className="text-[10px] font-mono font-semibold text-on-surface/70 block truncate">
                           {tpl.name}
                         </span>
-                        <span className="text-[8px] font-mono text-on-surface/30 block truncate">
+                        <span className="text-[8px] font-mono text-on-surface/40 block truncate">
                           {tpl.tasks.length} tasks
                         </span>
                       </div>
@@ -141,7 +141,7 @@ export function CreateProjectDialog({
               </div>
 
               <div className="border-t border-border pt-3">
-                <span className="text-[9px] font-mono text-on-surface/20 uppercase tracking-wider block mb-2">
+                <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-wider block mb-2">
                   Ou criar manualmente
                 </span>
                 <div className="flex flex-col gap-4">
@@ -150,14 +150,14 @@ export function CreateProjectDialog({
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Nome do projeto"
                     autoFocus
-                    className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+                    className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
                   />
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Descri\u00e7\u00e3o (opcional)"
                     rows={2}
-                    className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors resize-none"
+                    className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors resize-none"
                   />
                   <div className="flex flex-col gap-1.5">
                     <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">

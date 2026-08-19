@@ -33,7 +33,7 @@ export function AddMealForm({ onCreated }: AddMealFormProps) {
         value={name}
         onChange={(e) => setName(e.target.value)}
         placeholder="Nova receita..."
-        className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+        className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
       />
       <button
         type="submit"

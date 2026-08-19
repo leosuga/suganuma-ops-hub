@@ -70,12 +70,12 @@ function TxnRowContent({ txn, onDelete, onEdit }: {
       {(onDelete || onEdit) && (
         <div className="flex-none w-12 flex items-center justify-end gap-1" role="cell">
           {onEdit && (
-            <button onClick={() => onEdit(txn)} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-teal transition-colors rounded-sm text-[11px]" aria-label={`Editar transação: ${txn.description || txn.category}`}>
+            <button onClick={() => onEdit(txn)} className="w-5 h-5 flex items-center justify-center text-on-surface/40 hover:text-teal transition-colors rounded-sm text-[11px]" aria-label={`Editar transação: ${txn.description || txn.category}`}>
               ✎
             </button>
           )}
           {onDelete && (
-            <button onClick={() => onDelete(txn.id)} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors rounded-sm" aria-label={`Excluir transação: ${txn.description || txn.category}`}>
+            <button onClick={() => onDelete(txn.id)} className="w-5 h-5 flex items-center justify-center text-on-surface/40 hover:text-danger transition-colors rounded-sm" aria-label={`Excluir transação: ${txn.description || txn.category}`}>
               ×
             </button>
           )}
@@ -104,7 +104,7 @@ export function TransactionTable({ transactions, isLoading, onDelete, onEdit }: 
   if (transactions.length === 0) {
     return (
       <div className="border border-border bg-surface rounded-sm p-8 flex items-center justify-center">
-        <span className="text-[11px] font-mono text-on-surface/30">Nenhuma transação neste período</span>
+        <span className="text-[11px] font-mono text-on-surface/40">Nenhuma transação neste período</span>
       </div>
     )
   }

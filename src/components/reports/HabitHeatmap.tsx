@@ -18,9 +18,9 @@ export function HabitHeatmap({ habits, heatmapDays, entrySet, buildEntryKey }: H
           className="grid gap-x-1"
           style={{ gridTemplateColumns: `100px repeat(${heatmapDays.length}, minmax(20px, 1fr))` }}
         >
-          <div className="text-[9px] font-mono text-on-surface/20" />
+          <div className="text-[9px] font-mono text-on-surface/40" />
           {heatmapDays.map((day) => (
-            <div key={day.dateStr} className="text-center text-[8px] font-mono text-on-surface/20 pb-1">{day.label}</div>
+            <div key={day.dateStr} className="text-center text-[8px] font-mono text-on-surface/40 pb-1">{day.label}</div>
           ))}
 
           {habits.map((habit) => (

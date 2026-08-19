@@ -50,7 +50,7 @@ export default function HabitsPage() {
             <span className="text-[10px] font-mono font-semibold tracking-[0.2em] text-on-surface/40 uppercase">
               HABITS TRACKER
             </span>
-            <span className="text-[10px] font-mono text-on-surface/20">
+            <span className="text-[10px] font-mono text-on-surface/40">
               {active.length} ativo{active.length !== 1 ? "s" : ""}
             </span>
           </div>
@@ -70,12 +70,12 @@ export default function HabitsPage() {
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Nome do hábito..."
               autoFocus
-              className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+              className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
             />
             <button type="submit" disabled={!newName.trim() || createHabit.isPending} className="h-8 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors">
               {createHabit.isPending ? "..." : "ADD"}
             </button>
-            <button type="button" onClick={() => setAdding(false)} className="text-on-surface/30 hover:text-on-surface/60 text-[14px]">×</button>
+            <button type="button" onClick={() => setAdding(false)} className="text-on-surface/40 hover:text-on-surface/60 text-[14px]">×</button>
           </form>
         )}
 
@@ -88,7 +88,7 @@ export default function HabitsPage() {
             </div>
           ) : habits.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-32 gap-2 p-4">
-              <span className="text-[11px] font-mono text-on-surface/20">Nenhum hábito ainda</span>
+              <span className="text-[11px] font-mono text-on-surface/40">Nenhum hábito ainda</span>
               <button onClick={() => setAdding(true)} className="text-[10px] font-mono text-teal hover:text-teal-hi transition-colors">+ Criar primeiro hábito</button>
             </div>
           ) : (
@@ -97,7 +97,7 @@ export default function HabitsPage() {
                 <div className="w-32 flex-none" />
                 <div className="flex-1 flex items-center gap-1 justify-center">
                   {dayLabels.map((l) => (
-                    <span key={l} className="w-6 text-center text-[7px] font-mono text-on-surface/20 uppercase">{l}</span>
+                    <span key={l} className="w-6 text-center text-[7px] font-mono text-on-surface/40 uppercase">{l}</span>
                   ))}
                 </div>
                 <div className="w-20 flex-none" />

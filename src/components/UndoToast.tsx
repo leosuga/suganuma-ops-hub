@@ -51,7 +51,7 @@ function ToastBar() {
             DESFAZER
           </button>
         )}
-        <button onClick={() => setToast(null)} className="text-on-surface/30 hover:text-on-surface/60 text-[14px]">×</button>
+        <button onClick={() => setToast(null)} className="text-on-surface/40 hover:text-on-surface/60 text-[14px]">×</button>
       </div>
     </div>
   )

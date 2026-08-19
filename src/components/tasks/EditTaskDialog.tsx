@@ -177,7 +177,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
     onOpenChange(false)
   }
 
-  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
 
   return (
     <Dialog open={open} onOpenChange={(v) => onOpenChange(v)}>
@@ -211,7 +211,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               onChange={(e) => dispatch({ type: "field", key: "taskNotes", value: e.target.value })}
               placeholder="Notas, links, contexto..."
               rows={3}
-              className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors resize-none"
+              className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors resize-none"
             />
           </div>
 
@@ -443,7 +443,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               <button
                 type="button"
                 onClick={() => dispatch({ type: "field", key: "confirmDelete", value: true })}
-                className="h-7 px-3 text-[9px] font-mono text-on-surface/20 hover:text-danger transition-colors"
+                className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-danger transition-colors"
               >
                 DELETAR TASK
               </button>

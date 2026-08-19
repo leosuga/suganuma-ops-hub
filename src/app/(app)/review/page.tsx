@@ -184,7 +184,7 @@ export default function ReviewPage() {
             <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
               WEEKLY REVIEW
             </h1>
-            <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">{weekLabel}</p>
+            <p className="text-[10px] font-mono text-on-surface/40 mt-0.5">{weekLabel}</p>
           </div>
           {staleAreas.length > 0 && (
             <button
@@ -202,25 +202,25 @@ export default function ReviewPage() {
           {stats.map((s) => (
             <div key={s.label} className="border border-border bg-surface rounded-sm p-2 text-center">
               <div className={cn("text-[14px] font-mono font-semibold", s.color)}>{s.value}</div>
-              <div className="text-[8px] font-mono text-on-surface/30 tracking-wider mt-0.5">{s.label}</div>
+              <div className="text-[8px] font-mono text-on-surface/40 tracking-wider mt-0.5">{s.label}</div>
             </div>
           ))}
         </div>
 
         {!hasAnyData && (
           <div className="border border-border bg-surface rounded-sm p-8 text-center">
-            <p className="text-[11px] font-mono text-on-surface/30">
+            <p className="text-[11px] font-mono text-on-surface/40">
               Sem dados esta semana. Use o app e volte aqui para ver seu resumo!
             </p>
             <div className="mt-3 flex items-center justify-center gap-2">
               <Link href="/tasks" className="text-[9px] font-mono text-teal hover:text-teal-hi transition-colors">
                 + TASK
               </Link>
-              <span className="text-on-surface/20">·</span>
+              <span className="text-on-surface/40">·</span>
               <Link href="/notes" className="text-[9px] font-mono text-teal hover:text-teal-hi transition-colors">
                 + NOTA
               </Link>
-              <span className="text-on-surface/20">·</span>
+              <span className="text-on-surface/40">·</span>
               <Link href="/finance" className="text-[9px] font-mono text-teal hover:text-teal-hi transition-colors">
                 + TXN
               </Link>
@@ -233,7 +233,7 @@ export default function ReviewPage() {
           <div className="border border-border bg-surface rounded-sm overflow-hidden">
             <div className="px-3 py-2 border-b border-border flex items-center justify-between">
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOTAS CRIADAS</span>
-              <span className="text-[9px] font-mono text-on-surface/20">{weekNotes.length}</span>
+              <span className="text-[9px] font-mono text-on-surface/40">{weekNotes.length}</span>
             </div>
             {contextBar(notesByContext, weekNotes.length)}
             <div className="divide-y divide-border">
@@ -250,7 +250,7 @@ export default function ReviewPage() {
                       <span className={cn("w-1.5 h-1.5 rounded-full flex-none", cfg.bg.replace("/10", "").replace("bg-", "bg-"))} />
                     )}
                     <span className="text-[11px] font-mono text-on-surface truncate flex-1">{n.title}</span>
-                    <span className="text-[9px] font-mono text-on-surface/20">
+                    <span className="text-[9px] font-mono text-on-surface/40">
                       {new Date(n.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
                     </span>
                   </Link>
@@ -265,7 +265,7 @@ export default function ReviewPage() {
           <div className="border border-border bg-surface rounded-sm overflow-hidden">
             <div className="px-3 py-2 border-b border-border flex items-center justify-between">
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">TASKS COMPLETADAS</span>
-              <span className="text-[9px] font-mono text-on-surface/20">{weekTasksDone.length}</span>
+              <span className="text-[9px] font-mono text-on-surface/40">{weekTasksDone.length}</span>
             </div>
             {contextBar(tasksByContext, weekTasksDone.length)}
             <div className="divide-y divide-border">
@@ -277,7 +277,7 @@ export default function ReviewPage() {
                 >
                   <span className="text-[10px] font-mono text-teal flex-none">✓</span>
                   <span className="text-[11px] font-mono text-on-surface truncate flex-1 line-through opacity-40">{t.title}</span>
-                  <span className="text-[9px] font-mono text-on-surface/20">
+                  <span className="text-[9px] font-mono text-on-surface/40">
                     {t.completed_at ? new Date(t.completed_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) : ""}
                   </span>
                 </Link>
@@ -291,7 +291,7 @@ export default function ReviewPage() {
           <div className="border border-border bg-surface rounded-sm overflow-hidden">
             <div className="px-3 py-2 border-b border-border flex items-center justify-between">
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">TRANSAÇÕES</span>
-              <span className="text-[9px] font-mono text-on-surface/20">{weekTransactions.length}</span>
+              <span className="text-[9px] font-mono text-on-surface/40">{weekTransactions.length}</span>
             </div>
             <div className="divide-y divide-border">
               {weekTransactions.slice(0, 5).map((t) => (

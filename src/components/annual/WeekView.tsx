@@ -84,7 +84,7 @@ export function WeekView({ year, weekOffset, events, onEditEvent }: WeekViewProp
                 className="flex items-start justify-end pr-1 border-b border-border/10"
                 style={{ height: CELL_HEIGHT }}
               >
-                <span className="text-[8px] font-mono text-on-surface/30 -mt-1">
+                <span className="text-[8px] font-mono text-on-surface/40 -mt-1">
                   {String(h).padStart(2, "0")}:00
                 </span>
               </div>

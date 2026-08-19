@@ -18,7 +18,7 @@ export function StatCard({
         {value}
       </span>
       {sub && (
-        <span className="text-[10px] font-mono text-on-surface/30">{sub}</span>
+        <span className="text-[10px] font-mono text-on-surface/40">{sub}</span>
       )}
     </div>
   )

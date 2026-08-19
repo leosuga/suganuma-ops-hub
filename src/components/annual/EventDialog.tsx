@@ -218,7 +218,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                     {d > 0 ? `+${d}` : d}d
                   </button>
                 ))}
-                <span className="text-on-surface/20 mx-0.5">|</span>
+                <span className="text-on-surface/40 mx-0.5">|</span>
                 {[-1, 1].map((m) => (
                   <button
                     key={m}

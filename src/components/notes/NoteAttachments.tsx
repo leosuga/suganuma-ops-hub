@@ -102,7 +102,7 @@ export function NoteAttachments({ noteId, ownerId, attachments, onChange, editab
               ) : (
                 <div className="w-20 h-20 flex flex-col items-center justify-center border border-border rounded-sm bg-bg px-1">
                   <span className="text-[8px] font-mono text-on-surface/40 text-center truncate w-full">{att.name}</span>
-                  <span className="text-[7px] font-mono text-on-surface/20 mt-0.5">{(att.size / 1024).toFixed(0)}KB</span>
+                  <span className="text-[7px] font-mono text-on-surface/40 mt-0.5">{(att.size / 1024).toFixed(0)}KB</span>
                 </div>
               )}
               {editable && (
@@ -140,7 +140,7 @@ export function NoteAttachments({ noteId, ownerId, attachments, onChange, editab
           >
             {uploading ? "UP..." : "+ ANEXO"}
           </button>
-          {uploading && <span className="text-[9px] font-mono text-on-surface/30">Enviando...</span>}
+          {uploading && <span className="text-[9px] font-mono text-on-surface/40">Enviando...</span>}
         </div>
       )}
     </div>

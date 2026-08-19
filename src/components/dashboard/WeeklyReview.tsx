@@ -80,7 +80,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
             <span className="text-2xl font-mono font-bold text-teal">
               {completedThisWeek}
             </span>
-            <span className="text-[9px] font-mono text-on-surface/30">
+            <span className="text-[9px] font-mono text-on-surface/40">
               esta semana
             </span>
           </div>
@@ -91,7 +91,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
             <span className="text-2xl font-mono font-bold text-on-surface">
               {createdThisWeek}
             </span>
-            <span className="text-[9px] font-mono text-on-surface/30">
+            <span className="text-[9px] font-mono text-on-surface/40">
               esta semana
             </span>
           </div>
@@ -102,7 +102,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
             <span className={`text-2xl font-mono font-bold ${pendingNow > 0 ? "text-amber" : "text-green-400"}`}>
               {pendingNow}
             </span>
-            <span className="text-[9px] font-mono text-on-surface/30">
+            <span className="text-[9px] font-mono text-on-surface/40">
               total atual
             </span>
           </div>
@@ -114,10 +114,10 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
               HÁBITOS
             </span>
             <div className="grid gap-x-1" style={{ gridTemplateColumns: `90px repeat(${activeDays}, minmax(16px, 1fr))` }}>
-              <div className="text-[9px] font-mono text-on-surface/20" />
+              <div className="text-[9px] font-mono text-on-surface/40" />
               {weekDays.slice(0, activeDays).map((day) => (
                 <div key={day.toISOString()} className="text-center">
-                  <span className="text-[7px] font-mono text-on-surface/25 uppercase">
+                  <span className="text-[7px] font-mono text-on-surface/40 uppercase">
                     {DAY_NAMES[day.getDay() === 0 ? 6 : day.getDay() - 1]}
                   </span>
                 </div>
@@ -150,7 +150,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
         )}
 
         {activeHabits === 0 && (
-          <div className="text-[10px] font-mono text-on-surface/20 text-center py-2">
+          <div className="text-[10px] font-mono text-on-surface/40 text-center py-2">
             Nenhum hábito ativo
           </div>
         )}

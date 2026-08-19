@@ -52,7 +52,7 @@ export function BiometricLogDialog({ open, onOpenChange }: BiometricLogProps) {
     onOpenChange(false)
   }
 
-  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-health transition-colors"
+  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health transition-colors"
 
   return (
     <Dialog open={open} onOpenChange={(v) => onOpenChange(v)}>
@@ -73,7 +73,7 @@ export function BiometricLogDialog({ open, onOpenChange }: BiometricLogProps) {
                   "h-7 text-[8px] font-mono font-semibold tracking-wider rounded-sm border transition-colors",
                   kind === k.value
                     ? "border-health bg-health/10 text-health"
-                    : "border-border text-on-surface/30 hover:border-on-surface/40"
+                    : "border-border text-on-surface/40 hover:border-on-surface/40"
                 )}
               >
                 {k.label}
@@ -132,7 +132,7 @@ export function BiometricList() {
   if (logs.length === 0) {
     return (
       <div className="border border-border bg-surface rounded-sm p-6 flex items-center justify-center">
-        <span className="text-[11px] font-mono text-on-surface/20">Nenhum registro ainda</span>
+        <span className="text-[11px] font-mono text-on-surface/40">Nenhum registro ainda</span>
       </div>
     )
   }
@@ -140,9 +140,9 @@ export function BiometricList() {
   return (
     <div className="border border-border bg-surface rounded-sm overflow-hidden">
       <div className="h-8 px-4 flex items-center gap-3 border-b border-border bg-bg">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase w-24">TIPO</span>
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase flex-1">VALOR</span>
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase w-24 text-right">DATA</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase w-24">TIPO</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase flex-1">VALOR</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase w-24 text-right">DATA</span>
       </div>
       <div className="divide-y divide-border">
         {logs.map((log) => {
@@ -156,7 +156,7 @@ export function BiometricList() {
               <span className="flex-1 text-[12px] font-mono text-health tabular-nums">
                 {formatValue(log.kind, parseHealthLogValue(log.value) ?? {})}
               </span>
-              <span className="text-[10px] font-mono text-on-surface/30 w-24 text-right">{dateStr}</span>
+              <span className="text-[10px] font-mono text-on-surface/40 w-24 text-right">{dateStr}</span>
             </div>
           )
         })}

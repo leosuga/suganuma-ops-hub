@@ -37,7 +37,7 @@ export default function LoginPage() {
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
             SUGANUMA
           </h1>
-          <p className="text-[10px] font-mono text-on-surface/30 tracking-widest mt-1">
+          <p className="text-[10px] font-mono text-on-surface/40 tracking-widest mt-1">
             OPS HUB — COMMAND CENTER
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function LoginPage() {
                   Link enviado para
                 </p>
                 <p className="text-[11px] font-mono text-teal">{email}</p>
-                <p className="text-[10px] font-mono text-on-surface/30 text-center">
+                <p className="text-[10px] font-mono text-on-surface/40 text-center">
                   Verifique sua caixa de entrada e clique no link para acessar.
                 </p>
               </div>
@@ -74,7 +74,7 @@ export default function LoginPage() {
                     placeholder="seu@email.com"
                     required
                     autoFocus
-                    className="h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+                    className="h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
                   />
                 </div>
 
@@ -94,7 +94,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="text-center text-[9px] font-mono text-on-surface/20 mt-4">
+        <p className="text-center text-[9px] font-mono text-on-surface/40 mt-4">
           ACESSO RESTRITO — SISTEMA PRIVADO
         </p>
       </div>

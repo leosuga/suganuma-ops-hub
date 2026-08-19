@@ -68,7 +68,7 @@ export default function MealsPage() {
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
             MEAL PLANNING
           </h1>
-          <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
+          <p className="text-[10px] font-mono text-on-surface/40 mt-0.5">
             {meals.length} receita{meals.length !== 1 ? "s" : ""} · planejamento semanal
           </p>
         </div>
@@ -95,13 +95,13 @@ export default function MealsPage() {
             <table className="w-full min-w-[600px]">
               <thead>
                 <tr className="border-b border-border bg-bg">
-                  <th className="h-8 px-2 text-left text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase w-16" />
+                  <th className="h-8 px-2 text-left text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase w-16" />
                   {weekDates.map((d, i) => {
                     const isToday = d.toDateString() === new Date().toDateString()
                     return (
                       <th key={i} className={cn(
                         "h-8 px-1 text-center text-[9px] font-mono font-semibold tracking-widest uppercase",
-                        isToday ? "text-teal" : "text-on-surface/30"
+                        isToday ? "text-teal" : "text-on-surface/40"
                       )}>
                         {DAY_LABELS[d.getDay()]}
                         <br />
@@ -154,7 +154,7 @@ export default function MealsPage() {
                             </select>
                           </div>
                           {meal && (
-                            <p className="text-[8px] font-mono text-on-surface/20 truncate mt-0.5">
+                            <p className="text-[8px] font-mono text-on-surface/40 truncate mt-0.5">
                               {meal.name.length > 15 ? meal.name.slice(0, 15) + "..." : meal.name}
                             </p>
                           )}
@@ -172,7 +172,7 @@ export default function MealsPage() {
         {meals.length > 0 && (
           <div className="border border-border bg-surface rounded-sm overflow-hidden">
             <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
                 RECEITAS
               </span>
             </div>

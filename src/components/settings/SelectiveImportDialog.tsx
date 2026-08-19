@@ -155,7 +155,7 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
                 onChange={handleFileSelect}
                 className="block w-full text-[11px] font-mono text-on-surface/50 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border file:border-border file:bg-bg file:text-[10px] file:font-mono file:text-teal file:cursor-pointer"
               />
-              <p className="text-[9px] font-mono text-on-surface/30 mt-2">
+              <p className="text-[9px] font-mono text-on-surface/40 mt-2">
                 Selecione um arquivo .json de backup do Ops Hub
               </p>
             </div>
@@ -167,7 +167,7 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
                 </span>
                 <button
                   onClick={toggleAll}
-                  className="text-[9px] font-mono text-on-surface/30 hover:text-teal transition-colors"
+                  className="text-[9px] font-mono text-on-surface/40 hover:text-teal transition-colors"
                 >
                   {selected.size === tables.length ? "DESMARCAR" : "MARCAR"} TUDO
                 </button>
@@ -193,7 +193,7 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
                     <span className="flex-1 text-[11px] font-mono text-on-surface/70">
                       {t.label}
                     </span>
-                    <span className="text-[9px] font-mono text-on-surface/30">
+                    <span className="text-[9px] font-mono text-on-surface/40">
                       {t.rows} linha{t.rows !== 1 ? "s" : ""}
                     </span>
                   </label>

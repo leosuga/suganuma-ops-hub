@@ -83,7 +83,7 @@ export function PregnancyCard() {
   const nextMilestone =
     currentWeek !== null ? MILESTONES.find((m) => m.week > currentWeek) ?? null : null
 
-  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-health transition-colors"
+  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health transition-colors"
 
   return (
     <div className="border border-border bg-surface rounded-sm overflow-hidden">
@@ -93,7 +93,7 @@ export function PregnancyCard() {
         </span>
         <button
           onClick={editing ? () => setEditing(false) : startEdit}
-          className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors"
+          className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors"
         >
           {editing ? "CANCELAR" : "EDITAR"}
         </button>
@@ -163,7 +163,7 @@ export function PregnancyCard() {
                     : daysLeft === 0
                       ? "É hoje!"
                       : `${Math.abs(daysLeft)} dia${Math.abs(daysLeft) === 1 ? "" : "s"} após a DPP`}
-                  {trimester && <span className="text-on-surface/30"> · {trimester}º trimestre</span>}
+                  {trimester && <span className="text-on-surface/40"> · {trimester}º trimestre</span>}
                 </p>
               )}
               {pregnancy.notes && (
@@ -178,7 +178,7 @@ export function PregnancyCard() {
                 </div>
               )}
               {nextMilestone && (
-                <p className="text-[9px] font-mono text-on-surface/30 mt-1.5">
+                <p className="text-[9px] font-mono text-on-surface/40 mt-1.5">
                   Próximo marco: semana {nextMilestone.week} — {nextMilestone.label}
                 </p>
               )}
@@ -188,7 +188,7 @@ export function PregnancyCard() {
           {prenatalAppointments.length > 0 && (
             <div className="border-t border-border">
               <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-                <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
+                <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
                   EXAMES PRÉ-NATAIS
                 </span>
               </div>

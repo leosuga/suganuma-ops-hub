@@ -63,7 +63,7 @@ export function HabitRow({ habit, weekDays }: HabitRowProps) {
           className="flex-1 h-7 bg-bg border border-border rounded-sm px-2 text-[12px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
         />
         <button onClick={handleSaveEdit} disabled={updateHabit.isPending} className="text-[9px] font-mono text-teal tracking-wider">OK</button>
-        <button onClick={() => setEditing(false)} className="text-on-surface/30 text-[14px]">×</button>
+        <button onClick={() => setEditing(false)} className="text-on-surface/40 text-[14px]">×</button>
       </div>
     )
   }
@@ -103,8 +103,8 @@ export function HabitRow({ habit, weekDays }: HabitRowProps) {
         })}
       </div>
       <div className="w-20 flex-none flex items-center justify-end gap-1">
-        <button onClick={() => { setEditName(habit.name); setEditing(true) }} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-teal transition-colors text-[11px]">✎</button>
-        <button onClick={handleToggleActive} className={cn("text-[8px] font-mono tracking-wider", habit.active ? "text-on-surface/20 hover:text-on-surface/50" : "text-teal")}>{habit.active ? "⊘" : "⊕"}</button>
+        <button onClick={() => { setEditName(habit.name); setEditing(true) }} className="w-5 h-5 flex items-center justify-center text-on-surface/40 hover:text-teal transition-colors text-[11px]">✎</button>
+        <button onClick={handleToggleActive} className={cn("text-[8px] font-mono tracking-wider", habit.active ? "text-on-surface/40 hover:text-on-surface/50" : "text-teal")}>{habit.active ? "⊘" : "⊕"}</button>
         {confirmDelete ? (
           <>
             <button onClick={() => {
@@ -120,10 +120,10 @@ export function HabitRow({ habit, weekDays }: HabitRowProps) {
                 },
               })
             }} className="text-[8px] font-mono text-danger tracking-wider">DEL</button>
-            <button onClick={() => setConfirmDelete(false)} className="text-on-surface/30 text-[14px]">×</button>
+            <button onClick={() => setConfirmDelete(false)} className="text-on-surface/40 text-[14px]">×</button>
           </>
         ) : (
-          <button onClick={() => setConfirmDelete(true)} className="text-on-surface/20 hover:text-danger transition-colors">×</button>
+          <button onClick={() => setConfirmDelete(true)} className="text-on-surface/40 hover:text-danger transition-colors">×</button>
         )}
       </div>
     </div>

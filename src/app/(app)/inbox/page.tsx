@@ -40,7 +40,7 @@ const PRIORITY_COLORS: Record<string, string> = {
   urgent: "text-danger border-danger/40 bg-danger/10",
   high: "text-amber border-amber/40 bg-amber/10",
   med: "text-on-surface/40 border-border bg-transparent",
-  low: "text-on-surface/20 border-border/50 bg-transparent",
+  low: "text-on-surface/40 border-border/50 bg-transparent",
 }
 
 function timeAgo(dateStr: string): string {
@@ -180,7 +180,7 @@ function InboxPageInner() {
           </div>
           {pendingWithoutAI > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-[8px] font-mono text-on-surface/20">
+              <span className="text-[8px] font-mono text-on-surface/40">
                 {pendingWithoutAI} sem triagem IA
               </span>
               <button
@@ -203,7 +203,7 @@ function InboxPageInner() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Jogue aqui qualquer pensamento, ideia ou lembrete..."
               autoFocus
-              className="flex-1 h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+              className="flex-1 h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
             />
             <button
               type="submit"
@@ -223,7 +223,7 @@ function InboxPageInner() {
               onClick={() => setFilter(f)}
               className={cn(
                 "text-[9px] font-mono font-semibold tracking-wider uppercase transition-colors",
-                filter === f ? "text-teal" : "text-on-surface/30 hover:text-on-surface/50"
+                filter === f ? "text-teal" : "text-on-surface/40 hover:text-on-surface/50"
               )}
             >
               {f === "unprocessed" ? "PENDENTES" : f === "archived" ? "ARQUIVADOS" : "TODOS"}
@@ -244,7 +244,7 @@ function InboxPageInner() {
 
           {!isLoading && items.length === 0 && (
             <div className="flex flex-col items-center justify-center h-32 gap-2 p-4">
-              <span className="text-[11px] font-mono text-on-surface/20">
+              <span className="text-[11px] font-mono text-on-surface/40">
                 {filter === "unprocessed" ? "Inbox zero. Capture acima." : "Nenhum item."}
               </span>
             </div>
@@ -273,8 +273,8 @@ function InboxPageInner() {
                           {item.content}
                         </p>
                         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                          <span className="text-[8px] font-mono text-on-surface/20">{timeAgo(item.created_at)}</span>
-                          <span className="text-[7px] font-mono text-on-surface/30 border border-on-surface/10 rounded-sm px-1 py-0.5">
+                          <span className="text-[8px] font-mono text-on-surface/40">{timeAgo(item.created_at)}</span>
+                          <span className="text-[7px] font-mono text-on-surface/40 border border-on-surface/10 rounded-sm px-1 py-0.5">
                             {SOURCE_LABELS[item.source] ?? item.source.toUpperCase()}
                           </span>
                           {item.status === "triaged" && (
@@ -374,7 +374,7 @@ function InboxPageInner() {
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="h-6 px-2 text-on-surface/20 hover:text-danger font-mono text-[8px] tracking-wider transition-colors"
+                          className="h-6 px-2 text-on-surface/40 hover:text-danger font-mono text-[8px] tracking-wider transition-colors"
                         >
                           DEL
                         </button>
@@ -385,7 +385,7 @@ function InboxPageInner() {
                       <div className="flex items-center gap-1.5 mt-2">
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="h-6 px-2 text-on-surface/20 hover:text-danger font-mono text-[8px] tracking-wider transition-colors"
+                          className="h-6 px-2 text-on-surface/40 hover:text-danger font-mono text-[8px] tracking-wider transition-colors"
                         >
                           DEL
                         </button>
@@ -401,11 +401,11 @@ function InboxPageInner() {
         {/* Keyboard hints */}
         {filter === "unprocessed" && unprocessed.length > 0 && (
           <div className="px-4 py-1.5 border-t border-border flex items-center gap-3 flex-none">
-            <span className="text-[7px] font-mono text-on-surface/20">J/K navegar</span>
-            <span className="text-[7px] font-mono text-on-surface/20">T task</span>
-            <span className="text-[7px] font-mono text-on-surface/20">N note</span>
-            <span className="text-[7px] font-mono text-on-surface/20">I triar IA</span>
-            <span className="text-[7px] font-mono text-on-surface/20">A arquivar</span>
+            <span className="text-[7px] font-mono text-on-surface/40">J/K navegar</span>
+            <span className="text-[7px] font-mono text-on-surface/40">T task</span>
+            <span className="text-[7px] font-mono text-on-surface/40">N note</span>
+            <span className="text-[7px] font-mono text-on-surface/40">I triar IA</span>
+            <span className="text-[7px] font-mono text-on-surface/40">A arquivar</span>
           </div>
         )}
       </div>

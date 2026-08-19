@@ -28,7 +28,7 @@ export function ReportsKPIs({
           TASKS – TAXA
         </span>
         <span className="text-xl font-mono font-semibold text-on-surface block">{rate}%</span>
-        <span className="text-[10px] font-mono text-on-surface/30 block mt-1">{done}/{total} concluídas</span>
+        <span className="text-[10px] font-mono text-on-surface/40 block mt-1">{done}/{total} concluídas</span>
       </div>
 
       <div className="border border-border bg-surface rounded-sm p-4">
@@ -36,7 +36,7 @@ export function ReportsKPIs({
           TASKS – ATRASADAS
         </span>
         <span className={`text-xl font-mono font-semibold block ${overdue > 0 ? "text-danger" : "text-on-surface"}`}>{overdue}</span>
-        <span className="text-[10px] font-mono text-on-surface/30 block mt-1">pendências críticas</span>
+        <span className="text-[10px] font-mono text-on-surface/40 block mt-1">pendências críticas</span>
       </div>
 
       <div className="border border-border bg-surface rounded-sm p-4">
@@ -44,7 +44,7 @@ export function ReportsKPIs({
           FINANCEIRO – SALDO
         </span>
         <span className={`text-xl font-mono font-semibold block ${balance >= 0 ? "text-teal" : "text-danger"}`}>{fmt(balance)}</span>
-        <span className="text-[10px] font-mono text-on-surface/30 block mt-1">{fmt(income)} rec / {fmt(expense)} desp</span>
+        <span className="text-[10px] font-mono text-on-surface/40 block mt-1">{fmt(income)} rec / {fmt(expense)} desp</span>
       </div>
 
       <div className="border border-border bg-surface rounded-sm p-4">
@@ -52,7 +52,7 @@ export function ReportsKPIs({
           HÁBITOS – STREAK MÁX
         </span>
         <span className="text-xl font-mono font-semibold text-health block">{maxStreak}d</span>
-        <span className="text-[10px] font-mono text-on-surface/30 block mt-1">{activeHabits} ativos</span>
+        <span className="text-[10px] font-mono text-on-surface/40 block mt-1">{activeHabits} ativos</span>
       </div>
     </div>
   )

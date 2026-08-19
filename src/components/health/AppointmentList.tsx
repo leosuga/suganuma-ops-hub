@@ -30,7 +30,7 @@ export function AddAppointmentDialog({ open, onOpenChange }: AddAppointmentDialo
     onOpenChange(false)
   }
 
-  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-health transition-colors"
+  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health transition-colors"
 
   return (
     <Dialog open={open} onOpenChange={(v) => onOpenChange(v)}>
@@ -74,7 +74,7 @@ export function AppointmentList() {
   if (appointments.length === 0) {
     return (
       <div className="border border-border bg-surface rounded-sm p-6 flex items-center justify-center">
-        <span className="text-[11px] font-mono text-on-surface/20">Nenhum agendamento</span>
+        <span className="text-[11px] font-mono text-on-surface/40">Nenhum agendamento</span>
       </div>
     )
   }
@@ -87,9 +87,9 @@ export function AppointmentList() {
       <div key={appt.id} className={cn("flex items-center gap-3 h-10 px-4 hover:bg-surface-hover transition-colors", isPast && "opacity-40")}>
         <span className="text-[10px] font-mono text-on-surface/40 w-14 flex-none">{dateStr} {timeStr}</span>
         <span className="flex-1 text-[12px] font-mono text-on-surface truncate">{appt.title}</span>
-        {appt.kind && <span className="text-[9px] font-mono text-on-surface/30 uppercase tracking-wider flex-none">{appt.kind}</span>}
-        {appt.location && <span className="text-[10px] font-mono text-on-surface/30 flex-none truncate max-w-[100px]">{appt.location}</span>}
-        <button onClick={() => deleteAppt.mutate(appt.id)} className="flex-none w-6 h-6 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors">×</button>
+        {appt.kind && <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-wider flex-none">{appt.kind}</span>}
+        {appt.location && <span className="text-[10px] font-mono text-on-surface/40 flex-none truncate max-w-[100px]">{appt.location}</span>}
+        <button onClick={() => deleteAppt.mutate(appt.id)} className="flex-none w-6 h-6 flex items-center justify-center text-on-surface/40 hover:text-danger transition-colors">×</button>
       </div>
     )
   }
@@ -97,7 +97,7 @@ export function AppointmentList() {
   return (
     <div className="border border-border bg-surface rounded-sm overflow-hidden">
       <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">AGENDAMENTOS</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">AGENDAMENTOS</span>
       </div>
       <div className="divide-y divide-border">
         {upcoming.map((a) => renderRow(a, false))}

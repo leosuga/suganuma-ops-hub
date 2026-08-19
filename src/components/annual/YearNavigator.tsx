@@ -26,7 +26,7 @@ export function YearNavigator({ year, onChange }: YearNavigatorProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={() => onChange(year - 1)}
-          className="w-6 h-6 flex items-center justify-center text-on-surface/30 hover:text-on-surface/70 font-mono transition-colors"
+          className="w-6 h-6 flex items-center justify-center text-on-surface/40 hover:text-on-surface/70 font-mono transition-colors"
           aria-label="Ano anterior"
         >
           ‹
@@ -36,7 +36,7 @@ export function YearNavigator({ year, onChange }: YearNavigatorProps) {
         </span>
         <button
           onClick={() => onChange(year + 1)}
-          className="w-6 h-6 flex items-center justify-center text-on-surface/30 hover:text-on-surface/70 font-mono transition-colors"
+          className="w-6 h-6 flex items-center justify-center text-on-surface/40 hover:text-on-surface/70 font-mono transition-colors"
           aria-label="Próximo ano"
         >
           ›
@@ -44,7 +44,7 @@ export function YearNavigator({ year, onChange }: YearNavigatorProps) {
       </div>
 
       <div className="flex items-center gap-2">
-        <Link href="/calendar" className="text-[9px] font-mono text-on-surface/20 hover:text-teal/80 tracking-wider transition-colors border-l border-border pl-2 ml-1">
+        <Link href="/calendar" className="text-[9px] font-mono text-on-surface/40 hover:text-teal/80 tracking-wider transition-colors border-l border-border pl-2 ml-1">
           MÊS →
         </Link>
       </div>

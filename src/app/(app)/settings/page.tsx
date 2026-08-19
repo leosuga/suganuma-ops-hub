@@ -159,7 +159,7 @@ export default function SettingsPage() {
         <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
           SETTINGS
         </h1>
-        <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
+        <p className="text-[10px] font-mono text-on-surface/40 mt-0.5">
           Configurações do sistema
         </p>
       </div>
@@ -178,7 +178,7 @@ export default function SettingsPage() {
                 "flex items-center gap-2 h-7 px-3 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
                 accent === a.value
                   ? "border-teal bg-teal/10 text-teal"
-                  : "border-border text-on-surface/30 hover:border-on-surface/40"
+                  : "border-border text-on-surface/40 hover:border-on-surface/40"
               )}
             >
               <span className={cn("w-2.5 h-2.5 rounded-full", a.color)} />
@@ -194,7 +194,7 @@ export default function SettingsPage() {
           <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
             AGENT TOKENS
           </span>
-          <span className="text-[9px] font-mono text-on-surface/30">
+          <span className="text-[9px] font-mono text-on-surface/40">
             {active.length} ativo{active.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -205,7 +205,7 @@ export default function SettingsPage() {
             onChange={(e) => setTokenUi((s) => ({ ...s, newTokenName: e.target.value }))}
             onKeyDown={(e) => { if (e.key === "Enter") handleCreateToken() }}
             placeholder="Nome do token (ex: Claude Desktop)"
-            className="flex-1 h-7 px-2 text-[11px] font-mono bg-bg border border-border rounded-sm text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal/60"
+            className="flex-1 h-7 px-2 text-[11px] font-mono bg-bg border border-border rounded-sm text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal/60"
           />
           <button
             onClick={handleCreateToken}
@@ -227,13 +227,13 @@ export default function SettingsPage() {
               <button onClick={handleCopy} className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/50 hover:border-teal hover:text-teal rounded-sm transition-colors">
                 {tokenUi.copied ? "✓ COPIADO" : "COPIAR"}
               </button>
-              <button onClick={() => setTokenUi((s) => ({ ...s, createdToken: null }))} className="h-7 w-7 flex items-center justify-center text-on-surface/30 hover:text-on-surface/60 transition-colors">×</button>
+              <button onClick={() => setTokenUi((s) => ({ ...s, createdToken: null }))} className="h-7 w-7 flex items-center justify-center text-on-surface/40 hover:text-on-surface/60 transition-colors">×</button>
             </div>
           </div>
         )}
         {active.length === 0 && !tokenUi.createdToken ? (
           <div className="px-4 py-6 text-center">
-            <span className="text-[11px] font-mono text-on-surface/20">Nenhum token ativo</span>
+            <span className="text-[11px] font-mono text-on-surface/40">Nenhum token ativo</span>
           </div>
         ) : (
           <div className="divide-y divide-border">
@@ -241,7 +241,7 @@ export default function SettingsPage() {
               <div key={t.id} className="flex items-center gap-3 px-4 py-2.5">
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-mono text-on-surface truncate">{t.name}</p>
-                  <p className="text-[9px] font-mono text-on-surface/30">
+                  <p className="text-[9px] font-mono text-on-surface/40">
                     Criado {fmtDate(t.created_at)}
                     {t.last_used_at ? ` · Usado ${fmtDate(t.last_used_at)}` : " · Nunca usado"}
                   </p>
@@ -255,7 +255,7 @@ export default function SettingsPage() {
         )}
         {revoked.length > 0 && (
           <div className="px-4 py-2.5 border-t border-border">
-            <p className="text-[9px] font-mono text-on-surface/20">
+            <p className="text-[9px] font-mono text-on-surface/40">
               {revoked.length} token{revoked.length !== 1 ? "s" : ""} revogado{revoked.length !== 1 ? "s" : ""}
             </p>
           </div>
@@ -312,7 +312,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <p className="text-center text-[9px] font-mono text-on-surface/20">
+      <p className="text-center text-[9px] font-mono text-on-surface/40">
         SUGANUMA OPS HUB — ACESSO RESTRITO
       </p>
 

@@ -36,7 +36,7 @@ export function ContextNotesWidget({ notes }: ContextNotesWidgetProps) {
         <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
           NOTAS POR CONTEXTO
         </span>
-        <Link href="/notes" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
+        <Link href="/notes" className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">
           VER TODAS →
         </Link>
       </div>

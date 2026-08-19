@@ -77,7 +77,7 @@ export default function FinancePage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">FINANCE HUB</h1>
-          <p className="text-[10px] font-mono text-on-surface/30 mt-0.5 capitalize">{monthLabel}</p>
+          <p className="text-[10px] font-mono text-on-surface/40 mt-0.5 capitalize">{monthLabel}</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setCsvOpen(true)} className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/40 hover:border-on-surface/40 hover:text-on-surface/70 rounded-sm transition-colors">IMPORTAR CSV</button>
@@ -86,18 +86,18 @@ export default function FinancePage() {
       </div>
 
       <div className="flex items-center gap-3">
-        <button onClick={prevMonth} className="w-6 h-6 flex items-center justify-center text-on-surface/30 hover:text-on-surface/70 font-mono transition-colors">‹</button>
+        <button onClick={prevMonth} className="w-6 h-6 flex items-center justify-center text-on-surface/40 hover:text-on-surface/70 font-mono transition-colors">‹</button>
         <span className="text-[11px] font-mono text-on-surface/60 capitalize min-w-30 text-center">{monthLabel}</span>
-        <button onClick={nextMonth} className="w-6 h-6 flex items-center justify-center text-on-surface/30 hover:text-on-surface/70 font-mono transition-colors">›</button>
+        <button onClick={nextMonth} className="w-6 h-6 flex items-center justify-center text-on-surface/40 hover:text-on-surface/70 font-mono transition-colors">›</button>
       </div>
 
       <FinanceKPIs transactions={transactions} isLoading={isLoading} />
       <RevenueChart transactions={transactions} isLoading={isLoading} />
 
       <div className="flex items-center gap-2">
-        <span className="text-[9px] font-mono text-on-surface/30 uppercase tracking-widest">FILTRAR:</span>
+        <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-widest">FILTRAR:</span>
         {[{ value: "", label: "TODOS" }, { value: "income", label: "RECEITA" }, { value: "expense", label: "DESPESA" }, { value: "transfer", label: "TRANSF." }, { value: "tax", label: "IMPOSTO" }].map((opt) => (
-          <button key={opt.value} onClick={() => setKindFilter(opt.value)} className={`h-6 px-2 text-[8px] font-mono font-semibold tracking-wider rounded-sm border transition-colors ${kindFilter === opt.value ? "border-teal bg-teal/10 text-teal" : "border-border text-on-surface/30 hover:border-on-surface/40"}`}>{opt.label}</button>
+          <button key={opt.value} onClick={() => setKindFilter(opt.value)} className={`h-6 px-2 text-[8px] font-mono font-semibold tracking-wider rounded-sm border transition-colors ${kindFilter === opt.value ? "border-teal bg-teal/10 text-teal" : "border-border text-on-surface/40 hover:border-on-surface/40"}`}>{opt.label}</button>
         ))}
       </div>
 

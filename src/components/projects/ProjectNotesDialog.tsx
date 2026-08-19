@@ -63,7 +63,7 @@ export function ProjectNotesDialog({ open, onOpenChange, project, notes, onDelet
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder="Nova nota..."
-              className="flex-1 h-8 px-3 bg-bg border border-border rounded-sm text-[11px] font-mono text-on-surface placeholder:text-on-surface/20 focus:border-teal/40 focus:outline-none"
+              className="flex-1 h-8 px-3 bg-bg border border-border rounded-sm text-[11px] font-mono text-on-surface placeholder:text-on-surface/40 focus:border-teal/40 focus:outline-none"
             />
             <button
               type="submit"
@@ -71,7 +71,7 @@ export function ProjectNotesDialog({ open, onOpenChange, project, notes, onDelet
               className={cn(
                 "h-8 px-3 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors",
                 creating || !newTitle.trim()
-                  ? "text-on-surface/20 border-border bg-bg cursor-not-allowed"
+                  ? "text-on-surface/40 border-border bg-bg cursor-not-allowed"
                   : "text-teal border-teal/40 bg-teal/10 hover:bg-teal/20"
               )}
             >
@@ -81,8 +81,8 @@ export function ProjectNotesDialog({ open, onOpenChange, project, notes, onDelet
 
           {projectNotes.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-[11px] font-mono text-on-surface/30">Nenhuma nota vinculada a este projeto</p>
-              <p className="text-[10px] font-mono text-on-surface/20 mt-1">
+              <p className="text-[11px] font-mono text-on-surface/40">Nenhuma nota vinculada a este projeto</p>
+              <p className="text-[10px] font-mono text-on-surface/40 mt-1">
                 Digite um título acima para criar a primeira nota
               </p>
             </div>

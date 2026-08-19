@@ -57,7 +57,7 @@ export function AddTransactionDialog({
   }
 
   const inputClass =
-    "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+    "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
 
   return (
     <Dialog open={open} onOpenChange={(v) => onOpenChange(v)}>
@@ -86,7 +86,7 @@ export function AddTransactionDialog({
                         : opt.value === "transfer"
                           ? "border-amber bg-amber/10 text-amber"
                           : "border-border bg-surface text-on-surface/50"
-                    : "border-border text-on-surface/30 hover:border-on-surface/40"
+                    : "border-border text-on-surface/40 hover:border-on-surface/40"
                 )}
               >
                 {opt.label}

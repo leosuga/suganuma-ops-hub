@@ -40,7 +40,7 @@ export function SimpleBarChart({
         {data.map((item, idx) => (
           <span
             key={idx}
-            className="text-[8px] font-mono text-on-surface/30 flex-1 text-center"
+            className="text-[8px] font-mono text-on-surface/40 flex-1 text-center"
           >
             {typeof item.label === "string" ? item.label : ""}
           </span>

@@ -132,13 +132,13 @@ export default function DashboardPage() {
             <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
               SUGANUMA OPS HUB
             </h1>
-            <p className="text-[10px] font-mono text-on-surface/30 mt-0.5 capitalize">
+            <p className="text-[10px] font-mono text-on-surface/40 mt-0.5 capitalize">
               {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
             </p>
           </div>
           <Link
             href="/cockpit"
-            className="text-[9px] font-mono text-on-surface/30 hover:text-teal transition-colors tracking-wider uppercase"
+            className="text-[9px] font-mono text-on-surface/40 hover:text-teal transition-colors tracking-wider uppercase"
           >
             Cockpit →
           </Link>
@@ -166,10 +166,10 @@ export default function DashboardPage() {
 
         <form onSubmit={handleQuickWeight} className="border border-border bg-surface rounded-sm overflow-hidden">
           <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
               PESO HOJE
             </span>
-            <Link href="/health" className="ml-auto text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">
+            <Link href="/health" className="ml-auto text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">
               HEALTH →
             </Link>
           </div>
@@ -179,7 +179,7 @@ export default function DashboardPage() {
               value={weightInput}
               onChange={(e) => setWeightInput(e.target.value)}
               placeholder="68.5 kg"
-              className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-health transition-colors"
+              className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health transition-colors"
             />
             <button
               type="submit"
@@ -220,7 +220,7 @@ export default function DashboardPage() {
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
                 PROJETOS ATIVOS
               </span>
-              <Link href="/projects" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
+              <Link href="/projects" className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">
                 VER TODOS →
               </Link>
             </div>
@@ -238,7 +238,7 @@ export default function DashboardPage() {
                       <div className="w-20 h-1.5 bg-bg rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: project.color }} />
                       </div>
-                      <span className="text-[10px] font-mono text-on-surface/30 w-10 text-right">{pct}%</span>
+                      <span className="text-[10px] font-mono text-on-surface/40 w-10 text-right">{pct}%</span>
                     </div>
                   </div>
                 )
@@ -254,7 +254,7 @@ export default function DashboardPage() {
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
               TASKS POR CATEGORIA
             </span>
-            <Link href="/tasks" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
+            <Link href="/tasks" className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">
               VER TASKS →
             </Link>
           </div>

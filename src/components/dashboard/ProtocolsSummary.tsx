@@ -28,7 +28,7 @@ export function ProtocolsSummary() {
       <span className={`text-[28px] font-mono font-bold leading-none ${doneCount === total ? "text-health" : "text-on-surface"}`}>
         {doneCount}/{total}
       </span>
-      <span className="text-[10px] font-mono text-on-surface/30">feitos hoje</span>
+      <span className="text-[10px] font-mono text-on-surface/40">feitos hoje</span>
     </div>
   )
 }

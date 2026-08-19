@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
@@ -79,12 +80,12 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
                 href={item.href}
                 prefetch={item.href === "/dashboard" || item.href === "/tasks"}
                 className={cn(
-                  "flex flex-col items-center gap-1 px-3 py-1.5 rounded-sm transition-colors active:scale-95",
-                  active ? "text-teal" : "text-on-surface/30 hover:text-on-surface/60"
+                  "flex flex-col items-center justify-center gap-1 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-sm transition-colors active:scale-95",
+                  active ? "text-teal" : "text-on-surface/40 hover:text-on-surface/60"
                 )}
               >
                 {item.icon}
-                <span className="text-[8px] font-mono tracking-wider">{item.label}</span>
+                <span className="text-[10px] font-mono tracking-wider">{item.label}</span>
               </Link>
             )
           })}
@@ -93,7 +94,7 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
             onClick={() => setHubOpen(true)}
             className={cn(
               "flex flex-col items-center gap-1 px-3 py-1.5 rounded-sm transition-colors active:scale-95",
-              hubActive ? "text-teal" : "text-on-surface/30 hover:text-on-surface/60"
+              hubActive ? "text-teal" : "text-on-surface/40 hover:text-on-surface/60"
             )}
           >
             <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
@@ -102,23 +103,25 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
               <rect x="1" y="10" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
               <rect x="10" y="10" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
             </svg>
-            <span className="text-[8px] font-mono tracking-wider">HUB</span>
+            <span className="text-[10px] font-mono tracking-wider">HUB</span>
           </button>
         </div>
       </nav>
 
-      {/* Hub menu overlay */}
-      {hubOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm"
-            onClick={() => setHubOpen(false)}
-          />
-          <div className="fixed bottom-14 left-2 right-2 z-50 bg-surface border border-border rounded-sm shadow-2xl overflow-hidden">
+      {/* Hub menu overlay — Dialog do @base-ui/react em vez de divs manuais:
+          ganha role="dialog", focus trap e fecha com Escape de graça. */}
+      <DialogPrimitive.Root open={hubOpen} onOpenChange={setHubOpen}>
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Backdrop className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm" />
+          <DialogPrimitive.Popup className="fixed bottom-14 left-2 right-2 z-50 bg-surface border border-border rounded-sm shadow-2xl overflow-hidden outline-none">
             <div className="p-3 space-y-1">
               <div className="flex items-center justify-between px-1 pb-1.5 border-b border-border mb-1">
-                <span className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">HUB</span>
-                <button onClick={() => setHubOpen(false)} className="text-[10px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors active:scale-95">FECHAR</button>
+                <DialogPrimitive.Title className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+                  HUB
+                </DialogPrimitive.Title>
+                <DialogPrimitive.Close className="text-[10px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors active:scale-95 p-2.5 -m-2.5">
+                  FECHAR
+                </DialogPrimitive.Close>
               </div>
               <div className="grid grid-cols-3 gap-1">
                 {HUB_ITEMS.map((item) => {
@@ -129,20 +132,20 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
                       href={item.href}
                       onClick={() => setHubOpen(false)}
                       className={cn(
-                        "flex flex-col items-center gap-1 p-3 md:p-2 rounded-sm transition-colors active:scale-95",
+                        "flex flex-col items-center justify-center gap-1 p-3 md:p-2 min-h-[44px] rounded-sm transition-colors active:scale-95",
                         active ? "bg-teal/10 text-teal" : "text-on-surface/50 hover:bg-surface-hover hover:text-on-surface/70"
                       )}
                     >
                       <span className="text-[12px] font-mono font-semibold">{item.label}</span>
-                      <span className="text-[7px] font-mono tracking-wider opacity-60">{item.desc}</span>
+                      <span className="text-[9px] font-mono tracking-wider opacity-60">{item.desc}</span>
                     </Link>
                   )
                 })}
               </div>
             </div>
-          </div>
-        </>
-      )}
+          </DialogPrimitive.Popup>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
     </>
   )
 }

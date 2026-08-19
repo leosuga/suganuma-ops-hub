@@ -39,7 +39,7 @@ export function AddProtocolDialog({ open, onOpenChange }: AddProtocolDialogProps
             placeholder="Ex: Ácido fólico, Vitamina D, Caminhada diária"
             required
             autoFocus
-            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-health transition-colors"
+            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health transition-colors"
           />
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => onOpenChange(false)} className="h-8 px-4 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 transition-colors">CANCELAR</button>
@@ -114,7 +114,7 @@ function ProtocolRow({ protocol }: { protocol: { id: string; name: string; activ
             className="flex-1 h-7 bg-bg border border-border rounded-sm px-2 text-[12px] font-mono text-on-surface focus:outline-none focus:border-health transition-colors"
           />
           <button onClick={handleSaveEdit} disabled={updateProtocol.isPending} className="text-[9px] font-mono text-health hover:opacity-70 tracking-wider">OK</button>
-          <button onClick={() => setEditing(false)} className="text-on-surface/30 hover:text-on-surface/60 text-[14px]">×</button>
+          <button onClick={() => setEditing(false)} className="text-on-surface/40 hover:text-on-surface/60 text-[14px]">×</button>
         </>
       ) : (
         <>
@@ -139,7 +139,7 @@ function ProtocolRow({ protocol }: { protocol: { id: string; name: string; activ
             {protocol.name}
           </span>
           {!protocol.active && (
-            <span className="flex-none text-[8px] font-mono text-on-surface/20 uppercase tracking-wider">INATIVO</span>
+            <span className="flex-none text-[8px] font-mono text-on-surface/40 uppercase tracking-wider">INATIVO</span>
           )}
           {streak > 1 && (
             <span className="flex-none text-[9px] font-mono text-amber tracking-wider">
@@ -148,7 +148,7 @@ function ProtocolRow({ protocol }: { protocol: { id: string; name: string; activ
           )}
           <span className={cn(
             "flex-none text-[8px] font-mono px-1.5 h-4 flex items-center rounded-[2px] border tracking-wider uppercase",
-            doneToday ? "text-health border-health/40 bg-health/10" : "text-on-surface/20 border-border"
+            doneToday ? "text-health border-health/40 bg-health/10" : "text-on-surface/40 border-border"
           )}>
             {doneToday ? "OK" : "PND"}
           </span>
@@ -156,15 +156,15 @@ function ProtocolRow({ protocol }: { protocol: { id: string; name: string; activ
           {confirmDelete ? (
             <>
               <button onClick={handleDelete} disabled={deleteProtocol.isPending} className="text-[9px] font-mono text-danger hover:opacity-70 tracking-wider">DEL</button>
-              <button onClick={() => setConfirmDelete(false)} className="text-on-surface/30 hover:text-on-surface/60 text-[14px]">×</button>
+              <button onClick={() => setConfirmDelete(false)} className="text-on-surface/40 hover:text-on-surface/60 text-[14px]">×</button>
             </>
           ) : (
             <>
-              <button onClick={() => { setEditName(protocol.name); setEditing(true) }} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-teal transition-colors text-[11px]" aria-label={`Editar protocolo: ${protocol.name}`}>✎</button>
-              <button onClick={handleToggleActive} className={cn("text-[8px] font-mono tracking-wider", protocol.active ? "text-on-surface/20 hover:text-on-surface/50" : "text-teal hover:text-teal-hi")} title={protocol.active ? "Desativar" : "Ativar"}>
+              <button onClick={() => { setEditName(protocol.name); setEditing(true) }} className="w-5 h-5 flex items-center justify-center text-on-surface/40 hover:text-teal transition-colors text-[11px]" aria-label={`Editar protocolo: ${protocol.name}`}>✎</button>
+              <button onClick={handleToggleActive} className={cn("text-[8px] font-mono tracking-wider", protocol.active ? "text-on-surface/40 hover:text-on-surface/50" : "text-teal hover:text-teal-hi")} title={protocol.active ? "Desativar" : "Ativar"}>
                 {protocol.active ? "⊘" : "⊕"}
               </button>
-              <button onClick={() => setConfirmDelete(true)} className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors">×</button>
+              <button onClick={() => setConfirmDelete(true)} className="w-5 h-5 flex items-center justify-center text-on-surface/40 hover:text-danger transition-colors">×</button>
             </>
           )}
         </>
@@ -181,7 +181,7 @@ export function ProtocolList() {
   if (protocols.length === 0) {
     return (
       <div className="border border-border bg-surface rounded-sm p-6 flex items-center justify-center">
-        <span className="text-[11px] font-mono text-on-surface/20">Nenhum protocolo ainda</span>
+        <span className="text-[11px] font-mono text-on-surface/40">Nenhum protocolo ainda</span>
       </div>
     )
   }
@@ -189,7 +189,7 @@ export function ProtocolList() {
   return (
     <div className="border border-border bg-surface rounded-sm overflow-hidden">
       <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">PROTOCOLOS DIÁRIOS</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">PROTOCOLOS DIÁRIOS</span>
       </div>
       <div className="divide-y divide-border">
         {protocols.map((p) => <ProtocolRow key={p.id} protocol={p} />)}

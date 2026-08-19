@@ -89,7 +89,7 @@ export function HabitStats({ habits }: HabitStatsProps) {
           </span>
           <span className="text-xl font-mono font-bold text-health block">{bestStreak}d</span>
           {bestStreakName && (
-            <span className="text-[10px] font-mono text-on-surface/30 block mt-1 truncate">{bestStreakName}</span>
+            <span className="text-[10px] font-mono text-on-surface/40 block mt-1 truncate">{bestStreakName}</span>
           )}
         </div>
 
@@ -98,7 +98,7 @@ export function HabitStats({ habits }: HabitStatsProps) {
             CONSISTÊNCIA
           </span>
           <span className="text-xl font-mono font-bold text-teal block">{weekRate}%</span>
-          <span className="text-[10px] font-mono text-on-surface/30 block mt-1">desta semana</span>
+          <span className="text-[10px] font-mono text-on-surface/40 block mt-1">desta semana</span>
         </div>
 
         <div className="border border-border bg-surface rounded-sm p-4">
@@ -106,7 +106,7 @@ export function HabitStats({ habits }: HabitStatsProps) {
             ATIVOS
           </span>
           <span className="text-xl font-mono font-bold text-on-surface block">{active.length}</span>
-          <span className="text-[10px] font-mono text-on-surface/30 block mt-1">
+          <span className="text-[10px] font-mono text-on-surface/40 block mt-1">
             {habits.length - active.length} inativos
           </span>
         </div>
@@ -122,10 +122,10 @@ export function HabitStats({ habits }: HabitStatsProps) {
               className="grid gap-x-1"
               style={{ gridTemplateColumns: `100px repeat(${activeDays}, minmax(24px, 1fr))` }}
             >
-              <div className="text-[9px] font-mono text-on-surface/20" />
+              <div className="text-[9px] font-mono text-on-surface/40" />
               {weekDays.slice(0, activeDays).map((day) => (
                 <div key={day.toISOString()} className="text-center">
-                  <span className="text-[7px] font-mono text-on-surface/25 uppercase">
+                  <span className="text-[7px] font-mono text-on-surface/40 uppercase">
                     {DAY_NAMES[day.getDay() === 0 ? 6 : day.getDay() - 1]}
                   </span>
                 </div>

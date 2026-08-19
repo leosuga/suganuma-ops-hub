@@ -30,10 +30,10 @@ export function QuickAddExpense() {
   return (
     <form onSubmit={handleSubmit} className="border border-border bg-surface rounded-sm overflow-hidden">
       <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
           DESPESA RÁPIDA
         </span>
-        <Link href="/finance" className="ml-auto text-[9px] font-mono text-on-surface/20 hover:text-on-surface/60 transition-colors">
+        <Link href="/finance" className="ml-auto text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">
           +DETALHES →
         </Link>
       </div>
@@ -44,14 +44,14 @@ export function QuickAddExpense() {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="R$ 0,00"
-          className="w-24 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors flex-none"
+          className="w-24 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors flex-none"
         />
         <input
           type="text"
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           placeholder="Descrição da despesa..."
-          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
         />
         <button
           type="submit"

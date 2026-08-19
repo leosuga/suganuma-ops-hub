@@ -138,7 +138,7 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
                 <p className="text-[11px] font-mono text-on-surface/40">
                   Clique para selecionar um arquivo CSV
                 </p>
-                <p className="text-[9px] font-mono text-on-surface/20">
+                <p className="text-[9px] font-mono text-on-surface/40">
                   Suporte: Nubank, formato genérico (data, descrição, valor)
                 </p>
               </div>
@@ -161,7 +161,7 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
                 </span>
                 <button
                   onClick={() => { setStep("upload"); setRows([]) }}
-                  className="text-[10px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors"
+                  className="text-[10px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors"
                 >
                   trocar arquivo
                 </button>
@@ -170,7 +170,7 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
               <div className="border border-border rounded-sm overflow-hidden max-h-80 overflow-y-auto">
                 <div className="h-7 px-3 flex items-center gap-2 bg-bg border-b border-border">
                   {["TIPO", "DATA", "DESCRIÇÃO", "VALOR"].map((h) => (
-                    <span key={h} className="text-[8px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase first:w-8 last:w-20 last:text-right">
+                    <span key={h} className="text-[8px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase first:w-8 last:w-20 last:text-right">
                       {h}
                     </span>
                   ))}
@@ -192,7 +192,7 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
                 ))}
                 {rows.length > 100 && (
                   <div className="h-9 px-3 flex items-center">
-                    <span className="text-[10px] font-mono text-on-surface/30">
+                    <span className="text-[10px] font-mono text-on-surface/40">
                       +{rows.length - 100} linhas não exibidas
                     </span>
                   </div>

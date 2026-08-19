@@ -46,7 +46,7 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
           onChange={(e) => setTarget(e.target.value)}
           placeholder="Orçamento (R$)"
           autoFocus
-          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
         />
         <div className="flex gap-2 justify-end">
           <button onClick={() => setEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">CANCELAR</button>
@@ -66,7 +66,7 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
         </span>
         <button
           onClick={() => setEditing(true)}
-          className="text-[8px] font-mono text-on-surface/30 hover:text-teal tracking-wider transition-colors"
+          className="text-[8px] font-mono text-on-surface/40 hover:text-teal tracking-wider transition-colors"
         >
           {budget ? "EDITAR" : "DEFINIR"}
         </button>
@@ -78,7 +78,7 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
             <span className={`text-2xl font-mono font-bold ${pct > 100 ? "text-danger" : pct > 80 ? "text-amber" : "text-teal"}`}>
               {pct}%
             </span>
-            <span className="text-[10px] font-mono text-on-surface/30 pb-1">
+            <span className="text-[10px] font-mono text-on-surface/40 pb-1">
               {fmt(expense)} / {fmt(budgetTarget)}
             </span>
           </div>
@@ -91,7 +91,7 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono text-on-surface/30">
+            <span className="text-[10px] font-mono text-on-surface/40">
               {remaining < 0 ? "Estouro:" : "Restante:"}
             </span>
             <span className={`text-[12px] font-mono font-semibold ${remaining < 0 ? "text-danger" : "text-teal"}`}>
@@ -100,7 +100,7 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
           </div>
         </>
       ) : (
-        <div className="text-[10px] font-mono text-on-surface/20 text-center py-2">
+        <div className="text-[10px] font-mono text-on-surface/40 text-center py-2">
           Sem orçamento definido para {month}
         </div>
       )}

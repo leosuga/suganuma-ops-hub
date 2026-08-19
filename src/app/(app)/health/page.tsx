@@ -31,7 +31,7 @@ export default function HealthPage() {
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-health uppercase">
             HEALTH HUB
           </h1>
-          <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
+          <p className="text-[10px] font-mono text-on-surface/40 mt-0.5">
             Saúde, gravidez e protocolos familiares
           </p>
         </div>

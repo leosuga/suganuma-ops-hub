@@ -20,7 +20,7 @@ export function AccountManager() {
   const [kind, setKind] = useState("")
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
-  const inputClass = "h-7 bg-bg border border-border rounded-sm px-2 text-[11px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+  const inputClass = "h-7 bg-bg border border-border rounded-sm px-2 text-[11px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
 
   function startAdd() {
     setName("")
@@ -73,7 +73,7 @@ export function AccountManager() {
   return (
     <div className="border border-border bg-surface rounded-sm overflow-hidden">
       <div className="h-8 px-4 flex items-center justify-between border-b border-border bg-bg">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/30 uppercase">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
           CONTAS
         </span>
         {!adding && !editingId && (
@@ -92,7 +92,7 @@ export function AccountManager() {
         <div className="p-6 flex items-center justify-center">
           <button
             onClick={startAdd}
-            className="text-[11px] font-mono text-on-surface/20 hover:text-teal transition-colors"
+            className="text-[11px] font-mono text-on-surface/40 hover:text-teal transition-colors"
           >
             Nenhuma conta — clique para criar
           </button>
@@ -127,7 +127,7 @@ export function AccountManager() {
                   >
                     {updateAccount.isPending ? "..." : "OK"}
                   </button>
-                  <button onClick={cancelForm} className="text-on-surface/30 hover:text-on-surface/60 text-[14px]">×</button>
+                  <button onClick={cancelForm} className="text-on-surface/40 hover:text-on-surface/60 text-[14px]">×</button>
                 </div>
               )
             }
@@ -138,7 +138,7 @@ export function AccountManager() {
                 {acct.kind && (
                   <span className="text-[10px] font-mono text-on-surface/40 truncate max-w-[120px]">{acct.kind}</span>
                 )}
-                <span className="text-[10px] font-mono text-on-surface/30">
+                <span className="text-[10px] font-mono text-on-surface/40">
                   {acct.currency}
                 </span>
                 <span className="text-[10px] font-mono text-teal tabular-nums w-20 text-right">
@@ -155,7 +155,7 @@ export function AccountManager() {
                     </button>
                     <button
                       onClick={() => setConfirmDelete(null)}
-                      className="text-on-surface/30 hover:text-on-surface/60 text-[14px]"
+                      className="text-on-surface/40 hover:text-on-surface/60 text-[14px]"
                     >
                       ×
                     </button>
@@ -164,14 +164,14 @@ export function AccountManager() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => startEdit(acct)}
-                      className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-teal transition-colors text-[11px]"
+                      className="w-5 h-5 flex items-center justify-center text-on-surface/40 hover:text-teal transition-colors text-[11px]"
                       aria-label={`Editar conta: ${acct.name}`}
                     >
                       ✎
                     </button>
                     <button
                       onClick={() => setConfirmDelete(acct.id)}
-                      className="w-5 h-5 flex items-center justify-center text-on-surface/20 hover:text-danger transition-colors"
+                      className="w-5 h-5 flex items-center justify-center text-on-surface/40 hover:text-danger transition-colors"
                       aria-label={`Excluir conta: ${acct.name}`}
                     >
                       ×
@@ -208,7 +208,7 @@ export function AccountManager() {
               >
                 {createAccount.isPending ? "..." : "OK"}
               </button>
-              <button onClick={cancelForm} className="text-on-surface/30 hover:text-on-surface/60 text-[14px]">×</button>
+              <button onClick={cancelForm} className="text-on-surface/40 hover:text-on-surface/60 text-[14px]">×</button>
             </div>
           )}
         </div>

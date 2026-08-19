@@ -201,7 +201,7 @@ function NotesPageInner() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">NOTES</h1>
-              <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
+              <p className="text-[10px] font-mono text-on-surface/40 mt-0.5">
                 {notes.length} nota{notes.length !== 1 ? "s" : ""} · {mocs.length} MOC{mocs.length !== 1 ? "s" : ""}
               </p>
             </div>
@@ -233,7 +233,7 @@ function NotesPageInner() {
                   "w-9 h-9 flex items-center justify-center rounded-sm border transition-colors active:scale-95",
                   showSemanticSearch
                     ? "bg-teal/15 text-teal border-teal/40"
-                    : "text-on-surface/30 border-border hover:border-on-surface/30 hover:text-on-surface/50"
+                    : "text-on-surface/40 border-border hover:border-on-surface/30 hover:text-on-surface/50"
                 )}
                 title="Busca semântica"
               >
@@ -251,7 +251,7 @@ function NotesPageInner() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar notas..."
-            className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+            className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
           />
 
           {/* Context bar */}
@@ -294,7 +294,7 @@ function NotesPageInner() {
               "w-full h-7 flex items-center justify-center gap-1.5 rounded-sm font-mono text-[8px] font-semibold tracking-widest border transition-colors active:scale-95",
               activeFilterCount > 0
                 ? "bg-teal/10 text-teal border-teal/30"
-                : "text-on-surface/30 border-border hover:border-on-surface/30 hover:text-on-surface/50"
+                : "text-on-surface/40 border-border hover:border-on-surface/30 hover:text-on-surface/50"
             )}
           >
             <span>FILTROS</span>
@@ -309,7 +309,7 @@ function NotesPageInner() {
             <div className="space-y-2 border border-border rounded-sm p-2 bg-surface/50">
               {allPara.length > 0 && (
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                  <span className="text-[7px] font-mono text-on-surface/30 tracking-wider flex-none">PARA</span>
+                  <span className="text-[7px] font-mono text-on-surface/40 tracking-wider flex-none">PARA</span>
                   <button
                     onClick={() => setFilterPara(null)}
                     className={cn(
@@ -339,7 +339,7 @@ function NotesPageInner() {
               )}
               {tagPrefixes.length > 0 && (
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                  <span className="text-[7px] font-mono text-on-surface/30 tracking-wider flex-none">TAGS</span>
+                  <span className="text-[7px] font-mono text-on-surface/40 tracking-wider flex-none">TAGS</span>
                   <button
                     onClick={() => { setFilterPrefix(null); setFilterTag(null) }}
                     className={cn(
@@ -383,7 +383,7 @@ function NotesPageInner() {
                           "flex-none h-6 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
                           isActive
                             ? "bg-amber/15 text-amber border border-amber/40"
-                            : "text-on-surface/30 border border-border hover:border-on-surface/30 hover:text-on-surface/50"
+                            : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/50"
                         )}
                       >
                         {rest}
@@ -402,7 +402,7 @@ function NotesPageInner() {
         <div className="hidden md:block space-y-3">
           <div>
             <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">NOTES</h1>
-            <p className="text-[10px] font-mono text-on-surface/30 mt-0.5">
+            <p className="text-[10px] font-mono text-on-surface/40 mt-0.5">
               {notes.length} nota{notes.length !== 1 ? "s" : ""} · {mocs.length} MOC{mocs.length !== 1 ? "s" : ""}
             </p>
           </div>
@@ -432,7 +432,7 @@ function NotesPageInner() {
               "h-7 px-3 font-mono text-[9px] font-semibold tracking-widest rounded-sm border transition-colors active:scale-95",
               showSemanticSearch
                 ? "bg-teal/15 text-teal border-teal/40"
-                : "text-on-surface/30 border-border hover:border-on-surface/30 hover:text-on-surface/50"
+                : "text-on-surface/40 border-border hover:border-on-surface/30 hover:text-on-surface/50"
             )}
           >
             {showSemanticSearch ? "FECHAR BUSCA SEMÂNTICA" : "BUSCA SEMÂNTICA"}
@@ -547,7 +547,7 @@ function NotesPageInner() {
                       "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
                       isActive
                         ? "bg-amber/15 text-amber border border-amber/40"
-                        : "text-on-surface/30 border border-border hover:border-on-surface/30 hover:text-on-surface/50"
+                        : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/50"
                     )}
                   >
                     {rest}
@@ -562,7 +562,7 @@ function NotesPageInner() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar notas..."
-            className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/20 focus:outline-none focus:border-teal transition-colors"
+            className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
           />
         </div>
 
@@ -576,7 +576,7 @@ function NotesPageInner() {
 
         {!isLoading && notes.length === 0 && (
           <div className="border border-border bg-surface rounded-sm p-8 flex items-center justify-center">
-            <span className="text-[11px] font-mono text-on-surface/20">Nenhuma nota ainda</span>
+            <span className="text-[11px] font-mono text-on-surface/40">Nenhuma nota ainda</span>
           </div>
         )}
 
@@ -619,7 +619,7 @@ function NotesPageInner() {
               </span>
               <button
                 onClick={() => setSelectedIds(new Set())}
-                className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60"
+                className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60"
               >
                 Limpar
               </button>

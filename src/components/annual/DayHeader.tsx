@@ -31,7 +31,7 @@ export function DayHeader({ maxDays, dayWidth }: DayHeaderProps) {
                 "flex-none flex items-center justify-center border-r border-border/20 text-[8px] font-mono tabular-nums last:border-r-0",
                 isToday
                   ? "text-teal font-bold bg-teal/[0.08]"
-                  : "text-on-surface/30"
+                  : "text-on-surface/40"
               )}
               style={{ width: dayWidth }}
             >

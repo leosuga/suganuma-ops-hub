@@ -166,7 +166,7 @@ function SidebarInner() {
                 "w-10 h-10 flex flex-col items-center justify-center rounded-sm gap-0.5 transition-colors",
                 active
                   ? "text-teal bg-teal/10"
-                  : "text-on-surface/30 hover:text-on-surface/60 hover:bg-surface-hover"
+                  : "text-on-surface/40 hover:text-on-surface/60 hover:bg-surface-hover"
               )}
             >
               {item.icon}
@@ -178,7 +178,7 @@ function SidebarInner() {
 
       {pathname.startsWith("/notes") && (
         <div className="flex-none flex flex-col items-center gap-1 pb-2 border-t border-border pt-2">
-          <span className="text-[6px] font-mono text-on-surface/20 tracking-wider mb-1">CTX</span>
+          <span className="text-[6px] font-mono text-on-surface/40 tracking-wider mb-1">CTX</span>
           {(Object.keys(CONTEXT_CONFIG) as Array<keyof typeof CONTEXT_CONFIG>).map((ctx) => {
             const cfg = CONTEXT_CONFIG[ctx]
             const isActive = searchParams.get("ctx") === ctx
@@ -192,7 +192,7 @@ function SidebarInner() {
                   "w-7 h-7 flex items-center justify-center rounded-sm transition-colors",
                   isActive
                     ? cfg.bg + " border " + cfg.border
-                    : "text-on-surface/20 hover:text-on-surface/50"
+                    : "text-on-surface/40 hover:text-on-surface/50"
                 )}
               >
                 <span className={cn("text-[8px] font-mono font-bold", isActive ? cfg.color : "")}>
@@ -213,7 +213,7 @@ function SidebarInner() {
             "w-10 h-10 flex flex-col items-center justify-center rounded-sm gap-0.5 transition-colors",
             pathname.startsWith("/settings")
               ? "text-teal bg-teal/10"
-              : "text-on-surface/30 hover:text-on-surface/60 hover:bg-surface-hover"
+              : "text-on-surface/40 hover:text-on-surface/60 hover:bg-surface-hover"
           )}
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

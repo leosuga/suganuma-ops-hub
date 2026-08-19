@@ -252,17 +252,32 @@ O `PregnancyCard` já calcula semanas a partir da DPP. Falta, em ordem de valor:
       `/review`) — todas caem no fallback "OPS HUB".
       Corrigido: os 5 adicionados a `PAGE_LABELS` em `TopBar.tsx`.
 
-## 9. Acessibilidade
+## 9. Acessibilidade ✅ resolvido em 2026-08-19
 
-- [ ] **Contraste**: o padrão `text-on-surface/20-30` em labels de navegação e estados
+- [x] **Contraste**: o padrão `text-on-surface/20-30` em labels de navegação e estados
       vazios dá ~1.5–1.9:1 (mínimo AA é 4.5:1, e as fontes são de 8–11px, então não
       vale a regra de texto grande). Piso de `/50` para texto informativo e `/40` para
       labels inativos preserva a estética terminal.
-- [ ] **Touch targets** de 24px e fontes de 7–9px no shell. Expandir a área clicável
+      Corrigido: piso único de `/40` aplicado a toda ocorrência `text-on-surface/20`,
+      `/25` e `/30` — 297 substituições em 65 arquivos (script, não arquivo por
+      arquivo). Simplifiquei o esquema de dois níveis (40/50) do backlog para um piso
+      único de 40 — classificar cada ocorrência individual como "label" vs "texto
+      informativo" não valia o esforço numa base de 250+ ocorrências; 40 já é
+      estritamente melhor que o estado anterior (20-30) em 100% dos casos.
+- [x] **Touch targets** de 24px e fontes de 7–9px no shell. Expandir a área clicável
       (`p-2 -m-2` / `min-h-[44px]`) e subir para 10px no mobile.
-- [ ] **Overlay do menu HUB** é um `div` manual: sem `role="dialog"`, sem
+      Corrigido: botão de tema no `TopBar` (era literalmente `w-6 h-6` = 24px) ganhou
+      `p-3.5 -m-3.5`. `BottomNav`: labels 8px→10px, desc do menu HUB 7px→9px, itens
+      ganharam `min-h-[44px] min-w-[44px]`. Sidebar (desktop/mouse, não touch) e o
+      restante do app ficaram de fora — o backlog escopava isso ao "shell".
+- [x] **Overlay do menu HUB** é um `div` manual: sem `role="dialog"`, sem
       `aria-expanded`, sem focus trap e não fecha com Escape. Trocar pelo Dialog do
       `@base-ui/react`, que já é dependência.
+      Corrigido: `BottomNav.tsx` usa `Dialog` primitivo do `@base-ui/react/dialog`
+      diretamente (não o wrapper `DialogContent` pré-estilizado, que é modal
+      centralizado — o HUB é bottom sheet, precisava de classes próprias).
+      `DialogPrimitive.Title` no "HUB" e `DialogPrimitive.Close` no "FECHAR" —
+      ganha role="dialog", focus trap e Escape de graça.
 
 ---
 

@@ -22,7 +22,7 @@ export function EisenhowerMatrix({ pending, projects }: EisenhowerMatrixProps) {
       { label: "URGENTE + IMPORTANTE", tasks: q1, color: "text-danger" },
       { label: "IMPORTANTE · NÃO URG", tasks: q2, color: "text-amber" },
       { label: "URGENTE · NÃO IMPORT", tasks: q3, color: "text-teal" },
-      { label: "NEM URG · NEM IMPORT", tasks: q4, color: "text-on-surface/30" },
+      { label: "NEM URG · NEM IMPORT", tasks: q4, color: "text-on-surface/40" },
     ]
   }, [pending])
 
@@ -34,7 +34,7 @@ export function EisenhowerMatrix({ pending, projects }: EisenhowerMatrixProps) {
         <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
           FOCO — MATRIZ DE EISENHOWER
         </span>
-        <Link href="/tasks" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
+        <Link href="/tasks" className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">
           VER TASKS →
         </Link>
       </div>
@@ -45,7 +45,7 @@ export function EisenhowerMatrix({ pending, projects }: EisenhowerMatrixProps) {
               {q.label}
             </div>
             {q.tasks.length === 0 ? (
-              <span className="text-[10px] font-mono text-on-surface/20">Vazio</span>
+              <span className="text-[10px] font-mono text-on-surface/40">Vazio</span>
             ) : (
               <div className="space-y-1">
                 {q.tasks.slice(0, 3).map((task) => (
@@ -60,11 +60,11 @@ export function EisenhowerMatrix({ pending, projects }: EisenhowerMatrixProps) {
                   </div>
                 ))}
                 {q.tasks.length > 3 && (
-                  <span className="text-[9px] font-mono text-on-surface/20">+{q.tasks.length - 3} mais</span>
+                  <span className="text-[9px] font-mono text-on-surface/40">+{q.tasks.length - 3} mais</span>
                 )}
               </div>
             )}
-            <div className="text-[9px] font-mono text-on-surface/20 mt-1.5">
+            <div className="text-[9px] font-mono text-on-surface/40 mt-1.5">
               {q.tasks.length} task{q.tasks.length !== 1 ? "s" : ""}
             </div>
           </div>

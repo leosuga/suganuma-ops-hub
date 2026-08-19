@@ -141,7 +141,7 @@ export function UpcomingEvents() {
             )}
             <Link
               href="/calendar/year"
-              className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors"
+              className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors"
             >
               CALENDÁRIO →
             </Link>
@@ -183,12 +183,12 @@ export function UpcomingEvents() {
                     {event.title}
                   </span>
                   {event.location && (
-                    <span className="text-[10px] font-mono text-on-surface/30 truncate max-w-[80px]">
+                    <span className="text-[10px] font-mono text-on-surface/40 truncate max-w-[80px]">
                       📍 {event.location}
                     </span>
                   )}
                   {event.project_name && (
-                    <span className="text-[10px] font-mono text-on-surface/30 truncate max-w-[80px]">
+                    <span className="text-[10px] font-mono text-on-surface/40 truncate max-w-[80px]">
                       {event.project_name}
                     </span>
                   )}
@@ -197,7 +197,7 @@ export function UpcomingEvents() {
             })
           ) : (
             <div className="px-4 py-6 text-center">
-              <p className="text-[11px] font-mono text-on-surface/30">
+              <p className="text-[11px] font-mono text-on-surface/40">
                 Nenhum evento nos próximos dias
               </p>
               <button
