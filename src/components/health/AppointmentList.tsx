@@ -44,7 +44,7 @@ export function AddAppointmentDialog({ open, onOpenChange }: AddAppointmentDialo
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título (ex: Consulta pré-natal)" required autoFocus className={inputClass} />
           <input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} required className={inputClass} />
           <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Local (opcional)" className={inputClass} />
-          <input type="text" value={kind} onChange={(e) => setKind(e.target.value)} placeholder="Tipo (ex: consulta, exame, ultrassom)" className={inputClass} />
+          <input type="text" value={kind} onChange={(e) => setKind(e.target.value)} placeholder="Tipo (ex: prenatal, exame, ultrassom)" className={inputClass} />
           <div className="flex justify-end gap-2 pt-1">
             <button type="button" onClick={() => onOpenChange(false)} className="h-8 px-4 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 transition-colors">CANCELAR</button>
             <button type="submit" disabled={create.isPending} className="h-8 px-4 border border-health text-health font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-health/20 disabled:opacity-30 transition-colors">

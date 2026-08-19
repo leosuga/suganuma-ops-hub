@@ -94,6 +94,24 @@ export const TEMPLATES: ProjectTemplate[] = [
       { title: "Pós-evento: agradecimentos e fotos", category: "personal", priority: "low" },
     ],
   },
+  {
+    id: "baby-arrival",
+    name: "Chegada do Bebê",
+    color: "#F472B6",
+    description: "Checklist de preparação: enxoval, documentos, mala da maternidade",
+    tasks: [
+      { title: "Montar lista de enxoval (roupas, fraldas, higiene)", category: "logistics", priority: "med" },
+      { title: "Comprar berço, carrinho e bebê conforto", category: "finance", priority: "high" },
+      { title: "Preparar o quarto do bebê", category: "logistics", priority: "med" },
+      { title: "Pesquisar e agendar pediatra", category: "health", priority: "high" },
+      { title: "Escolher maternidade e conhecer a estrutura", category: "logistics", priority: "high" },
+      { title: "Montar mala da maternidade (mãe e bebê)", category: "logistics", priority: "urgent" },
+      { title: "Providenciar documentos: certidão, plano de saúde", category: "logistics", priority: "med" },
+      { title: "Organizar licença-maternidade/paternidade no trabalho", category: "logistics", priority: "high" },
+      { title: "Instalar bebê conforto no carro", category: "logistics", priority: "med" },
+      { title: "Definir rede de apoio para o pós-parto", category: "personal", priority: "low" },
+    ],
+  },
 ]
 
 export function getTemplate(id: string): ProjectTemplate | undefined {

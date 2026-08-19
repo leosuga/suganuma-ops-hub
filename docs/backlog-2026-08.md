@@ -173,17 +173,26 @@ Com o React Compiler ativo, a exigência de memoização manual do AGENTS.md est
 - [ ] **Budget é um número único por mês.** As categorias já existem nas transactions —
       falta coluna `category` na tabela budget e a comparação meta × realizado.
 
-## 7. Gravidez — alto valor, custo baixo
+## 7. Gravidez — alto valor, custo baixo ✅ resolvido em 2026-08-19
 
 O `PregnancyCard` já calcula semanas a partir da DPP. Falta, em ordem de valor:
 
-- [ ] Countdown de dias para a DPP e trimestre atual (poucas linhas).
-- [ ] Timeline de exames pré-natais — os `appointment` já têm `kind`; basta a convenção
+- [x] Countdown de dias para a DPP e trimestre atual (poucas linhas).
+      Corrigido: `daysUntil()`/`trimesterOf()` em `PregnancyCard.tsx`, contagem
+      âncorada em `today()` (fuso São Paulo), não em `new Date()` cru.
+- [x] Timeline de exames pré-natais — os `appointment` já têm `kind`; basta a convenção
       `kind="prenatal"` e uma seção no card.
-- [ ] Checklist de preparação (enxoval, documentos, mala da maternidade) — dá para
+      Corrigido: seção "EXAMES PRÉ-NATAIS" no card, filtra `appointment.kind === "prenatal"`.
+      Placeholder do campo Tipo em `AddAppointmentDialog` atualizado para sugerir a
+      convenção (o campo já era texto livre, sem dropdown para travar).
+- [x] Checklist de preparação (enxoval, documentos, mala da maternidade) — dá para
       resolver sem código novo, com um template "Chegada do bebê" em
       `src/lib/templates.ts`, no mesmo mecanismo dos 5 templates existentes.
-- [ ] Marcos por semana (24: viabilidade, 37: termo) — array hardcoded resolve.
+      Corrigido: template `baby-arrival` com 10 tasks, aparece automático no
+      CreateProjectDialog (que já itera `TEMPLATES` sem contagem fixa).
+- [x] Marcos por semana (24: viabilidade, 37: termo) — array hardcoded resolve.
+      Corrigido: `MILESTONES` (12/20/24/28/37/40 semanas) em `PregnancyCard.tsx`,
+      mostra o próximo marco a partir da semana atual.
 
 ## 8. Navegação e UX
 
@@ -227,7 +236,7 @@ O `PregnancyCard` já calcula semanas a partir da DPP. Falta, em ordem de valor:
 ## Notas de contexto
 
 - **Migrations são aplicadas manualmente** no SQL editor do Supabase (ver AGENTS.md).
-  A `0035_oauth.sql` está pendente.
+  `0035_oauth.sql` e `0036_note_attachments_private.sql` já foram aplicadas (2026-08-19).
 - **Os testes `.test.tsx` falham no ambiente node** do `vitest.config.ts` — é
   pré-existente e esperado; usar `npm run test:docker` para os testes de componente.
 - **`.env.local` contém a `SUPABASE_SERVICE_ROLE_KEY` real** (a chave que bypassa RLS).
