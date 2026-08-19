@@ -3,12 +3,25 @@ import { randomUUID } from "node:crypto"
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js"
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js"
 import { createMcpServer } from "@/lib/mcp/server"
-import { validateMcpAuth, McpAuthError, corsHeaders, isAllowedOrigin, validateHostHeader } from "@/lib/mcp/auth"
+import {
+  validateMcpAuth,
+  McpAuthError,
+  corsHeaders,
+  isAllowedOrigin,
+  validateHostHeader,
+  wwwAuthenticateHeader,
+} from "@/lib/mcp/auth"
 import { checkMcpRateLimit, cleanupStaleRateLimitBuckets } from "@/lib/mcp/rate-limit"
+import type { McpToolContext } from "@/lib/mcp/types"
 
 // In-memory session store. In multi-instance deployments this would need a shared store;
 // for a single Docker container behind Caddy this is sufficient for Fase 1.
-const transports = new Map<string, WebStandardStreamableHTTPServerTransport>()
+interface Session {
+  transport: WebStandardStreamableHTTPServerTransport
+  ctx: McpToolContext
+}
+
+const sessions = new Map<string, Session>()
 
 // Periodic cleanup of stale rate-limit buckets to prevent memory growth in long-running containers.
 // Runs every 5 minutes; buckets older than 10 minutes past their reset window are evicted.
@@ -17,22 +30,60 @@ if (typeof setInterval !== "undefined") {
 }
 
 function cleanupSession(sessionId: string) {
-  const t = transports.get(sessionId)
-  if (t) {
-    t.onclose = undefined
-    transports.delete(sessionId)
+  const session = sessions.get(sessionId)
+  if (session) {
+    session.transport.onclose = undefined
+    sessions.delete(sessionId)
   }
+}
+
+/**
+ * IP do cliente.
+ *
+ * Usa a entrada MAIS À DIREITA de X-Forwarded-For: essa é a que o proxy confiável
+ * (Caddy) anexou. A primeira entrada é controlada por quem faz a requisição e
+ * poderia ser forjada para escapar do rate limit.
+ */
+function clientIpFrom(req: NextRequest): string {
+  const xff = req.headers.get("x-forwarded-for")
+  if (xff) {
+    const parts = xff.split(",").map((p) => p.trim()).filter(Boolean)
+    if (parts.length > 0) return parts[parts.length - 1]
+  }
+  return req.headers.get("x-real-ip") ?? "unknown"
+}
+
+function unauthorizedResponse(origin: string | null, message: string) {
+  return new NextResponse(
+    JSON.stringify({ error: "invalid_token", error_description: message }),
+    {
+      status: 401,
+      headers: {
+        ...corsHeaders(origin),
+        "Content-Type": "application/json",
+        // Sem este header o cliente não descobre o authorization server e
+        // nunca oferece o botão de conectar.
+        "WWW-Authenticate": wwwAuthenticateHeader("invalid_token", message),
+      },
+    }
+  )
 }
 
 async function handleMcpRequest(req: NextRequest): Promise<Response> {
   const origin = req.headers.get("origin")
   const sessionId = req.headers.get("mcp-session-id") ?? undefined
 
-  validateHostHeader(req)
+  try {
+    validateHostHeader(req)
+  } catch (err) {
+    const status = err instanceof McpAuthError ? err.status : 500
+    return new NextResponse(
+      JSON.stringify({ error: err instanceof Error ? err.message : "Host inválido" }),
+      { status, headers: { ...corsHeaders(origin), "Content-Type": "application/json" } }
+    )
+  }
 
-  // Rate limiting por IP (Caddy X-Forwarded-For ou remoteAddress)
-  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? req.ip ?? "unknown"
-  const rateLimit = checkMcpRateLimit(clientIp)
+  const rateLimit = checkMcpRateLimit(clientIpFrom(req))
   if (!rateLimit.allowed) {
     return new NextResponse(
       JSON.stringify({
@@ -56,37 +107,54 @@ async function handleMcpRequest(req: NextRequest): Promise<Response> {
     body = await req.json().catch(() => undefined)
   }
 
+  // Toda requisição revalida o portador. Isso mantém a revogação e a expiração
+  // efetivas dentro de uma sessão já aberta, e permite que o cliente troque um
+  // access token renovado sem reabrir a sessão.
+  let auth: { ownerId: string; token: string; scopes: string[] }
+  try {
+    auth = await validateMcpAuth(req)
+  } catch (err) {
+    if (err instanceof McpAuthError && err.status === 401) {
+      return unauthorizedResponse(origin, err.message)
+    }
+    const status = err instanceof McpAuthError ? err.status : 500
+    return new NextResponse(JSON.stringify({ error: err instanceof Error ? err.message : "Auth error" }), {
+      status,
+      headers: { ...corsHeaders(origin), "Content-Type": "application/json" },
+    })
+  }
+
   let transport: WebStandardStreamableHTTPServerTransport
 
-  if (sessionId && transports.has(sessionId)) {
-    transport = transports.get(sessionId)!
+  const existing = sessionId ? sessions.get(sessionId) : undefined
+
+  if (existing) {
+    // A sessão pertence a um dono; um token de outro dono nunca a reaproveita.
+    if (existing.ctx.ownerId !== auth.ownerId) {
+      return unauthorizedResponse(origin, "Sessão pertence a outro usuário")
+    }
+    existing.ctx.token = auth.token
+    existing.ctx.scopes = auth.scopes
+    transport = existing.transport
   } else if (!sessionId && body && isInitializeRequest(body)) {
-    let ownerId: string
-    let token: string
-    try {
-      const auth = await validateMcpAuth(req)
-      ownerId = auth.ownerId
-      token = auth.token
-    } catch (err) {
-      const status = err instanceof McpAuthError ? err.status : 500
-      const headers = corsHeaders(origin)
-      return new NextResponse(JSON.stringify({ error: err instanceof Error ? err.message : "Auth error" }), {
-        status,
-        headers: { ...headers, "Content-Type": "application/json" },
-      })
+    const newSessionId = randomUUID()
+    const ctx: McpToolContext = {
+      ownerId: auth.ownerId,
+      token: auth.token,
+      scopes: auth.scopes,
+      baseUrl: "http://127.0.0.1:3000",
     }
 
-    const newSessionId = randomUUID()
     transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: () => newSessionId,
       onsessioninitialized: (id) => {
-        transports.set(id, transport)
+        sessions.set(id, { transport, ctx })
       },
     })
 
     transport.onclose = () => cleanupSession(newSessionId)
 
-    const server = createMcpServer({ ownerId, token, baseUrl: "http://127.0.0.1:3000" })
+    const server = createMcpServer(ctx)
     await server.connect(transport)
   } else {
     return new NextResponse(

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { z } from "zod"
+import { resolveAccessToken } from "@/lib/oauth/store"
+import { FULL_SCOPES, SCOPE_READ, SCOPE_WRITE } from "@/lib/oauth/config"
 
 async function sha256hex(str: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str))
@@ -9,40 +11,88 @@ async function sha256hex(str: string): Promise<string> {
     .join("")
 }
 
-export async function validateAgentToken(req: NextRequest): Promise<string> {
+export interface ResolvedBearer {
+  ownerId: string
+  scopes: string[]
+  /** "agent" = token estático ops_ gerado em Settings; "oauth" = access token OAuth. */
+  kind: "agent" | "oauth"
+}
+
+function extractBearer(req: NextRequest): string | null {
   const auth = req.headers.get("authorization") ?? ""
-  if (!auth.startsWith("Bearer ops_")) {
-    throw new AgentAuthError("Token inválido ou ausente")
+  if (!auth.startsWith("Bearer ")) return null
+  const token = auth.slice("Bearer ".length).trim()
+  return token.length > 0 ? token : null
+}
+
+/**
+ * Resolve o portador da requisição, aceitando os dois esquemas:
+ *
+ * - `ops_...`  — token de agente estático (Settings → Agent Tokens). Acesso total.
+ * - `opsa_...` — access token OAuth, com os escopos concedidos no consentimento.
+ */
+export async function resolveBearer(req: NextRequest): Promise<ResolvedBearer> {
+  const token = extractBearer(req)
+  if (!token) throw new AgentAuthError("Token inválido ou ausente")
+
+  if (token.startsWith("ops_")) {
+    const hash = await sha256hex(token)
+    const supabase = createServiceClient()
+    const { data, error } = await supabase
+      .from("agent_token")
+      .select("id, owner_id, revoked_at")
+      .eq("token_hash", hash)
+      .maybeSingle()
+
+    if (error || !data || data.revoked_at) {
+      throw new AgentAuthError("Token não encontrado ou revogado")
+    }
+
+    void supabase
+      .from("agent_token")
+      .update({ last_used_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .then(() => {})
+      .catch(() => {})
+
+    return { ownerId: data.owner_id, scopes: [...FULL_SCOPES], kind: "agent" }
   }
 
-  const token = auth.slice("Bearer ".length)
-  const hash = await sha256hex(token)
+  const oauth = await resolveAccessToken(token)
+  if (!oauth) throw new AgentAuthError("Token não encontrado, expirado ou revogado")
 
-  const supabase = createServiceClient()
-  const { data, error } = await supabase
-    .from("agent_token")
-    .select("id, owner_id, revoked_at")
-    .eq("token_hash", hash)
-    .single()
+  return { ownerId: oauth.ownerId, scopes: oauth.scopes, kind: "oauth" }
+}
 
-  if (error || !data || data.revoked_at) {
-    throw new AgentAuthError("Token não encontrado ou revogado")
+/** Escopo exigido por método HTTP: leitura para GET/HEAD, escrita para o resto. */
+export function requiredScopeForMethod(method: string): string {
+  return method === "GET" || method === "HEAD" ? SCOPE_READ : SCOPE_WRITE
+}
+
+/**
+ * Valida o portador e devolve o owner_id.
+ *
+ * Também aplica o escopo: uma conexão concedida apenas como somente-leitura não
+ * consegue chamar rotas de mutação, mesmo que a tool tente.
+ */
+export async function validateAgentToken(req: NextRequest): Promise<string> {
+  const bearer = await resolveBearer(req)
+  const needed = requiredScopeForMethod(req.method)
+  if (!bearer.scopes.includes(needed)) {
+    throw new AgentScopeError(`Escopo insuficiente: ${needed} é necessário`)
   }
-
-  supabase
-    .from("agent_token")
-    .update({ last_used_at: new Date().toISOString() })
-    .eq("id", data.id)
-    .then(() => {})
-    .catch(() => {})
-
-  return data.owner_id
+  return bearer.ownerId
 }
 
 export class AgentAuthError extends Error {}
+export class AgentScopeError extends Error {}
 
 export function unauthorized(msg = "Não autorizado") {
   return NextResponse.json({ error: msg }, { status: 401 })
+}
+
+export function forbidden(msg = "Escopo insuficiente") {
+  return NextResponse.json({ error: msg }, { status: 403 })
 }
 
 export function badRequest(msg: string) {

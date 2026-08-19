@@ -40,6 +40,33 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  // Documentos de discovery OAuth. Ficam sob /.well-known/ por especificação
+  // (RFC 8414 / RFC 9728); os handlers vivem em /api/oauth/metadata/* porque o
+  // App Router não roteia diretórios iniciados por ponto.
+  async rewrites() {
+    return [
+      {
+        source: "/.well-known/oauth-protected-resource",
+        destination: "/api/oauth/metadata/protected-resource",
+      },
+      {
+        source: "/.well-known/oauth-protected-resource/api/mcp",
+        destination: "/api/oauth/metadata/protected-resource",
+      },
+      {
+        source: "/.well-known/oauth-authorization-server",
+        destination: "/api/oauth/metadata/authorization-server",
+      },
+      {
+        source: "/.well-known/oauth-authorization-server/api/mcp",
+        destination: "/api/oauth/metadata/authorization-server",
+      },
+      {
+        source: "/.well-known/openid-configuration",
+        destination: "/api/oauth/metadata/authorization-server",
+      },
+    ]
+  },
 }
 
 export default nextConfig

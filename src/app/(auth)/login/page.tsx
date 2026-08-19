@@ -14,9 +14,15 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
     const supabase = createClient()
+    // Preserva o destino (ex.: um fluxo OAuth iniciado em /authorize) através do magic link.
+    const next = new URLSearchParams(window.location.search).get("next")
+    const callback = new URL("/api/auth/callback", window.location.origin)
+    if (next && next.startsWith("/") && !next.startsWith("//")) {
+      callback.searchParams.set("next", next)
+    }
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
+      options: { emailRedirectTo: callback.toString() },
     })
     setLoading(false)
     if (error) { setError(error.message); return }

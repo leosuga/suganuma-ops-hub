@@ -11,8 +11,15 @@ function getOrigin(request: NextRequest): string {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const code  = searchParams.get("code")
-  const next  = searchParams.get("next") ?? "/dashboard"
   const origin = getOrigin(request)
+
+  // Só aceita caminho relativo: `next=//evil.com` ou `next=https://evil.com`
+  // transformaria o callback em um open redirect.
+  const requestedNext = searchParams.get("next")
+  const next =
+    requestedNext && requestedNext.startsWith("/") && !requestedNext.startsWith("//") && !requestedNext.startsWith("/\\")
+      ? requestedNext
+      : "/dashboard"
 
   if (!code) {
     return NextResponse.redirect(`${origin}/login?error=missing_code`)

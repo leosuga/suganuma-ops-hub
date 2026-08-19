@@ -5,6 +5,9 @@ import { checkAgentRateLimit, cleanupStaleRateLimitBuckets } from "@/lib/mcp/rat
 const BYPASS = [
   /^\/_next\//,
   /^\/api\//,
+  // Discovery OAuth precisa ser público: se cair no redirect para /login, o
+  // cliente MCP nunca encontra o authorization server.
+  /^\/\.well-known\//,
   /^\/sw\.js$/,
   /^\/manifest\.webmanifest$/,
   /^\/favicon\.ico$/,
@@ -23,7 +26,11 @@ export async function middleware(request: NextRequest) {
 
   // Agent API rate limiting (before auth/redirect logic)
   if (AGENT_PATH.test(pathname)) {
-    const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? request.ip ?? "unknown"
+    // Entrada mais à direita do X-Forwarded-For: é a que o proxy confiável (Caddy)
+    // anexou. A primeira é controlada pelo cliente e poderia ser forjada para
+    // gerar um bucket novo a cada requisição, anulando o rate limit.
+    const forwarded = request.headers.get("x-forwarded-for")?.split(",").map((p) => p.trim()).filter(Boolean)
+    const clientIp = forwarded?.[forwarded.length - 1] ?? request.headers.get("x-real-ip") ?? "unknown"
     const rateLimit = checkAgentRateLimit(clientIp)
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -68,7 +75,14 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (!user && pathname !== "/login") {
-    return NextResponse.redirect(new URL("/login", request.url))
+    // Preserva o destino: sem isso, um fluxo OAuth iniciado em /authorize se perde
+    // no login e o usuário precisa recomeçar a conexão do zero.
+    const loginUrl = new URL("/login", request.url)
+    const target = `${pathname}${request.nextUrl.search}`
+    if (target !== "/" && target !== "/dashboard") {
+      loginUrl.searchParams.set("next", target)
+    }
+    return NextResponse.redirect(loginUrl)
   }
 
   if (user && pathname === "/login") {
