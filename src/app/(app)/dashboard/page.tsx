@@ -5,21 +5,17 @@ import Link from "next/link"
 import { useTasks } from "@/lib/queries/tasks"
 import { useTransactions } from "@/lib/queries/finance"
 import { useTitle } from "@/lib/useTitle"
-import { useAppointments, usePregnancy, useCreateHealthLog } from "@/lib/queries/health"
-import { useMealPlans } from "@/lib/queries/meals"
+import { usePregnancy, useCreateHealthLog } from "@/lib/queries/health"
 import { useNotes } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
-import { useUpcomingEvents } from "@/lib/queries/annual"
 import { parseContextTags } from "@/lib/contexts"
-import { addDays, today, currentMonth } from "@/lib/date"
+import { currentMonth } from "@/lib/date"
 import { fmtCurrency } from "@/lib/format"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { StatCard } from "@/components/dashboard/StatCard"
 import { ProtocolsSummary } from "@/components/dashboard/ProtocolsSummary"
 import { QuickAddTask } from "@/components/dashboard/QuickAddTask"
 import { QuickAddExpense } from "@/components/dashboard/QuickAddExpense"
-import { DailyBriefing } from "@/components/dashboard/DailyBriefing"
-import { NeedsAttention } from "@/components/dashboard/NeedsAttention"
 import { TaskKPIs } from "@/components/dashboard/TaskKPIs"
 import { EisenhowerMatrix } from "@/components/dashboard/EisenhowerMatrix"
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview"
@@ -45,14 +41,12 @@ export default function DashboardPage() {
   useTitle("Dashboard · Suganuma Ops Hub")
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
   const { data: transactions = [], isLoading: financeLoading } = useTransactions({ month: currentMonth() })
-  const { data: appointments = [] } = useAppointments()
   const { data: pregnancy } = usePregnancy()
   const createHealthLog = useCreateHealthLog()
   const { data: notes = [] } = useNotes()
-  const { data: mealPlans = [] } = useMealPlans(currentMonth())
 
   // Deferred queries: load after first paint to reduce initial waterfall.
-  // These power below-the-fold sections (Eisenhower matrix, projects list, events).
+  // These power below-the-fold sections (Eisenhower matrix, projects list).
   const [deferredReady, setDeferredReady] = useState(false)
   useEffect(() => {
     // Activate deferred queries on the next tick after mount
@@ -61,7 +55,6 @@ export default function DashboardPage() {
   }, [])
 
   const { data: projects = [] } = useProjects({ enabled: deferredReady })
-  const { data: allEvents = [] } = useUpcomingEvents(20, { enabled: deferredReady })
 
   const [weightInput, setWeightInput] = useState("")
 
@@ -70,7 +63,6 @@ export default function DashboardPage() {
     done,
     urgent,
     overdue,
-    needsAttention,
     tasksByCategory,
     activeProjectsWithProgress,
   } = useMemo(() => {
@@ -79,7 +71,6 @@ export default function DashboardPage() {
     const urgent = pending.filter((t) => t.priority === "urgent")
     const now = new Date()
     const overdue = pending.filter((t) => t.due_at && new Date(t.due_at) < now)
-    const needsAttention = urgent.length > 0 ? urgent : overdue.length > 0 ? overdue : pending.slice(0, 3)
 
     const tasksByCategory = TASK_CATEGORIES.map((cat) => ({
       cat,
@@ -96,7 +87,7 @@ export default function DashboardPage() {
         return { project, total, doneTasks, pct }
       })
 
-    return { pending, done, urgent, overdue, needsAttention, tasksByCategory, activeProjectsWithProgress }
+    return { pending, done, urgent, overdue, tasksByCategory, activeProjectsWithProgress }
   }, [tasks, projects])
 
   const { income, expense, balance } = useMemo(() => {
@@ -109,32 +100,6 @@ export default function DashboardPage() {
     () => notes.filter((n) => parseContextTags(n.tags).length === 0).length,
     [notes]
   )
-
-  const { todayStr, tomorrowStr, todayMeals, todayNotes, todayAppts, upcomingAppts, appointmentsForAttention } = useMemo(() => {
-    const now = new Date()
-    const todayStr = today()
-
-    const tomorrowStr = addDays(now, 1).toISOString().slice(0, 10)
-
-    return {
-      todayStr,
-      tomorrowStr,
-      todayMeals: mealPlans.filter((mp) => mp.date === todayStr),
-      todayNotes: notes.filter((n) => n.pinned).slice(0, 2),
-      todayAppts: appointments.filter((a) => a.starts_at.slice(0, 10) === todayStr),
-      upcomingAppts: appointments
-        .filter((a) => new Date(a.starts_at) >= now)
-        .slice(0, 3),
-      appointmentsForAttention: appointments.filter((a) => {
-        const d = a.starts_at.slice(0, 10)
-        return d === todayStr || d === tomorrowStr
-      }),
-    }
-  }, [appointments, mealPlans, notes])
-
-  const eventsForAttention = useMemo(() => {
-    return allEvents.filter((e) => e.start_date <= tomorrowStr && e.end_date >= todayStr)
-  }, [allEvents, todayStr, tomorrowStr])
 
   const isLoading = tasksLoading || financeLoading
 
@@ -162,26 +127,25 @@ export default function DashboardPage() {
         )}
         {!isLoading && (
         <div className="space-y-5">
-        <div>
-          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
-            SUGANUMA OPS HUB
-          </h1>
-          <p className="text-[10px] font-mono text-on-surface/30 mt-0.5 capitalize">
-            {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
-          </p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
+              SUGANUMA OPS HUB
+            </h1>
+            <p className="text-[10px] font-mono text-on-surface/30 mt-0.5 capitalize">
+              {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+          </div>
+          <Link
+            href="/cockpit"
+            className="text-[9px] font-mono text-on-surface/30 hover:text-teal transition-colors tracking-wider uppercase"
+          >
+            Cockpit →
+          </Link>
         </div>
 
         <QuickAddTask />
         <QuickAddExpense />
-
-        <DailyBriefing
-          pendingCount={pending.length}
-          doneCount={done.length}
-          urgentCount={urgent.length}
-          todayAppts={todayAppts}
-          todayMeals={todayMeals}
-          todayNotes={todayNotes}
-        />
 
         <ContextNotesWidget notes={notes} />
 
@@ -227,30 +191,6 @@ export default function DashboardPage() {
           </div>
         </form>
 
-        <NeedsAttention
-          tasks={needsAttention}
-          urgentCount={urgent.length}
-          events={eventsForAttention}
-          appointments={appointmentsForAttention}
-        />
-
-        {urgent.length > 0 && (
-          <div className="border border-danger/40 bg-danger/5 rounded-sm px-4 py-2.5 flex items-center gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse flex-none" />
-            <span className="text-[11px] font-mono text-danger">
-              {urgent.length} {urgent.length === 1 ? "task urgente" : "tasks urgentes"} pendente{urgent.length > 1 ? "s" : ""}
-            </span>
-          </div>
-        )}
-        {overdue.length > 0 && (
-          <div className="border border-amber/40 bg-amber/5 rounded-sm px-4 py-2.5 flex items-center gap-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber animate-pulse flex-none" />
-            <span className="text-[11px] font-mono text-amber">
-              {overdue.length} {overdue.length === 1 ? "task atrasada" : "tasks atrasadas"}
-            </span>
-          </div>
-        )}
-
         <WeeklyReview tasks={tasks} />
 
         <TaskKPIs
@@ -273,33 +213,6 @@ export default function DashboardPage() {
         <BudgetCard income={income} expense={expense} />
 
         <UpcomingEvents />
-
-        {upcomingAppts.length > 0 && (
-          <div className="border border-border bg-surface rounded-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
-                PRÓXIMAS CONSULTAS
-              </span>
-              <Link href="/health" className="text-[9px] font-mono text-on-surface/30 hover:text-on-surface/60 transition-colors">
-                VER TODAS →
-              </Link>
-            </div>
-            <div className="divide-y divide-border">
-              {upcomingAppts.map((a) => {
-                const date = new Date(a.starts_at)
-                const dateStr = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
-                const timeStr = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-                return (
-                  <div key={a.id} className="flex items-center gap-3 h-10 px-4">
-                    <span className="text-[10px] font-mono text-health w-16 flex-none">{dateStr} {timeStr}</span>
-                    <span className="flex-1 text-[12px] font-mono text-on-surface truncate">{a.title}</span>
-                    {a.location && <span className="text-[10px] font-mono text-on-surface/30 truncate max-w-[100px]">{a.location}</span>}
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
 
         {activeProjectsWithProgress.length > 0 && (
           <div className="border border-border bg-surface rounded-sm">

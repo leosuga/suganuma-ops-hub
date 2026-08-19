@@ -194,7 +194,7 @@ O `PregnancyCard` já calcula semanas a partir da DPP. Falta, em ordem de valor:
       Corrigido: `MILESTONES` (12/20/24/28/37/40 semanas) em `PregnancyCard.tsx`,
       mostra o próximo marco a partir da semana atual.
 
-## 8. Navegação e UX — parcial, resolvido em 2026-08-19
+## 8. Navegação e UX ✅ resolvido em 2026-08-19
 
 - [x] **Módulos órfãos no mobile**: `/meals`, `/habits` e `/reports` não aparecem nem na
       BottomNav nem no menu HUB, e o CommandPalette é inacessível no celular (o botão
@@ -203,11 +203,25 @@ O `PregnancyCard` já calcula semanas a partir da DPP. Falta, em ordem de valor:
 - [x] **No desktop, o inverso**: `/inbox` e `/cockpit` não estão na Sidebar — justamente
       as duas páginas de workflow diário.
       Corrigido: os 2 adicionados ao `NAV_ITEMS` em `Sidebar.tsx`.
-- [ ] **Cockpit × Dashboard: ~80% de sobreposição**, com queries duplicadas. Decidir:
+- [x] **Cockpit × Dashboard: ~80% de sobreposição**, com queries duplicadas. Decidir:
       ou matar a página `/cockpit` e manter só o endpoint `get_daily_cockpit` para
       agentes, ou tornar o Cockpit acionável e enxugar o Dashboard.
-      **Não feito** — é decisão de produto (qual página o usuário realmente usa no dia
-      a dia), não correção mecânica. Perguntei ao Leo antes de mexer.
+      Decisão do Leo: Cockpit vira a entrada diária (ação), Dashboard fica
+      métricas/gráficos. Corrigido:
+      - Cockpit ganhou ação: checkbox de done inline nas tasks (URGENTES,
+        ATRASADAS, QUICK WINS) e triagem inline no INBOX (→TASK, →NOTE, ARQ).
+      - Extraído `useToggleTaskDone()` (`tasks.ts`) e `useConvertInboxToTask/Note()`
+        (`inbox.ts`) de `tasks/page.tsx` e `inbox/page.tsx` para reusar no Cockpit
+        sem duplicar a lógica de recorrência/triagem — as duas páginas originais
+        também passaram a usar os hooks compartilhados.
+      - Dashboard perdeu `NeedsAttention`, `DailyBriefing`, os banners de
+        urgente/atrasada e "PRÓXIMAS CONSULTAS" (sobreposição direta com o
+        Cockpit); os dois componentes ficaram órfãos e foram deletados. Ganhou
+        um link "Cockpit →" no header.
+      **Verificação**: build + tsc + testes passam; não consegui testar
+      visualmente em browser (rotas exigem sessão autenticada, sem acesso a
+      browser interativo neste ambiente) — vale conferir no navegador antes de
+      considerar 100% fechado.
 - [x] **Captura global inexistente fora do `/inbox`.** O `AppShell` renderiza
       `<CommandPalette>` sem a prop `onAddTask`, então a ação "Nova task" do palette
       nunca aparece. Passar a prop, adicionar uma ação "capturar no inbox" e

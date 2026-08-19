@@ -5,7 +5,7 @@ import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useTitle } from "@/lib/useTitle"
-import { useTasks, useUpdateTask, useDeleteTask, useCreateTask } from "@/lib/queries/tasks"
+import { useTasks, useDeleteTask, useCreateTask, useToggleTaskDone } from "@/lib/queries/tasks"
 import { useCreateNote } from "@/lib/queries/notes"
 import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
 import { useProjects } from "@/lib/queries/projects"
@@ -34,7 +34,7 @@ function TasksPageInner() {
 
   const { data: tasks = [], isLoading, isError } = useTasks()
   const { data: projects = [] } = useProjects()
-  const updateTask = useUpdateTask()
+  const toggleDone = useToggleTaskDone()
   const deleteTask = useDeleteTask()
   const createTask = useCreateTask()
   const toast = useUndoToast()
@@ -83,38 +83,10 @@ function TasksPageInner() {
     {} as Partial<Record<Category, number>>
   )
 
-  const handleToggle = useCallback((id: string, currentStatus: string) => {
-    const isDone = currentStatus === "done"
+  const handleToggle = useCallback((id: string) => {
     const task = tasks.find((t) => t.id === id)
-    updateTask.mutate({
-      id,
-      status: isDone ? "todo" : "done",
-      completed_at: isDone ? null : new Date().toISOString(),
-    })
-    if (!isDone && task?.recurrence) {
-      const nextDue = new Date()
-      nextDue.setHours(23, 59, 0, 0)
-      if (task.recurrence === "daily") {
-        nextDue.setDate(nextDue.getDate() + 1)
-      } else if (task.recurrence === "weekly") {
-        nextDue.setDate(nextDue.getDate() + 7)
-      } else if (task.recurrence === "monthly") {
-        nextDue.setMonth(nextDue.getMonth() + 1)
-      }
-      createTask.mutate({
-        title: task.title,
-        category: task.category,
-        priority: task.priority,
-        status: "todo",
-        due_at: nextDue.toISOString(),
-        recurrence: task.recurrence,
-        project_id: task.project_id ?? undefined,
-        delegated_to: task.delegated_to ?? undefined,
-        important: task.important,
-        tags: task.tags,
-      })
-    }
-  }, [tasks, updateTask, createTask])
+    if (task) toggleDone(task)
+  }, [tasks, toggleDone])
 
   const handleDelete = useCallback((id: string) => {
     const task = tasks.find((t) => t.id === id)

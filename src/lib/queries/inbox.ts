@@ -1,8 +1,22 @@
+import { useCallback } from "react"
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeTable } from "@/lib/realtime"
 import { triageInboxItem, triageAllPending } from "@/lib/actions/inbox-triage"
+import { useCreateTask } from "@/lib/queries/tasks"
+import { useCreateNote } from "@/lib/queries/notes"
 import type { InboxItemRow } from "@/lib/types"
+
+export interface InboxAiPayload {
+  suggested_type?: string
+  suggested_priority?: string
+  suggested_tags?: string[]
+  suggested_category?: string | null
+  suggested_project_name?: string | null
+  action_items?: string[]
+  summary?: string
+  duplicates?: Array<{ id: string; title: string; score: number; type: string }>
+}
 
 export const inboxKeys = {
   all: ["inbox"] as const,
@@ -118,6 +132,51 @@ export function useDeleteInboxItem() {
       queryClient.invalidateQueries({ queryKey: inboxKeys.all, exact: false })
     },
   })
+}
+
+/**
+ * Converte um item do inbox em task e marca como triado.
+ * Extraído de inbox/page.tsx para reusar no Cockpit sem duplicar a lógica.
+ */
+export function useConvertInboxToTask() {
+  const createTask = useCreateTask()
+  const triage = useTriageInboxItem()
+  return useCallback(
+    async (item: InboxItemRow) => {
+      const ai = item.ai_payload as InboxAiPayload | null
+      await createTask.mutateAsync({
+        title: (ai?.action_items?.[0] ?? item.content).slice(0, 200),
+        category: (ai?.suggested_category as "finance" | "logistics" | "personal" | "health") ?? "personal",
+        priority: (ai?.suggested_priority as "low" | "med" | "high" | "urgent") ?? "med",
+        status: "todo",
+        tags: ai?.suggested_tags ?? null,
+      })
+      await triage.mutateAsync(item.id)
+    },
+    [createTask, triage]
+  )
+}
+
+/**
+ * Converte um item do inbox em nota e marca como triado.
+ * Extraído de inbox/page.tsx para reusar no Cockpit sem duplicar a lógica.
+ */
+export function useConvertInboxToNote() {
+  const createNote = useCreateNote()
+  const triage = useTriageInboxItem()
+  return useCallback(
+    async (item: InboxItemRow) => {
+      const ai = item.ai_payload as InboxAiPayload | null
+      await createNote.mutateAsync({
+        title: (ai?.summary ?? item.content).slice(0, 100),
+        content: item.content,
+        pinned: false,
+        tags: ai?.suggested_tags ?? undefined,
+      })
+      await triage.mutateAsync(item.id)
+    },
+    [createNote, triage]
+  )
 }
 
 export function useTriageWithAI() {

@@ -1,10 +1,11 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useTitle } from "@/lib/useTitle"
-import { useTasks } from "@/lib/queries/tasks"
-import { useInbox } from "@/lib/queries/inbox"
+import { useTasks, useToggleTaskDone, type TaskRow } from "@/lib/queries/tasks"
+import { useInbox, useConvertInboxToTask, useConvertInboxToNote, useArchiveInboxItem } from "@/lib/queries/inbox"
+import type { InboxItemRow } from "@/lib/types"
 import { useAppointments } from "@/lib/queries/health"
 import { useUpcomingEvents } from "@/lib/queries/annual"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
@@ -19,6 +20,26 @@ function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })
 }
 
+function TaskCheckbox({ task, onToggle }: { task: TaskRow; onToggle: (task: TaskRow) => void }) {
+  const isDone = task.status === "done"
+  return (
+    <button
+      onClick={() => onToggle(task)}
+      aria-label={isDone ? "Marcar como pendente" : "Marcar como concluída"}
+      className={cn(
+        "flex-none w-3.5 h-3.5 rounded-[3px] border transition-colors",
+        isDone ? "bg-teal border-teal flex items-center justify-center" : "border-on-surface/30 hover:border-teal"
+      )}
+    >
+      {isDone && (
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="text-bg">
+          <path d="M1 4L3 6L7 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
 function CockpitPageInner() {
   useTitle("Cockpit · Suganuma Ops Hub")
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
@@ -26,6 +47,30 @@ function CockpitPageInner() {
   const { data: appointments = [], isLoading: apptsLoading } = useAppointments()
   const { data: events = [], isLoading: eventsLoading } = useUpcomingEvents(5)
   const loading = tasksLoading || inboxLoading || apptsLoading || eventsLoading
+
+  const toggleDone = useToggleTaskDone()
+  const convertToTask = useConvertInboxToTask()
+  const convertToNote = useConvertInboxToNote()
+  const archiveInboxItem = useArchiveInboxItem()
+  const [converting, setConverting] = useState<string | null>(null)
+
+  async function handleConvertToTask(item: InboxItemRow) {
+    setConverting(item.id)
+    try {
+      await convertToTask(item)
+    } finally {
+      setConverting(null)
+    }
+  }
+
+  async function handleConvertToNote(item: InboxItemRow) {
+    setConverting(item.id)
+    try {
+      await convertToNote(item)
+    } finally {
+      setConverting(null)
+    }
+  }
 
   const now = new Date()
   const todayStr = today()
@@ -102,9 +147,38 @@ function CockpitPageInner() {
               {inboxItems.slice(0, 3).map((item) => (
                 <div key={item.id} className="px-4 py-2.5 flex items-center gap-3">
                   <span className="flex-1 text-[11px] font-mono text-on-surface truncate">{item.content}</span>
-                  <span className="flex-none text-[8px] font-mono text-amber">{inboxItems.length} pendente{inboxItems.length !== 1 ? "s" : ""}</span>
+                  <div className="flex-none flex items-center gap-1.5">
+                    <button
+                      onClick={() => handleConvertToTask(item)}
+                      disabled={converting === item.id}
+                      className="h-6 px-2 bg-teal/10 border border-teal/40 text-teal font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors"
+                    >
+                      {converting === item.id ? "..." : "TASK"}
+                    </button>
+                    <button
+                      onClick={() => handleConvertToNote(item)}
+                      disabled={converting === item.id}
+                      className="h-6 px-2 bg-amber/10 border border-amber/40 text-amber font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-amber/20 disabled:opacity-30 transition-colors"
+                    >
+                      {converting === item.id ? "..." : "NOTE"}
+                    </button>
+                    <button
+                      onClick={() => archiveInboxItem.mutate(item.id)}
+                      className="h-6 px-2 bg-on-surface/5 border border-border text-on-surface/40 font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-on-surface/10 transition-colors"
+                    >
+                      ARQ
+                    </button>
+                  </div>
                 </div>
               ))}
+              {inboxItems.length > 3 && (
+                <div className="px-4 py-2 text-[9px] font-mono text-on-surface/20">
+                  +{inboxItems.length - 3} mais em{" "}
+                  <Link href="/inbox" className="text-on-surface/40 hover:text-on-surface/60 transition-colors">
+                    /inbox
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -123,6 +197,7 @@ function CockpitPageInner() {
               <div className="divide-y divide-border">
                 {urgent.map((t) => (
                   <div key={t.id} className="px-4 py-2.5 flex items-center gap-3">
+                    <TaskCheckbox task={t} onToggle={toggleDone} />
                     <span className="flex-1 text-[11px] font-mono text-on-surface truncate">{t.title}</span>
                     {t.due_at && (
                       <span className="flex-none text-[9px] font-mono text-danger">{fmtDate(t.due_at)}</span>
@@ -145,6 +220,7 @@ function CockpitPageInner() {
               <div className="divide-y divide-border">
                 {overdue.map((t) => (
                   <div key={t.id} className="px-4 py-2.5 flex items-center gap-3">
+                    <TaskCheckbox task={t} onToggle={toggleDone} />
                     <span className="flex-1 text-[11px] font-mono text-on-surface truncate">{t.title}</span>
                     <span className="flex-none text-[9px] font-mono text-amber">{fmtDate(t.due_at!)}</span>
                   </div>
@@ -167,6 +243,7 @@ function CockpitPageInner() {
             <div className="divide-y divide-border">
               {quickWins.map((t) => (
                 <div key={t.id} className="px-4 py-2.5 flex items-center gap-3">
+                  <TaskCheckbox task={t} onToggle={toggleDone} />
                   <span className="flex-1 text-[11px] font-mono text-on-surface truncate">{t.title}</span>
                   <span className="flex-none text-[8px] font-mono text-on-surface/30">{t.priority.toUpperCase()}</span>
                 </div>

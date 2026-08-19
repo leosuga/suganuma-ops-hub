@@ -1,3 +1,4 @@
+import { useCallback } from "react"
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import type { Task } from "@/lib/schemas/task"
@@ -108,6 +109,47 @@ export function useUpdateTask() {
       queryClient.invalidateQueries({ queryKey: taskKeys.all })
     },
   })
+}
+
+/**
+ * Alterna done/todo e, se a task for recorrente e estiver sendo concluída,
+ * cria a próxima ocorrência. Extraído de tasks/page.tsx para reusar o mesmo
+ * comportamento no Cockpit sem duplicar a lógica de recorrência.
+ */
+export function useToggleTaskDone() {
+  const updateTask = useUpdateTask()
+  const createTask = useCreateTask()
+
+  return useCallback(
+    (task: TaskRow) => {
+      const isDone = task.status === "done"
+      updateTask.mutate({
+        id: task.id,
+        status: isDone ? "todo" : "done",
+        completed_at: isDone ? null : new Date().toISOString(),
+      })
+      if (!isDone && task.recurrence) {
+        const nextDue = new Date()
+        nextDue.setHours(23, 59, 0, 0)
+        if (task.recurrence === "daily") nextDue.setDate(nextDue.getDate() + 1)
+        else if (task.recurrence === "weekly") nextDue.setDate(nextDue.getDate() + 7)
+        else if (task.recurrence === "monthly") nextDue.setMonth(nextDue.getMonth() + 1)
+        createTask.mutate({
+          title: task.title,
+          category: task.category,
+          priority: task.priority,
+          status: "todo",
+          due_at: nextDue.toISOString(),
+          recurrence: task.recurrence,
+          project_id: task.project_id ?? undefined,
+          delegated_to: task.delegated_to ?? undefined,
+          important: task.important,
+          tags: task.tags,
+        })
+      }
+    },
+    [updateTask, createTask]
+  )
 }
 
 export function useDeleteTask() {

@@ -2,9 +2,17 @@
 
 import { useState, useCallback, useEffect, useRef } from "react"
 import { useTitle } from "@/lib/useTitle"
-import { useInbox, useCreateInboxItem, useTriageInboxItem, useArchiveInboxItem, useDeleteInboxItem, useTriageWithAI, useTriageAllPending } from "@/lib/queries/inbox"
-import { useCreateTask } from "@/lib/queries/tasks"
-import { useCreateNote } from "@/lib/queries/notes"
+import {
+  useInbox,
+  useCreateInboxItem,
+  useArchiveInboxItem,
+  useDeleteInboxItem,
+  useTriageWithAI,
+  useTriageAllPending,
+  useConvertInboxToTask,
+  useConvertInboxToNote,
+  type InboxAiPayload,
+} from "@/lib/queries/inbox"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { cn } from "@/lib/utils"
 import type { InboxItemRow } from "@/lib/types"
@@ -46,17 +54,6 @@ function timeAgo(dateStr: string): string {
   return `há ${d}d`
 }
 
-interface AiPayload {
-  suggested_type?: string
-  suggested_priority?: string
-  suggested_tags?: string[]
-  suggested_category?: string | null
-  suggested_project_name?: string | null
-  action_items?: string[]
-  summary?: string
-  duplicates?: Array<{ id: string; title: string; score: number; type: string }>
-}
-
 function InboxPageInner() {
   useTitle("Inbox · Suganuma Ops Hub")
   const [filter, setFilter] = useState<StatusFilter>("unprocessed")
@@ -68,13 +65,12 @@ function InboxPageInner() {
 
   const { data: items = [], isLoading } = useInbox(filter)
   const createInboxItem = useCreateInboxItem()
-  const triageInboxItem = useTriageInboxItem()
   const archiveInboxItem = useArchiveInboxItem()
   const deleteInboxItem = useDeleteInboxItem()
   const triageWithAI = useTriageWithAI()
   const triageAll = useTriageAllPending()
-  const createTask = useCreateTask()
-  const createNote = useCreateNote()
+  const convertToTask = useConvertInboxToTask()
+  const convertToNote = useConvertInboxToNote()
 
   const unprocessed = items.filter((i) => i.status === "unprocessed")
 
@@ -92,35 +88,20 @@ function InboxPageInner() {
   const handleConvertToTask = useCallback(async (item: InboxItemRow) => {
     setConverting(item.id)
     try {
-      const ai = item.ai_payload as AiPayload | null
-      await createTask.mutateAsync({
-        title: (ai?.action_items?.[0] ?? item.content).slice(0, 200),
-        category: (ai?.suggested_category as "finance" | "logistics" | "personal" | "health") ?? "personal",
-        priority: (ai?.suggested_priority as "low" | "med" | "high" | "urgent") ?? "med",
-        status: "todo",
-        tags: ai?.suggested_tags ?? null,
-      })
-      await triageInboxItem.mutateAsync(item.id)
+      await convertToTask(item)
     } finally {
       setConverting(null)
     }
-  }, [createTask, triageInboxItem])
+  }, [convertToTask])
 
   const handleConvertToNote = useCallback(async (item: InboxItemRow) => {
     setConverting(item.id)
     try {
-      const ai = item.ai_payload as AiPayload | null
-      await createNote.mutateAsync({
-        title: (ai?.summary ?? item.content).slice(0, 100),
-        content: item.content,
-        pinned: false,
-        tags: ai?.suggested_tags ?? undefined,
-      })
-      await triageInboxItem.mutateAsync(item.id)
+      await convertToNote(item)
     } finally {
       setConverting(null)
     }
-  }, [createNote, triageInboxItem])
+  }, [convertToNote])
 
   const handleArchive = useCallback(async (id: string) => {
     await archiveInboxItem.mutateAsync(id)
@@ -272,7 +253,7 @@ function InboxPageInner() {
           {!isLoading && items.length > 0 && (
             <div className="divide-y divide-border">
               {items.map((item, idx) => {
-                const ai = item.ai_payload as AiPayload | null
+                const ai = item.ai_payload as InboxAiPayload | null
                 const isUnprocessed = item.status === "unprocessed"
                 const isSelected = isUnprocessed && idx === selectedIndex
 
