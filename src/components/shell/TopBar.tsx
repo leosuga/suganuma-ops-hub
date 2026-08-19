@@ -15,6 +15,11 @@ const PAGE_LABELS: Record<string, string> = {
   "/meals": "MEAL PLANNING",
   "/habits": "HABITS TRACKER",
   "/settings": "SETTINGS",
+  "/cockpit": "DAILY COCKPIT",
+  "/inbox": "INBOX",
+  "/projects": "PROJECTS",
+  "/reports": "REPORTS",
+  "/review": "WEEKLY REVIEW",
 }
 
 interface TopBarProps {

@@ -55,6 +55,9 @@ const HUB_ITEMS = [
   { href: "/calendar", label: "CAL", desc: "Calendário" },
   { href: "/review", label: "REV", desc: "Revisão" },
   { href: "/health", label: "HLTH", desc: "Saúde" },
+  { href: "/meals", label: "MEAL", desc: "Refeições" },
+  { href: "/habits", label: "HBT", desc: "Hábitos" },
+  { href: "/reports", label: "REPS", desc: "Relatórios" },
   { href: "/settings", label: "SET", desc: "Ajustes" },
 ]
 

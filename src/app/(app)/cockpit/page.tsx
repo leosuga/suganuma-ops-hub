@@ -8,6 +8,7 @@ import { useInbox } from "@/lib/queries/inbox"
 import { useAppointments } from "@/lib/queries/health"
 import { useUpcomingEvents } from "@/lib/queries/annual"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
+import { today } from "@/lib/date"
 import { cn } from "@/lib/utils"
 
 function fmtTime(iso: string): string {
@@ -20,13 +21,14 @@ function fmtDate(iso: string): string {
 
 function CockpitPageInner() {
   useTitle("Cockpit · Suganuma Ops Hub")
-  const { data: tasks = [] } = useTasks()
-  const { data: inboxItems = [] } = useInbox("unprocessed")
-  const { data: appointments = [] } = useAppointments()
-  const { data: events = [] } = useUpcomingEvents(5)
+  const { data: tasks = [], isLoading: tasksLoading } = useTasks()
+  const { data: inboxItems = [], isLoading: inboxLoading } = useInbox("unprocessed")
+  const { data: appointments = [], isLoading: apptsLoading } = useAppointments()
+  const { data: events = [], isLoading: eventsLoading } = useUpcomingEvents(5)
+  const loading = tasksLoading || inboxLoading || apptsLoading || eventsLoading
 
   const now = new Date()
-  const todayStr = now.toISOString().slice(0, 10)
+  const todayStr = today()
 
   const pending = useMemo(() => tasks.filter((t) => t.status === "todo" || t.status === "doing"), [tasks])
 
@@ -71,6 +73,16 @@ function CockpitPageInner() {
           <p className="text-[10px] font-mono text-on-surface/30 mt-0.5 capitalize">{dateLabel}</p>
         </div>
 
+        {loading && (
+          <div className="space-y-3">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="h-24 bg-surface border border-border rounded-sm animate-pulse" />
+            ))}
+          </div>
+        )}
+
+        {!loading && (
+        <>
         {/* Inbox */}
         <div className="border border-border bg-surface rounded-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
@@ -224,6 +236,8 @@ function CockpitPageInner() {
             {inboxItems.length} no inbox
           </span>
         </div>
+        </>
+        )}
       </div>
     </SectionErrorBoundary>
   )

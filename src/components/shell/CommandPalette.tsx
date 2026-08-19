@@ -151,17 +151,19 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
           </>
         )}
 
-        {onAddTask && (
-          <>
-            <CommandSeparator />
-            <CommandGroup heading="Ações">
-              <CommandItem value="nova task" onSelect={() => { onOpenChange(false); onAddTask() }}>
-                <span className="font-mono text-[12px]">+ Nova Task</span>
-                <kbd className="ml-auto text-[9px] font-mono text-muted-foreground">N</kbd>
-              </CommandItem>
-            </CommandGroup>
-          </>
-        )}
+        <CommandSeparator />
+        <CommandGroup heading="Ações">
+          {onAddTask && (
+            <CommandItem value="nova task" onSelect={() => { onOpenChange(false); onAddTask() }}>
+              <span className="font-mono text-[12px]">+ Nova Task</span>
+              <kbd className="ml-auto text-[9px] font-mono text-muted-foreground">N</kbd>
+            </CommandItem>
+          )}
+          <CommandItem value="capturar inbox" onSelect={() => navigate("/inbox")}>
+            <span className="font-mono text-[12px]">+ Capturar no Inbox</span>
+            <kbd className="ml-auto text-[9px] font-mono text-muted-foreground">I</kbd>
+          </CommandItem>
+        </CommandGroup>
 
         {pendingTasks.length > 0 && (
           <>

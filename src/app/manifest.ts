@@ -23,5 +23,19 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "any",
       },
     ],
+    // Long-press no ícone da PWA instalada — atalho direto pra captura,
+    // sem passar pela navegação normal.
+    shortcuts: [
+      {
+        name: "Capturar no Inbox",
+        short_name: "Inbox",
+        url: "/inbox",
+      },
+      {
+        name: "Nova Task",
+        short_name: "Task",
+        url: "/tasks",
+      },
+    ],
   }
 }

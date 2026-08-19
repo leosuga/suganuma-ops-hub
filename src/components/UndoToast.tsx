@@ -73,3 +73,12 @@ export function useUndoToast(): ToastHook {
 
   return { show }
 }
+
+/**
+ * Dispara o toast fora de um componente React — usado pelo onError global do
+ * QueryClient (criado uma vez via useState, antes do UndoToastProvider montar
+ * no JSX, então não pode chamar o hook useUndoToast diretamente).
+ */
+export function showErrorToast(label: string) {
+  globalShow?.({ label })
+}

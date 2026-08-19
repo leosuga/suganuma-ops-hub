@@ -194,30 +194,49 @@ O `PregnancyCard` já calcula semanas a partir da DPP. Falta, em ordem de valor:
       Corrigido: `MILESTONES` (12/20/24/28/37/40 semanas) em `PregnancyCard.tsx`,
       mostra o próximo marco a partir da semana atual.
 
-## 8. Navegação e UX
+## 8. Navegação e UX — parcial, resolvido em 2026-08-19
 
-- [ ] **Módulos órfãos no mobile**: `/meals`, `/habits` e `/reports` não aparecem nem na
+- [x] **Módulos órfãos no mobile**: `/meals`, `/habits` e `/reports` não aparecem nem na
       BottomNav nem no menu HUB, e o CommandPalette é inacessível no celular (o botão
       é `hidden md:flex`). O grid do HUB comporta os três.
-- [ ] **No desktop, o inverso**: `/inbox` e `/cockpit` não estão na Sidebar — justamente
+      Corrigido: os 3 adicionados ao `HUB_ITEMS` em `BottomNav.tsx`.
+- [x] **No desktop, o inverso**: `/inbox` e `/cockpit` não estão na Sidebar — justamente
       as duas páginas de workflow diário.
+      Corrigido: os 2 adicionados ao `NAV_ITEMS` em `Sidebar.tsx`.
 - [ ] **Cockpit × Dashboard: ~80% de sobreposição**, com queries duplicadas. Decidir:
       ou matar a página `/cockpit` e manter só o endpoint `get_daily_cockpit` para
       agentes, ou tornar o Cockpit acionável e enxugar o Dashboard.
-- [ ] **Captura global inexistente fora do `/inbox`.** O `AppShell` renderiza
+      **Não feito** — é decisão de produto (qual página o usuário realmente usa no dia
+      a dia), não correção mecânica. Perguntei ao Leo antes de mexer.
+- [x] **Captura global inexistente fora do `/inbox`.** O `AppShell` renderiza
       `<CommandPalette>` sem a prop `onAddTask`, então a ação "Nova task" do palette
       nunca aparece. Passar a prop, adicionar uma ação "capturar no inbox" e
       `shortcuts` no `manifest.ts` (long-press no ícone da PWA).
-- [ ] **Cockpit sem estado de loading** — mostra "Inbox zero" e "Nenhuma urgente"
+      Corrigido: `AppShell` agora monta `QuickAddDialog` global e passa `onAddTask`;
+      `CommandPalette` ganhou a ação "Capturar no Inbox"; `manifest.ts` ganhou
+      `shortcuts` (Inbox, Nova Task).
+- [x] **Cockpit sem estado de loading** — mostra "Inbox zero" e "Nenhuma urgente"
       durante o fetch: um falso "tudo em dia" no briefing.
-- [ ] **Erros de mutation são silenciosos** — só vão para o logger; o optimistic update
+      Corrigido: skeleton enquanto `tasks`/`inbox`/`appointments`/`events` carregam.
+      De caminho, corrigido também `todayStr = new Date().toISOString().slice(0,10)`
+      (mesmo bug de fuso da seção 3) para `today()`.
+- [x] **Erros de mutation são silenciosos** — só vão para o logger; o optimistic update
       reverte sem o usuário saber. Reusar o `UndoToast` como toast de erro no `onError`
       global.
-- [ ] **PWA offline é só de fachada** (NetworkOnly + `offline.html`). Mínimo viável sem
+      Corrigido: `showErrorToast()` exportado de `UndoToast.tsx` (função pura, fora de
+      componente — o `onError` global do `QueryClient` roda antes do
+      `UndoToastProvider` montar em JSX), chamado no `onError` de `AppShell`.
+- [x] **PWA offline é só de fachada** (NetworkOnly + `offline.html`). Mínimo viável sem
       mexer na arquitetura: persistir o cache do TanStack Query
       (`@tanstack/query-persist-client`) para leitura offline.
-- [ ] **TopBar sem label para 5 rotas** (`/cockpit`, `/inbox`, `/projects`, `/reports`,
+      Corrigido: `@tanstack/react-query-persist-client` +
+      `@tanstack/query-sync-storage-persister` instalados, `AppShell` trocou
+      `QueryClientProvider` por `PersistQueryClientProvider` (localStorage, 24h).
+      **Trade-off aceito com o Leo**: dados de tasks/finanças/saúde passam a ficar
+      persistidos no localStorage, não só em memória.
+- [x] **TopBar sem label para 5 rotas** (`/cockpit`, `/inbox`, `/projects`, `/reports`,
       `/review`) — todas caem no fallback "OPS HUB".
+      Corrigido: os 5 adicionados a `PAGE_LABELS` em `TopBar.tsx`.
 
 ## 9. Acessibilidade
 

@@ -20,6 +20,26 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: "/inbox",
+    label: "INBX",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M2 7l2-5h8l2 5M2 7v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7M2 7h3l1 2h4l1-2h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    href: "/cockpit",
+    label: "COCK",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="6" stroke="currentColor" strokeWidth="1.2" />
+        <circle cx="8" cy="8" r="3" stroke="currentColor" strokeWidth="1.2" />
+        <circle cx="8" cy="8" r="0.8" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
     href: "/calendar",
     label: "CAL",
     icon: (
