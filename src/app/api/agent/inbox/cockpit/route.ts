@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateAgentToken, unauthorized, serverError } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
+import { today as todayInSaoPaulo } from "@/lib/date"
 
 export async function GET(req: NextRequest) {
   let ownerId: string
   try { ownerId = await validateAgentToken(req) } catch { return unauthorized() }
 
   const supabase = createServiceClient()
-  const today = new Date().toISOString().slice(0, 10)
+  const today = todayInSaoPaulo()
   const now = new Date().toISOString()
 
   const [tasksResult, inboxResult, appointmentsResult, eventsResult] = await Promise.all([

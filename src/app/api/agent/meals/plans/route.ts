@@ -45,6 +45,18 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServiceClient()
 
+  // meal_id não é validado contra o dono por padrão nas FKs — sem isso, um
+  // meal_id de outro owner é aceito silenciosamente no plano.
+  if (parsed.data.meal_id) {
+    const { data: meal } = await supabase
+      .from("meal")
+      .select("id")
+      .eq("id", parsed.data.meal_id)
+      .eq("owner_id", ownerId)
+      .maybeSingle()
+    if (!meal) return badRequest("meal_id não encontrado")
+  }
+
   const { data: existing } = await supabase
     .from("meal_plan")
     .select("id")

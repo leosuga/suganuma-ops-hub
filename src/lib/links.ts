@@ -19,6 +19,27 @@ export function parseWikiLinks(content: string): WikiLink[] {
   return matches
 }
 
+/**
+ * Mapa reverso título → notas que linkam para ele, construído uma vez sobre
+ * a lista inteira. Substitui o padrão anterior de cada NoteRow varrer todas
+ * as notas para achar seus backlinks (O(N²) na lista inteira).
+ */
+export function buildBacklinksMap<T extends { id: string; content: string | null }>(
+  notes: T[]
+): Map<string, T[]> {
+  const map = new Map<string, T[]>()
+  for (const note of notes) {
+    if (!note.content) continue
+    for (const link of parseWikiLinks(note.content)) {
+      const key = link.target.toLowerCase().trim()
+      const existing = map.get(key)
+      if (existing) existing.push(note)
+      else map.set(key, [note])
+    }
+  }
+  return map
+}
+
 export function renderWikiLinksToMarkdown(content: string): string {
   return content.replace(WIKI_LINK_REGEX, (_match, target, display) => {
     const label = display ? display.trim() : target.trim()

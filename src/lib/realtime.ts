@@ -29,6 +29,13 @@ const TABLE_QUERY_PREFIX: Record<string, string[]> = {
   inbox_item: ["inbox"],
 }
 
+// Tabelas sem coluna owner_id — o filtro `owner_id=eq.<uid>` do Realtime falha
+// silenciosamente nelas (nenhum evento chega, sem erro visível). A invalidação
+// batida por essas tabelas ainda é segura: os dados em si continuam vindo de
+// queries com .eq("owner_id", ...); o único efeito de não filtrar aqui é
+// refetch extra quando outro owner muda uma entry.
+const NO_OWNER_FILTER_TABLES = new Set(["habit_entry", "protocol_entry"])
+
 // Debounce realtime invalidations: when multiple changes arrive in quick succession
 // (e.g. bulk insert, or 3 tables invalidating "calendar" simultaneously),
 // batch them into a single refetch after 300ms.
@@ -84,7 +91,7 @@ export function useRealtimeTable(table: string, _queryKey?: readonly unknown[]) 
               event: "*",
               schema: "public",
               table,
-              filter: `owner_id=eq.${session.user.id}`,
+              ...(NO_OWNER_FILTER_TABLES.has(table) ? {} : { filter: `owner_id=eq.${session.user.id}` }),
             },
             () => {
               invalidateTable(queryClient, table)

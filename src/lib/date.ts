@@ -1,5 +1,10 @@
+// Formata como YYYY-MM-DD no fuso de São Paulo. toISOString() usa UTC — às
+// 21h-23h59 em São Paulo (UTC-3) isso já vira o dia seguinte em UTC, fazendo
+// "hoje" virar amanhã à noite (hábitos, filtro do Cockpit, notificações etc.).
+const SAO_PAULO_DATE = new Intl.DateTimeFormat("sv-SE", { timeZone: "America/Sao_Paulo" })
+
 export function today(): string {
-  return new Date().toISOString().slice(0, 10)
+  return SAO_PAULO_DATE.format(new Date())
 }
 
 export function currentMonth(): string {
@@ -30,5 +35,5 @@ export function isoWeekKey(d: Date): string {
 }
 
 export function dateStr(d: Date): string {
-  return d.toISOString().slice(0, 10)
+  return SAO_PAULO_DATE.format(d)
 }

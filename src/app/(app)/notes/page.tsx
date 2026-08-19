@@ -6,6 +6,7 @@ import { useTitle } from "@/lib/useTitle"
 import { useNotes, useDeleteNote, useCreateNote, useUpdateNote } from "@/lib/queries/notes"
 import { useTasks } from "@/lib/queries/tasks"
 import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
+import { buildBacklinksMap } from "@/lib/links"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
@@ -33,6 +34,9 @@ function NotesPageInner() {
   const searchParams = useSearchParams()
   const { data: notes = [], isLoading } = useNotes()
   const { data: tasks = [] } = useTasks()
+  // Construído uma vez para a lista inteira — evita cada NoteRow varrer todas
+  // as notas para achar seus próprios backlinks (O(N²) na página).
+  const backlinksMap = useMemo(() => buildBacklinksMap(notes), [notes])
   const deleteNote = useDeleteNote()
   const createNote = useCreateNote()
   const toast = useUndoToast()
@@ -581,7 +585,7 @@ function NotesPageInner() {
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-teal uppercase">MAPS OF CONTENT</span>
             {mocs.map((n) => (
-              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} tasks={tasks} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
+              <NoteRow key={n.id} note={n} onDelete={handleDelete} backlinksMap={backlinksMap} tasks={tasks} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
             ))}
           </div>
         )}
@@ -590,7 +594,7 @@ function NotesPageInner() {
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">FIXADAS</span>
             {pinned.map((n) => (
-              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} tasks={tasks} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
+              <NoteRow key={n.id} note={n} onDelete={handleDelete} backlinksMap={backlinksMap} tasks={tasks} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
             ))}
           </div>
         )}
@@ -601,7 +605,7 @@ function NotesPageInner() {
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOTAS</span>
             )}
             {unpinned.map((n) => (
-              <NoteRow key={n.id} note={n} onDelete={handleDelete} allNotes={notes} tasks={tasks} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
+              <NoteRow key={n.id} note={n} onDelete={handleDelete} backlinksMap={backlinksMap} tasks={tasks} selected={selectedIds.has(n.id)} onToggleSelect={handleToggleSelect} bulkMode={bulkMode} />
             ))}
           </div>
         )}

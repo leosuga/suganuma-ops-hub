@@ -3,8 +3,23 @@ const QDRANT_URL = process.env.QDRANT_URL || "http://localhost:6333"
 const COLLECTION_NAME = process.env.QDRANT_COLLECTION || "ops_hub_notes"
 const VECTOR_DIM = 768 // nomic-embed-text output dimension
 
+// Cache em variável de módulo: a collection não some sozinha em runtime, então
+// checar/criar a cada busca era um round-trip HTTP a mais por request. O cache
+// também deduplica chamadas concorrentes (todas aguardam a mesma promise).
+let collectionEnsured: Promise<void> | null = null
+
 // Qdrant collection setup (idempotent)
-export async function ensureCollection(): Promise<void> {
+export function ensureCollection(): Promise<void> {
+  if (!collectionEnsured) {
+    collectionEnsured = ensureCollectionUncached().catch((err) => {
+      collectionEnsured = null // permite retry na próxima chamada
+      throw err
+    })
+  }
+  return collectionEnsured
+}
+
+async function ensureCollectionUncached(): Promise<void> {
   const exists = await collectionExists()
   if (exists) return
 

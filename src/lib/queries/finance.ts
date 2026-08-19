@@ -18,6 +18,8 @@ export interface TransactionFilters {
   account_id?: string
   kind?: string
   month?: string // YYYY-MM
+  from?: string // YYYY-MM-DD, inclusive
+  to?: string // YYYY-MM-DD, inclusive
 }
 
 // ── Accounts ──────────────────────────────────────────────
@@ -120,6 +122,8 @@ export function transactionsOptions(filters?: TransactionFilters) {
         const nextMonth = parseInt(month) === 12 ? `${parseInt(year) + 1}-01-01` : `${year}-${String(parseInt(month) + 1).padStart(2, "0")}-01`
         q = q.gte("occurred_on", from).lt("occurred_on", nextMonth)
       }
+      if (filters?.from) q = q.gte("occurred_on", filters.from)
+      if (filters?.to) q = q.lte("occurred_on", filters.to)
 
       const { data, error } = await q.order("occurred_on", { ascending: false })
       if (error) throw error

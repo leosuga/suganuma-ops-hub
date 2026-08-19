@@ -5,6 +5,7 @@ import { useCreateNote } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
 import { injectFrontmatter } from "@/lib/frontmatter"
 import { CONTEXT_CONFIG, addContextTag } from "@/lib/contexts"
+import { today } from "@/lib/date"
 import { cn } from "@/lib/utils"
 
 type TemplateKey = "standard" | "moc" | "daily" | "project" | "area" | "resource"
@@ -59,7 +60,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
       pinned: false,
       para: t.para,
       is_moc: t.isMoc,
-      daily_date: template === "daily" ? new Date().toISOString().slice(0, 10) : null,
+      daily_date: template === "daily" ? today() : null,
       project_id: selectedProjectId,
     })
 

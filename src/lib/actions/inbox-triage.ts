@@ -166,12 +166,19 @@ export async function triageAllPending(): Promise<{ ok: boolean; triaged: number
 
     if (error) throw error
 
+    // Lotes de 4 em paralelo em vez de 1-por-1: até 20 chamadas ao LLM em série
+    // arriscava estourar o timeout da server action numa única invocação síncrona.
+    const BATCH_SIZE = 4
     let triaged = 0
     let errors = 0
-    for (const item of pending ?? []) {
-      const result = await triageInboxItem(item.id)
-      if (result.ok) triaged++
-      else errors++
+    const items = pending ?? []
+    for (let i = 0; i < items.length; i += BATCH_SIZE) {
+      const batch = items.slice(i, i + BATCH_SIZE)
+      const results = await Promise.allSettled(batch.map((item) => triageInboxItem(item.id)))
+      for (const result of results) {
+        if (result.status === "fulfilled" && result.value.ok) triaged++
+        else errors++
+      }
     }
 
     return { ok: true, triaged, errors }

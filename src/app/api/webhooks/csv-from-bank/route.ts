@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { z } from "zod"
-import { verifyWebhookHmac, checkWebhookIdempotency, deriveEventKey } from "@/lib/webhooks/hmac"
+import { verifyWebhookHmac, checkWebhookIdempotency, deriveEventKey, resolveWebhookOwnerId } from "@/lib/webhooks/hmac"
 import { logger } from "@/lib/logger"
 
 const rowSchema = z.object({
@@ -13,7 +13,6 @@ const rowSchema = z.object({
 })
 
 const payloadSchema = z.object({
-  owner_id: z.string().uuid(),
   rows: z.array(rowSchema).min(1).max(500),
   import_id: z.string().optional(),
 })
@@ -24,6 +23,12 @@ export async function POST(req: NextRequest) {
 
   if (!(await verifyWebhookHmac(req, rawBody))) {
     return NextResponse.json({ error: "Assinatura inválida" }, { status: 401 })
+  }
+
+  const ownerId = resolveWebhookOwnerId()
+  if (!ownerId) {
+    logger.error("webhook", "WEBHOOK_OWNER_ID não configurado", {})
+    return NextResponse.json({ error: "Servidor não configurado" }, { status: 500 })
   }
 
   let parsed: z.infer<typeof payloadSchema>
@@ -42,7 +47,7 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = createServiceClient()
-  const inserts = parsed.rows.map((row) => ({ ...row, owner_id: parsed.owner_id, currency: "BRL" }))
+  const inserts = parsed.rows.map((row) => ({ ...row, owner_id: ownerId, currency: "BRL" }))
 
   const { error } = await supabase.from("transaction").insert(inserts)
   if (error) {
@@ -51,6 +56,6 @@ export async function POST(req: NextRequest) {
   }
 
   await idempotency.mark?.()
-  logger.info("webhook", "csv-from-bank imported", { count: inserts.length, owner_id: parsed.owner_id })
+  logger.info("webhook", "csv-from-bank imported", { count: inserts.length })
   return NextResponse.json({ inserted: inserts.length }, { status: 201 })
 }

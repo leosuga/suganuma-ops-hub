@@ -2,6 +2,21 @@
 
 import { createClient } from "@/lib/supabase/client"
 
+// Bucket privado (migration 0036): sem URL pública permanente, cada leitura
+// precisa de uma signed URL. 7 dias é generoso o bastante para não expirar
+// entre visitas normais à nota, mas continua sendo uma credencial temporária.
+const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 7
+
+export async function getNoteAttachmentUrl(path: string): Promise<string> {
+  const supabase = createClient()
+  const { data, error } = await supabase.storage
+    .from("note-attachments")
+    .createSignedUrl(path, SIGNED_URL_TTL_SECONDS)
+
+  if (error || !data) throw error ?? new Error("Falha ao gerar URL assinada")
+  return data.signedUrl
+}
+
 export async function uploadNoteAttachment(
   file: File,
   noteId: string,
@@ -9,7 +24,6 @@ export async function uploadNoteAttachment(
 ): Promise<{ url: string; path: string; name: string; type: string; size: number }> {
   const supabase = createClient()
 
-  const ext = file.name.split(".").pop() || "bin"
   const timestamp = Date.now()
   const path = `${ownerId}/${noteId}/${timestamp}-${file.name}`
 
@@ -23,12 +37,10 @@ export async function uploadNoteAttachment(
 
   if (uploadError) throw uploadError
 
-  const { data: urlData } = supabase.storage
-    .from("note-attachments")
-    .getPublicUrl(path)
+  const url = await getNoteAttachmentUrl(path)
 
   return {
-    url: urlData.publicUrl,
+    url,
     path,
     name: file.name,
     type: file.type,

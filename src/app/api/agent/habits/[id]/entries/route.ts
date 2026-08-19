@@ -18,6 +18,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const limit = parseLimitParam(req.nextUrl.searchParams.get("limit"), 90, 500)
 
   const supabase = createServiceClient()
+
+  // Verify habit belongs to owner before returning entries — sem isso, qualquer
+  // token válido lê entries (incluindo notes) de hábitos de outro dono.
+  const { data: habit } = await supabase
+    .from("habit_track")
+    .select("id")
+    .eq("id", id)
+    .eq("owner_id", ownerId)
+    .single()
+
+  if (!habit) return NextResponse.json({ error: "Hábito não encontrado" }, { status: 404 })
+
   const { data, error } = await supabase
     .from("habit_entry")
     .select("*")

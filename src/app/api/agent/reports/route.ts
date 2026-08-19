@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
   const supabase = createServiceClient()
 
-  const [t, tr, h, e] = await Promise.all([
+  const [t, tr, h] = await Promise.all([
     supabase
       .from("task")
       .select("id, completed_at, due_at, created_at, status, priority")
@@ -23,15 +23,19 @@ export async function GET(req: NextRequest) {
       .from("habit_track")
       .select("id, name, active, created_at")
       .eq("owner_id", ownerId),
-    supabase
-      .from("habit_entry")
-      .select("habit_id, done_on")
-      .limit(500),
   ])
 
   if (t.error) return serverError(t.error.message)
   if (tr.error) return serverError(tr.error.message)
   if (h.error) return serverError(h.error.message)
+
+  // habit_entry não tem owner_id — sem filtrar por habit_id dos hábitos do dono,
+  // esta query devolveria entries (incluindo notes) de qualquer usuário.
+  const habitIds = (h.data ?? []).map((habit) => habit.id)
+  const e = habitIds.length
+    ? await supabase.from("habit_entry").select("habit_id, done_on").in("habit_id", habitIds).limit(500)
+    : { data: [], error: null }
+
   if (e.error) return serverError(e.error.message)
 
   const tasks = (t.data ?? []) as Array<{

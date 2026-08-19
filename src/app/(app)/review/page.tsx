@@ -8,6 +8,7 @@ import { useTasks } from "@/lib/queries/tasks"
 import { useTransactions } from "@/lib/queries/finance"
 import { useHealthLogs, useAppointments } from "@/lib/queries/health"
 import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
+import { dateStr } from "@/lib/date"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { cn } from "@/lib/utils"
 
@@ -55,18 +56,23 @@ function contextBar(counts: Record<string, number>, total: number) {
 
 export default function ReviewPage() {
   useTitle("Review · Suganuma Ops Hub")
+  const { start: weekStart, end: weekEnd } = getWeekRange()
+  const weekLabel = formatWeekLabel(weekStart, weekEnd)
+
   const { data: notes = [], isLoading: notesLoading } = useNotes()
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
-  const { data: transactions = [], isLoading: txLoading } = useTransactions()
+  // Só a semana em revisão — sem isso, a página busca a tabela inteira de
+  // transações a cada visita, crescendo sem limite com o histórico da conta.
+  const { data: transactions = [], isLoading: txLoading } = useTransactions({
+    from: dateStr(weekStart),
+    to: dateStr(weekEnd),
+  })
   const { data: healthLogs = [], isLoading: healthLoading } = useHealthLogs()
   const { data: appointments = [], isLoading: apptLoading } = useAppointments()
   const updateNote = useUpdateNote()
   const [markingDone, setMarkingDone] = useState(false)
 
   const loading = notesLoading || tasksLoading || txLoading || healthLoading || apptLoading
-
-  const { start: weekStart, end: weekEnd } = getWeekRange()
-  const weekLabel = formatWeekLabel(weekStart, weekEnd)
 
   // Notes created this week
   const weekNotes = notes.filter((n) => isWithinWeek(n.created_at, weekStart, weekEnd))

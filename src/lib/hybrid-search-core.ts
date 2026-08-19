@@ -42,31 +42,39 @@ export async function hybridSearchCore(ownerId: string, query: string, limit: nu
     const q = query.trim()
     const fetchLimit = Math.max(limit * 2, 20)
 
-    // 1. Vector search via Qdrant (semantic similarity)
-    let vectorResults: Array<{ id: string; score: number }> = []
-    try {
-      const embedding = await embedText(q)
-      await ensureCollection()
-      const raw = await searchNotes(ownerId, embedding, fetchLimit, 0.5)
-      vectorResults = raw.map((r) => ({ id: r.id, score: r.score }))
-    } catch (err) {
-      logger.warn("hybridSearchCore", "Vector search failed (non-blocking)", { error: (err as Error).message })
-    }
-
-    // 2. FTS via PostgreSQL (keyword match, BM25-like ranking via ts_rank)
-    let ftsResults: Array<{ id: string; title: string; content: string | null; tags: string[] | null; para: string | null; is_moc: boolean | null; project_id: string | null; pinned: boolean | null; updated_at: string }> = []
-    try {
-      const { data, error } = await supabase
+    // Vetorial (Qdrant) e FTS (Postgres) são independentes — rodar em paralelo
+    // corta a latência combinada quase pela metade em vez de somar as duas.
+    const [vectorOutcome, ftsOutcome] = await Promise.allSettled([
+      (async () => {
+        const embedding = await embedText(q)
+        await ensureCollection()
+        const raw = await searchNotes(ownerId, embedding, fetchLimit, 0.5)
+        return raw.map((r) => ({ id: r.id, score: r.score }))
+      })(),
+      supabase
         .from("note")
         .select("id, title, content, tags, para, is_moc, project_id, pinned, updated_at")
         .eq("owner_id", ownerId)
         .textSearch("search_vector", q, { config: "portuguese" })
         .limit(fetchLimit)
+        .then(({ data, error }) => {
+          if (error) throw error
+          return data ?? []
+        }),
+    ])
 
-      if (error) throw error
-      ftsResults = data ?? []
-    } catch (err) {
-      logger.warn("hybridSearchCore", "FTS search failed (non-blocking)", { error: (err as Error).message })
+    let vectorResults: Array<{ id: string; score: number }> = []
+    if (vectorOutcome.status === "fulfilled") {
+      vectorResults = vectorOutcome.value
+    } else {
+      logger.warn("hybridSearchCore", "Vector search failed (non-blocking)", { error: vectorOutcome.reason?.message })
+    }
+
+    let ftsResults: Array<{ id: string; title: string; content: string | null; tags: string[] | null; para: string | null; is_moc: boolean | null; project_id: string | null; pinned: boolean | null; updated_at: string }> = []
+    if (ftsOutcome.status === "fulfilled") {
+      ftsResults = ftsOutcome.value
+    } else {
+      logger.warn("hybridSearchCore", "FTS search failed (non-blocking)", { error: ftsOutcome.reason?.message })
     }
 
     // 3. RRF merge

@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { uploadNoteAttachment, deleteNoteAttachment } from "@/lib/storage"
+import { uploadNoteAttachment, deleteNoteAttachment, getNoteAttachmentUrl } from "@/lib/storage"
 import { logger } from "@/lib/logger"
 import type { Attachment } from "@/lib/types/note"
 
@@ -18,7 +18,33 @@ interface NoteAttachmentsProps {
 
 export function NoteAttachments({ noteId, ownerId, attachments, onChange, editable }: NoteAttachmentsProps) {
   const [uploading, setUploading] = useState(false)
+  const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // A URL persistida na nota é uma signed URL que expira (bucket privado, ver
+  // migration 0036). Reassina a cada render em vez de confiar no valor salvo,
+  // que pode ser de uma sessão de dias atrás.
+  const attachmentPaths = attachments.map((a) => a.path).join(",")
+
+  useEffect(() => {
+    if (attachments.length === 0) return
+    let cancelled = false
+    Promise.all(
+      attachments.map(async (att) => {
+        try {
+          return [att.path, await getNoteAttachmentUrl(att.path)] as const
+        } catch (err) {
+          logger.warn("NoteAttachments", "Falha ao reassinar URL", { path: att.path, error: String(err) })
+          return [att.path, att.url] as const
+        }
+      })
+    ).then((entries) => {
+      if (!cancelled) setSignedUrls(Object.fromEntries(entries))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [attachmentPaths])
 
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const files = e.target.files
@@ -68,7 +94,7 @@ export function NoteAttachments({ noteId, ownerId, attachments, onChange, editab
             <div key={att.path} className="relative group">
               {isImage(att.type) ? (
                 <img
-                  src={att.url}
+                  src={signedUrls[att.path] ?? att.url}
                   alt={att.name}
                   className="w-20 h-20 object-cover rounded-sm border border-border"
                   loading="lazy"

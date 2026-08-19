@@ -6,6 +6,30 @@ import { createClient } from "@/lib/supabase/server"
 import { logger } from "@/lib/logger"
 
 /**
+ * Núcleo do sync de embedding — sem lookup de sessão, o chamador já garante o
+ * dono da nota. Compartilhado entre a Server Action (sessão via cookie) e as
+ * rotas de agente (Bearer token, sem cookie de sessão).
+ */
+async function syncNoteEmbeddingCore(note: { id: string; title: string; content: string | null; owner_id: string }) {
+  const textToEmbed = `${note.title}\n\n${note.content || ""}`.trim()
+  if (!textToEmbed) {
+    // Delete if empty
+    await deleteNoteVector(note.id).catch(() => null)
+    return { ok: true }
+  }
+
+  const embedding = await embedText(textToEmbed)
+
+  await ensureCollection()
+  await upsertNoteVector(note.id, note.owner_id, embedding, {
+    title: note.title,
+    content_preview: (note.content || "").slice(0, 200),
+  })
+
+  return { ok: true }
+}
+
+/**
  * Sync a note's embedding to Qdrant.
  * Called after note create or update (from client mutation onSuccess).
  */
@@ -24,26 +48,27 @@ export async function syncNoteEmbedding(noteId: string) {
       .single()
     if (error || !note) throw new Error("Note not found")
 
-    const textToEmbed = `${note.title}\n\n${note.content || ""}`.trim()
-    if (!textToEmbed) {
-      // Delete if empty
-      await deleteNoteVector(noteId).catch(() => null)
-      return { ok: true }
-    }
-
-    // Generate embedding
-    const embedding = await embedText(textToEmbed)
-
-    // Upsert to Qdrant
-    await ensureCollection()
-    await upsertNoteVector(note.id, note.owner_id, embedding, {
-      title: note.title,
-      content_preview: (note.content || "").slice(0, 200),
-    })
-
-    return { ok: true }
+    return await syncNoteEmbeddingCore(note)
   } catch (err) {
     logger.error("syncNoteEmbedding", "Failed", { noteId, error: (err as Error).message })
+    return { ok: false, error: (err as Error).message }
+  }
+}
+
+/**
+ * Mesma sincronização, para chamadores que já têm a nota e o dono verificados
+ * fora de uma sessão de cookie (rotas de agente/MCP, autenticadas por Bearer).
+ */
+export async function syncNoteEmbeddingForOwner(note: {
+  id: string
+  title: string
+  content: string | null
+  owner_id: string
+}) {
+  try {
+    return await syncNoteEmbeddingCore(note)
+  } catch (err) {
+    logger.error("syncNoteEmbeddingForOwner", "Failed", { noteId: note.id, error: (err as Error).message })
     return { ok: false, error: (err as Error).message }
   }
 }

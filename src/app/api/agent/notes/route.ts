@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateAgentToken, unauthorized, badRequest, serverError } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
+import { syncNoteEmbeddingForOwner } from "@/lib/actions/semantic-search"
 import { z } from "zod"
 
 const createSchema = z.object({
@@ -47,5 +48,11 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) return serverError(error.message)
+
+  // Fire-and-forget: notas criadas via agente/MCP não passavam por
+  // syncNoteEmbedding (só a mutation da UI chamava), ficando invisíveis na
+  // busca semântica.
+  void syncNoteEmbeddingForOwner(data)
+
   return NextResponse.json(data, { status: 201 })
 }

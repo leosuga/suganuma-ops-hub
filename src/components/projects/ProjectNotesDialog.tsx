@@ -7,6 +7,7 @@ import type { ProjectRow } from "@/lib/queries/projects"
 import { NoteRow as NoteRowComponent } from "@/components/notes/NoteRow"
 import { useTasks } from "@/lib/queries/tasks"
 import { injectFrontmatter } from "@/lib/frontmatter"
+import { buildBacklinksMap } from "@/lib/links"
 import { cn } from "@/lib/utils"
 
 interface ProjectNotesDialogProps {
@@ -22,6 +23,7 @@ export function ProjectNotesDialog({ open, onOpenChange, project, notes, onDelet
   const [newTitle, setNewTitle] = useState("")
   const [creating, setCreating] = useState(false)
   const { data: tasks = [] } = useTasks()
+  const backlinksMap = useMemo(() => buildBacklinksMap(notes), [notes])
 
   const projectNotes = useMemo(() => {
     if (!project) return []
@@ -91,7 +93,7 @@ export function ProjectNotesDialog({ open, onOpenChange, project, notes, onDelet
                   key={note.id}
                   note={note}
                   onDelete={onDeleteNote}
-                  allNotes={notes}
+                  backlinksMap={backlinksMap}
                   tasks={tasks}
                 />
               ))}

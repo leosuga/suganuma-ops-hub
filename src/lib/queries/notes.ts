@@ -11,6 +11,12 @@ export const noteKeys = {
   daily: (date: string) => ["notes", "daily", date] as const,
 }
 
+// Colunas de NoteRow, explicitamente — sem search_vector (tsvector da busca
+// full-text, migration 0033). select("*") trazia esse campo em toda listagem,
+// crescendo com o conteúdo de cada nota sem nunca ser lido pela UI.
+const NOTE_COLUMNS =
+  "id, owner_id, title, content, tags, pinned, linked_task_id, para, daily_date, is_moc, last_review, project_id, favorited, attachments, created_at, updated_at"
+
 const notesOptions = queryOptions({
   queryKey: noteKeys.all,
   staleTime: 60_000,
@@ -20,7 +26,7 @@ const notesOptions = queryOptions({
     if (!user) throw new Error("Not authenticated")
     const { data, error } = await supabase
       .from("note")
-      .select("*")
+      .select(NOTE_COLUMNS)
       .eq("owner_id", user.id)
       .order("pinned", { ascending: false })
       .order("updated_at", { ascending: false })
@@ -44,7 +50,7 @@ export function dailyNoteOptions(date: string) {
       if (!user) throw new Error("Not authenticated")
       const { data, error } = await supabase
         .from("note")
-        .select("*")
+        .select(NOTE_COLUMNS)
         .eq("owner_id", user.id)
         .eq("daily_date", date)
         .maybeSingle()

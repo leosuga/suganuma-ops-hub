@@ -1,3 +1,5 @@
+import { today as todayInSaoPaulo } from "@/lib/date"
+
 type Category = "finance" | "logistics" | "personal" | "health"
 type Priority = "low" | "med" | "high" | "urgent"
 
@@ -96,19 +98,27 @@ export function parseTitle(raw: string, projects: ProjectLike[]): ParsedTitle {
   }
 
   // ^tomorrow ^today ^YYYY-MM-DD
+  //
+  // Fuso fixo -03:00 (São Paulo, sem horário de verão desde 2019) em vez do
+  // timezone local do processo: parseTitle roda tanto no browser quanto no
+  // servidor (rota de agente, tool MCP), e um container Docker normalmente
+  // está em UTC — sem isso, "hoje" à noite virava "amanhã".
   const dueMatch = title.match(/\^(\S+)/)
   if (dueMatch) {
     const raw2 = dueMatch[1].toLowerCase()
-    const today = new Date()
-    today.setHours(23, 59, 0, 0)
+    let dateOnly: string | undefined
     if (raw2 === "today") {
-      due_at = today.toISOString()
+      dateOnly = todayInSaoPaulo()
     } else if (raw2 === "tomorrow") {
-      today.setDate(today.getDate() + 1)
-      due_at = today.toISOString()
+      // Soma o dia sobre um ponto âncora em UTC (meia-noite), não sobre o
+      // relógio local do processo — evita o mesmo problema de fuso.
+      const anchor = new Date(`${todayInSaoPaulo()}T00:00:00Z`)
+      anchor.setUTCDate(anchor.getUTCDate() + 1)
+      dateOnly = anchor.toISOString().slice(0, 10)
     } else if (/^\d{4}-\d{2}-\d{2}$/.test(raw2)) {
-      due_at = new Date(raw2 + "T23:59:00").toISOString()
+      dateOnly = raw2
     }
+    if (dateOnly) due_at = new Date(`${dateOnly}T23:59:00-03:00`).toISOString()
     title = title.replace(dueMatch[0], "").trim()
   }
 

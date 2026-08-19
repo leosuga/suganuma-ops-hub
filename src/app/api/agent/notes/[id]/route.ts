@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateAgentToken, unauthorized, badRequest, serverError, validateUuidParam } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
+import { syncNoteEmbeddingForOwner, deleteNoteEmbedding } from "@/lib/actions/semantic-search"
 import { z } from "zod"
 
 const updateSchema = z.object({
@@ -32,6 +33,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (error) return serverError(error.message)
   if (!data) return NextResponse.json({ error: "Não encontrado" }, { status: 404 })
+
+  void syncNoteEmbeddingForOwner(data)
+
   return NextResponse.json(data)
 }
 
@@ -50,5 +54,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     .eq("owner_id", ownerId)
 
   if (error) return serverError(error.message)
+
+  void deleteNoteEmbedding(id)
+
   return new NextResponse(null, { status: 204 })
 }

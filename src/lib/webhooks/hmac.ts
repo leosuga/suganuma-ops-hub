@@ -40,6 +40,22 @@ export async function verifyWebhookHmac(
 }
 
 /**
+ * Owner_id fixo do dono do hub, vindo de env var — nunca do payload.
+ *
+ * App de usuário único: confiar no `owner_id` que o emissor manda no corpo
+ * permite que qualquer chamada com o HMAC válido escreva em nome de QUALQUER
+ * owner_id (basta um UUID válido no payload). Como não há sessão de usuário
+ * num webhook, a única fonte confiável é uma env var configurada no servidor.
+ */
+export function resolveWebhookOwnerId(): string | null {
+  const ownerId = process.env.WEBHOOK_OWNER_ID
+  if (!ownerId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ownerId)) {
+    return null
+  }
+  return ownerId
+}
+
+/**
  * Idempotency check: returns true if this payload has already been processed.
  * Uses the `webhook_event` table to track (source, event_id) pairs.
  * Callers should provide a unique event_id (from the payload or a hash of it).

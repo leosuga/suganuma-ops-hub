@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import type { RealtimeChannel } from "@supabase/supabase-js"
-import { today } from "@/lib/date"
+import { today, dateStr } from "@/lib/date"
 import { fmtShortTime } from "@/lib/format"
 
 const NOTIFIED_KEY = "ops_hub_notified_ts"
@@ -45,7 +45,7 @@ async function checkAndNotify() {
         .select("id, title, start_date")
         .eq("owner_id", user.id)
         .gte("start_date", today())
-        .lte("start_date", new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10))
+        .lte("start_date", dateStr(new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000)))
         .order("start_date", { ascending: true })
         .limit(5),
   ])

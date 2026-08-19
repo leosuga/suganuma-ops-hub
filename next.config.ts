@@ -12,7 +12,11 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      // 'unsafe-eval' removido: React/Next.js não usam eval em produção (só em
+      // dev, para reconstruir stack traces). Migrar 'unsafe-inline' para nonce
+      // exigiria renderização dinâmica em todas as páginas (perde SSG/ISR) —
+      // fora do escopo desta correção pontual.
+      "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: blob: https:",

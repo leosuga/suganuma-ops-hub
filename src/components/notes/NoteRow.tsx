@@ -35,14 +35,15 @@ const paraLabel: Record<string, string> = {
 interface NoteRowProps {
   note: NoteRowType
   onDelete: (id: string) => void
-  allNotes?: NoteRowType[]
+  /** Mapa título → notas que linkam para ele, pré-computado uma vez pelo parent (ver buildBacklinksMap). */
+  backlinksMap?: Map<string, NoteRowType[]>
   selected?: boolean
   onToggleSelect?: (id: string) => void
   bulkMode?: boolean
   tasks?: TaskRowType[]
 }
 
-export const NoteRow = memo(function NoteRow({ note, onDelete, allNotes, selected, onToggleSelect, bulkMode, tasks = [] }: NoteRowProps) {
+export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, selected, onToggleSelect, bulkMode, tasks = [] }: NoteRowProps) {
   const updateNote = useUpdateNote()
   const { data: linkedTasks = [] } = useTasksByNote(note.id)
   const { data: projects = [] } = useProjects()
@@ -73,12 +74,10 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, allNotes, selecte
 
   const wikiLinks = useMemo(() => parseWikiLinks(note.content ?? ""), [note.content])
   const backlinks = useMemo(() => {
-    if (!allNotes) return []
+    if (!backlinksMap) return []
     const normalizedTitle = note.title.toLowerCase().trim()
-    return allNotes.filter((n) =>
-      n.id !== note.id && (n.content?.toLowerCase().includes(`[[${normalizedTitle}]]`) || n.content?.toLowerCase().includes(`[[${normalizedTitle}|`))
-    )
-  }, [allNotes, note])
+    return (backlinksMap.get(normalizedTitle) ?? []).filter((n) => n.id !== note.id)
+  }, [backlinksMap, note.id, note.title])
 
   const markdownBody = useMemo(() => renderWikiLinksToMarkdown(frontmatter.body), [frontmatter.body])
   const inlineTasks = useMemo(() => parseInlineTasks(note.content ?? ""), [note.content])
