@@ -2,6 +2,39 @@
 
 # Session Learnings — Suganuma Ops Hub
 
+## 2026-08-19 — OAuth 2.1 Connector + Auditoria Completa do Backlog
+
+### Contexto
+Sessão implementou o custom connector OAuth 2.1 para o claude.ai (`src/lib/oauth/`,
+`/authorize`, `/api/oauth/*`, migration `0035_oauth.sql`) e depois trabalhou
+`docs/backlog-2026-08.md` (auditoria criada por sessão do Claude Cowork) seção por
+seção — segurança, performance, gravidez, navegação/UX, acessibilidade. 9 seções
+resolvidas e deployadas em produção no mesmo dia.
+
+### Decisões de arquitetura que ficaram
+- **Cockpit vira a entrada diária acionável** (checkbox de done inline, triagem
+  inline do inbox); **Dashboard fica métricas/gráficos** — tinham ~80% de
+  sobreposição. Decisão de produto tomada com o Leo antes de mexer.
+- **Hooks de ação compartilhados** (`useToggleTaskDone()` em `tasks.ts`,
+  `useConvertInboxToTask/Note()` em `inbox.ts`) extraídos de `tasks/page.tsx` e
+  `inbox/page.tsx` para o Cockpit reusar sem duplicar lógica (inclui recorrência
+  ao concluir task, que só existia inline antes)
+- **`WEBHOOK_OWNER_ID`** (env var) substitui confiar em `owner_id` do payload dos
+  webhooks — app de usuário único, sem sessão no contexto do webhook
+- **Contraste de texto**: piso único `text-on-surface/40` (era `/20`-`/30` em
+  vários lugares) — aplicado via script em 65 arquivos, não item a item
+
+### Lições
+- **NUNCA ter `middleware.ts` na raiz e em `src/` ao mesmo tempo** — ver AGENTS.md,
+  tabela de Deploy Critical Lessons. Bug real de produção descoberto só por auditoria.
+- **`tsc --noEmit` nunca passa neste projeto** (confirmado de novo) — pra validar que
+  uma mudança não introduziu regressão, comparar a *contagem e o conjunto de arquivos*
+  com erro contra uma baseline, não esperar zero erros
+- **Ao adicionar um novo Dialog/overlay**, usar os primitivos do `@base-ui/react`
+  direto (`Dialog.Root/Portal/Backdrop/Popup/Title/Close`) quando o layout for
+  diferente do wrapper `DialogContent` pré-estilizado (que é modal centralizado) —
+  ganha `role="dialog"`, focus trap e Escape de graça sem reescrever a lógica
+
 ## 2026-06-03 — Notes Module Evolution
 
 ### Context
