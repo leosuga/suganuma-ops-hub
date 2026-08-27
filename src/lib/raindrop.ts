@@ -138,16 +138,25 @@ export async function listRaindrops(
  * desde `sinceDate`, parando quando uma página vier vazia. Para volume de
  * usuário único, raramente passa de 1-2 páginas.
  */
+/**
+ * Busca todas as páginas de raindrops de CADA collection-alvo desde `sinceDate`.
+ *
+ * Buscar por collection individual (e não `collectionId=0` = todas) evita que
+ * uma collection pessoal grande (ex: "unread" com milhares de itens) afogue o
+ * backlog das collections técnicas — o escopo de cada chamada é exato.
+ */
 export async function listAllRaindropsSince(sinceDate: string): Promise<RaindropItem[]> {
   const all: RaindropItem[] = []
-  let page = 0
-  // Teto de segurança: 20 páginas (1000 itens) — nunca deve ser atingido.
-  while (page < 20) {
-    const items = await listRaindrops("0", { sinceDate, page, perpage: 50 })
-    if (items.length === 0) break
-    all.push(...items)
-    if (items.length < 50) break
-    page++
+  for (const collectionId of getCollectionIds()) {
+    let page = 0
+    // Teto de segurança: 20 páginas (1000 itens) por collection — nunca deve ser atingido.
+    while (page < 20) {
+      const items = await listRaindrops(String(collectionId), { sinceDate, page, perpage: 50 })
+      if (items.length === 0) break
+      all.push(...items)
+      if (items.length < 50) break
+      page++
+    }
   }
   return all
 }

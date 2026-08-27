@@ -29,6 +29,7 @@ jobs:
             export RAINDROP_TOKEN="${{ secrets.RAINDROP_TOKEN || '' }}"
             export RAINDROP_COLLECTION_IDS="${{ secrets.RAINDROP_COLLECTION_IDS || '' }}"
             export RAINDROP_SYNC_SECRET="${{ secrets.RAINDROP_SYNC_SECRET || '' }}"
+            export RAINDROP_MAX_ITEMS_PER_RUN="${{ secrets.RAINDROP_MAX_ITEMS_PER_RUN || '50' }}"
 
             bash << 'RUNDEPLOY'
             cd ~
@@ -49,6 +50,7 @@ jobs:
             echo RAINDROP_TOKEN=$RAINDROP_TOKEN >> .env.prod
             echo RAINDROP_COLLECTION_IDS=$RAINDROP_COLLECTION_IDS >> .env.prod
             echo RAINDROP_SYNC_SECRET=$RAINDROP_SYNC_SECRET >> .env.prod
+            echo RAINDROP_MAX_ITEMS_PER_RUN=$RAINDROP_MAX_ITEMS_PER_RUN >> .env.prod
 
             NET=$(docker inspect caddy_proxy --format '{{json .NetworkSettings.Networks}}' 2>/dev/null | python3 -c "import sys,json; print(list(json.load(sys.stdin).keys())[0])" 2>/dev/null || echo "")
             if [ -z "$NET" ]; then
