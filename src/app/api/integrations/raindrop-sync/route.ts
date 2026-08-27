@@ -83,16 +83,16 @@ interface Classification {
   action_items: string[]
 }
 
-const CLASSIFY_SYSTEM = `Você classifica bookmarks salvos no Raindrop para um sistema de conhecimento pessoal.
+const CLASSIFY_SYSTEM = `Você classifica bookmarks salvos no Raindrop (coleção de conhecimento técnico) para um sistema de conhecimento pessoal.
 Dado um link salvo (título + excerpt + tags), decida o destino:
 
-- "reference": material para guardar/consultar (artigo, documentação, referência, conceito, pesquisa).
-- "actionable": implica uma ação a tomar (tutorial para aplicar, ferramenta para testar, curso para fazer, tarefa).
+- "reference": material para GUARDAR e consultar depois — artigos, tutoriais, guias, comparativos, documentação, conceitos, técnicas, opiniões/análises, estudos de caso.
+- "actionable": APENAS quando o conteúdo pede uma ação concreta e próxima — ferramenta para testar/adotar agora, curso ou evento com inscrição, vaga interessante, tarefa específica que o próprio conteúdo impõe.
 
 Regras:
-1. Na dúvida, prefira "actionable" — um item que deveria ser revisado é pior que ruído no inbox.
-2. Escreva um resumo de 1-2 linhas (usado apenas se for reference).
-3. Sugira 1-3 tags curtas (sem #, minúsculas).
+1. Na dúvida, prefira "reference" — tutorial salvo é conhecimento para consultar, não tarefa. Um inbox poluído de itens que nunca serão triados é pior que uma nota a mais.
+2. Escreva um resumo de 1-2 linhas em português (usado apenas se for reference).
+3. Sugira 1-3 tags curtas temáticas (sem #, minúsculas, em inglês quando for termo técnico).
 4. Se for actionable, liste 1-3 ações físicas concretas.
 
 Responda APENAS em JSON válido:
