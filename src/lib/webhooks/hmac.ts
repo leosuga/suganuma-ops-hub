@@ -7,15 +7,17 @@ import { logger } from "@/lib/logger"
 
 /**
  * Verify HMAC-SHA256 signature of the raw body using a constant-time comparison.
- * Uses `WEBHOOK_SECRET` env var for all webhook routes.
+ * Uses `WEBHOOK_SECRET` env var by default; integrações com secret dedicado
+ * (ex: Raindrop) passam o próprio secret como terceiro argumento.
  */
 export async function verifyWebhookHmac(
   req: Request,
-  rawBody: string
+  rawBody: string,
+  secretOverride?: string
 ): Promise<boolean> {
-  const secret = process.env.WEBHOOK_SECRET
+  const secret = secretOverride ?? process.env.WEBHOOK_SECRET
   if (!secret) {
-    logger.warn("webhook", "No WEBHOOK_SECRET configured", {})
+    logger.warn("webhook", "No HMAC secret configured", {})
     return false
   }
 

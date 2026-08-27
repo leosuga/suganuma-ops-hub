@@ -1,0 +1,22 @@
+name: Raindrop Sync
+
+on:
+  schedule:
+    # Segunda-feira 08:00 BRT (11:00 UTC) — mesma cadência da revisão semanal.
+    - cron: "0 11 * * 1"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Raindrop sync
+        env:
+          RAINDROP_SYNC_SECRET: ${{ secrets.RAINDROP_SYNC_SECRET }}
+        run: |
+          BODY='{}'
+          SIG="sha256=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$RAINDROP_SYNC_SECRET" -binary | xxd -p -c 256)"
+          curl -sS -f --max-time 600 -X POST "https://ops.suganuma.com.br/api/integrations/raindrop-sync" \
+            -H "Content-Type: application/json" \
+            -H "x-hub-signature-256: $SIG" \
+            -d "$BODY"

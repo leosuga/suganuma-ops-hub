@@ -26,6 +26,9 @@ jobs:
             export OLLAMA_API_KEY="${{ secrets.OLLAMA_API_KEY || '' }}"
             export OLLAMA_CHAT_MODEL="${{ secrets.OLLAMA_CHAT_MODEL || 'gpt-oss:20b' }}"
             export QDRANT_URL="${{ secrets.QDRANT_URL || 'http://qdrant:6333' }}"
+            export RAINDROP_TOKEN="${{ secrets.RAINDROP_TOKEN || '' }}"
+            export RAINDROP_COLLECTION_IDS="${{ secrets.RAINDROP_COLLECTION_IDS || '' }}"
+            export RAINDROP_SYNC_SECRET="${{ secrets.RAINDROP_SYNC_SECRET || '' }}"
 
             bash << 'RUNDEPLOY'
             cd ~
@@ -43,6 +46,9 @@ jobs:
             echo OLLAMA_API_KEY=$OLLAMA_API_KEY >> .env.prod
             echo OLLAMA_CHAT_MODEL=$OLLAMA_CHAT_MODEL >> .env.prod
             echo QDRANT_URL=$QDRANT_URL >> .env.prod
+            echo RAINDROP_TOKEN=$RAINDROP_TOKEN >> .env.prod
+            echo RAINDROP_COLLECTION_IDS=$RAINDROP_COLLECTION_IDS >> .env.prod
+            echo RAINDROP_SYNC_SECRET=$RAINDROP_SYNC_SECRET >> .env.prod
 
             NET=$(docker inspect caddy_proxy --format '{{json .NetworkSettings.Networks}}' 2>/dev/null | python3 -c "import sys,json; print(list(json.load(sys.stdin).keys())[0])" 2>/dev/null || echo "")
             if [ -z "$NET" ]; then
