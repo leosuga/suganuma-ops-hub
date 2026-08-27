@@ -89,55 +89,104 @@ Dado um link salvo (título + excerpt + tags), decida o destino:
 - "reference": material para GUARDAR e consultar depois — artigos, tutoriais, guias, comparativos, documentação, conceitos, técnicas, opiniões/análises, estudos de caso.
 - "actionable": APENAS quando o conteúdo pede uma ação concreta e próxima — ferramenta para testar/adotar agora, curso ou evento com inscrição, vaga interessante, tarefa específica que o próprio conteúdo impõe.
 
+Você receberá uma lista NUMERADA de bookmarks. Classifique TODOS e responda APENAS em JSON válido:
+{ "items": [ { "index": 0, "kind": "reference" | "actionable", "summary": "resumo", "tags": ["tag1"], "action_items": ["ação 1"] } ] }
+
 Regras:
-1. Na dúvida, prefira "reference" — tutorial salvo é conhecimento para consultar, não tarefa. Um inbox poluído de itens que nunca serão triados é pior que uma nota a mais.
-2. Escreva um resumo de 1-2 linhas em português (usado apenas se for reference).
-3. Sugira 1-3 tags curtas temáticas (sem #, minúsculas, em inglês quando for termo técnico).
-4. Se for actionable, liste 1-3 ações físicas concretas.
+1. Inclua um objeto para CADA index da lista, sem pular nem duplicar.
+2. Na dúvida, prefira "reference" — tutorial salvo é conhecimento para consultar, não tarefa. Um inbox poluído de itens que nunca serão triados é pior que uma nota a mais.
+3. Escreva um resumo de 1-2 linhas em português (usado apenas se for reference).
+4. Sugira 1-3 tags curtas temáticas (sem #, minúsculas, em inglês quando for termo técnico).
+5. Se for actionable, liste 1-3 ações físicas concretas.`
 
-Responda APENAS em JSON válido:
-{ "kind": "reference" | "actionable", "summary": "resumo", "tags": ["tag1"], "action_items": ["ação 1"] }`
+const LLM_BATCH_SIZE = 20
 
-async function classifyItem(item: RaindropItem): Promise<Classification> {
-  const userPrompt = `Título: ${item.title}
+const FALLBACK_CLASSIFICATION: Classification = {
+  kind: "reference",
+  summary: "",
+  tags: [],
+  action_items: [],
+}
+
+function normalizeClassification(parsed: Partial<Classification>): Classification {
+  return {
+    kind: parsed.kind === "actionable" ? "actionable" : "reference",
+    summary: typeof parsed.summary === "string" ? parsed.summary : "",
+    tags: Array.isArray(parsed.tags) ? parsed.tags.filter((t) => typeof t === "string") : [],
+    action_items: Array.isArray(parsed.action_items)
+      ? parsed.action_items.filter((a) => typeof a === "string")
+      : [],
+  }
+}
+
+function formatItem(item: RaindropItem, index: number): string {
+  return `[${index}] Título: ${item.title}
 URL: ${item.link}
 Excerpt: ${item.excerpt || "(sem excerpt)"}
-Tags do Raindrop: ${(item.tags ?? []).join(", ") || "(sem tags)"}
-${item.note ? `Nota do usuário: ${item.note}` : ""}
-${item.highlights?.length ? `Highlights: ${item.highlights.map((h) => h.text).join(" | ")}` : ""}`
+Tags do Raindrop: ${(item.tags ?? []).join(", ") || "(sem tags)"}${item.note ? `\nNota do usuário: ${item.note}` : ""}${item.highlights?.length ? `\nHighlights: ${item.highlights.map((h) => h.text).join(" | ")}` : ""}`
+}
 
-  try {
-    const raw = await chatCompletion(
-      [
-        { role: "system", content: CLASSIFY_SYSTEM },
-        { role: "user", content: userPrompt },
-      ],
-      { format: "json", temperature: 0.2 }
-    )
+/**
+ * Classifica itens em lote: 1 chamada LLM por chunk de LLM_BATCH_SIZE itens
+ * (em vez de 1 chamada por item), amortizando o system prompt e reduzindo
+ * latência/chamadas em ~20x. Item sem classificação válida cai no fallback
+ * (reference, sem resumo — título + link + tags).
+ */
+async function classifyItems(items: RaindropItem[]): Promise<{ classifications: Classification[]; llmCalls: number }> {
+  const results = new Array<Classification>(items.length).fill(FALLBACK_CLASSIFICATION)
+  let llmCalls = 0
 
-    let parsed: Partial<Classification>
-    try {
-      parsed = JSON.parse(raw)
-    } catch {
-      const m = raw.match(/\{[\s\S]*\}/)
-      if (!m) throw new Error("LLM não retornou JSON")
-      parsed = JSON.parse(m[0])
+  for (let start = 0; start < items.length; start += LLM_BATCH_SIZE) {
+    const chunk = items.slice(start, start + LLM_BATCH_SIZE)
+
+    // 1 retry por chunk em falha (JSON inválido/HTTP); 2a falha → fallback reference
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const userPrompt = `Bookmarks:\n${chunk.map((item, i) => formatItem(item, start + i)).join("\n\n")}\n\nClassifique cada um (indexes ${start} a ${start + chunk.length - 1}) em JSON:`
+
+        const raw = await chatCompletion(
+          [
+            { role: "system", content: CLASSIFY_SYSTEM },
+            { role: "user", content: userPrompt },
+          ],
+          { format: "json", temperature: 0.2 }
+        )
+        llmCalls++
+
+        let parsed: { items?: Array<Partial<Classification> & { index?: number }> }
+        try {
+          parsed = JSON.parse(raw)
+        } catch {
+          const m = raw.match(/\{[\s\S]*\}/)
+          if (!m) throw new Error("LLM não retornou JSON")
+          parsed = JSON.parse(m[0])
+        }
+
+        const returned = Array.isArray(parsed.items) ? parsed.items : []
+        const byIndex = new Map<number, Classification>()
+        returned.forEach((it, pos) => {
+          // index explícito quando presente; senão, posicional se o comprimento bater
+          const idx = typeof it?.index === "number" ? it.index : returned.length === chunk.length ? pos : -1
+          if (idx >= start && idx < start + chunk.length) byIndex.set(idx, normalizeClassification(it))
+        })
+
+        for (let i = 0; i < chunk.length; i++) {
+          const idx = start + i
+          results[idx] = byIndex.get(idx) ?? FALLBACK_CLASSIFICATION
+        }
+        break // chunk ok — sai do loop de retries
+      } catch (err) {
+        if (attempt === 1) {
+          logger.warn("raindrop-sync", "Chunk de classificação falhou 2x — fallback reference para o chunk", {
+            size: chunk.length,
+            error: (err as Error).message,
+          })
+        }
+      }
     }
-
-    return {
-      kind: parsed.kind === "actionable" ? "actionable" : "reference",
-      summary: typeof parsed.summary === "string" ? parsed.summary : "",
-      tags: Array.isArray(parsed.tags) ? parsed.tags.filter((t) => typeof t === "string") : [],
-      action_items: Array.isArray(parsed.action_items) ? parsed.action_items.filter((a) => typeof a === "string") : [],
-    }
-  } catch (err) {
-    // Fallback: sem resumo, trata como reference (título + link + tags).
-    logger.warn("raindrop-sync", "Classificação falhou, fallback para reference", {
-      id: item._id,
-      error: (err as Error).message,
-    })
-    return { kind: "reference", summary: "", tags: [], action_items: [] }
   }
+
+  return { classifications: results, llmCalls }
 }
 
 // ── Roteamento ──────────────────────────────────────────────────────────────
@@ -220,6 +269,8 @@ export async function POST(req: NextRequest) {
   let skipped = 0
   let failed = 0
 
+  // 1ª passada: filtra tipos não-extraíveis e replay, coletando candidatos.
+  const candidates: Array<{ item: RaindropItem; idem: Awaited<ReturnType<typeof checkWebhookIdempotency>>; collectionTitle: string }> = []
   for (const item of newItems) {
     if (isSkippableType(item)) {
       skipped++
@@ -232,10 +283,20 @@ export async function POST(req: NextRequest) {
       continue
     }
 
-    const collectionTitle = item.collection ? (titleMap.get(item.collection.$id) ?? "") : ""
+    candidates.push({
+      item,
+      idem: idempotency,
+      collectionTitle: item.collection ? (titleMap.get(item.collection.$id) ?? "") : "",
+    })
+  }
 
+  // 2ª passada: classificação em lote (1 chamada LLM por chunk de 20) e roteamento.
+  const { classifications, llmCalls } = await classifyItems(candidates.map((c) => c.item))
+
+  for (let i = 0; i < candidates.length; i++) {
+    const { item, idem, collectionTitle } = candidates[i]
     try {
-      const classification = await classifyItem(item)
+      const classification = classifications[i]
       if (classification.kind === "actionable") {
         await routeActionable(ownerId, item, collectionTitle)
         inboxCreated++
@@ -243,7 +304,7 @@ export async function POST(req: NextRequest) {
         await routeReference(ownerId, item, classification, collectionTitle)
         notesCreated++
       }
-      await idempotency.mark?.()
+      await idem.mark?.()
     } catch (err) {
       failed++
       logger.error("raindrop-sync", "Falha ao processar item", {
@@ -266,6 +327,7 @@ export async function POST(req: NextRequest) {
     inboxCreated,
     skipped,
     failed,
+    llmCalls,
   })
 
   return NextResponse.json({
@@ -276,5 +338,6 @@ export async function POST(req: NextRequest) {
     inbox_created: inboxCreated,
     skipped,
     failed,
+    llm_calls: llmCalls,
   })
 }
