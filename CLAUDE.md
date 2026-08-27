@@ -2,6 +2,57 @@
 
 # Session Learnings — Suganuma Ops Hub
 
+## 2026-08-27 — Raindrop → Hub Notes (ponte de curadoria, Variante C)
+
+### Contexto
+Sessão implementou a ponte completa Raindrop → Hub (`docs/raindrop-hub-bridge.md`):
+endpoint `/api/integrations/raindrop-sync`, client `src/lib/raindrop.ts`, helper
+compartilhado `createNoteWithEmbedding()` (extraído de `/api/agent/notes`),
+workflow cron `raindrop-sync.yml`, migration `0037` (aplicada no VPS), 4 secrets
+via `gh` CLI, deploy 3x verde e validação ponta a ponta com dados reais (100
+itens → 98 notas / 2 inbox) + varredura do backlog (~2.1k itens) em background.
+
+### Decisões de arquitetura que ficaram
+- **Variante C (híbrida)** em vez de nota-direta (plano original do doc) ou
+  inbox-puro: classificador LLM decide por item — `reference` → nota
+  (pesquisável de imediato via Hybrid RAG); `actionable` → Inbox (entra no
+  Cockpit e no fluxo de triagem que já existia). O problema real era *revisão*,
+  não ingestão — a variante A só moveria a pilha do Raindrop pro Notes.
+- **Classificador com viés REFERENCE** — artigos/tutoriais/guias = nota.
+  Empírico: viés actionable mandava 56% do backlog técnico pro inbox (~1.1k
+  itens = pilha movida de novo). Recalibrado → 98/2. Regra geral: em volume,
+  validar o ratio com 1 run pequeno antes de varrer o backlog (dedup impede
+  reprocessar barato).
+- **Fetch por collection-alvo individual** (N chamadas), nunca `collectionId=0`:
+  collections pessoais grandes ("unread", ~3.8k itens) afogam o backlog técnico
+  no fetch das páginas mais recentes.
+- **Cursor via nota pinned** (`raindrop-sync-state`) + dedup via `webhook_event`
+  (unique `(source, event_key)`) — zero migration além do check de `source`.
+- **`createNoteWithEmbedding()`** centraliza insert + sync de embedding para
+  qualquer chamador server-side (rota agent, integrações) — nota criada fora da
+  UI NUNCA mais fica de fora do índice vetorial.
+- **Nome da collection como tag automática** (slug: "Data Science" →
+  `data-science`) — melhora organização/Busca semântica sem esforço do usuário.
+
+### Lições operacionais (detalhes na tabela de lessons do AGENTS.md)
+- **Migrations podem rodar via SSH** (Supabase self-hosted): `docker exec -i
+  supabase-db psql -U supabase_admin -d postgres` — owner é `supabase_admin`,
+  NÃO `postgres`. Fim da era "migration manual no SQL Editor".
+- **`gh` CLI cobre o ciclo inteiro do Mac**: `gh secret set`, `gh workflow run`,
+  `gh run watch`, e deploy via `git push origin feat/x:main` (fast-forward).
+- **O doc original da ponte estava desatualizado**: a Raindrop API TEM filtro
+  nativo de data (`search=created:>YYYY-MM-DD` via search operators) — pesquisei
+  na doc oficial (developer.raindrop.io + repo raindropio/developer-site) antes
+  de codar e corrigi a arquitetura (não paginar "para trás").
+- **Secrets do GitHub entram no container só no próximo deploy** (confirmado de
+  novo) — por isso a sequência certa: setar secrets ANTES do deploy.
+
+### Estado final da sessão
+Backlog em varredura (scripts/raindrop-sweep.sh em background, cap 100/run) —
+cron semanal assume a partir de então (segunda 08:00 BRT). Fora do escopo v1
+(documentado): reprocessar itens atualizados (`lastUpdate`), tabela dedicada
+`integration_cursor`, re-taguear histórico em renomeação de collection.
+
 ## 2026-08-19 — OAuth 2.1 Connector + Auditoria Completa do Backlog
 
 ### Contexto

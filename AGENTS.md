@@ -184,6 +184,10 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase client
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side admin
 - `WEBHOOK_SECRET` — HMAC webhooks (único secret para todos os 3 webhooks)
+- `RAINDROP_TOKEN` — Test Token do Raindrop (não expira)
+- `RAINDROP_COLLECTION_IDS` — IDs das collections de conhecimento técnico (CSV, ex: "55561655,55561647")
+- `RAINDROP_SYNC_SECRET` — HMAC do endpoint raindrop-sync (secret DEDICADO, não reusa WEBHOOK_SECRET)
+- `RAINDROP_MAX_ITEMS_PER_RUN` — cap de itens por run (default 100; subir para acelerar varredura de backlog)
 - `COOLIFY_TOKEN` — token API Coolify (opcional, não mais usado no pipeline atual)
 
 ### Deploy troubleshooting
@@ -319,6 +323,9 @@ npm run test:docker
 - **Migration 0032**: `inbox_item` — captura de atrito zero com triagem posterior
 - **Migration 0033**: `search_vector` tsvector + GIN em note/task — Hybrid RAG (FTS + Vector + RRF)
 - **Migration 0034**: `energy_level` em task (low/med/high) — filtro de energia disponível
+- **Migration 0035**: `oauth` — custom connector OAuth 2.1 (claude.ai)
+- **Migration 0036**: `note_attachments_private` — ajuste de storage para attachments
+- **Migration 0037**: `'raindrop'` no check de `inbox_item.source` — ponte Raindrop → Hub (aplicada no VPS via `docker exec` psql, ver lição 2026-08-27)
 - **`queryOptions` API TanStack v5**: Todas as queries exportam `queryOptions`. `staleTime` e `gcTime` configurados por query (ver seção Performance). `refetchOnWindowFocus: false` global
 - **`sw.js`**: versão `v16`. Estratégia: `_next/static` NetworkFirst, navegação NetworkOnly. Sem background sync (removido placeholder no-op)
 - **Next.js 16 `next.config.ts`**: `reactCompiler: true` em root (não `experimental`). `typedRoutes` quebra build com BottomNav strings. `headers()` com `source: "/:path*"` funciona (sintaxe simples); `headers()` com regex `/icon-:size*` quebra Turbopack
@@ -330,6 +337,21 @@ npm run test:docker
 - HMAC centralizado em `src/lib/webhooks/hmac.ts` com `crypto.timingSafeEqual` (constant-time comparison)
 - **Idempotência**: tabela `webhook_event` com unique constraint `(source, event_key)`. Cada webhook verifica replay antes de processar
 - **Payload schemas**: `email-to-task` aceita `message_id`, `csv-from-bank` aceita `import_id`, `deploy-status` aceita `run_id` para event keys explícitos
+
+## Raindrop Sync (2026-08-27)
+- **Endpoint**: `POST /api/integrations/raindrop-sync` — ponte de curadoria automática Raindrop → Hub Notes (Variante C)
+- **Auth**: HMAC com `RAINDROP_SYNC_SECRET` (secret DEDICADO, não reusa `WEBHOOK_SECRET`; `verifyWebhookHmac` agora aceita `secretOverride` como 3º parâmetro)
+- **Fluxo**: cron semanal (GitHub Actions, segunda 11:00 UTC / 08:00 BRT) → lê cursor → busca raindrops das collections-alvo → dedup via `webhook_event` (`source='raindrop'`, key = raindrop `_id`) → classifica via LLM (`chatCompletion` Ollama Cloud, JSON mode) → roteia → avança cursor
+- **Roteamento (Variante C)**: `reference` → nota via `createNoteWithEmbedding()` (tags: `raindrop` + slug da collection + tags do LLM, `para: "resources"`); `actionable` → `inbox_item` (source='raindrop', content prefixado com `[Collection]`)
+- **Classificador**: viés para REFERENCE — artigos/tutoriais/guias/comparativos = nota; actionable só para ação concreta e próxima (testar ferramenta agora, inscrição, vaga). Empírico no backlog técnico: viés actionable → 56% no inbox (pilha movida); recalibrado → 98 notas/2 inbox
+- **Multi-collection**: `RAINDROP_COLLECTION_IDS` (CSV com 16 IDs). Fetch por collection INDIVIDUAL (`listAllRaindropsSince` faz loop) — NÃO usar `collectionId=0` (todas): collections pessoais grandes (ex: "unread", ~3.8k itens) afogam o backlog técnico no fetch das páginas mais recentes
+- **Raindrop API** (validada 2026-08-27): Test Token NÃO expira; `perpage` máx 50; `page` 0-based; filtro nativo de data via `search=created:>YYYY-MM-DD` (granularidade de DIA — borda resolvida com cursor−1 dia + filtro client-side por timestamp + dedup); cada raindrop traz `collection.$id`; `type` nativo (`article`/`link`/`video`/`document`/`image`/`audio` — image/audio pulados); permanent copy (`/cache`) é Pro-only
+- **Cursor**: nota pinned com tag `raindrop-sync-state` (corpo = ISO timestamp do último `created` processado). Zero migration. Parsing defensivo (falha → null → refetch, dedup protege)
+- **Nota criada fora da UI entra no índice vetorial**: helper compartilhado `createNoteWithEmbedding()` (`src/lib/actions/notes.ts`) — insert service role + `syncNoteEmbeddingForOwner` fire-and-forget. Usado por `/api/agent/notes` POST e pelo Raindrop sync
+- **Workflow**: `.github/workflows/raindrop-sync.yml` — cron `0 11 * * 1` + `workflow_dispatch`; assina HMAC do body `{}` com `openssl dgst -sha256 -hmac`
+- **Backlog sweep**: `scripts/raindrop-sweep.sh` — loop de `workflow_dispatch` até delta < 100 (backlog esgotado); log em `/tmp/raindrop-sweep.log`
+- **Cap por run**: `RAINDROP_MAX_ITEMS_PER_RUN` (default 100) — protege contra runaway de chamadas LLM; cursor avança oldest-first (sort client-side crescente) para nunca perder itens no cap
+- **Docs**: `docs/raindrop-hub-bridge.md`
 
 ## MCP Server (2026-06-19)
 - **Endpoint**: `/api/mcp` (Streamable HTTP, spec 2025-06-18)
@@ -475,3 +497,7 @@ npm run test:docker
 | 2026-08-10 | **`triageAllPending` server action precisa de hook + botão UI** — a função existia mas não estava wired na UI. Hook `useTriageAllPending` + botão "TRIAR TUDO" no header do /inbox resolve. Processa até 20 items sem `ai_payload` | Inbox |
 | 2026-08-19 | **`middleware.ts` na raiz E em `src/` ao mesmo tempo — Next.js carrega a raiz em silêncio**, mesmo o projeto usando `src/app`. Sem erro de build, sem warning. Rate limiting de `/api/agent/*` documentado neste arquivo nunca esteve ativo em produção por meses — a versão ativa (raiz) não tinha esse código. Sempre confirmar que existe só UM `middleware.ts` antes de debugar por que ele "não faz efeito" | Auditoria de segurança |
 | 2026-08-19 | **Padrão "marcar como usado" com `.update().is(col, null)` precisa checar linhas afetadas do UPDATE, não um SELECT anterior** — do contrário, troca concorrente do mesmo authorization code (ou qualquer recurso de uso único) passa despercebida. Corrigir com `.update(...).is(col, null).select("id")` e checar `.length === 0` | Race condition em exchangeAuthorizationCode |
+| 2026-08-27 | **Supabase é self-hosted no VPS — migrations rodam via SSH, sem SQL Editor** — `ssh LeoVM 'docker exec -i supabase-db psql -U supabase_admin -d postgres' < supabase/migrations/XXXX.sql`. O dono das tabelas é `supabase_admin`, NÃO `postgres` (`psql -U postgres` falha com "must be owner of table"). Container do DB: `supabase-db` | Migration 0037 (Raindrop) |
+| 2026-08-27 | **`gh` CLI autenticado como leosuga permite gerenciar secrets e workflows do Mac** — `gh secret set`, `gh workflow run "Nome"`, `gh run watch`. Deploy de feature branch: `git push origin feat/x:main` (fast-forward) dispara o deploy sem checkout de main. O nome no `gh workflow run` é o campo `name:` ("Raindrop Sync"), não o filename | Dev workflow |
+| 2026-08-27 | **Raindrop API tem filtro nativo de data via search operators** — `search=created:>YYYY-MM-DD` (granularidade de DIA). Test Token não expira; `perpage` máx 50; cada raindrop traz `collection.$id`. Com collections pessoais grandes no account, buscar por collection-alvo individual (N chamadas), nunca `collectionId=0` | Integração Raindrop |
+| 2026-08-27 | **Viés de classificador LLM importa em volume** — "actionable na dúvida" mandou 56% de um backlog técnico (~2.1k itens) pro Inbox = pilha movida, não resolvida. Recalibrado para reference-bias → 98/2. Validar o ratio com 1 run pequeno ANTES de varrer o backlog inteiro (dedup impede reprocessar barato) | Raindrop Sync |
