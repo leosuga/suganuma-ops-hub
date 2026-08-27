@@ -43,6 +43,13 @@ que já existia (Cockpit / "TRIAR TUDO").
 inbox (errado — pilha movida). Recalibrado com viés reference → **98 notas /
 2 inbox**. Lição: validar o ratio com 1 run pequeno antes de varrer o backlog.
 
+**Classificação via LLM (em lote)**: modelo `gpt-oss:20b` na Ollama Cloud
+(fallback local `llama3.2` se a cloud falhar), JSON mode, `temperature: 0.2`.
+**1 chamada por chunk de 20 itens** (system prompt amortizado — ~20× menos
+chamadas/latência que 1 por item). 1 retry por chunk; item sem classificação
+válida → fallback (reference, sem resumo). A resposta do endpoint inclui
+`llm_calls` para observabilidade.
+
 ## 2. Componentes
 
 | Peça | Arquivo |

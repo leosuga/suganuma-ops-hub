@@ -351,6 +351,7 @@ npm run test:docker
 - **Workflow**: `.github/workflows/raindrop-sync.yml` — cron `0 11 * * 1` + `workflow_dispatch`; assina HMAC do body `{}` com `openssl dgst -sha256 -hmac`
 - **Backlog sweep**: `scripts/raindrop-sweep.sh` — loop de `workflow_dispatch` até delta < 100 (backlog esgotado); log em `/tmp/raindrop-sweep.log`
 - **Cap por run**: `RAINDROP_MAX_ITEMS_PER_RUN` (default 100) — protege contra runaway de chamadas LLM; cursor avança oldest-first (sort client-side crescente) para nunca perder itens no cap
+- **Classificação em lote**: 1 chamada LLM por chunk de 20 itens (amortiza o system prompt; ~20× menos chamadas/latência vs 1 por item). 1 retry por chunk em falha; item sem classificação válida → fallback (reference, sem resumo). Mapeamento por `index` explícito com fallback posicional. Response/log incluem `llm_calls`
 - **Docs**: `docs/raindrop-hub-bridge.md`
 
 ## MCP Server (2026-06-19)
