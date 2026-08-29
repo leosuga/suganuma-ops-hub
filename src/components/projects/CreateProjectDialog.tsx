@@ -70,6 +70,7 @@ export function CreateProjectDialog({
               category: tt.category ?? "personal",
               priority: tt.priority ?? "med",
               status: "todo",
+              important: false,
               project_id: result.id,
             })
           )

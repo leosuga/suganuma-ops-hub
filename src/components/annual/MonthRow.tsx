@@ -106,12 +106,12 @@ interface DragState {
   eventId: string
   type: "left" | "right" | "move"
   startX: number
-  startY: number
+  startY?: number
   originalStartCol: number
   originalEndCol: number
   originalStartDate: string
   originalEndDate: string
-  originalMonth: number
+  originalMonth?: number
   clickOffsetX?: number
 }
 

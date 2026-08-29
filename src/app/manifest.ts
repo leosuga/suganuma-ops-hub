@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#0A0A0A",
-    theme_color: "#55D7ED",
+    theme_color: "#121212",
     icons: [
       {
         src: "/icon-192.png",
@@ -22,6 +22,12 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
         purpose: "any",
       },
+      {
+        src: "/icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
+      },
     ],
     // Long-press no ícone da PWA instalada — atalho direto pra captura,
     // sem passar pela navegação normal.
@@ -30,11 +36,13 @@ export default function manifest(): MetadataRoute.Manifest {
         name: "Capturar no Inbox",
         short_name: "Inbox",
         url: "/inbox",
+        icons: [{ src: "/icon-192.png", sizes: "192x192" }],
       },
       {
         name: "Nova Task",
         short_name: "Task",
         url: "/tasks",
+        icons: [{ src: "/icon-192.png", sizes: "192x192" }],
       },
     ],
   }

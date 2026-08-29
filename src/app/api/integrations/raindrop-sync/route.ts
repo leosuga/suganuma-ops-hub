@@ -43,17 +43,23 @@ async function readCursor(ownerId: string): Promise<string | null> {
   return isNaN(Date.parse(data.content)) ? null : data.content
 }
 
-async function writeCursor(ownerId: string, timestamp: string): Promise<void> {
+async function writeCursor(ownerId: string, timestamp: string, expectedCurrent?: string | null): Promise<void> {
   const supabase = createServiceClient()
   const { data: existing } = await supabase
     .from("note")
-    .select("id")
+    .select("id, content")
     .eq("owner_id", ownerId)
     .contains("tags", [CURSOR_TAG])
     .maybeSingle()
 
   if (existing) {
-    await supabase.from("note").update({ content: timestamp }).eq("id", existing.id)
+    // Guard otimista: só avança se o cursor ainda é o que lemos no início da
+    // run. Duas runs concorrentes (cron + sweep) não regredem o cursor.
+    let query = supabase.from("note").update({ content: timestamp }).eq("id", existing.id)
+    if (expectedCurrent !== undefined) {
+      query = query.eq("content", expectedCurrent ?? "")
+    }
+    await query
   } else {
     await supabase.from("note").insert({
       owner_id: ownerId,
@@ -315,9 +321,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Avança o cursor para o item mais recente processado (max created do batch).
+  // expectedCurrent = cursor lido no início: se outra run avançou enquanto esta
+  // processava, o update condicional não aplica (evita regressão do cursor).
   if (newItems.length > 0) {
     const maxCreated = newItems.reduce((m, i) => (i.created > m ? i.created : m), newItems[0].created)
-    await writeCursor(ownerId, maxCreated)
+    await writeCursor(ownerId, maxCreated, cursor)
   }
 
   logger.info("raindrop-sync", "Sincronização concluída", {

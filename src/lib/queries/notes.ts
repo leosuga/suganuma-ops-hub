@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/r
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeTable } from "@/lib/realtime"
 import { syncNoteEmbedding, deleteNoteEmbedding } from "@/lib/actions/semantic-search"
-import type { NoteRow } from "@/lib/types/note"
+import type { NoteRow, NoteInsert } from "@/lib/types/note"
 
 export type { NoteRow }
 
@@ -68,7 +68,7 @@ export function useDailyNote(date: string) {
 export function useCreateNote() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (note: Omit<NoteRow, "id" | "created_at" | "updated_at" | "owner_id">) => {
+    mutationFn: async (note: Omit<NoteInsert, "owner_id">) => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error("Not authenticated")

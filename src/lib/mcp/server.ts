@@ -133,7 +133,7 @@ export function createMcpServer(ctx: McpToolContext): McpServer {
             durationMs: Date.now() - start,
           })
           return {
-            content: [{ type: "text", text: typeof result === "string" ? result : JSON.stringify(result, null, 2) }],
+            content: [{ type: "text" as const, text: typeof result === "string" ? result : JSON.stringify(result, null, 2) }],
             isError: false,
           }
         } catch (err) {
@@ -148,7 +148,7 @@ export function createMcpServer(ctx: McpToolContext): McpServer {
             durationMs: Date.now() - start,
           })
           return {
-            content: [{ type: "text", text: `Erro na tool ${tool.name}: ${error}` }],
+            content: [{ type: "text" as const, text: `Erro na tool ${tool.name}: ${error}` }],
             isError: true,
           }
         }

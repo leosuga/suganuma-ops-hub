@@ -9,20 +9,31 @@ export async function GET(req: NextRequest) {
 
   const supabase = createServiceClient()
 
+  // Bounded: sem limite, o histórico inteiro do owner iria para a memória.
+  // Os agregados mensais usam 400 dias; order + limit mantém o custo previsível.
+  const since = new Date(Date.now() - 400 * 24 * 60 * 60_000).toISOString().slice(0, 10)
+
   const [t, tr, h] = await Promise.all([
     supabase
       .from("task")
       .select("id, completed_at, due_at, created_at, status, priority")
       .eq("owner_id", ownerId)
-      .neq("status", "archived"),
+      .neq("status", "archived")
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(1000),
     supabase
       .from("transaction")
       .select("id, kind, amount, occurred_on")
-      .eq("owner_id", ownerId),
+      .eq("owner_id", ownerId)
+      .gte("occurred_on", since)
+      .order("occurred_on", { ascending: false })
+      .limit(2000),
     supabase
       .from("habit_track")
       .select("id, name, active, created_at")
-      .eq("owner_id", ownerId),
+      .eq("owner_id", ownerId)
+      .limit(500),
   ])
 
   if (t.error) return serverError(t.error.message)

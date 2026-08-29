@@ -240,12 +240,16 @@ export async function resolveAccessToken(accessToken: string): Promise<ResolvedT
   if (data.access_expires_at && new Date(data.access_expires_at).getTime() < Date.now()) return null
 
   // Best-effort, sem bloquear a request.
-  void supabase
-    .from("oauth_token")
-    .update({ last_used_at: new Date().toISOString() })
-    .eq("id", data.id)
-    .then(() => {})
-    .catch(() => {})
+  void (async () => {
+    try {
+      await supabase
+        .from("oauth_token")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("id", data.id)
+    } catch {
+      // best-effort
+    }
+  })()
 
   return {
     ownerId: data.owner_id,

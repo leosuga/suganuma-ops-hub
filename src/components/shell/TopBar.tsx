@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
+import { useOnlineStatus } from "@/lib/use-sw-update"
 
 const PAGE_LABELS: Record<string, string> = {
   "/dashboard": "DASHBOARD",
@@ -35,9 +36,12 @@ export function TopBar({ user, onOpenCommand }: TopBarProps) {
   useEffect(() => setMounted(true), [])
 
   const pageLabel =
-    Object.entries(PAGE_LABELS).find(([key]) =>
-      pathname.startsWith(key)
-    )?.[1] ?? "OPS HUB"
+    // Longest-match primeiro: "/calendar/year" precisa ganhar de "/calendar"
+    Object.entries(PAGE_LABELS)
+      .sort((a, b) => b[0].length - a[0].length)
+      .find(([key]) => pathname.startsWith(key))?.[1] ?? "OPS HUB"
+
+  const online = useOnlineStatus()
 
   const initials = user.email
     ? user.email.slice(0, 2).toUpperCase()
@@ -51,6 +55,17 @@ export function TopBar({ user, onOpenCommand }: TopBarProps) {
         </span>
 
       <div className="flex items-center gap-3">
+        {/* Offline indicator */}
+        {!online && (
+          <span
+            role="status"
+            aria-live="polite"
+            className="text-[9px] font-mono font-semibold tracking-wider text-amber border border-amber/40 bg-amber/10 rounded-sm px-1.5 py-0.5"
+          >
+            OFFLINE
+          </span>
+        )}
+
         {/* Theme toggle */}
         {mounted && (
           <button

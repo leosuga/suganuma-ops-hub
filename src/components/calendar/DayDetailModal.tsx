@@ -33,6 +33,7 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
       category: "personal",
       priority: "med",
       status: "todo",
+      important: false,
       due_at: new Date(date + "T23:59:00").toISOString(),
     })
     setTaskInput("")

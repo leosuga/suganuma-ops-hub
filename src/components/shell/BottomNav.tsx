@@ -70,7 +70,7 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
 
   return (
     <>
-      <nav className={cn("bg-surface/95 border-t border-border z-40", hidden ? "hidden" : "")}>
+      <nav aria-label="Navegação principal" className={cn("bg-surface/95 border-t border-border z-40", hidden ? "hidden" : "")}>
         <div className="h-14 flex items-center justify-around px-1 pb-[env(safe-area-inset-bottom)]">
           {NAV_ITEMS.map((item) => {
             const active = pathname.startsWith(item.href)
@@ -79,6 +79,7 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
                 key={item.href}
                 href={item.href}
                 prefetch={item.href === "/dashboard" || item.href === "/tasks"}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex flex-col items-center justify-center gap-1 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-sm transition-colors active:scale-95",
                   active ? "text-teal" : "text-on-surface/40 hover:text-on-surface/60"
@@ -131,6 +132,7 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setHubOpen(false)}
+                      aria-current={active ? "page" : undefined}
                       className={cn(
                         "flex flex-col items-center justify-center gap-1 p-3 md:p-2 min-h-[44px] rounded-sm transition-colors active:scale-95",
                         active ? "bg-teal/10 text-teal" : "text-on-surface/50 hover:bg-surface-hover hover:text-on-surface/70"

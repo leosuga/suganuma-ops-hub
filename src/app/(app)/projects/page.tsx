@@ -231,6 +231,7 @@ export default function ProjectsPage() {
           project={selectedProject}
           notes={notes}
           onDeleteNote={handleDeleteNote}
+          onCreateNote={handleCreateProjectNote}
         />
       </div>
     </SectionErrorBoundary>

@@ -1,7 +1,11 @@
 // Qdrant vector search client — self-hosted on same VPS network
+import { fetchWithTimeout } from "@/lib/fetch-with-timeout"
+
 const QDRANT_URL = process.env.QDRANT_URL || "http://localhost:6333"
 const COLLECTION_NAME = process.env.QDRANT_COLLECTION || "ops_hub_notes"
 const VECTOR_DIM = 768 // nomic-embed-text output dimension
+
+const QDRANT_TIMEOUT_MS = Number(process.env.QDRANT_TIMEOUT_MS) || 10_000
 
 // Cache em variável de módulo: a collection não some sozinha em runtime, então
 // checar/criar a cada busca era um round-trip HTTP a mais por request. O cache
@@ -23,16 +27,20 @@ async function ensureCollectionUncached(): Promise<void> {
   const exists = await collectionExists()
   if (exists) return
 
-  const res = await fetch(`${QDRANT_URL}/collections/${COLLECTION_NAME}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      vectors: {
-        size: VECTOR_DIM,
-        distance: "Cosine",
-      },
-    }),
-  })
+  const res = await fetchWithTimeout(
+    `${QDRANT_URL}/collections/${COLLECTION_NAME}`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        vectors: {
+          size: VECTOR_DIM,
+          distance: "Cosine",
+        },
+      }),
+    },
+    QDRANT_TIMEOUT_MS,
+  )
 
   if (!res.ok) {
     const text = await res.text().catch(() => "")
@@ -41,9 +49,11 @@ async function ensureCollectionUncached(): Promise<void> {
 }
 
 export async function collectionExists(): Promise<boolean> {
-  const res = await fetch(`${QDRANT_URL}/collections/${COLLECTION_NAME}/exists`, {
-    method: "GET",
-  })
+  const res = await fetchWithTimeout(
+    `${QDRANT_URL}/collections/${COLLECTION_NAME}/exists`,
+    { method: "GET" },
+    QDRANT_TIMEOUT_MS,
+  )
   if (!res.ok) return false
   const data = (await res.json()) as { result: { exists: boolean } }
   return data.result.exists
@@ -56,23 +66,27 @@ export async function upsertNoteVector(
   embedding: number[],
   payload?: Record<string, unknown>
 ): Promise<void> {
-  const res = await fetch(`${QDRANT_URL}/collections/${COLLECTION_NAME}/points`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      points: [
-        {
-          id: noteId,
-          vector: embedding,
-          payload: {
-            owner_id: ownerId,
-            note_id: noteId,
-            ...(payload || {}),
+  const res = await fetchWithTimeout(
+    `${QDRANT_URL}/collections/${COLLECTION_NAME}/points`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        points: [
+          {
+            id: noteId,
+            vector: embedding,
+            payload: {
+              owner_id: ownerId,
+              note_id: noteId,
+              ...(payload || {}),
+            },
           },
-        },
-      ],
-    }),
-  })
+        ],
+      }),
+    },
+    QDRANT_TIMEOUT_MS,
+  )
 
   if (!res.ok) {
     const text = await res.text().catch(() => "")
@@ -82,13 +96,17 @@ export async function upsertNoteVector(
 
 // Delete a note vector
 export async function deleteNoteVector(noteId: string): Promise<void> {
-  const res = await fetch(`${QDRANT_URL}/collections/${COLLECTION_NAME}/points/delete`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      points: [noteId],
-    }),
-  })
+  const res = await fetchWithTimeout(
+    `${QDRANT_URL}/collections/${COLLECTION_NAME}/points/delete`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        points: [noteId],
+      }),
+    },
+    QDRANT_TIMEOUT_MS,
+  )
 
   if (!res.ok) {
     const text = await res.text().catch(() => "")
@@ -103,24 +121,28 @@ export async function searchNotes(
   limit: number = 10,
   scoreThreshold: number = 0.7
 ): Promise<Array<{ id: string; score: number; payload?: Record<string, unknown> }>> {
-  const res = await fetch(`${QDRANT_URL}/collections/${COLLECTION_NAME}/points/search`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      vector: embedding,
-      limit,
-      score_threshold: scoreThreshold,
-      with_payload: true,
-      filter: {
-        must: [
-          {
-            key: "owner_id",
-            match: { value: ownerId },
-          },
-        ],
-      },
-    }),
-  })
+  const res = await fetchWithTimeout(
+    `${QDRANT_URL}/collections/${COLLECTION_NAME}/points/search`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        vector: embedding,
+        limit,
+        score_threshold: scoreThreshold,
+        with_payload: true,
+        filter: {
+          must: [
+            {
+              key: "owner_id",
+              match: { value: ownerId },
+            },
+          ],
+        },
+      }),
+    },
+    QDRANT_TIMEOUT_MS,
+  )
 
   if (!res.ok) {
     const text = await res.text().catch(() => "")
@@ -136,7 +158,7 @@ export async function searchNotes(
 // Check Qdrant health
 export async function checkQdrantHealth(): Promise<boolean> {
   try {
-    const res = await fetch(`${QDRANT_URL}/healthz`, { method: "GET" })
+    const res = await fetchWithTimeout(`${QDRANT_URL}/healthz`, { method: "GET" }, 5_000)
     return res.ok
   } catch {
     return false

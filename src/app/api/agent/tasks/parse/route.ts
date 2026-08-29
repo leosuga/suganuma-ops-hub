@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     .insert({
       owner_id: ownerId,
       title: parsed.title,
-      notes: parsedBody.data.notes ?? parsed.notes ?? "",
+      notes: parsedBody.data.notes ?? "",
       category: parsed.category ?? "personal",
       priority: parsed.priority ?? "med",
       due_at: parsed.due_at ?? null,

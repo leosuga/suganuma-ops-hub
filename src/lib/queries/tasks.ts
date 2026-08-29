@@ -11,18 +11,18 @@ type TaskVars = {
   id?: string
   title?: string
   notes?: string | null
-  category?: string
-  status?: string
-  priority?: string
+  category?: "finance" | "logistics" | "personal" | "health"
+  status?: "todo" | "doing" | "done" | "archived"
+  priority?: "low" | "med" | "high" | "urgent"
   due_at?: string | null
   completed_at?: string | null
   project_id?: string | null
   delegated_to?: string | null
   important?: boolean
-  recurrence?: string | null
+  recurrence?: "daily" | "weekly" | "monthly" | null
+  energy_level?: "low" | "med" | "high" | null
   tags?: string[] | null
   linked_note_id?: string | null
-  energy_level?: string | null
 }
 
 export const taskKeys = {
@@ -140,7 +140,7 @@ export function useToggleTaskDone() {
           priority: task.priority,
           status: "todo",
           due_at: nextDue.toISOString(),
-          recurrence: task.recurrence,
+          recurrence: task.recurrence as "daily" | "weekly" | "monthly",
           project_id: task.project_id ?? undefined,
           delegated_to: task.delegated_to ?? undefined,
           important: task.important,

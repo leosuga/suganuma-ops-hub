@@ -16,6 +16,13 @@ export async function GET(req: NextRequest) {
   const validTo = validateIsoDateTime(to)
   if (!validFrom || !validTo) return badRequest("from e to devem ser ISO datetime válidos")
 
+  // Sanity cap: range controlado pelo cliente não pode varrer o histórico inteiro.
+  const MAX_RANGE_DAYS = 400
+  const rangeDays = (new Date(validTo).getTime() - new Date(validFrom).getTime()) / (24 * 60 * 60_000)
+  if (rangeDays > MAX_RANGE_DAYS) {
+    return badRequest(`Range máximo: ${MAX_RANGE_DAYS} dias`)
+  }
+
   const supabase = createServiceClient()
 
   const [appointments, tasks, mealPlans] = await Promise.all([
@@ -25,7 +32,8 @@ export async function GET(req: NextRequest) {
       .eq("owner_id", ownerId)
       .gte("starts_at", validFrom)
       .lte("starts_at", validTo)
-      .order("starts_at", { ascending: true }),
+      .order("starts_at", { ascending: true })
+      .limit(1000),
     supabase
       .from("task")
       .select("id, title, due_at, priority, status, category")
@@ -34,14 +42,16 @@ export async function GET(req: NextRequest) {
       .not("due_at", "is", null)
       .gte("due_at", validFrom)
       .lte("due_at", validTo)
-      .order("due_at", { ascending: true }),
+      .order("due_at", { ascending: true })
+      .limit(1000),
     supabase
       .from("meal_plan")
       .select("id, date, meal_type, meal_id, meal:meal_id (id, name, kind, tags)")
       .eq("owner_id", ownerId)
       .gte("date", validFrom.slice(0, 10))
       .lte("date", validTo.slice(0, 10))
-      .order("date", { ascending: true }),
+      .order("date", { ascending: true })
+      .limit(1000),
   ])
 
   if (appointments.error) return serverError(appointments.error.message)

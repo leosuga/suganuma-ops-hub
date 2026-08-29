@@ -62,7 +62,7 @@ export function calendarOptions(from: string, to: string) {
       return {
         appointments: (appointments.data ?? []) as AppointmentCal[],
         tasks: (tasks.data ?? []) as TaskCal[],
-        mealPlans: (mealPlans.data ?? []) as RawMealPlan[] as MealPlanCal[],
+        mealPlans: (mealPlans.data ?? []) as unknown as MealPlanCal[],
       }
     },
   })

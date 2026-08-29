@@ -79,7 +79,8 @@ export function importFromICal(icsContent: string): AnnualEventInsert[] {
         currentEvent.title = unescapeICalText(parseICalValue(line))
       } else if (upper.startsWith("DTSTART")) {
         const val = parseICalValue(line)
-        currentEvent.start_date = parseICalDate(val)
+        const d = parseICalDate(val)
+        if (d) currentEvent.start_date = d
       } else if (upper.startsWith("DTEND")) {
         const val = parseICalValue(line)
         // DTEND in iCal is exclusive, so subtract one day

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
+import { IMPORT_ORDER, FK_COLUMNS_TO_STRIP } from "@/lib/export-import"
 
 const TABLE_LABELS: Record<string, string> = {
   task: "Tasks",
@@ -61,7 +62,13 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
             info.push({ name, label: TABLE_LABELS[name], rows: rows.length })
           }
         }
-        info.sort((a, b) => b.rows - a.rows)
+        // Parent-first order (matches importAllData) so child rows never
+        // import before their parents — row-count order caused FK violations.
+        info.sort((a, b) => {
+          const ia = IMPORT_ORDER.indexOf(a.name as (typeof IMPORT_ORDER)[number])
+          const ib = IMPORT_ORDER.indexOf(b.name as (typeof IMPORT_ORDER)[number])
+          return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib)
+        })
         setTables(info)
         setSelected(new Set(info.map((t) => t.name)))
         setFileLoaded(true)
@@ -92,16 +99,27 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
     setImporting(true)
     setImported(0)
 
+    try {
+      await doImport()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Erro ao importar")
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  async function doImport() {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) { setImporting(false); return }
+    if (!user) return
 
     let total = 0
+    let failed: string[] = []
 
     // Re-read file from input
     const inputEl = document.getElementById("import-file-input") as HTMLInputElement
     const file = inputEl?.files?.[0]
-    if (!file) { setImporting(false); return }
+    if (!file) return
 
     const text = await file.text()
     const json = JSON.parse(text)
@@ -111,20 +129,37 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
       const rows = json.tables[table.name]
       if (!Array.isArray(rows) || rows.length === 0) continue
 
+      const fksToStrip = FK_COLUMNS_TO_STRIP[table.name] ?? []
+
       const cleaned = rows.map((row: Record<string, unknown>) => {
         const { id, created_at, updated_at, ...rest } = row
+        // Strip cross-table FKs (same sanitization as importAllData) to avoid
+        // dangling references when importing a subset of tables
+        for (const fk of fksToStrip) {
+          if (fk in rest) rest[fk] = null
+        }
         return { ...rest, owner_id: user.id }
       })
 
-      const { error } = await supabase.from(table.name).insert(cleaned)
-      if (error) {
-        throw new Error(`import: erro na tabela ${table.name}: ${error.message}`)
+      // Chunked inserts to stay under PostgREST body limits
+      let inserted = 0
+      for (let i = 0; i < cleaned.length; i += 500) {
+        const chunk = cleaned.slice(i, i + 500)
+        const { error } = await supabase.from(table.name).insert(chunk)
+        if (error) {
+          failed = [...failed, `${table.name}: ${error.message}`]
+          break
+        }
+        inserted += chunk.length
       }
-      total += cleaned.length
+      total += inserted
+    }
+
+    if (failed.length > 0) {
+      throw new Error(`import: erros — ${failed.join("; ")}`)
     }
 
     setImported(total)
-    setImporting(false)
   }
 
   function handleClose() {

@@ -149,6 +149,7 @@ export function useConvertInboxToTask() {
         category: (ai?.suggested_category as "finance" | "logistics" | "personal" | "health") ?? "personal",
         priority: (ai?.suggested_priority as "low" | "med" | "high" | "urgent") ?? "med",
         status: "todo",
+        important: false,
         tags: ai?.suggested_tags ?? null,
       })
       await triage.mutateAsync(item.id)

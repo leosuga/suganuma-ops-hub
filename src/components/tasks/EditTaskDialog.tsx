@@ -13,6 +13,7 @@ type Category = "finance" | "logistics" | "personal" | "health"
 type Priority = "low" | "med" | "high" | "urgent"
 type Status = "todo" | "doing" | "done" | "archived"
 type EnergyLevel = "low" | "med" | "high"
+type Recurrence = "" | "daily" | "weekly" | "monthly"
 
 const CATEGORY_OPTIONS: { value: Category; label: string }[] = [
   { value: "personal", label: "PERSONAL" },
@@ -57,14 +58,14 @@ interface FormState {
   projectId: string
   delegatedTo: string
   important: boolean
-  recurrence: string
+  recurrence: Recurrence
   tagsInput: string
-  energyLevel: string
+  energyLevel: EnergyLevel | ""
   confirmDelete: boolean
 }
 
 type Action =
-  | { type: "field"; key: keyof FormState; value: string | boolean }
+  | { type: "field"; key: keyof FormState; value: string | boolean | EnergyLevel | "" }
   | { type: "reset"; state: FormState }
 
 function reducer(state: FormState, action: Action): FormState {
@@ -117,7 +118,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           projectId: task.project_id ?? "",
           delegatedTo: task.delegated_to ?? "",
           important: task.important ?? false,
-          recurrence: task.recurrence ?? "",
+          recurrence: (task.recurrence as Recurrence | null) ?? "",
           tagsInput: (task.tags ?? []).join(" "),
           energyLevel: task.energy_level ?? "",
           confirmDelete: false,
@@ -142,9 +143,9 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       project_id?: string | null
       delegated_to?: string | null
       important?: boolean
-      recurrence?: string | null
+      recurrence?: "daily" | "weekly" | "monthly" | null
       tags?: string[] | null
-      energy_level?: string | null
+      energy_level?: "low" | "med" | "high" | null
     } = {
       id: task.id,
       title: state.title.trim(),
@@ -156,7 +157,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
       project_id: state.projectId || null,
       delegated_to: state.delegatedTo.trim() || null,
       important: state.important,
-      recurrence: state.recurrence || null,
+      recurrence: (state.recurrence || null) as "daily" | "weekly" | "monthly" | null,
       tags: state.tagsInput.trim() ? state.tagsInput.trim().split(/\s+/).filter(Boolean) : null,
       energy_level: state.energyLevel || null,
     }

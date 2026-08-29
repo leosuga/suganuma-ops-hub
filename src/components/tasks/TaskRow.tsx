@@ -117,21 +117,24 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
           transition: swipeX !== 0 && touchStart === null ? "transform 0.2s ease" : "none",
         }}
       >
-        {/* Checkbox */}
+        {/* Checkbox — visual 20px, hit area >=36px via padding compensado */}
         <button
           onClick={() => onToggle(task.id, task.status)}
           aria-label={isDone ? "Marcar como pendente" : "Marcar como concluída"}
+          aria-pressed={isDone}
           className={cn(
-            "flex-none w-3.5 h-3.5 rounded-[3px] border transition-colors",
+            "flex-none m-1 p-1 rounded-[4px] transition-colors",
             isDone
-              ? "bg-teal border-teal flex items-center justify-center"
-              : "border-on-surface/30 hover:border-teal"
+              ? "bg-teal flex items-center justify-center"
+              : "border border-on-surface/30 hover:border-teal"
           )}
         >
-          {isDone && (
-            <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className="text-bg">
+          {isDone ? (
+            <svg width="12" height="12" viewBox="0 0 8 8" fill="none" className="text-bg">
               <path d="M1 4L3 6L7 2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
+          ) : (
+            <span className="block w-3 h-3" aria-hidden="true" />
           )}
         </button>
 
@@ -227,7 +230,7 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
         {onCreateNote && (
           <button
             onClick={(e) => { e.stopPropagation(); onCreateNote(task) }}
-            className="flex-none w-5 h-5 flex items-center justify-center text-on-surface/40 hover:text-teal transition-colors rounded-sm text-[11px]"
+            className="flex-none w-7 h-7 -m-1 flex items-center justify-center text-on-surface/40 hover:text-teal transition-colors rounded-sm text-[11px]"
             aria-label={`Criar nota para: ${task.title}`}
           >
             📝
@@ -237,7 +240,7 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
         {onEdit && (
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(task) }}
-            className="flex-none w-5 h-5 flex items-center justify-center text-on-surface/40 hover:text-teal transition-colors rounded-sm text-[11px]"
+            className="flex-none w-7 h-7 -m-1 flex items-center justify-center text-on-surface/40 hover:text-teal transition-colors rounded-sm text-[11px]"
             aria-label={`Editar task: ${task.title}`}
           >
             ✎

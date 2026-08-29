@@ -19,14 +19,34 @@ import type { McpToolContext } from "@/lib/mcp/types"
 interface Session {
   transport: WebStandardStreamableHTTPServerTransport
   ctx: McpToolContext
+  createdAt: number
 }
 
 const sessions = new Map<string, Session>()
 
+// Sessões abandonadas (cliente sumiu sem fechar o transporte) nunca seriam
+// evitadas — o Map só remove no onclose. TTL de 24h conta a partir da criação;
+// renovação implícita não é necessária: clientes ativos reconectam.
+const MCP_SESSION_TTL_MS = Number(process.env.MCP_SESSION_TTL_MS) || 24 * 60 * 60_000
+
+function cleanupExpiredSessions() {
+  const now = Date.now()
+  for (const [id, session] of sessions) {
+    if (now - session.createdAt > MCP_SESSION_TTL_MS) {
+      session.transport.onclose = undefined
+      sessions.delete(id)
+    }
+  }
+}
+
 // Periodic cleanup of stale rate-limit buckets to prevent memory growth in long-running containers.
 // Runs every 5 minutes; buckets older than 10 minutes past their reset window are evicted.
+// Also evicts MCP sessions older than the TTL.
 if (typeof setInterval !== "undefined") {
-  setInterval(() => cleanupStaleRateLimitBuckets(10 * 60_000), 5 * 60_000).unref?.()
+  setInterval(() => {
+    cleanupStaleRateLimitBuckets(10 * 60_000)
+    cleanupExpiredSessions()
+  }, 5 * 60_000).unref?.()
 }
 
 function cleanupSession(sessionId: string) {
@@ -148,7 +168,7 @@ async function handleMcpRequest(req: NextRequest): Promise<Response> {
     transport = new WebStandardStreamableHTTPServerTransport({
       sessionIdGenerator: () => newSessionId,
       onsessioninitialized: (id) => {
-        sessions.set(id, { transport, ctx })
+        sessions.set(id, { transport, ctx, createdAt: Date.now() })
       },
     })
 

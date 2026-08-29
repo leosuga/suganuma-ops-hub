@@ -10,9 +10,12 @@
 
 const BASE_URL = "https://api.raindrop.io/rest/v1"
 
+import { fetchWithTimeout } from "@/lib/fetch-with-timeout"
+
 const RAINDROP_TOKEN = process.env.RAINDROP_TOKEN || ""
 // Lista de IDs separados por vírgula (ex: "123,456"). `0` = todas (não usar).
 const RAINDROP_COLLECTION_IDS = process.env.RAINDROP_COLLECTION_IDS || ""
+const RAINDROP_TIMEOUT_MS = Number(process.env.RAINDROP_TIMEOUT_MS) || 30_000
 
 // Tipos de raindrop que não têm texto extraível para resumo (pulados na ingestão).
 const SKIP_TYPES = new Set(["image", "audio"])
@@ -56,7 +59,7 @@ function authHeaders(): Record<string, string> {
  * IDs das collections de conhecimento técnico e fixá-los em RAINDROP_COLLECTION_IDS.
  */
 export async function listCollections(): Promise<RaindropCollection[]> {
-  const res = await fetch(`${BASE_URL}/collections`, { headers: authHeaders() })
+  const res = await fetchWithTimeout(`${BASE_URL}/collections`, { headers: authHeaders() }, RAINDROP_TIMEOUT_MS)
   if (!res.ok) {
     throw new Error(`Raindrop collections failed: ${res.status} ${await res.text().catch(() => "")}`)
   }
@@ -66,7 +69,7 @@ export async function listCollections(): Promise<RaindropCollection[]> {
 
 /** Lista collections aninhadas (child collections). */
 export async function listChildCollections(): Promise<RaindropCollection[]> {
-  const res = await fetch(`${BASE_URL}/collections/childrens`, { headers: authHeaders() })
+  const res = await fetchWithTimeout(`${BASE_URL}/collections/childrens`, { headers: authHeaders() }, RAINDROP_TIMEOUT_MS)
   if (!res.ok) {
     throw new Error(`Raindrop child collections failed: ${res.status} ${await res.text().catch(() => "")}`)
   }
@@ -123,9 +126,11 @@ export async function listRaindrops(
     params.set("search", `created:>${opts.sinceDate}`)
   }
 
-  const res = await fetch(`${BASE_URL}/raindrops/${collectionId}?${params.toString()}`, {
-    headers: authHeaders(),
-  })
+  const res = await fetchWithTimeout(
+    `${BASE_URL}/raindrops/${collectionId}?${params.toString()}`,
+    { headers: authHeaders() },
+    RAINDROP_TIMEOUT_MS,
+  )
   if (!res.ok) {
     throw new Error(`Raindrop raindrops failed: ${res.status} ${await res.text().catch(() => "")}`)
   }

@@ -126,7 +126,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
               {habitTracks.map((habit) => (
                 <div key={habit.id} className="contents">
                   <div className="text-[10px] font-mono text-on-surface/50 flex items-center gap-1 py-1.5 truncate">
-                    <span className="text-[11px]">{habit.emoji || "\u25CF"}</span>
+                    <span className="text-[11px]">{"\u25CF"}</span>
                   </div>
                   {weekDays.slice(0, activeDays).map((day) => {
                     const done = entrySet.has(`${habit.id}::${day.toDateString()}`)
@@ -136,7 +136,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
                           className="w-3 h-3 rounded-[2px]"
                           style={{
                             backgroundColor: done
-                              ? habit.color || "var(--color-health)"
+                              ? "var(--color-health)"
                               : "rgba(222,227,229,0.06)",
                           }}
                         />

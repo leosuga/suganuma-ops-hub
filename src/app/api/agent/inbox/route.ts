@@ -6,7 +6,7 @@ import { z } from "zod"
 const createSchema = z.object({
   content: z.string().min(1).max(5000),
   source: z.enum(["manual", "telegram", "audio", "email", "webhook", "mcp"]).default("mcp"),
-  ai_payload: z.record(z.unknown()).optional().nullable(),
+  ai_payload: z.record(z.string(), z.unknown()).optional().nullable(),
 })
 
 export async function GET(req: NextRequest) {
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   try { ownerId = await validateAgentToken(req) } catch { return unauthorized() }
 
   const status = req.nextUrl.searchParams.get("status") ?? "unprocessed"
-  const limit = parseLimitParam(req.nextUrl.searchParams.get("limit"), "50", 200)
+  const limit = parseLimitParam(req.nextUrl.searchParams.get("limit"), 50, 200)
 
   const supabase = createServiceClient()
   let q = supabase

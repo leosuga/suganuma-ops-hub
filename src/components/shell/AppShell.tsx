@@ -18,6 +18,7 @@ import { TopBar } from "./TopBar"
 import { logger } from "@/lib/logger"
 import { useNotifications } from "@/lib/notifications"
 import { useInitAccent } from "@/lib/theme"
+import { useSwUpdate } from "@/lib/use-sw-update"
 import { UndoToastProvider, showErrorToast } from "@/components/UndoToast"
 
 const CommandPalette = dynamic(() => import("./CommandPalette").then(m => ({ default: m.CommandPalette })), { ssr: false })
@@ -29,14 +30,8 @@ interface AppShellProps {
 }
 
 export function AppShell({ children, user }: AppShellProps) {
-  useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js", {
-        scope: "/",
-        updateViaCache: "none",
-      }).catch(() => {})
-    }
-  }, [])
+  // Registro do SW + detecção de nova versão (banner "atualizar")
+  const { updateAvailable, applyUpdate } = useSwUpdate()
 
   useNotifications()
   useInitAccent()
@@ -103,6 +98,17 @@ export function AppShell({ children, user }: AppShellProps) {
         {/* Main area */}
         <div className="flex flex-1 flex-col min-w-0 overflow-hidden">
           <TopBar user={user} onOpenCommand={() => setCmdOpen(true)} />
+
+          {/* Nova versão do SW disponível — aplica e recarrega */}
+          {updateAvailable && (
+            <button
+              onClick={applyUpdate}
+              role="status"
+              className="flex-none w-full bg-teal/15 border-b border-teal/30 text-teal font-mono text-[10px] font-semibold tracking-widest uppercase py-1.5 hover:bg-teal/25 transition-colors"
+            >
+              Nova versão disponível — toque para atualizar
+            </button>
+          )}
 
           <main className="flex-1 overflow-auto">
             {children}

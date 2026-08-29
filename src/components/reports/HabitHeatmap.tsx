@@ -1,5 +1,5 @@
 interface HabitHeatmapProps {
-  habits: { id: string; name: string; emoji?: string; color?: string }[]
+  habits: { id: string; name: string; emoji?: string | null; color?: string | null }[]
   heatmapDays: { dateStr: string; label: string }[]
   entrySet: Set<string>
   buildEntryKey: (habitId: string, dateStr: string) => string

@@ -13,6 +13,13 @@ export const annualEventKeys = {
 
 type AnnualEventQueryRow = AnnualEventRow & { project?: { name?: string | null } | null }
 
+function withProjectName(rows: Record<string, unknown>[]): AnnualEventRow[] {
+  return rows.map((row) => {
+    const project = row.project as { name?: string | null } | null | undefined
+    return { ...row, project_name: project?.name || null }
+  }) as AnnualEventRow[]
+}
+
 export function annualEventsOptions(year: number) {
   return queryOptions({
     queryKey: annualEventKeys.year(year),
@@ -29,11 +36,7 @@ export function annualEventsOptions(year: number) {
         .order("start_date", { ascending: true })
 
       if (error) throw error
-      const rows = (data ?? []).map((row) => ({
-        ...row,
-        project_name: row.project?.name || null,
-      }))
-      return rows as AnnualEventRow[]
+      return withProjectName(data ?? [])
     },
     staleTime: 30_000,
   })
@@ -63,11 +66,7 @@ export function upcomingEventsOptions(limit: number = 10) {
         .limit(limit)
 
       if (error) throw error
-      const rows = (data ?? []).map((row) => ({
-        ...row,
-        project_name: row.project?.name || null,
-      }))
-      return rows as AnnualEventRow[]
+      return withProjectName(data ?? [])
     },
     staleTime: 30_000,
   })

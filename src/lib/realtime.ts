@@ -3,7 +3,11 @@
 import { useEffect } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
+import { logger } from "@/lib/logger"
 import type { RealtimeChannel, RealtimePostgresChangesPayload } from "@supabase/supabase-js"
+import type { REALTIME_SUBSCRIBE_STATES } from "@supabase/realtime-js"
+
+type ChannelStatus = REALTIME_SUBSCRIBE_STATES
 
 type ChangePayload = RealtimePostgresChangesPayload<Record<string, unknown>>
 
@@ -97,7 +101,14 @@ export function useRealtimeTable(table: string, _queryKey?: readonly unknown[]) 
               invalidateTable(queryClient, table)
             }
           )
-          .subscribe()
+          .subscribe((status: ChannelStatus) => {
+            // Canal morto = UI stale silenciosa. Logar dá diagnóstico onde
+            // antes não havia nada; o supabase-js reestabelece o socket, e o
+            // status CHANNEL_ERROR sinaliza para futura lógica de resubscribe.
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+              logger.warn("realtime", `channel ${channelKey} status: ${status}`, { table })
+            }
+          })
 
         activeChannels.set(channelKey, { channel, refCount: 1 })
       })

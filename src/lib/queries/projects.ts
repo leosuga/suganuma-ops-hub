@@ -11,7 +11,7 @@ type ProjectVars = {
   name?: string
   description?: string | null
   color?: string
-  status?: string
+  status?: "done" | "active" | "paused"
 }
 
 export const projectKeys = {

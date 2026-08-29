@@ -134,7 +134,7 @@ export function HabitStats({ habits }: HabitStatsProps) {
               {active.map((habit) => (
                 <div key={habit.id} className="contents">
                   <div className="text-[10px] font-mono text-on-surface/50 flex items-center gap-1 py-1.5 truncate">
-                    <span className="text-[11px]">{habit.emoji || "\u25CF"}</span>
+                    <span className="text-[11px]">{"\u25CF"}</span>
                     <span className="truncate">{habit.name}</span>
                   </div>
                   {weekDays.slice(0, activeDays).map((day) => {

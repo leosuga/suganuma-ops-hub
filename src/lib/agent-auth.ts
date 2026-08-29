@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service"
 import { z } from "zod"
 import { resolveAccessToken } from "@/lib/oauth/store"
 import { FULL_SCOPES, SCOPE_READ, SCOPE_WRITE } from "@/lib/oauth/config"
+import { logger } from "@/lib/logger"
 
 async function sha256hex(str: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str))
@@ -48,12 +49,16 @@ export async function resolveBearer(req: NextRequest): Promise<ResolvedBearer> {
       throw new AgentAuthError("Token não encontrado ou revogado")
     }
 
-    void supabase
-      .from("agent_token")
-      .update({ last_used_at: new Date().toISOString() })
-      .eq("id", data.id)
-      .then(() => {})
-      .catch(() => {})
+    void (async () => {
+      try {
+        await supabase
+          .from("agent_token")
+          .update({ last_used_at: new Date().toISOString() })
+          .eq("id", data.id)
+      } catch {
+        // best-effort update — não bloqueia a request
+      }
+    })()
 
     return { ownerId: data.owner_id, scopes: [...FULL_SCOPES], kind: "agent" }
   }
@@ -100,7 +105,17 @@ export function badRequest(msg: string) {
 }
 
 export function serverError(msg = "Erro interno") {
-  return NextResponse.json({ error: msg }, { status: 500 })
+  // Mensagens de erro do Supabase/DB vazam detalhes de schema. Mascarar com
+  // correlation id: o detalhe real fica nos logs do servidor para debug.
+  const correlationId = crypto.randomUUID()
+  logger.error("agent-api", "Internal error (details masked to client)", {
+    correlationId,
+    originalMessage: msg,
+  })
+  return NextResponse.json(
+    { error: `Erro interno (ref: ${correlationId})` },
+    { status: 500 },
+  )
 }
 
 // ── Query param & path param validation helpers ──

@@ -93,6 +93,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
       category: "personal",
       priority: "med",
       status: "todo",
+      important: false,
       linked_note_id: note.id,
     })
     return result
@@ -122,6 +123,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
       category: "personal",
       priority: "med",
       status: "todo",
+      important: false,
       // Herdar contexto da nota como tags da task
       tags: noteContexts.length > 0
         ? noteContexts.map((c) => `ctx/${c}`)

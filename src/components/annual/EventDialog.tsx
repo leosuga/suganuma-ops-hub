@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { dateStr, addDays } from "@/lib/date"
+import { dateStr as formatDateStr, addDays } from "@/lib/date"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -33,7 +33,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
   const [title, setTitle] = useState("")
   const [start, setStart] = useState("")
   const [end, setEnd] = useState("")
-  const [color, setColor] = useState(ANNUAL_COLORS[0])
+  const [color, setColor] = useState<string>(ANNUAL_COLORS[0])
   const [startTime, setStartTime] = useState<string | null>(null)
   const [endTime, setEndTime] = useState<string | null>(null)
   const [recurrence, setRecurrence] = useState("none")
@@ -73,13 +73,13 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
 
   function shiftDate(dateStr: string, days: number): string {
     const d = new Date(dateStr + "T00:00:00")
-    return dateStr(addDays(d, days))
+    return formatDateStr(addDays(d, days))
   }
 
   function shiftMonth(dateStr: string, months: number): string {
     const d = new Date(dateStr + "T00:00:00")
     d.setMonth(d.getMonth() + months)
-    return dateStr(d)
+    return formatDateStr(d)
   }
 
   function handleShift(days: number) {
@@ -89,7 +89,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
     const newStartDate = new Date(newStart + "T00:00:00")
     const newEndDate = new Date(newStartDate.getTime() + duration)
     setStart(newStart)
-    setEnd(dateStr(newEndDate))
+    setEnd(formatDateStr(newEndDate))
   }
 
   function handleShiftMonth(months: number) {
@@ -99,7 +99,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
     const newStartDate = new Date(newStart + "T00:00:00")
     const newEndDate = new Date(newStartDate.getTime() + duration)
     setStart(newStart)
-    setEnd(dateStr(newEndDate))
+    setEnd(formatDateStr(newEndDate))
   }
 
   function handleSubmit(e: React.FormEvent) {

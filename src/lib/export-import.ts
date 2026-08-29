@@ -6,7 +6,7 @@ const TABLES = ["task", "project", "account", "transaction", "health_log", "preg
 // FK columns that reference other user-owned tables.
 // These are stripped on import to prevent dangling references when importing
 // data from another user or DB. The data itself (text, amounts, dates) is preserved.
-const FK_COLUMNS_TO_STRIP: Record<string, string[]> = {
+export const FK_COLUMNS_TO_STRIP: Record<string, string[]> = {
   task: ["project_id", "linked_note_id"],
   note: ["project_id", "linked_task_id"],
   transaction: ["account_id"],
@@ -40,10 +40,40 @@ const IMPORT_ORDER = [
   "inbox_item",
 ] as const
 
+export { IMPORT_ORDER }
+
 interface ExportData {
   version: string
   exported_at: string
   tables: Record<string, Record<string, unknown>[]>
+}
+
+// Self-hosted Supabase caps rows per request (default 1000). Export must page
+// through results or large tables (tasks, transactions) silently truncate.
+const EXPORT_PAGE_SIZE = 1000
+// PostgREST request body limits reject very large single inserts.
+const INSERT_CHUNK_SIZE = 500
+
+async function fetchAllRows(
+  supabase: ReturnType<typeof createClient>,
+  table: string,
+  ownerId: string,
+): Promise<Record<string, unknown>[]> {
+  const all: Record<string, unknown>[] = []
+  let from = 0
+  for (;;) {
+    const { data, error } = await supabase
+      .from(table)
+      .select("*")
+      .eq("owner_id", ownerId)
+      .range(from, from + EXPORT_PAGE_SIZE - 1)
+    if (error) throw error
+    const rows = (data ?? []) as Record<string, unknown>[]
+    all.push(...rows)
+    if (rows.length < EXPORT_PAGE_SIZE) break
+    from += EXPORT_PAGE_SIZE
+  }
+  return all
 }
 
 export async function exportAllData(): Promise<string> {
@@ -54,12 +84,7 @@ export async function exportAllData(): Promise<string> {
   const tables: ExportData["tables"] = {}
 
   for (const table of TABLES) {
-    const { data, error } = await supabase
-      .from(table)
-      .select("*")
-      .eq("owner_id", user.id)
-    if (error) throw error
-    tables[table] = (data ?? []) as Record<string, unknown>[]
+    tables[table] = await fetchAllRows(supabase, table, user.id)
   }
 
   const exportData: ExportData = {
@@ -105,12 +130,21 @@ export async function importAllData(json: string): Promise<number> {
       return { ...rest, owner_id: user.id }
     })
 
-    const { error } = await supabase.from(table).insert(cleaned)
-    if (error) {
-      logger.warn("import", `erro na tabela ${table}`, { error: error.message, rows: cleaned.length })
-      continue
+    // Insert in chunks to stay under PostgREST body limits
+    let inserted = 0
+    for (let i = 0; i < cleaned.length; i += INSERT_CHUNK_SIZE) {
+      const chunk = cleaned.slice(i, i + INSERT_CHUNK_SIZE)
+      const { error } = await supabase.from(table).insert(chunk)
+      if (error) {
+        logger.warn("import", `erro na tabela ${table} (chunk ${Math.floor(i / INSERT_CHUNK_SIZE)})`, {
+          error: error.message,
+          rows: chunk.length,
+        })
+        break
+      }
+      inserted += chunk.length
     }
-    total += cleaned.length
+    total += inserted
   }
 
   return total

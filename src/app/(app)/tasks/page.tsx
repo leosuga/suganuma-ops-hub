@@ -102,6 +102,7 @@ function TasksPageInner() {
               category: task.category,
               priority: task.priority,
               status: task.status,
+              important: task.important,
               due_at: task.due_at ?? undefined,
             })
           },

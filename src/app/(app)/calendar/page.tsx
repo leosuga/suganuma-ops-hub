@@ -90,6 +90,7 @@ export default function CalendarPage() {
       category: "personal",
       priority: "med",
       status: "todo",
+      important: false,
       due_at: new Date(selectedDay + "T23:59:00").toISOString(),
     })
     setTaskInput("")

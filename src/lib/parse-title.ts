@@ -18,7 +18,7 @@ interface ParsedTitle {
   project_id?: string | null
   delegated_to?: string
   important?: boolean
-  recurrence?: string | null
+  recurrence?: "daily" | "weekly" | "monthly" | null
   tags?: string[]
   energy_level?: "low" | "med" | "high"
 }
@@ -31,7 +31,7 @@ export function parseTitle(raw: string, projects: ProjectLike[]): ParsedTitle {
   let project_id: string | undefined | null
   let delegated_to: string | undefined
   let important: boolean | undefined
-  let recurrence: string | null | undefined
+  let recurrence: "daily" | "weekly" | "monthly" | null | undefined
   let tags: string[] | undefined
   let energy_level: "low" | "med" | "high" | undefined
 
