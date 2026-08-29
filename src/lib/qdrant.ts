@@ -6,6 +6,17 @@ const COLLECTION_NAME = process.env.QDRANT_COLLECTION || "ops_hub_notes"
 const VECTOR_DIM = 768 // nomic-embed-text output dimension
 
 const QDRANT_TIMEOUT_MS = Number(process.env.QDRANT_TIMEOUT_MS) || 10_000
+// API key opcional do servidor Qdrant (QDRANT__SERVICE__API_KEY lá). Se setada,
+// vai no header `api-key` de TODAS as chamadas — sem ela o Qdrant responde 401.
+const QDRANT_API_KEY = process.env.QDRANT_API_KEY || ""
+
+function qdrantHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    ...(QDRANT_API_KEY ? { "api-key": QDRANT_API_KEY } : {}),
+    ...extra,
+  }
+}
 
 // Cache em variável de módulo: a collection não some sozinha em runtime, então
 // checar/criar a cada busca era um round-trip HTTP a mais por request. O cache
@@ -31,7 +42,7 @@ async function ensureCollectionUncached(): Promise<void> {
     `${QDRANT_URL}/collections/${COLLECTION_NAME}`,
     {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: qdrantHeaders(),
       body: JSON.stringify({
         vectors: {
           size: VECTOR_DIM,
@@ -70,7 +81,7 @@ export async function upsertNoteVector(
     `${QDRANT_URL}/collections/${COLLECTION_NAME}/points`,
     {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: qdrantHeaders(),
       body: JSON.stringify({
         points: [
           {
@@ -100,7 +111,7 @@ export async function deleteNoteVector(noteId: string): Promise<void> {
     `${QDRANT_URL}/collections/${COLLECTION_NAME}/points/delete`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: qdrantHeaders(),
       body: JSON.stringify({
         points: [noteId],
       }),
@@ -125,7 +136,7 @@ export async function searchNotes(
     `${QDRANT_URL}/collections/${COLLECTION_NAME}/points/search`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: qdrantHeaders(),
       body: JSON.stringify({
         vector: embedding,
         limit,

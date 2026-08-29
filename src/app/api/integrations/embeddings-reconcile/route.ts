@@ -25,6 +25,11 @@ import { logger } from "@/lib/logger"
 const QDRANT_URL = process.env.QDRANT_URL || "http://localhost:6333"
 const QDRANT_COLLECTION = process.env.QDRANT_COLLECTION || "ops_hub_notes"
 const QDRANT_TIMEOUT_MS = Number(process.env.QDRANT_TIMEOUT_MS) || 10_000
+const QDRANT_API_KEY = process.env.QDRANT_API_KEY || ""
+const RECONCILE_AUTH_HEADERS: Record<string, string> = {
+  "Content-Type": "application/json",
+  ...(QDRANT_API_KEY ? { "api-key": QDRANT_API_KEY } : {}),
+}
 const SCROLL_LIMIT = 256
 const NOTE_PAGE_SIZE = 500
 const RE_EMBED_DELAY_MS = Number(process.env.RECONCILE_EMBED_DELAY_MS) || 250
@@ -49,7 +54,7 @@ async function qdrantScrollForHashes(ownerId: string): Promise<Map<string, strin
       `${QDRANT_URL}/collections/${QDRANT_COLLECTION}/points/scroll`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: RECONCILE_AUTH_HEADERS,
         body: JSON.stringify({
           limit: SCROLL_LIMIT,
           with_payload: true,
@@ -150,7 +155,7 @@ export async function POST(req: NextRequest) {
             `${QDRANT_URL}/collections/${QDRANT_COLLECTION}/points`,
             {
               method: "PUT",
-              headers: { "Content-Type": "application/json" },
+              headers: RECONCILE_AUTH_HEADERS,
               body: JSON.stringify({
                 points: [
                   {
