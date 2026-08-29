@@ -16,20 +16,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { verifyWebhookHmac, deriveEventKey, resolveWebhookOwnerId } from "@/lib/webhooks/hmac"
-import { fetchWithTimeout } from "@/lib/fetch-with-timeout"
+import { qdrantRequest } from "@/lib/qdrant"
 import { embedText } from "@/lib/ollama"
 import { ensureCollection } from "@/lib/qdrant"
 import { contentHash, embeddableText } from "@/lib/content-hash"
 import { logger } from "@/lib/logger"
 
-const QDRANT_URL = process.env.QDRANT_URL || "http://localhost:6333"
 const QDRANT_COLLECTION = process.env.QDRANT_COLLECTION || "ops_hub_notes"
-const QDRANT_TIMEOUT_MS = Number(process.env.QDRANT_TIMEOUT_MS) || 10_000
-const QDRANT_API_KEY = process.env.QDRANT_API_KEY || ""
-const RECONCILE_AUTH_HEADERS: Record<string, string> = {
-  "Content-Type": "application/json",
-  ...(QDRANT_API_KEY ? { "api-key": QDRANT_API_KEY } : {}),
-}
 const SCROLL_LIMIT = 256
 const NOTE_PAGE_SIZE = 500
 const RE_EMBED_DELAY_MS = Number(process.env.RECONCILE_EMBED_DELAY_MS) || 250
@@ -50,29 +43,24 @@ async function qdrantScrollForHashes(ownerId: string): Promise<Map<string, strin
   let offset: string | null = null
 
   for (;;) {
-    const res = await fetchWithTimeout(
-      `${QDRANT_URL}/collections/${QDRANT_COLLECTION}/points/scroll`,
-      {
-        method: "POST",
-        headers: RECONCILE_AUTH_HEADERS,
-        body: JSON.stringify({
-          limit: SCROLL_LIMIT,
-          with_payload: true,
-          filter: {
-            must: [{ key: "owner_id", match: { value: ownerId } }],
-          },
-          ...(offset ? { offset } : {}),
-        }),
+    // node:http nativo (qdrantRequest) — o fetch do Next runtime apresentou
+    // cache/dedup que congelava o mapa de hashes entre runs (2026-08-29).
+    const body: Record<string, unknown> = {
+      limit: SCROLL_LIMIT,
+      with_payload: true,
+      filter: {
+        must: [{ key: "owner_id", match: { value: ownerId } }],
       },
-      QDRANT_TIMEOUT_MS,
-    )
-    if (res.status === 404) {
+      ...(offset ? { offset } : {}),
+    }
+    const { status, json } = await qdrantRequest("POST", `/collections/${QDRANT_COLLECTION}/points/scroll`, body)
+    if (status === 404) {
       // Coleção ainda não existe (primeira run, sync nunca rodou) — tratamos
       // como "vetorial vazio": TODAS as notes serão consideradas missing.
       return hashes
     }
-    if (!res.ok) throw new Error(`qdrant scroll failed: ${res.status}`)
-    const data = (await res.json()) as {
+    if (status !== 200) throw new Error(`qdrant scroll failed: ${status}`)
+    const data = json as {
       result?: { points: QdrantPoint[] }
       next_page_offset?: string | null
     }
@@ -156,38 +144,29 @@ export async function POST(req: NextRequest) {
           // p/ incluir content_hash no payload — o core não grava hash)
           const embedding = await embedText(text)
           await ensureCollection()
-          const res = await fetchWithTimeout(
-            `${QDRANT_URL}/collections/${QDRANT_COLLECTION}/points`,
-            {
-              method: "PUT",
-              headers: RECONCILE_AUTH_HEADERS,
-              body: JSON.stringify({
-                points: [
-                  {
-                    id: note.id,
-                    vector: embedding,
-                    payload: {
-                      owner_id: ownerId,
-                      note_id: note.id,
-                      title: note.title,
-                      content_preview: (note.content || "").slice(0, 200),
-                      content_hash: expected,
-                      model: embedModel,
-                    },
-                  },
-                ],
-              }),
-            },
-            QDRANT_TIMEOUT_MS,
-          )
-          if (!res.ok) throw new Error(`upsert ${res.status}`)
+          const { status } = await qdrantRequest("PUT", `/collections/${QDRANT_COLLECTION}/points`, {
+            points: [
+              {
+                id: note.id,
+                vector: embedding,
+                payload: {
+                  owner_id: ownerId,
+                  note_id: note.id,
+                  title: note.title,
+                  content_preview: (note.content || "").slice(0, 200),
+                  content_hash: expected,
+                  model: embedModel,
+                },
+              },
+            ],
+          })
+          if (status !== 200) throw new Error(`upsert ${status}`)
           reEmbedded++
           if (process.env.RECONCILE_DEBUG === "1") {
             logger.info("reconcile", "upsert debug", {
               id: note.id,
-              status: res.status,
+              status,
               vectorLen: embedding.length,
-              qdrantUrl: QDRANT_URL,
             })
           }
         } catch (err) {
