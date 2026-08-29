@@ -212,6 +212,9 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `RAINDROP_COLLECTION_IDS` — IDs das collections de conhecimento técnico (CSV, ex: "55561655,55561647")
 - `RAINDROP_SYNC_SECRET` — HMAC do endpoint raindrop-sync (secret DEDICADO, não reusa WEBHOOK_SECRET)
 - `RAINDROP_MAX_ITEMS_PER_RUN` — cap de itens por run (default no código: 50; o deploy.yml passa 50 também)
+- `EMBEDDINGS_RECONCILE_SECRET` — HMAC do endpoint embeddings-reconcile (secret DEDICADO)
+- `QDRANT_API_KEY` — API key do servidor Qdrant (QDRANT__SERVICE__API_KEY no container dele)
+- `WEB_PUSH_VAPID_PUBLIC_KEY`, `WEB_PUSH_VAPID_PRIVATE_KEY` — chaves VAPID do Web Push (geradas 2026-08-29)
 - `COOLIFY_TOKEN` — token API Coolify (opcional, não mais usado no pipeline atual)
 
 ### Deploy troubleshooting
@@ -369,6 +372,18 @@ npm run test:docker
 - HMAC centralizado em `src/lib/webhooks/hmac.ts` com `crypto.timingSafeEqual` (constant-time comparison) — **coberto por 16 testes** (`tests/webhooks-hmac.test.ts`)
 - **Idempotência**: tabela `webhook_event` com unique constraint `(source, event_key)`. Cada webhook verifica replay antes de processar
 - **Payload schemas**: `email-to-task` aceita `message_id`, `csv-from-bank` aceita `import_id`, `deploy-status` aceita `run_id` para event keys explícitos
+
+## Web Push (VAPID) (2026-08-29)
+- **Notificações com o app FECHADO** — diferente de `new Notification()` (exige aba aberta). iOS 16.4+ PWA instalada suporta; Chrome/Firefox sempre suportaram
+- **Migration 0039** `push_subscription`: endpoint unique (re-subscribe = upsert), RLS — usuário gerencia só as próprias
+- **Server**: `src/lib/web-push.ts` com `web-push` lib; TTL 1h; subs inválidas (410/404) auto-removidas após envio; `WEB_PUSH_VAPID_PUBLIC_KEY`/`WEB_PUSH_VAPID_PRIVATE_KEY`
+- **Rotas**: `GET /api/push` (public key), `POST/DELETE /api/push` (subscribe/unsubscribe via sessão + RLS), `POST /api/push/send` (HMAC com `WEBHOOK_SECRET`; monta briefing automático de overdue tasks + consultas 24h se payload vazio)
+- **Client**: `src/lib/use-web-push.ts` — **requestPermission só via GESTO** (botão em Settings; iOS PWA bloqueia sem gesto). `urlB64ToUint8Array` converte a VAPID key
+- **SW v18**: handler `push` (mostra notificação) + `notificationclick` (foca/navega p/ `data.url`)
+- **UI**: Settings → seção "NOTIFICAÇÕES PUSH" com estados unsupported/unconfigured/default/granted/denied
+- **Cron**: workflow "Daily Briefing Push" — 11:00 UTC (08:00 BRT) → 1 run do briefing; falha real (não-200) aborta
+- **iOS**: exigiu PWA reinstalada? Não — mas exige PWA **instalada** (standalone), não Safari tab. Se o toggle aparece "não suportado": verificar se foi aberto da home screen
+- **Gerar novas chaves**: `npx web-push generate-vapid-keys` → `gh secret set WEB_PUSH_VAPID_*` + linhas no `.env.prod` do VPS + deploy
 
 ## Raindrop Sync (2026-08-27)
 - **Endpoint**: `POST /api/integrations/raindrop-sync` — ponte de curadoria automática Raindrop → Hub Notes (Variante C)
