@@ -44,7 +44,9 @@ function ToastBar() {
       role="status"
       aria-live="polite"
       className={cn(
-        "fixed bottom-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-200",
+        // Nav (56px) + safe-area + folgas — toast nunca sobrepõe a BottomNav
+        "fixed left-1/2 -translate-x-1/2 z-50 transition-all duration-200",
+        "bottom-[calc(56px+max(env(safe-area-inset-bottom),8px)+16px)]",
         toast ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
       )}
     >

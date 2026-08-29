@@ -11,11 +11,13 @@ const NAV_ITEMS = [
     href: "/dashboard",
     label: "DASH",
     icon: (
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-        <rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
-        <rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
-        <rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
-        <rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" strokeWidth="1.2" />
+      // Grid 18×18, conteúdo dentro de 1.5..16.5 — stroke nunca toca a borda
+      // do viewBox (SVG clipa em overflow default; tocava = ícone cortado).
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <rect x="2" y="2" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
+        <rect x="10.5" y="2" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
+        <rect x="2" y="10.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
+        <rect x="10.5" y="10.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
       </svg>
     ),
   },
@@ -23,8 +25,8 @@ const NAV_ITEMS = [
     href: "/inbox",
     label: "INBX",
     icon: (
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-        <path d="M2 7l2-5h8l2 5M2 7v6a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7M2 7h3l1 2h4l1-2h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M3 8.5L5 3.5h8l2 5M3 8.5v5a1.2 1.2 0 0 0 1.2 1.2h9.6a1.2 1.2 0 0 0 1.2-1.2v-5M3 8.5h3.2l1 2h3.6l1-2H15" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -32,9 +34,9 @@ const NAV_ITEMS = [
     href: "/tasks",
     label: "TASKS",
     icon: (
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-        <path d="M2 4h12M2 8h8M2 12h10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-        <path d="M12 10l1.5 1.5L16 9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M2.5 5h13M2.5 9h8M2.5 13h10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M12.5 11.5l1.7 1.7 2.3-2.7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -42,8 +44,8 @@ const NAV_ITEMS = [
     href: "/finance",
     label: "FIN",
     icon: (
-      <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-        <path d="M8 1v14M5 4h4.5a2.5 2.5 0 0 1 0 5H5m0 0h5a2.5 2.5 0 0 1 0 5H5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M9 2v14M5.8 5h4.2a2.4 2.4 0 0 1 0 4.8H5.8m0 0h5a2.4 2.4 0 0 1 0 4.8H5.8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -70,8 +72,15 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
 
   return (
     <>
-      <nav aria-label="Navegação principal" className={cn("bg-surface/95 border-t border-border z-40", hidden ? "hidden" : "")}>
-        <div className="h-14 flex items-center justify-around px-1 pb-[env(safe-area-inset-bottom)]">
+      <nav aria-label="Navegação principal" className={cn(
+        "bg-surface/95 border-t border-border z-40",
+        // Safe-area FORA da altura fixa: h-14 do inner deve conter só o conteúdo.
+        // Padding dentro de h-14 (border-box) esmagava os ícones com inset de 34px
+        // do home indicator do iPhone. max(...,8px) dá respiro mínimo no desktop.
+        "pb-[max(env(safe-area-inset-bottom),8px)]",
+        hidden ? "hidden" : ""
+      )}>
+        <div className="h-14 flex items-center justify-around px-1">
           {NAV_ITEMS.map((item) => {
             const active = pathname.startsWith(item.href)
             return (
@@ -81,8 +90,10 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
                 prefetch={item.href === "/dashboard" || item.href === "/tasks"}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-sm transition-colors active:scale-95",
-                  active ? "text-teal" : "text-on-surface/40 hover:text-on-surface/60"
+                  "flex flex-col items-center justify-center gap-1 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-md transition-colors",
+                  active
+                    ? "bg-teal/10 text-teal"
+                    : "text-on-surface/40 hover:text-on-surface/60"
                 )}
               >
                 {item.icon}
@@ -93,16 +104,21 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
 
           <button
             onClick={() => setHubOpen(true)}
+            aria-label="Abrir menu HUB"
+            aria-haspopup="dialog"
+            aria-expanded={hubOpen}
             className={cn(
-              "flex flex-col items-center gap-1 px-3 py-1.5 rounded-sm transition-colors active:scale-95",
-              hubActive ? "text-teal" : "text-on-surface/40 hover:text-on-surface/60"
+              "flex flex-col items-center justify-center gap-1 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-md transition-colors",
+              hubActive
+                ? "bg-teal/10 text-teal"
+                : "text-on-surface/40 hover:text-on-surface/60"
             )}
           >
-            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-              <rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-              <rect x="10" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-              <rect x="1" y="10" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
-              <rect x="10" y="10" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2" />
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <rect x="2" y="2" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="11" y="2" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="2" y="11" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
+              <rect x="11" y="11" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
             </svg>
             <span className="text-[10px] font-mono tracking-wider">HUB</span>
           </button>
@@ -114,7 +130,7 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
       <DialogPrimitive.Root open={hubOpen} onOpenChange={setHubOpen}>
         <DialogPrimitive.Portal>
           <DialogPrimitive.Backdrop className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm" />
-          <DialogPrimitive.Popup className="fixed bottom-14 left-2 right-2 z-50 bg-surface border border-border rounded-sm shadow-2xl overflow-hidden outline-none">
+          <DialogPrimitive.Popup className="fixed left-2 right-2 z-50 bg-surface border border-border rounded-sm shadow-2xl overflow-hidden outline-none bottom-[calc(56px+max(env(safe-area-inset-bottom),8px)+8px)]">
             <div className="p-3 space-y-1">
               <div className="flex items-center justify-between px-1 pb-1.5 border-b border-border mb-1">
                 <DialogPrimitive.Title className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
@@ -134,7 +150,7 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
                       onClick={() => setHubOpen(false)}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "flex flex-col items-center justify-center gap-1 p-3 md:p-2 min-h-[44px] rounded-sm transition-colors active:scale-95",
+                        "flex flex-col items-center justify-center gap-1 p-3 md:p-2 min-h-[44px] rounded-md transition-colors active:scale-95",
                         active ? "bg-teal/10 text-teal" : "text-on-surface/50 hover:bg-surface-hover hover:text-on-surface/70"
                       )}
                     >
