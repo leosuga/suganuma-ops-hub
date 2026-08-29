@@ -24,6 +24,8 @@ const securityHeaders = [
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
+      // Bloqueia <object>/<embed>/<applet> — vetores clássicos de content injection
+      "object-src 'none'",
     ].join("; "),
   },
 ]

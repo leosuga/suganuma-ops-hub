@@ -117,7 +117,7 @@ const FALLBACK_CLASSIFICATION: Classification = {
 function normalizeClassification(parsed: Partial<Classification>): Classification {
   return {
     kind: parsed.kind === "actionable" ? "actionable" : "reference",
-    summary: typeof parsed.summary === "string" ? parsed.summary : "",
+    summary: sanitizeLlmText(parsed.summary, 300),
     tags: Array.isArray(parsed.tags) ? parsed.tags.filter((t) => typeof t === "string") : [],
     action_items: Array.isArray(parsed.action_items)
       ? parsed.action_items.filter((a) => typeof a === "string")
@@ -125,11 +125,36 @@ function normalizeClassification(parsed: Partial<Classification>): Classificatio
   }
 }
 
+/**
+ * Sanitiza texto vindo de fonte externa (Raindrop) antes de entrar no prompt
+ * e texto vindo do LLM antes de ser persistido.
+ *
+ * - Prompt: neutraliza instruções embutidas em títulos/excerpts de bookmarks
+ *   (prompt injection via web content) e quebra a delimitação do bloco.
+ * - Persistido: remove artefatos de injection que o LLM pode ecoar do input.
+ */
+function sanitizeLlmText(text: unknown, maxLen: number): string {
+  if (typeof text !== "string") return ""
+  return text
+    // Quebra de tags/instruções/injeção de markup
+    .replace(/<\/?(system|user|assistant|instruction|prompt|json|code)>/gi, " ")
+    .replace(/\[(?:\/?)(?:system|instruction|bookmarks?)\]/gi, " ")
+    // Falsos delimitadores de item ("[12] Título:") que confundem o parser posicional
+    .replace(/^\s*\d+\]\s*/gm, " ")
+    // Colapsa whitespace e trunca
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, maxLen)
+}
+
 function formatItem(item: RaindropItem, index: number): string {
-  return `[${index}] Título: ${item.title}
+  // Campos externos (título/excerpt/tags/nota/highlights) passam pelo
+  // sanitizador: um bookmark malicioso não pode emitir instruções no prompt
+  // nem forjar o formato numerado que o parser usa para mapear respostas.
+  return `[${index}] Título: ${sanitizeLlmText(item.title, 300)}
 URL: ${item.link}
-Excerpt: ${item.excerpt || "(sem excerpt)"}
-Tags do Raindrop: ${(item.tags ?? []).join(", ") || "(sem tags)"}${item.note ? `\nNota do usuário: ${item.note}` : ""}${item.highlights?.length ? `\nHighlights: ${item.highlights.map((h) => h.text).join(" | ")}` : ""}`
+Excerpt: ${sanitizeLlmText(item.excerpt, 500) || "(sem excerpt)"}
+Tags do Raindrop: ${sanitizeLlmText((item.tags ?? []).join(", "), 200) || "(sem tags)"}${item.note ? `\nNota do usuário: ${sanitizeLlmText(item.note, 500)}` : ""}${item.highlights?.length ? `\nHighlights: ${sanitizeLlmText(item.highlights.map((h) => h.text).join(" | "), 500)}` : ""}`
 }
 
 /**
@@ -200,7 +225,12 @@ async function classifyItems(items: RaindropItem[]): Promise<{ classifications: 
 async function routeReference(ownerId: string, item: RaindropItem, c: Classification, collectionTitle: string) {
   const content = [c.summary, "", `Fonte: ${item.link}`].filter(Boolean).join("\n")
   const collectionTag = collectionSlug(collectionTitle)
-  const tags = Array.from(new Set(["raindrop", collectionTag, ...c.tags])).filter(Boolean)
+  // Tags do LLM sanitizadas: só slug seguro, limitadas, sem instruções persistidas
+  const safeTags = c.tags
+    .map((t) => t.toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, ""))
+    .filter(Boolean)
+    .slice(0, 5)
+  const tags = Array.from(new Set(["raindrop", collectionTag, ...safeTags])).filter(Boolean)
   await createNoteWithEmbedding(ownerId, {
     title: item.title.slice(0, 500),
     content,

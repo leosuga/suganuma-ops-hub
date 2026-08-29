@@ -24,6 +24,13 @@ const NAMESPACES: Record<string, LimitConfig> = {
     maxRequests: Number(process.env.AGENT_RATE_LIMIT_MAX_REQUESTS ?? "60"),
     blockMs: Number(process.env.AGENT_RATE_LIMIT_BLOCK_DURATION_MS ?? "60000"),
   },
+  // DCR é público por spec (RFC 7591) e insere rows no DB — sem limite, é
+  // vetor de spam de storage. 10 registros/min por IP é folgado p/ uso real.
+  "oauth-register": {
+    windowMs: 60_000,
+    maxRequests: Number(process.env.OAUTH_REGISTER_RATE_LIMIT_MAX ?? "10"),
+    blockMs: Number(process.env.OAUTH_REGISTER_RATE_LIMIT_BLOCK_MS ?? "60000"),
+  },
 }
 
 const buckets = new Map<string, Bucket>()
@@ -66,6 +73,10 @@ export function checkMcpRateLimit(clientIp: string): { allowed: boolean; retryAf
 
 export function checkAgentRateLimit(clientIp: string): { allowed: boolean; retryAfter: number } {
   return check("agent", clientIp)
+}
+
+export function checkOAuthRegisterRateLimit(clientIp: string): { allowed: boolean; retryAfter: number } {
+  return check("oauth-register", clientIp)
 }
 
 export function cleanupStaleRateLimitBuckets(maxAgeMs = 5 * 60_000) {

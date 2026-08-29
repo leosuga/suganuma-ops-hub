@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useCreateTask } from "@/lib/queries/tasks"
 import { projectKeys } from "@/lib/queries/projects"
@@ -39,7 +39,10 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
   const queryClient = useQueryClient()
 
   const projects = queryClient.getQueryData<ProjectRow[]>(projectKeys.all) ?? []
-  const parsed = parseTitle(input, projects)
+  const parsed = useMemo(
+    () => parseTitle(input, projects),
+    [input, projects]
+  )
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()

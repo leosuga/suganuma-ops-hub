@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { randomSecret } from "@/lib/oauth/crypto"
+import { checkOAuthRegisterRateLimit } from "@/lib/mcp/rate-limit"
 import { logger } from "@/lib/logger"
 
 // Dynamic Client Registration — RFC 7591.
@@ -36,6 +37,20 @@ function isAcceptableRedirectUri(uri: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  // DCR é aberto por spec, mas insere rows no DB. X-Forwarded-For rightmost =
+  // entrada anexada pelo Caddy (não forjável pelo cliente).
+  const xff = req.headers.get("x-forwarded-for")
+  const clientIp = xff
+    ? (xff.split(",").map((p) => p.trim()).filter(Boolean).pop() ?? "unknown")
+    : (req.headers.get("x-real-ip") ?? "unknown")
+  const rl = checkOAuthRegisterRateLimit(clientIp)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "rate_limited", error_description: "Muitos registros — tente novamente mais tarde" },
+      { status: 429, headers: { ...CORS, "Retry-After": String(rl.retryAfter) } }
+    )
+  }
+
   const body = (await req.json().catch(() => null)) as {
     redirect_uris?: unknown
     client_name?: unknown

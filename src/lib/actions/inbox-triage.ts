@@ -1,10 +1,23 @@
 "use server"
 
+import { z } from "zod"
 import { chatCompletion } from "@/lib/ollama"
 import { embedText } from "@/lib/ollama"
 import { ensureCollection, searchNotes } from "@/lib/qdrant"
 import { createClient } from "@/lib/supabase/server"
 import { logger } from "@/lib/logger"
+
+// Validação do output do LLM — o JSON mode não garante tipos (um campo pode
+// vir como string onde esperamos array, etc.). Mesmo padrão do
+// normalizeClassification do raindrop-sync: tipo errado vira fallback seguro.
+const llmTriageSchema = z.object({
+  suggested_type: z.enum(["task", "note", "idea", "reminder", "multiple"]).catch("task"),
+  suggested_category: z.enum(["finance", "logistics", "personal", "health"]).nullable().catch(null),
+  suggested_priority: z.enum(["low", "med", "high", "urgent"]).catch("med"),
+  suggested_tags: z.array(z.string().trim().min(1).max(40)).max(10).catch([]),
+  action_items: z.array(z.string().trim().min(1).max(500)).max(10).catch([]),
+  summary: z.string().trim().max(500).catch(""),
+})
 
 export interface TriageResult {
   suggested_type: "task" | "note" | "idea" | "reminder" | "multiple"
@@ -77,19 +90,19 @@ Analise e responda em JSON:`
       { format: "json", temperature: 0.2 }
     )
 
-    let parsed: Partial<TriageResult>
+    let llmOutput: z.infer<typeof llmTriageSchema>
     try {
-      parsed = JSON.parse(raw)
+      llmOutput = llmTriageSchema.parse(JSON.parse(raw))
     } catch {
       logger.warn("triageInboxItem", "LLM returned invalid JSON, attempting extraction", { raw: raw.slice(0, 200) })
       const jsonMatch = raw.match(/\{[\s\S]*\}/)
       if (!jsonMatch) throw new Error("LLM did not return valid JSON")
-      parsed = JSON.parse(jsonMatch[0])
+      llmOutput = llmTriageSchema.parse(JSON.parse(jsonMatch[0]))
     }
 
     let suggestedProjectId: string | null = null
     let suggestedProjectName: string | null = null
-    if (parsed.suggested_type && projects) {
+    if (llmOutput.suggested_type && projects) {
       const contentLower = item.content.toLowerCase()
       const match = projects.find((p) => contentLower.includes(p.name.toLowerCase()))
       if (match) {
@@ -124,14 +137,14 @@ Analise e responda em JSON:`
     }
 
     const result: TriageResult = {
-      suggested_type: parsed.suggested_type ?? "task",
+      suggested_type: llmOutput.suggested_type,
       suggested_project_id: suggestedProjectId,
       suggested_project_name: suggestedProjectName,
-      suggested_priority: parsed.suggested_priority ?? "med",
-      suggested_tags: parsed.suggested_tags ?? [],
-      suggested_category: parsed.suggested_category ?? null,
-      action_items: parsed.action_items ?? [],
-      summary: parsed.summary ?? item.content.slice(0, 80),
+      suggested_priority: llmOutput.suggested_priority,
+      suggested_tags: llmOutput.suggested_tags,
+      suggested_category: llmOutput.suggested_category,
+      action_items: llmOutput.action_items,
+      summary: llmOutput.summary || item.content.slice(0, 80),
       duplicates,
     }
 
