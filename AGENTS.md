@@ -119,6 +119,13 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - **Sessões MCP** têm TTL 24h (`MCP_SESSION_TTL_MS`) com eviction no setInterval de 5min
 - **`/api/oauth/register` (DCR)** tem rate limit 10/min por IP (`checkOAuthRegisterRateLimit`)
 
+## Qdrant — auth e rede (descobertas 2026-08-29)
+- **Qdrant exige API key**: container roda com `QDRANT__SERVICE__API_KEY` definido. Toda chamada sem o header `api-key` recebe **401 silencioso** — e foi assim desde sempre: `qdrant.ts` nunca enviou o header, então sync de embeddings/busca vetorial caíam 401 e a busca "funcionava" só pelo fallback FTS. Fix: `QDRANT_API_KEY` env + header em todas as chamadas (`qdrantHeaders()` em `qdrant.ts`, `RECONCILE_AUTH_HEADERS` no reconcile)
+- **Qdrant vive na rede `rede_data`** (NÃO `coolify`): DNS Docker não cruza redes. O deploy conecta o container da app às duas: `coolify` (Caddy/Supabase/Ollama) + `rede_data` (Qdrant). Sem o connect manual, `wget qdrant:6333` → `bad address`
+- **Secret extraído sem exposição**: para copiar um secret do VPS ao GitHub sem exibi-lo no terminal: `ssh LeoVM 'docker inspect qdrant --format "{{json .Config.Env}}"' | python3 -c "..." | gh secret set NOME` — pipe direto VPS→GitHub
+- **Coleção `ops_hub_notes` nasce vazia**: scroll com 404 = coleção inexistente (primeira run) → tratado como mapa vazio, todas as notes viram "missing" e re-embed gradual (cap 50/run por padrão). Para acelerar: rodar o workflow manualmente ou subir `RECONCILE_MAX_RE_EMBEDS`
+- **Healthcheck rápido do Qdrant**: `docker exec suganuma-ops-hub wget -qO- http://qdrant:6333/healthz` (após network connect)
+
 ## Deploy
 
 ### Infraestrutura real no VPS
@@ -130,7 +137,13 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
   - **Não é necessário migrar para Traefik** — o Caddy já gerencia todo o proxy do VPS
   - Caddy resolve o container do app via Docker DNS interno (`reverse_proxy suganuma-ops-hub:3000`)
   - Se Coolify renomear o container, atualizar o bloco `ops.suganuma.com.br` no Caddyfile
-- **Container da app em produção**: nome `suganuma-ops-hub`, imagem `ops-hub:latest`, na rede `coolify` (compartilhada com Caddy)
+- **Container da app em produção**: nome `suganuma-ops-hub`, imagem `ops-hub:latest`, redes `coolify` (Caddy) + `rede_data` (Qdrant)
+
+### update-ops-proxy.sh — NUNCA usar IP do container (lição 2026-08-29)
+- O script `~/update-ops-proxy.sh` no VPS reescreve o bloco `ops.suganuma.com.br` do Caddyfile a cada deploy
+- **Bug**: com o container multi-rede (coolify + rede_data), `{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}` retorna DOIS IPs e `head -1` os **concatena** → `reverse_proxy 10.0.2.2172.23.0.8:3000` → Caddy 502 em todo o domínio
+- **Fix permanente no script**: upstream é SEMPRE o nome do container (`suganuma-ops-hub:3000`), sed substitui qualquer IP/hostname `:3000` pelo DNS. Reforça a lição de 2026-06-18 (container IP é dinâmico) e estende para multi-rede
+- **Debug de "site down" pós-deploy**: 1) `docker exec caddy_proxy wget -qO- http://suganuma-ops-hub:3000/sw.js` (alcança?), 2) `grep -A3 ops.suganuma ~/proxy/Caddyfile` (upstream sadio?), 3) `docker logs caddy_proxy --tail 5`
 
 ### Dockerfile — regras críticas
 - Base image: **`node:22-alpine`** (atualizado de v20 em 2026-05-09)
@@ -369,7 +382,7 @@ npm run test:docker
 - **Nota criada fora da UI entra no índice vetorial**: helper compartilhado `createNoteWithEmbedding()` (`src/lib/actions/notes.ts`) — insert service role + `syncNoteEmbeddingForOwner` fire-and-forget. Usado por `/api/agent/notes` POST e pelo Raindrop sync
 - **Workflow**: `.github/workflows/raindrop-sync.yml` — cron `0 11 * * 1` + `workflow_dispatch`; assina HMAC do body `{}` com `openssl dgst -sha256 -hmac`
 - **Backlog sweep**: `scripts/raindrop-sweep.sh` — loop de `workflow_dispatch` até delta < 100 (backlog esgotado); log em `/tmp/raindrop-sweep.log`
-- **Cap por run**: `RAINDROP_MAX_ITEMS_PER_RUN` (default 100) — protege contra runaway de chamadas LLM; cursor avança oldest-first (sort client-side crescente) para nunca perder itens no cap
+- **Cap por run**: `RAINDROP_MAX_ITEMS_PER_RUN` (default 50, código e deploy.yml) — protege contra runaway de chamadas LLM; cursor avança oldest-first (sort client-side crescente) para nunca perder itens no cap
 - **Classificação em lote**: 1 chamada LLM por chunk de 20 itens (amortiza o system prompt; ~20× menos chamadas/latência vs 1 por item). 1 retry por chunk em falha; item sem classificação válida → fallback (reference, sem resumo). Mapeamento por `index` explícito com fallback posicional. Response/log incluem `llm_calls`
 - **Docs**: `docs/raindrop-hub-bridge.md`
 
@@ -538,3 +551,7 @@ npm run test:docker
 | 2026-08-29 | **SVG que desenha até a borda do viewBox clipa stroke** — stroke 1.2 em path que chega a x=16 de um viewBox 16×16 estende até 16.6 (stroke centerline + metade). Redraw em grid com margem de ≥1.5px do stroke à borda do viewBox. `overflow-visible` resolve, mas redraw é determinístico em qualquer escala | SVG design |
 | 2026-08-29 | **Gate de testes no deploy bloqueou 2 deploys na 1ª ativação** — `npx vitest` sem `npm ci` baixa vitest órfão (sem deps do projeto); DOM tests colhidos no node env falham com `document is not defined`. Correção: `npm ci` antes + `exclude` de `*.test.tsx` no `vitest.config.ts`. Gate funciona — não removê-lo para "resolver" falha | CI/Deploy |
 | 2026-08-29 | **LLM outputs vão para o DB — validar com Zod schema + `.catch()` fallbacks, não confiar no JSON mode** — `suggested_tags` da triagem aceitava qualquer tipo (string, número, null). Pattern: `z.object({...}).catch(fallback)` por campo; mesmo padrão do `normalizeClassification` do raindrop. E **sanitizar conteúdo externo (Raindrop) no prompt E no output persistido** (`sanitizeLlmText`): bookmark malicioso não pode injetar instruções | LLM security |
+| 2026-08-29 | **Container multi-rede quebra scripts que extraem IP com `{{range .NetworkSettings.Networks}}`** — range itera TODAS as redes e `head -1` de output em linha única CONCATENA os IPs (`10.0.2.2` + `172.23.0.8` → `10.0.2.2172.23.0.8` no upstream do Caddy → site 502 inteiro). Fix estrutural no `update-ops-proxy.sh`: upstream SEMPRE por nome de container, nunca IP | Caddyfile corruption |
+| 2026-08-29 | **Serviço com auth (Qdrant + API key) + client que nunca enviou a key = integração morta silenciosa** — 401 em toda chamada era engolido pelos fallbacks (FTS). A coleção `ops_hub_notes` nunca existiu. Diagnosticado ao rodar o reconcile job (nova route) + ler LOGS do servidor Qdrant. Ao integrar serviços com auth: testar uma chamada real de dentro do container antes de assumir que funciona; olhar logs do SERVIDOR, não só do client | Silent infra failure |
+| 2026-08-29 | **DNS Docker não cruza redes** — app na `coolify`, Qdrant na `rede_data` = `bad address`. Deploy conecta o container às 2 redes (`docker network connect rede_data suganuma-ops-hub` pós-run). Non-fatal no deploy: semantic search degrada, app não para | Docker networking |
+| 2026-08-29 | **Reconcile job provou valor na 1ª run**: descobriu os dois problemas acima e indexou as primeiras 50 notas (2168 scanned, cap 50/run). Monitorar progresso via response JSON (`current` crescendo, `missing` caindo) | Embeddings |
