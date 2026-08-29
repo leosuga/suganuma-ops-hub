@@ -61,13 +61,16 @@ async function qdrantScrollForHashes(ownerId: string): Promise<Map<string, strin
     }
     if (status !== 200) throw new Error(`qdrant scroll failed: ${status}`)
     const data = json as {
-      result?: { points: QdrantPoint[] }
+      result?: { points: QdrantPoint[]; next_page_offset?: string | null }
       next_page_offset?: string | null
     }
     for (const p of data.result?.points ?? []) {
       if (p.payload?.content_hash) hashes.set(p.id, p.payload.content_hash)
     }
-    offset = data.next_page_offset ?? null
+    // ATENÇÃO: o Qdrant retorna next_page_offset DENTRO de result (não no topo).
+    // Lendo do topo, o loop parava após a 1ª página (256) e ~1850 notas ficavam
+    // "missing" para sempre — as mesmas 50 re-embedadas a cada run, forever.
+    offset = (data.result?.next_page_offset ?? data.next_page_offset) ?? null
     if (!offset) break
   }
   return hashes
