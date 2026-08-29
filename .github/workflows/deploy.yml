@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -47,6 +47,7 @@ jobs:
             export RAINDROP_COLLECTION_IDS="${{ secrets.RAINDROP_COLLECTION_IDS || '' }}"
             export RAINDROP_SYNC_SECRET="${{ secrets.RAINDROP_SYNC_SECRET || '' }}"
             export RAINDROP_MAX_ITEMS_PER_RUN="${{ secrets.RAINDROP_MAX_ITEMS_PER_RUN || '50' }}"
+            export EMBEDDINGS_RECONCILE_SECRET="${{ secrets.EMBEDDINGS_RECONCILE_SECRET || '' }}"
 
             bash << 'RUNDEPLOY'
             cd ~
@@ -71,6 +72,7 @@ jobs:
             echo RAINDROP_COLLECTION_IDS=$RAINDROP_COLLECTION_IDS >> .env.prod
             echo RAINDROP_SYNC_SECRET=$RAINDROP_SYNC_SECRET >> .env.prod
             echo RAINDROP_MAX_ITEMS_PER_RUN=$RAINDROP_MAX_ITEMS_PER_RUN >> .env.prod
+            echo EMBEDDINGS_RECONCILE_SECRET=$EMBEDDINGS_RECONCILE_SECRET >> .env.prod
 
             NET=$(docker inspect caddy_proxy --format '{{json .NetworkSettings.Networks}}' 2>/dev/null | python3 -c "import sys,json; print(list(json.load(sys.stdin).keys())[0])" 2>/dev/null || echo "")
             if [ -z "$NET" ]; then

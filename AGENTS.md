@@ -373,6 +373,16 @@ npm run test:docker
 - **Classificação em lote**: 1 chamada LLM por chunk de 20 itens (amortiza o system prompt; ~20× menos chamadas/latência vs 1 por item). 1 retry por chunk em falha; item sem classificação válida → fallback (reference, sem resumo). Mapeamento por `index` explícito com fallback posicional. Response/log incluem `llm_calls`
 - **Docs**: `docs/raindrop-hub-bridge.md`
 
+## Embeddings Reconcile (2026-08-29)
+- **Problema que resolve**: `syncNoteEmbedding` fire-and-forget no `onSettled` — se falhar, a nota fica fora do índice vetorial **para sempre** (busca semântica nunca a encontra; fallback FTS mitiga mas não corrige)
+- **Endpoint**: `POST /api/integrations/embeddings-reconcile` — HMAC com `EMBEDDINGS_RECONCILE_SECRET` (secret dedicado)
+- **Algoritmo**: scroll paginado do Qdrant (payload traz `content_hash` do texto embedado) × varredura paginada de notes → re-embed SÓ do que diverge ou não existe
+- **`contentHash`** (`src/lib/content-hash.ts`): SHA-256 truncado a 32 hex do `embeddableText` — função compartilhada define a concatenação canônica (`title\n\ncontent`) em UM lugar. Coberta por testes (`tests/content-hash.test.ts`)
+- **Caps**: `RECONCILE_MAX_RE_EMBEDS` (50/run) + delay 250ms entre embeds (`RECONCILE_EMBED_DELAY_MS`) — não satura Ollama local
+- **Órfãos** (Qdrant aponta nota deletada): apenas reportados (`orphanCount`), não deletados — risco baixo
+- **Trigger**: workflow "Embeddings Reconcile" (domingo 06:00 UTC + `workflow_dispatch`) — pulado silenciosamente se `EMBEDDINGS_RECONCILE_SECRET` não existir
+- **Secrets/CI**: `actions/checkout` e `actions/setup-node` migrados para @v7 (2026-08-29; @v4 rodava Node 20 deprecado)
+
 ## MCP Server (2026-06-19)
 - **Endpoint**: `/api/mcp` (Streamable HTTP, spec 2025-06-18)
 - **Auth**: Bearer token (`ops_...`) validado contra `agent_token` table

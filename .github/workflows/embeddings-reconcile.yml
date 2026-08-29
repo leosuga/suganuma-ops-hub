@@ -1,0 +1,30 @@
+name: Embeddings Reconcile
+
+on:
+  schedule:
+    # Domingo 06:00 UTC (03:00 BRT) — fora do horário de uso
+    - cron: "0 6 * * 0"
+  workflow_dispatch:
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger reconcile endpoint
+        env:
+          RECONCILE_SECRET: ${{ secrets.EMBEDDINGS_RECONCILE_SECRET }}
+        run: |
+          if [ -z "$RECONCILE_SECRET" ]; then
+            echo "EMBEDDINGS_RECONCILE_SECRET não configurado — pulando (crie o secret para ativar)"
+            exit 0
+          fi
+          BODY='{}'
+          SIG="sha256=$(printf '%s' "$BODY" | openssl dgst -sha256 -hmac "$RECONCILE_SECRET" -binary | xxd -p -c 256)"
+          HTTP=$(curl -s -o /tmp/reconcile.json -w "%{http_code}" \
+            -X POST "https://ops.suganuma.com.br/api/integrations/embeddings-reconcile" \
+            -H "Content-Type: application/json" \
+            -H "x-hub-signature-256: $SIG" \
+            -d "$BODY" --max-time 600)
+          echo "HTTP $HTTP"
+          cat /tmp/reconcile.json
+          [ "$HTTP" = "200" ] || { echo "RECONCILE FAILED"; exit 1; }
