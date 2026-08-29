@@ -67,7 +67,7 @@ async function ensureCollectionUncached(): Promise<void> {
 export async function collectionExists(): Promise<boolean> {
   const res = await fetchWithTimeout(
     `${QDRANT_URL}/collections/${COLLECTION_NAME}/exists`,
-    { method: "GET" },
+    { method: "GET", headers: qdrantHeaders() },
     QDRANT_TIMEOUT_MS,
   )
   // 404 = coleção não existe. QUALQUER outro erro (401 auth, 5xx) deve
@@ -181,7 +181,7 @@ export async function searchNotes(
 // Check Qdrant health
 export async function checkQdrantHealth(): Promise<boolean> {
   try {
-    const res = await fetchWithTimeout(`${QDRANT_URL}/healthz`, { method: "GET" }, 5_000)
+    const res = await fetchWithTimeout(`${QDRANT_URL}/healthz`, { method: "GET", headers: qdrantHeaders() }, 5_000)
     return res.ok
   } catch {
     return false
