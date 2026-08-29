@@ -131,8 +131,26 @@ export async function middleware(request: NextRequest) {
     return redirect
   }
 
+  // Páginas STATICAS (/, /login, /callback): o HTML foi gerado no build, sem
+  // nonce nos scripts — nonce + 'strict-dynamic' bloquearia TODOS os scripts
+  // do framework e a página morria sem hidratar (bug visto no iOS: botão de
+  // login "desaparecia" = ficava disabled, sem handler). CSP compat: mesmo
+  // padrão de antes (self + unsafe-inline) para scripts e estilos.
+  const STATIC_PAGES = new Set(["/", "/login"])
+
   // Páginas dinâmicas autenticadas: nonce real que o Next injeta nos scripts.
   // crypto.randomUUID() é global (Web Crypto) — node:crypto não existe no Edge.
+  if (STATIC_PAGES.has(pathname)) {
+    const cspCompat = buildCsp("", isDev, true)
+    response = NextResponse.next({ request })
+    response.headers.set("Content-Security-Policy", cspCompat)
+    if (pathname === "/login") return response
+    // "/" redireciona para /tasks depois de setar CSP
+    response = NextResponse.redirect(new URL("/tasks", request.url))
+    response.headers.set("Content-Security-Policy", cspCompat)
+    return response
+  }
+
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64")
   const cspHeader = buildCsp(nonce, isDev, false)
 
