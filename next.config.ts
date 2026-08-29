@@ -6,28 +6,9 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
-  // CSP allows inline styles (Tailwind + styled-jsx) and self for scripts/connect.
-  // 'unsafe-inline' for styles is required by Next.js styled-jsx runtime.
-  {
-    key: "Content-Security-Policy",
-    value: [
-      "default-src 'self'",
-      // 'unsafe-eval' removido: React/Next.js não usam eval em produção (só em
-      // dev, para reconstruir stack traces). Migrar 'unsafe-inline' para nonce
-      // exigiria renderização dinâmica em todas as páginas (perde SSG/ISR) —
-      // fora do escopo desta correção pontual.
-      "script-src 'self' 'unsafe-inline'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "font-src 'self' https://fonts.gstatic.com",
-      "img-src 'self' data: blob: https:",
-      "connect-src 'self' https://api.suganuma.com.br https://ops.suganuma.com.br wss://api.suganuma.com.br",
-      "frame-ancestors 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-      // Bloqueia <object>/<embed>/<applet> — vetores clássicos de content injection
-      "object-src 'none'",
-    ].join("; "),
-  },
+  // CSP movida para o middleware (src/middleware.ts) com nonce + 'strict-dynamic'
+  // para páginas dinâmicas — doc oficial do Next 16. Headers duplicados aqui
+  // causariam interseção de políticas (quebra os scripts com nonce).
 ]
 
 const nextConfig: NextConfig = {
