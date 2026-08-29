@@ -1,6 +1,8 @@
-const CACHE = "ops-hub-v16"
+const CACHE = "ops-hub-v17"
 const OFFLINE_PAGE = "/offline.html"
 const STATIC_ASSETS = "/_next/static/"
+// Fallback de navegação offline: última página 200 servida (shell client-side).
+const LAST_GOOD_PAGE = "last-good-html"
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
@@ -17,7 +19,7 @@ self.addEventListener("activate", (e) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))
+          keys.filter((k) => k !== CACHE && k !== LAST_GOOD_PAGE).map((k) => caches.delete(k))
         )
       )
       .then(() => self.clients.claim())
@@ -69,16 +71,29 @@ self.addEventListener("fetch", (e) => {
     return
   }
 
-  // Navegação (HTML): NetworkOnly — NUNCA cachear
-  // O middleware retorna 307 redirect para /login; cachear isso corrompe a experiência
+  // Navegação (HTML): network-first com fallback em camadas.
+  //
+  // 1. Online: resposta 200 é servida E cacheada como "última página boa"
+  //    (clone em cache separado LAST_GOOD_PAGE). NUNCA cacheamos redirects
+  //    (307 para /login) nem erros — o bug documentado de 2026-06.
+  // 2. Offline: tenta a última página boa (shell client-side renderiza com os
+  //    dados do TanStack persistido — experiência muito melhor que offline.html).
+  // 3. Sem página cacheada: offline.html estático.
   if (isNavigate(e.request)) {
     e.respondWith(
       fetch(e.request)
         .then((res) => {
-          if (res.ok) return res
-          return caches.match(OFFLINE_PAGE)
+          if (res.ok && res.type === "basic") {
+            const copy = res.clone()
+            caches.open(LAST_GOOD_PAGE).then((c) => c.put("/__last-good", copy))
+          }
+          return res
         })
-        .catch(() => caches.match(OFFLINE_PAGE))
+        .catch(() =>
+          caches
+            .match("/__last-good", { cacheName: LAST_GOOD_PAGE })
+            .then((last) => last ?? caches.match(OFFLINE_PAGE))
+        )
     )
     return
   }
