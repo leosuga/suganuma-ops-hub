@@ -100,14 +100,24 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - Realtime Postgres Changes em `task` table dispara re-check
 - `requireInteraction: true` para não sumir automaticamente
 
-## Export/Import (2026-06-19)
+## Export/Import (2026-06-19, hardening 2026-08-29)
 - `exportAllData()` / `importAllData(json)` em `src/lib/export-import.ts`
 - Exporta **17 tabelas**: task, project, account, transaction, health_log, pregnancy, appointment, protocol, protocol_entry, note, meal, meal_plan, habit_track, habit_entry, budget, annual_event, **inbox_item**
+- **Export com paginação** (2026-08-29): `.range()` em páginas de 1000 — sem isso, self-hosted Supabase trunca tabelas >1000 rows **silenciosamente no único backup**
+- **Import em chunks de 500** (2026-08-29): insert completo estourava body limit do PostgREST em tabelas grandes; erro por chunk logado, chunk seguinte tenta
 - Import total: substitui `owner_id` pelo usuário atual, stripa `id`/`created_at`/`updated_at`, **stripa FKs cross-tabela** (`project_id`, `linked_task_id`, `account_id`, `meal_id`, `habit_id`, `protocol_id`, `pregnancy_id`, `series_id`) para evitar dangling references
-- Import em ordem parent-first (project, account, meal, habit_track, protocol, pregnancy, annual_event, ...)
+- Import em ordem parent-first (`IMPORT_ORDER` exportado — reutilizado pelo diálogo seletivo)
 - Export version: `0.3.0`
-- **Import seletivo** (`src/components/settings/SelectiveImportDialog.tsx`): dialog que lista tabelas do JSON com contagem de linhas, permite selecionar quais importar
+- **Import seletivo** (`src/components/settings/SelectiveImportDialog.tsx`): dialog que lista tabelas do JSON com contagem de linhas, permite selecionar quais importar — **sincronizado com importAllData** (mesmo `IMPORT_ORDER` parent-first + `FK_COLUMNS_TO_STRIP` + chunking + try/finally que não trava o `importing`)
 - UI na página Settings com 3 botões: Exportar backup, Importar seletivo, Importar tudo
+
+## Rede externa — padrão de timeout (2026-08-29)
+- **`fetchWithTimeout(url, init, timeoutMs)`** (`src/lib/fetch-with-timeout.ts`): AbortController + clearTimeout em `finally`. Usar em TODA fetch externa nova
+- Timeouts aplicados: Ollama chat/embed 120s (`OLLAMA_TIMEOUT_MS`), Ollama health 5s, Qdrant 10s (`QDRANT_TIMEOUT_MS`), Raindrop 30s (`RAINDROP_TIMEOUT_MS`), CIMD 5s, MCP interno 30s
+- Sem timeout, request pendurado (ex: ollama.com lento) trava server action/sync indefinidamente
+- **Erros server-side mascarados ao cliente**: `serverError()` em `agent-auth.ts` loga detalhe com correlation id UUID e devolve só `Erro interno (ref: <uuid>)` — não vazar mensagens do Supabase
+- **Sessões MCP** têm TTL 24h (`MCP_SESSION_TTL_MS`) com eviction no setInterval de 5min
+- **`/api/oauth/register` (DCR)** tem rate limit 10/min por IP (`checkOAuthRegisterRateLimit`)
 
 ## Deploy
 
@@ -183,11 +193,12 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` — acesso SSH ao VPS
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase client
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side admin
-- `WEBHOOK_SECRET` — HMAC webhooks (único secret para todos os 3 webhooks)
+- `WEBHOOK_SECRET` — HMAC fallback compartilhado dos 3 webhooks
+- `EMAIL_SECRET`, `CSV_SECRET`, `DEPLOY_SECRET` — secrets DEDICADOS por webhook (2026-08-29; opcionais — código faz fallback para `WEBHOOK_SECRET` se ausente; wire: `verifyWebhookHmac(req, body, process.env.EMAIL_SECRET || process.env.WEBHOOK_SECRET)`)
 - `RAINDROP_TOKEN` — Test Token do Raindrop (não expira)
 - `RAINDROP_COLLECTION_IDS` — IDs das collections de conhecimento técnico (CSV, ex: "55561655,55561647")
 - `RAINDROP_SYNC_SECRET` — HMAC do endpoint raindrop-sync (secret DEDICADO, não reusa WEBHOOK_SECRET)
-- `RAINDROP_MAX_ITEMS_PER_RUN` — cap de itens por run (default 100; subir para acelerar varredura de backlog)
+- `RAINDROP_MAX_ITEMS_PER_RUN` — cap de itens por run (default no código: 50; o deploy.yml passa 50 também)
 - `COOLIFY_TOKEN` — token API Coolify (opcional, não mais usado no pipeline atual)
 
 ### Deploy troubleshooting
@@ -201,22 +212,30 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - Config padrão: `vitest.config.ts` — ambiente `node`, pool `forks`, `singleFork: true`
   - Necessário porque `jsdom`/`happy-dom` travam no Node.js **v25.6.0** local
   - Testes unitários puros (schemas, parsers, contexts) rodam em milissegundos
+  - **Exclui `tests/queries/*.test.tsx` via `exclude`** (2026-08-29): DOM tests não pertencem ao node env; antes eram coletados e falhavam com `ReferenceError: document` como "44 falhas" fictícias
 - Config DOM: `vitest.dom.config.ts` — ambiente `happy-dom` para testes de componente React
   - Só funciona dentro do container Docker (`node:22-alpine`); localmente trava no Node v25
 - Comando: `npm test` → `vitest --no-watch` (só testes node)
 - Comando: `npm run test:docker` → builda imagem Docker e roda **todos** os testes com happy-dom
 
-### Testes atuais
+### Testes atuais (2026-08-29)
 | Suite | Arquivo | Testes |
 |---|---|---|
 | Zod schemas | `tests/schemas.test.ts` | 38 |
+| OAuth (puro, sem mocks) | `tests/oauth.test.ts` | 15 |
+| Webhook HMAC/ID | `tests/webhooks-hmac.test.ts` | 16 |
 | Task parser | `src/lib/parse-title.test.ts` | 12 |
 | Context tags | `src/lib/contexts.test.ts` | 12 |
-| Queries React | `tests/queries/*.test.tsx` | 45 |
+| Queries React (DOM) | `tests/queries/*.test.tsx` | 45 |
 | Smoke | `tests/queries/smoke.test.ts` | 1 |
-| **Total** | | **108** |
+| **Total** | | **139** (94 node + 45 DOM) |
 
-> ⚠️ Testes DOM/componentes (`.test.tsx`) travam no Node v25 local. Usar `npm run test:docker` (node:22-alpine). Testes unitários (`npm test`) funcionam localmente.
+> ⚠️ Testes DOM/componentes (`.test.tsx`) travam no Node v25 local. Usar `npm run test:docker` (node:22-alpine). Testes node (`npm test`) funcionam localmente — agora sem falsas falhas.
+
+### Gate de testes no deploy (2026-08-29)
+- `deploy.yml` roda `npm ci` + `npx vitest run` **antes** do SSH no VPS — build não sobe com testes vermelhos
+- O gate bloqueou 2 deploys na primeira ativação (vitest órfão sem `npm ci`; DOM tests no node env) — provou valor imediatamente
+- Rollback de deploy: imagem é taggeada por `GIT_SHA` (`ops-hub:<sha>`) além de `latest` — rollback = `docker run ops-hub:<sha-anterior>`
 
 ### Execução
 ```bash
@@ -332,9 +351,9 @@ npm run test:docker
 - **Security headers** (2026-06-19): HSTS, CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy configurados via `headers()` em `next.config.ts`
 - **Escaping de caracteres no write tool**: `\u00cd` e outros escapes Unicode podem aparecer em vez de caracteres acentuados ao usar o `write` tool. Sempre revisar arquivos escritos e corrigir acentos manualmente
 
-## Webhooks (2026-06-19)
-- **3 webhooks**: `email-to-task`, `csv-from-bank`, `deploy-status` — todos usam `WEBHOOK_SECRET` único
-- HMAC centralizado em `src/lib/webhooks/hmac.ts` com `crypto.timingSafeEqual` (constant-time comparison)
+## Webhooks (2026-06-19, atualizado 2026-08-29)
+- **3 webhooks**: `email-to-task`, `csv-from-bank`, `deploy-status` — cada um com secret DEDICADO (`EMAIL_SECRET`/`CSV_SECRET`/`DEPLOY_SECRET`), fallback para `WEBHOOK_SECRET` compartilhado (compatível até os secrets serem criados no GitHub)
+- HMAC centralizado em `src/lib/webhooks/hmac.ts` com `crypto.timingSafeEqual` (constant-time comparison) — **coberto por 16 testes** (`tests/webhooks-hmac.test.ts`)
 - **Idempotência**: tabela `webhook_event` com unique constraint `(source, event_key)`. Cada webhook verifica replay antes de processar
 - **Payload schemas**: `email-to-task` aceita `message_id`, `csv-from-bank` aceita `import_id`, `deploy-status` aceita `run_id` para event keys explícitos
 
@@ -346,7 +365,7 @@ npm run test:docker
 - **Classificador**: viés para REFERENCE — artigos/tutoriais/guias/comparativos = nota; actionable só para ação concreta e próxima (testar ferramenta agora, inscrição, vaga). Empírico no backlog técnico: viés actionable → 56% no inbox (pilha movida); recalibrado → 98 notas/2 inbox
 - **Multi-collection**: `RAINDROP_COLLECTION_IDS` (CSV com 16 IDs). Fetch por collection INDIVIDUAL (`listAllRaindropsSince` faz loop) — NÃO usar `collectionId=0` (todas): collections pessoais grandes (ex: "unread", ~3.8k itens) afogam o backlog técnico no fetch das páginas mais recentes
 - **Raindrop API** (validada 2026-08-27): Test Token NÃO expira; `perpage` máx 50; `page` 0-based; filtro nativo de data via `search=created:>YYYY-MM-DD` (granularidade de DIA — borda resolvida com cursor−1 dia + filtro client-side por timestamp + dedup); cada raindrop traz `collection.$id`; `type` nativo (`article`/`link`/`video`/`document`/`image`/`audio` — image/audio pulados); permanent copy (`/cache`) é Pro-only
-- **Cursor**: nota pinned com tag `raindrop-sync-state` (corpo = ISO timestamp do último `created` processado). Zero migration. Parsing defensivo (falha → null → refetch, dedup protege)
+- **Cursor**: nota pinned com tag `raindrop-sync-state` (corpo = ISO timestamp do último `created` processado). Zero migration. Parsing defensivo (falha → null → refetch, dedup protege). **Write com guard otimista** (2026-08-29): `update().eq("content", cursorLido)` — sweep concorrente com o cron não regrediu o cursor
 - **Nota criada fora da UI entra no índice vetorial**: helper compartilhado `createNoteWithEmbedding()` (`src/lib/actions/notes.ts`) — insert service role + `syncNoteEmbeddingForOwner` fire-and-forget. Usado por `/api/agent/notes` POST e pelo Raindrop sync
 - **Workflow**: `.github/workflows/raindrop-sync.yml` — cron `0 11 * * 1` + `workflow_dispatch`; assina HMAC do body `{}` com `openssl dgst -sha256 -hmac`
 - **Backlog sweep**: `scripts/raindrop-sweep.sh` — loop de `workflow_dispatch` até delta < 100 (backlog esgotado); log em `/tmp/raindrop-sweep.log`
@@ -502,3 +521,10 @@ npm run test:docker
 | 2026-08-27 | **`gh` CLI autenticado como leosuga permite gerenciar secrets e workflows do Mac** — `gh secret set`, `gh workflow run "Nome"`, `gh run watch`. Deploy de feature branch: `git push origin feat/x:main` (fast-forward) dispara o deploy sem checkout de main. O nome no `gh workflow run` é o campo `name:` ("Raindrop Sync"), não o filename | Dev workflow |
 | 2026-08-27 | **Raindrop API tem filtro nativo de data via search operators** — `search=created:>YYYY-MM-DD` (granularidade de DIA). Test Token não expira; `perpage` máx 50; cada raindrop traz `collection.$id`. Com collections pessoais grandes no account, buscar por collection-alvo individual (N chamadas), nunca `collectionId=0` | Integração Raindrop |
 | 2026-08-27 | **Viés de classificador LLM importa em volume** — "actionable na dúvida" mandou 56% de um backlog técnico (~2.1k itens) pro Inbox = pilha movida, não resolvida. Recalibrado para reference-bias → 98/2. Validar o ratio com 1 run pequeno ANTES de varrer o backlog inteiro (dedup impede reprocessar barato) | Raindrop Sync |
+| 2026-08-29 | **`SKIP_TSC=1` esconde bugs reais — sessão com ~19 type errors latentes encontrados ao rodar build com tsc ativo** — incluíam: `dateStr` import shadowed por parâmetro de função (chamado como função → quebraria runtime ao mover evento), `habit.emoji`/`.color` acessando colunas que NÃO existem no DB (validar schema real via psql antes de acessar prop de Row), `important` faltando em 6 `createTask` mutates, `parseLimitParam` com fallback string, Zod 4 `z.record` exige 2 args (key+value). **Rodar `npm run build` (tsc ativo) localmente antes de deploys grandes** | Type safety |
+| 2026-08-29 | **Export/Import truncava backup silenciosamente** — `.select("*")` sem paginação respeita o max-rows de 1000/request do self-hosted; tabelas grandes (tasks/transactions/notes) truncavam no ÚNICO backup. `exportAllData` agora pagina `.range()`; imports em chunks de 500. Seleção de tabela por row-count também causava FK violation (ordem não parent-first) — SelectiveImportDialog reutiliza `IMPORT_ORDER`/`FK_COLUMNS_TO_STRIP` de export-import.ts | Data safety |
+| 2026-08-29 | **Fetch sem timeout em clients de IA trava server actions indefinidamente** — `fetchWithTimeout()` (`src/lib/fetch-with-timeout.ts`, AbortController + clearTimeout) é o padrão para ollama (120s), qdrant (10s), raindrop (30s); env-overridable (`*_TIMEOUT_MS`). Pattern já existia em mcp/api.ts — replicar em toda fetch externa nova | Reliability |
+| 2026-08-29 | **Safe-area inset DENTRO de container com altura fixa (h-14, border-box) clipa o conteúdo** — inset-bottom do iPhone é 34px; restavam 22px para ~34px de conteúdo → ícones da BottomNav cortados ao meio no PWA. Padrão correto: padding do safe-area no elemento PAI (sem altura fixa), conteúdo em altura fixa própria, `max(env(...),8px)` para padding mínimo quando inset=0. Overlays (sheet, toast) ancoram via `calc(56px + env(safe-area-inset-bottom))` | iOS PWA layout |
+| 2026-08-29 | **SVG que desenha até a borda do viewBox clipa stroke** — stroke 1.2 em path que chega a x=16 de um viewBox 16×16 estende até 16.6 (stroke centerline + metade). Redraw em grid com margem de ≥1.5px do stroke à borda do viewBox. `overflow-visible` resolve, mas redraw é determinístico em qualquer escala | SVG design |
+| 2026-08-29 | **Gate de testes no deploy bloqueou 2 deploys na 1ª ativação** — `npx vitest` sem `npm ci` baixa vitest órfão (sem deps do projeto); DOM tests colhidos no node env falham com `document is not defined`. Correção: `npm ci` antes + `exclude` de `*.test.tsx` no `vitest.config.ts`. Gate funciona — não removê-lo para "resolver" falha | CI/Deploy |
+| 2026-08-29 | **LLM outputs vão para o DB — validar com Zod schema + `.catch()` fallbacks, não confiar no JSON mode** — `suggested_tags` da triagem aceitava qualquer tipo (string, número, null). Pattern: `z.object({...}).catch(fallback)` por campo; mesmo padrão do `normalizeClassification` do raindrop. E **sanitizar conteúdo externo (Raindrop) no prompt E no output persistido** (`sanitizeLlmText`): bookmark malicioso não pode injetar instruções | LLM security |
