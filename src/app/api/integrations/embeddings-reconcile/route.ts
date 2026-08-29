@@ -182,6 +182,14 @@ export async function POST(req: NextRequest) {
           )
           if (!res.ok) throw new Error(`upsert ${res.status}`)
           reEmbedded++
+          if (process.env.RECONCILE_DEBUG === "1") {
+            logger.info("reconcile", "upsert debug", {
+              id: note.id,
+              status: res.status,
+              vectorLen: embedding.length,
+              qdrantUrl: QDRANT_URL,
+            })
+          }
         } catch (err) {
           errors.push(`${note.id.slice(0, 8)}: ${(err as Error).message}`)
         }
