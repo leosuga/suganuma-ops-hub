@@ -55,7 +55,12 @@ async function ensureCollectionUncached(): Promise<void> {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "")
-    throw new Error(`Qdrant create collection failed: ${res.status} ${text}`)
+    // 409 = já existe (corrida entre chamadas concorrentes) — estado final é o
+    // desejado, tratar como sucesso. Visto no bulk reconcile: 50 embeds mortos
+    // por 409 na run seguinte.
+    if (res.status !== 409) {
+      throw new Error(`Qdrant create collection failed: ${res.status} ${text}`)
+    }
   }
 }
 
@@ -65,7 +70,14 @@ export async function collectionExists(): Promise<boolean> {
     { method: "GET" },
     QDRANT_TIMEOUT_MS,
   )
-  if (!res.ok) return false
+  // 404 = coleção não existe. QUALQUER outro erro (401 auth, 5xx) deve
+  // PROPAGAR — tratar como "não existe" fazia a create correr e o upsert
+  // falhar em cascata com 409.
+  if (res.status === 404) return false
+  if (!res.ok) {
+    const text = await res.text().catch(() => "")
+    throw new Error(`Qdrant exists check failed: ${res.status} ${text}`)
+  }
   const data = (await res.json()) as { result: { exists: boolean } }
   return data.result.exists
 }
