@@ -49,6 +49,8 @@ jobs:
             export RAINDROP_SYNC_SECRET="${{ secrets.RAINDROP_SYNC_SECRET || '' }}"
             export RAINDROP_MAX_ITEMS_PER_RUN="${{ secrets.RAINDROP_MAX_ITEMS_PER_RUN || '50' }}"
             export EMBEDDINGS_RECONCILE_SECRET="${{ secrets.EMBEDDINGS_RECONCILE_SECRET || '' }}"
+            export WEB_PUSH_VAPID_PUBLIC_KEY="${{ secrets.WEB_PUSH_VAPID_PUBLIC_KEY || '' }}"
+            export WEB_PUSH_VAPID_PRIVATE_KEY="${{ secrets.WEB_PUSH_VAPID_PRIVATE_KEY || '' }}"
 
             bash << 'RUNDEPLOY'
             cd ~
@@ -75,6 +77,8 @@ jobs:
             echo RAINDROP_SYNC_SECRET=$RAINDROP_SYNC_SECRET >> .env.prod
             echo RAINDROP_MAX_ITEMS_PER_RUN=$RAINDROP_MAX_ITEMS_PER_RUN >> .env.prod
             echo EMBEDDINGS_RECONCILE_SECRET=$EMBEDDINGS_RECONCILE_SECRET >> .env.prod
+            echo WEB_PUSH_VAPID_PUBLIC_KEY=$WEB_PUSH_VAPID_PUBLIC_KEY >> .env.prod
+            echo WEB_PUSH_VAPID_PRIVATE_KEY=$WEB_PUSH_VAPID_PRIVATE_KEY >> .env.prod
 
             NET=$(docker inspect caddy_proxy --format '{{json .NetworkSettings.Networks}}' 2>/dev/null | python3 -c "import sys,json; print(list(json.load(sys.stdin).keys())[0])" 2>/dev/null || echo "")
             if [ -z "$NET" ]; then

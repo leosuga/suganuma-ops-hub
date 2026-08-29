@@ -1,4 +1,4 @@
-const CACHE = "ops-hub-v17"
+const CACHE = "ops-hub-v18"
 const OFFLINE_PAGE = "/offline.html"
 const STATIC_ASSETS = "/_next/static/"
 // Fallback de navegação offline: última página 200 servida (shell client-side).
@@ -121,4 +121,42 @@ self.addEventListener("message", (e) => {
   if (e.data === "SKIP_WAITING") {
     self.skipWaiting()
   }
+})
+
+// Web Push (VAPID) — notificações que funcionam com o app FECHADO.
+// Payload: { title, body, tag?, url? }
+self.addEventListener("push", (e) => {
+  let data = { title: "Ops Hub", body: "", url: "/dashboard" }
+  try {
+    data = { ...data, ...(e.data ? e.data.json() : {}) }
+  } catch {
+    data.body = e.data ? e.data.text() : ""
+  }
+  e.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: data.tag || undefined,
+      data: { url: data.url || "/dashboard" },
+      requireInteraction: true,
+    })
+  )
+})
+
+// Click na notificação → abre/foca a URL associada
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close()
+  const target = (e.notification.data && e.notification.data.url) || "/dashboard"
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.includes(target) && "focus" in client) return client.focus()
+      }
+      for (const client of clients) {
+        if ("focus" in client) return client.navigate(target).then((c) => c && c.focus())
+      }
+      return self.clients.openWindow(target)
+    })
+  )
 })

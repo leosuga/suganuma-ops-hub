@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { cn } from "@/lib/utils"
+import { useWebPush, type PushState } from "@/lib/use-web-push"
 import { getAccent, setAccent, type Accent } from "@/lib/theme"
 
 const SelectiveImportDialog = dynamic(() => import("@/components/settings/SelectiveImportDialog").then(m => ({ default: m.SelectiveImportDialog })), {
@@ -280,6 +281,9 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {/* Notifications (Web Push) */}
+      <PushSection />
+
       {/* System info */}
       <div className="border border-border bg-surface rounded-sm">
         <div className="px-4 py-3 border-b border-border">
@@ -319,5 +323,68 @@ export default function SettingsPage() {
       <SelectiveImportDialog open={selectImportOpen} onOpenChange={setSelectImportOpen} />
     </div>
     </SectionErrorBoundary>
+  )
+}
+
+const PUSH_STATE_LABEL: Record<PushState, string> = {
+  unsupported: "não suportado neste navegador",
+  unconfigured: "não configurado no servidor",
+  default: "permitir notificações",
+  granted: "ativas",
+  denied: "bloqueadas nas configurações do navegador",
+}
+
+function PushSection() {
+  const { state, enabled, busy, enable, disable } = useWebPush()
+
+  const statusLabel = enabled
+    ? "ATIVAS — receba alertas com o app fechado"
+    : disabledLabel(state)
+
+  function disabledLabel(s: PushState): string {
+    switch (s) {
+      case "unsupported": return "push não suportado (requer PWA instalada no iOS)"
+      case "unconfigured": return "servidor não configurado"
+      case "denied": return "permissão bloqueada — libere nas configurações do navegador"
+      default: return "desativadas"
+    }
+  }
+
+  return (
+    <div className="border border-border bg-surface rounded-sm">
+      <div className="px-4 py-3 border-b border-border">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOTIFICAÇÕES PUSH</span>
+      </div>
+      <div className="p-4 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <span className={cn(
+            "block text-[11px] font-mono",
+            enabled ? "text-teal" : "text-on-surface/50"
+          )}>
+            {statusLabel}
+          </span>
+          <span className="block text-[9px] font-mono text-on-surface/40 mt-0.5">
+            tasks atrasadas, consultas e eventos — mesmo com o app fechado
+          </span>
+        </div>
+        {state === "granted" && enabled ? (
+          <button
+            onClick={() => void disable()}
+            disabled={busy}
+            className="flex-none h-8 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/40 rounded-sm hover:border-on-surface/40 hover:text-on-surface/60 disabled:opacity-40 transition-colors"
+          >
+            {busy ? "..." : "DESATIVAR"}
+          </button>
+        ) : (
+          <button
+            onClick={() => void enable()}
+            disabled={busy || state === "unsupported" || state === "unconfigured" || state === "denied"}
+            className="flex-none h-8 px-3 text-[9px] font-mono font-semibold tracking-wider border border-teal text-teal rounded-sm hover:bg-teal/10 disabled:opacity-30 disabled:border-border disabled:text-on-surface/40 transition-colors"
+          >
+            {busy ? "..." : "ATIVAR"}
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
