@@ -8,6 +8,12 @@ export default defineConfig({
     pool: "forks",
     singleFork: true,
     testTimeout: 10000,
+    // DOM tests (*.test.tsx) exigem happy-dom + Docker (Node v25 trava local):
+    // rodam via `npm run test:docker` (vitest.dom.config.ts). Aqui só o node env.
+    exclude: [
+      "**/node_modules/**",
+      "tests/queries/*.test.tsx",
+    ],
   },
   resolve: {
     alias: {
