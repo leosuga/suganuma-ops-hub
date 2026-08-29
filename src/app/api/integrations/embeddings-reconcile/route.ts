@@ -66,6 +66,11 @@ async function qdrantScrollForHashes(ownerId: string): Promise<Map<string, strin
       },
       QDRANT_TIMEOUT_MS,
     )
+    if (res.status === 404) {
+      // Coleção ainda não existe (primeira run, sync nunca rodou) — tratamos
+      // como "vetorial vazio": TODAS as notes serão consideradas missing.
+      return hashes
+    }
     if (!res.ok) throw new Error(`qdrant scroll failed: ${res.status}`)
     const data = (await res.json()) as {
       result?: { points: QdrantPoint[] }
