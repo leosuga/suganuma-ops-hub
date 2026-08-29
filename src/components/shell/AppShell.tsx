@@ -19,6 +19,7 @@ import { logger } from "@/lib/logger"
 import { useNotifications } from "@/lib/notifications"
 import { useInitAccent } from "@/lib/theme"
 import { useSwUpdate } from "@/lib/use-sw-update"
+import { useGlobalErrorReporting } from "@/lib/error-reporting"
 import { UndoToastProvider, showErrorToast } from "@/components/UndoToast"
 
 const CommandPalette = dynamic(() => import("./CommandPalette").then(m => ({ default: m.CommandPalette })), { ssr: false })
@@ -32,6 +33,8 @@ interface AppShellProps {
 export function AppShell({ children, user }: AppShellProps) {
   // Registro do SW + detecção de nova versão (banner "atualizar")
   const { updateAvailable, applyUpdate } = useSwUpdate()
+  // window.onerror + unhandledrejection → /api/client_log
+  useGlobalErrorReporting()
 
   useNotifications()
   useInitAccent()

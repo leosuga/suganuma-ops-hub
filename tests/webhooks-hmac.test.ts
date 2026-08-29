@@ -16,7 +16,7 @@ import {
 
 const MockService = createServiceClient as unknown as ReturnType<typeof vi.fn>
 
-function chain(value: unknown, error?: string): ReturnType<Object> {
+function chain(value: unknown, error?: string): { then: (resolve: (v: unknown) => void) => Promise<void> } {
   const result = error ? { data: null, error: { message: error } } : { data: value, error: null }
   function wrap(): unknown {
     const proxy: Record<string, unknown> = {}
