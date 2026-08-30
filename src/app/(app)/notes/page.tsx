@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useCallback, useEffect, Suspense } from "rea
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { useTitle } from "@/lib/useTitle"
 import { useNotes, useDeleteNote, useCreateNote, useUpdateNote } from "@/lib/queries/notes"
+import { VirtualizedList } from "@/components/VirtualizedList"
 import { useTasks } from "@/lib/queries/tasks"
 import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
 import { buildBacklinksMap } from "@/lib/links"
@@ -110,21 +111,34 @@ function NotesPageInner() {
 
   const [showFilters, setShowFilters] = useState(false)
 
-  const filtered = notes.filter((n) => {
-    if (filterTag && (!n.tags || !n.tags.includes(filterTag))) return false
-    if (filterPrefix && (!n.tags || !n.tags.some((t) => t.startsWith(`${filterPrefix}/`)))) return false
-    if (filterContext && (!n.tags || !n.tags.some((t) => t === `ctx/${filterContext}`))) return false
-    if (filterPara && n.para !== filterPara) return false
-    if (search.trim()) {
-      const q = search.toLowerCase().trim()
-      if (!n.title.toLowerCase().includes(q) && !(n.content?.toLowerCase().includes(q))) return false
-    }
-    return true
-  })
+  const filtered = useMemo(() => {
+    const f = notes.filter((n) => {
+      if (filterTag && (!n.tags || !n.tags.includes(filterTag))) return false
+      if (filterPrefix && (!n.tags || !n.tags.some((t) => t.startsWith(`${filterPrefix}/`)))) return false
+      if (filterContext && (!n.tags || !n.tags.some((t) => t === `ctx/${filterContext}`))) return false
+      if (filterPara && n.para !== filterPara) return false
+      if (search.trim()) {
+        const q = search.toLowerCase().trim()
+        if (!n.title.toLowerCase().includes(q) && !(n.content?.toLowerCase().includes(q))) return false
+      }
+      return true
+    })
+    // Ordem de exibição unificada (virtualização exige lista única):
+    // MOCs → fixadas → demais (updated_at desc já vem do server).
+    return [...f].sort((a, b) => {
+      if (a.is_moc !== b.is_moc) return a.is_moc ? -1 : 1
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+      return 0
+    })
+  }, [notes, filterTag, filterPrefix, filterContext, filterPara, search])
 
   const mocs = filtered.filter((n) => n.is_moc)
   const pinned = filtered.filter((n) => n.pinned && !n.is_moc)
   const unpinned = filtered.filter((n) => !n.pinned && !n.is_moc)
+
+  // >50 notas: VirtualizedList (2168 NoteRows travavam o iPhone inteiro).
+  // <=50: render direto com seções MOCs/Fixadas/Notas (ux original).
+  const useVirtual = filtered.length > 50
 
   function handleDelete(id: string) {
     const note = notes.find((n) => n.id === id)
@@ -155,6 +169,25 @@ function NotesPageInner() {
       return next
     })
   }, [])
+
+  // Render de 1 linha da lista virtualizada (NoteRow já é memo + callbacks estáveis).
+  const renderNoteRow = useCallback(
+    (index: number) => {
+      const note = filtered[index]
+      return (
+        <NoteRow
+          note={note}
+          onDelete={handleDelete}
+          backlinksMap={backlinksMap}
+          tasks={tasks}
+          selected={selectedIds.has(note.id)}
+          onToggleSelect={handleToggleSelect}
+          bulkMode={bulkMode}
+        />
+      )
+    },
+    [filtered, handleDelete, backlinksMap, tasks, selectedIds, handleToggleSelect, bulkMode]
+  )
 
   const handleBulkContext = useCallback((ctx: string) => {
     selectedIds.forEach((id) => {
@@ -580,8 +613,18 @@ function NotesPageInner() {
           </div>
         )}
 
-        {/* MOCs first */}
-        {!isLoading && mocs.length > 0 && (
+        {!isLoading && useVirtual && filtered.length > 0 && (
+          <div className="h-[calc(100dvh-230px)] flex flex-col">
+            <VirtualizedList
+              items={filtered}
+              rowHeight={140}
+              overscan={6}
+              renderRow={renderNoteRow}
+            />
+          </div>
+        )}
+
+        {!useVirtual && mocs.length > 0 && (
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-teal uppercase">MAPS OF CONTENT</span>
             {mocs.map((n) => (
@@ -590,7 +633,7 @@ function NotesPageInner() {
           </div>
         )}
 
-        {!isLoading && pinned.length > 0 && (
+        {!useVirtual && pinned.length > 0 && (
           <div className="space-y-3">
             <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">FIXADAS</span>
             {pinned.map((n) => (
@@ -599,7 +642,7 @@ function NotesPageInner() {
           </div>
         )}
 
-        {!isLoading && unpinned.length > 0 && (
+        {!useVirtual && unpinned.length > 0 && (
           <div className="space-y-3">
             {(mocs.length > 0 || pinned.length > 0) && (
               <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOTAS</span>

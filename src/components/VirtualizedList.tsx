@@ -5,6 +5,7 @@ import { useVirtualizer } from "@tanstack/react-virtual"
 
 interface VirtualizedListProps {
   items: unknown[]
+  /** Altura estimada — com dynamic, é apenas a estimativa inicial (real medida via ResizeObserver). */
   rowHeight: number
   overscan?: number
   renderRow: (index: number) => React.ReactNode
@@ -18,6 +19,9 @@ export function VirtualizedList({ items, rowHeight, overscan = 10, renderRow }: 
     getScrollElement: () => parentRef.current,
     estimateSize: () => rowHeight,
     overscan,
+    // Medição dinâmica: rows podem ter alturas distintas (ex: NoteRow com
+    // preview 2 linhas vs 5). getVirtualItems + measureElement realinham.
+    measureElement: (el) => el.getBoundingClientRect().height,
   })
 
   useEffect(() => {
@@ -32,12 +36,13 @@ export function VirtualizedList({ items, rowHeight, overscan = 10, renderRow }: 
         {virtualizer.getVirtualItems().map((virtualRow) => (
           <div
             key={virtualRow.key}
+            data-index={virtualRow.index}
+            ref={virtualizer.measureElement}
             style={{
               position: "absolute",
               top: 0,
               left: 0,
               width: "100%",
-              height: `${virtualRow.size}px`,
               transform: `translateY(${virtualRow.start}px)`,
             }}
           >
