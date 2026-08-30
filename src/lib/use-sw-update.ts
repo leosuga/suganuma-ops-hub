@@ -7,10 +7,16 @@ export type SwUpdateState = "idle" | "available"
 /**
  * Detecta nova versão do Service Worker e expõe callback para aplicá-la.
  *
- * Fluxo: registration.onupdatefound → novo SW em "installing" → aguarda
- * estado "activated"/redundant no_waiting. Quando há update esperando,
- * o banner "NOVA VERSÃO" aparece; ao tocar, envia SKIP_WAITING e recarrega
- * no controllerchange (quando o novo SW assume).
+ * Casos cobertos:
+ * 1. update chega enquanto a página está aberta (updatefound)
+ * 2. update já estava waiting quando a página carregou
+ * 3. página resumida do background (visibilitychange) → reg.update() força
+ *    fetch do sw.js — cobre iOS standalone que "rescita" sem reload
+ * 4. polling de 60s como rede de segurança (deploys sem interação do usuário)
+ *
+ * Bootstrap: o detector só roda com o JS novo carregado. A 1ª experiência
+ * pós-deploy que introduz este código exige UM reload manual; dali em diante
+ * os banners aparecem sozinhos.
  */
 export function useSwUpdate() {
   const [updateAvailable, setUpdateAvailable] = useState(false)
@@ -19,6 +25,7 @@ export function useSwUpdate() {
     if (!("serviceWorker" in navigator)) return
 
     let reloading = false
+    let disposed = false
 
     function onControllerChange() {
       if (reloading) return
@@ -26,33 +33,57 @@ export function useSwUpdate() {
       window.location.reload()
     }
 
-    async function trackRegistration(reg: ServiceWorkerRegistration) {
+    function onStatechange(this: ServiceWorker) {
+      // "installed" = novo SW esperando ativação (waiting)
+      if (this.state === "installed" && navigator.serviceWorker.controller) {
+        setUpdateAvailable(true)
+      }
+    }
+
+    function trackRegistration(reg: ServiceWorkerRegistration) {
+      if (disposed) return
+
       // Caso 1: update chega enquanto a página está aberta
       reg.addEventListener("updatefound", () => {
-        const installing = reg.installing
-        if (!installing) return
-        installing.addEventListener("statechange", () => {
-          // "installed" = novo SW esperando ativação (waiting)
-          if (installing.state === "installed" && navigator.serviceWorker.controller) {
-            setUpdateAvailable(true)
-          }
-        })
+        reg.installing?.addEventListener("statechange", onStatechange)
       })
+
+      // Caso 2: update já waiting no load
+      reg.waiting?.addEventListener("statechange", onStatechange)
+      if (reg.waiting && navigator.serviceWorker.controller) {
+        setUpdateAvailable(true)
+      }
+
+      // Casos 3+4: forçar checagem periódica e ao voltar ao app
+      const check = () => {
+        if (disposed || document.visibilityState !== "visible") return
+        reg.update().catch(() => {})
+      }
+      const interval = setInterval(check, 60_000)
+      document.addEventListener("visibilitychange", check)
+      const cleanup = () => {
+        clearInterval(interval)
+        document.removeEventListener("visibilitychange", check)
+      }
+      // registra cleanup anexado ao disposal do hook
+      ;(reg as ServiceWorkerRegistration & { __cleanup?: () => void }).__cleanup = cleanup
+      window.addEventListener("pagehide", cleanup, { once: true })
     }
 
     navigator.serviceWorker.register("/sw.js", {
       scope: "/",
       updateViaCache: "none",
     }).then((reg) => {
-      void trackRegistration(reg)
-      // Caso 2: update chegou antes do registro desta sessão
-      if (reg.waiting && navigator.serviceWorker.controller) {
-        setUpdateAvailable(true)
+      if (disposed && (reg as ServiceWorkerRegistration & { __cleanup?: () => void }).__cleanup) {
+        ;(reg as ServiceWorkerRegistration & { __cleanup?: () => void }).__cleanup?.()
+        return
       }
+      trackRegistration(reg)
     }).catch(() => {})
 
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange)
     return () => {
+      disposed = true
       navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange)
     }
   }, [])
