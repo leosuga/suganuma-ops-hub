@@ -24,14 +24,25 @@ const notesOptions = queryOptions({
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error("Not authenticated")
-    const { data, error } = await supabase
-      .from("note")
-      .select(NOTE_COLUMNS)
-      .eq("owner_id", user.id)
-      .order("pinned", { ascending: false })
-      .order("updated_at", { ascending: false })
-    if (error) throw error
-    return (data ?? []) as NoteRow[]
+    // O PostgREST do VPS tem PGRST_DB_MAX_ROWS=1000 — query sem paginação
+    // retorna no MÁXIMO 1000 rows silenciosamente (2168 notas = ~1170 perdidas).
+    // Paginar em ranges até esvaziar, como no exportAllData.
+    const PAGE = 1000
+    const all: NoteRow[] = []
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await supabase
+        .from("note")
+        .select(NOTE_COLUMNS)
+        .eq("owner_id", user.id)
+        .order("pinned", { ascending: false })
+        .order("updated_at", { ascending: false })
+        .range(from, from + PAGE - 1)
+      if (error) throw error
+      const rows = (data ?? []) as NoteRow[]
+      all.push(...rows)
+      if (rows.length < PAGE) break
+    }
+    return all
   },
 })
 
