@@ -42,15 +42,18 @@ de saúde e gravidez. Ver §6 para a contenção específica do campo `reason`.
 ### 2.3 A aresta de conflito é o produto
 
 O valor não está em armazenar pessoas (uma agenda de contatos faz isso). Está em
-tornar o conflito um **dado explícito, direcionado e atribuível**. Quatro escolhas
+tornar o conflito um **dado explícito, direcionado e atribuível**. Cinco escolhas
 deliberadas:
 
 - **Direcionada.** `subject_id → object_id`. "X é incômodo para a M." não é a mesma
   informação que "X e M. brigaram". Aresta simétrica joga fora exatamente o que se quer
   registrar.
-- **Escopo enumerado, não peso numérico.** Nada de `severity: 0.7`. Um número é
+- **Política enumerada, não peso numérico.** Nada de `severity: 0.7`. Um número é
   precisão falsa e indefensável numa conversa real. O enum guarda a **decisão**:
-  `nao_convidar`, `convidar_avisar`, `manter_distante`, `condicional`.
+  `excluir_um`, `nao_juntos`, `ok_com_ressalva`.
+- **Dois eixos, não um.** `invite_policy` responde *"essa pessoa vem?"*; `handling`
+  responde *"o que eu faço se os dois vierem?"*. Ver §2.5 — foi a correção mais
+  importante do design.
 - **Dono do veto.** `veto_owner ∈ {eu, parceira, ambos}`. Converte uma discussão
   potencialmente tensa num campo de dados. Qualquer conflito que envolva a mãe da
   criança é decisão dela — o sistema apenas registra de quem é a palavra final.
@@ -64,6 +67,85 @@ alocação de mesas. A literatura de seating chart como CSP (CP-SAT, tabu search
 sólida, mas chá de bebê raramente tem lugar marcado, e o problema real do usuário é
 "não esquecer / não errar", não "particionar de forma ótima". Otimização fica para
 uma eventual v2 sobre o mesmo schema.
+
+### 2.5 Dois eixos: `invite_policy` e `handling`
+
+A primeira versão deste design tinha um enum único de quatro valores
+(`nao_convidar`, `convidar_avisar`, `manter_distante`, `condicional`). Ele misturava
+três perguntas diferentes na mesma coluna:
+
+| valor antigo | pergunta que respondia |
+|---|---|
+| `nao_convidar` | essa pessoa vem? |
+| `condicional` | essa pessoa vem? |
+| `convidar_avisar` | o que eu faço **antes**? |
+| `manter_distante` | o que eu faço **no dia**? |
+
+A consequência não era teórica: *"convidar a tia, avisar a mãe antes **e** manter as
+duas afastadas na festa"* é uma combinação plausível que o enum único tornava
+inexprimível — obrigava a escolher uma das três. Já a combinação inversa
+("não convidar, mas manter distante") não existe. Sinal de dimensões separadas
+coladas à força.
+
+**`invite_policy`** — eixo do convite, três valores:
+
+- `excluir_um` — decisão já tomada e **permanente**, com `excluded_person_id`
+  explícito. "A tia não vai a evento onde a mãe esteja." Vale para este chá e para
+  qualquer evento futuro.
+- `nao_juntos` — restrição sem decisão tomada. Os dois não coexistem; qual entra é
+  escolha de curadoria, feita a cada evento.
+- `ok_com_ressalva` — ambos podem vir; o conflito é administrável.
+
+**`handling text[]`** — eixo da condução, valores combináveis: `avisar_antes`
+(conversa prévia) e `separar_no_evento` (logística de espaço). Na prática acompanha
+`ok_com_ressalva`, já que nos outros dois casos as pessoas nunca estão juntas.
+
+#### Por que não existe um valor "excluir o subject"
+
+Uma tentativa anterior nomeava o valor pela **posição na aresta**
+(`excluir_subject`). Isso faz a correção do dado depender da ordem de digitação: no
+caso motivador o subject é a tia e excluí-la está certo, mas se o mesmo conflito
+fosse cadastrado ao contrário ("a mãe não tolera a tia"), o subject passa a ser a mãe
+e a regra mandaria excluir a mãe da criança. `excluded_person_id` explícito, com
+constraint de que seja o subject **ou** o object, elimina a classe inteira de bug.
+
+#### `condicional` foi removido
+
+"A prima só vem se a tia não vier" é idêntico a `nao_juntos` entre as duas, mais uma
+escolha humana na hora de montar a lista. A restrição fica no modelo; a decisão fica
+com quem cura. Some junto a coluna `condition_person_id` e sua check constraint.
+
+O único caso que `condicional` cobriria e `nao_juntos` não é a dependência
+**positiva** ("a tia só vem se a filha vier, por causa da carona") — que não é
+conflito, é logística, e está em §11.
+
+#### Camadas: fato reutilizável × política de um consumidor
+
+`invite_policy` e `handling` são vocabulário de **convite** — `nao_juntos` não
+significa nada num grupo de mensagens ou numa lista de quem chamar para ajudar numa
+mudança. A separação:
+
+| camada | conteúdo | reutilizável |
+|---|---|---|
+| fato sobre pessoas | `person`, `person_relation`; do conflito: direção, `reason`, `veto_owner`, `status` | sim, em qualquer domínio |
+| política de convite | `invite_policy`, `handling` | não |
+| evento | `guest_event`, `guest_invite` | não |
+
+Enquanto houver **um** consumidor, a política mora junto do fato — é o certo. Quando
+aparecer um segundo de natureza diferente, o caminho é extrair `invite_policy`/
+`handling` para uma tabela de política, **não** inchar o enum com valores de outro
+domínio.
+
+O que mantém essa porta aberta a custo zero: `checkGuestList()` é a **única** função
+que interpreta `invite_policy`. A UI exibe, mas não decide. Generalizar depois é
+mexer em um arquivo, não caçar `switch` espalhado pelo app. Essa restrição é parte do
+design, não um detalhe de implementação.
+
+> **Pendência de validação.** Este enum foi derivado por raciocínio sobre categorias,
+> **não** confrontado com os conflitos reais do caso motivador. O primeiro teste de
+> verdade é o cadastro dos primeiros conflitos: se algum não couber limpo num par
+> `(invite_policy, handling)`, o enum está errado e deve ser corrigido antes que haja
+> volume de dados.
 
 ## 3. Schema — `supabase/migrations/0040_people.sql`
 
@@ -109,24 +191,32 @@ create table if not exists person_relation (
 
 -- person_conflict: arestas de conflito (direcionadas)
 create table if not exists person_conflict (
-  id                  uuid primary key default gen_random_uuid(),
-  owner_id            uuid not null references auth.users on delete cascade,
-  subject_id          uuid not null references person on delete cascade,
-  object_id           uuid not null references person on delete cascade,
-  scope               text not null
-                      check (scope in ('nao_convidar','convidar_avisar',
-                                       'manter_distante','condicional')),
-  condition_person_id uuid references person on delete set null,
-  veto_owner          text not null default 'eu'
-                      check (veto_owner in ('eu','parceira','ambos')),
-  reason              text,           -- CAMPO SENSÍVEL — ver §6
-  status              text not null default 'ativo'
-                      check (status in ('ativo','resolvido')),
-  created_at          timestamptz not null default now(),
-  updated_at          timestamptz not null default now(),
+  id                 uuid primary key default gen_random_uuid(),
+  owner_id           uuid not null references auth.users on delete cascade,
+  subject_id         uuid not null references person on delete cascade,  -- quem se incomoda
+  object_id          uuid not null references person on delete cascade,  -- com quem
+  invite_policy      text not null                                       -- eixo: essa pessoa vem?
+                     check (invite_policy in ('excluir_um','nao_juntos','ok_com_ressalva')),
+  excluded_person_id uuid references person on delete cascade,           -- só p/ excluir_um
+  handling           text[] not null default '{}',                       -- eixo: o que faço no dia
+  veto_owner         text not null default 'eu'
+                     check (veto_owner in ('eu','parceira','ambos')),
+  reason             text,            -- CAMPO SENSÍVEL — ver §6
+  status             text not null default 'ativo'
+                     check (status in ('ativo','resolvido')),
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now(),
   constraint person_conflict_no_self check (subject_id <> object_id),
-  constraint person_conflict_condicional_needs_person
-    check (scope <> 'condicional' or condition_person_id is not null)
+  -- excluir_um exige saber QUEM sai, e quem sai tem que ser uma das duas pontas.
+  -- Nomear o excluído por posição na aresta (o "subject") tornaria a correção do
+  -- dado dependente da ordem de digitação — ver §2.5.
+  constraint person_conflict_excluir_um_needs_person
+    check (invite_policy <> 'excluir_um' or excluded_person_id is not null),
+  constraint person_conflict_excluded_is_an_endpoint
+    check (excluded_person_id is null
+           or excluded_person_id in (subject_id, object_id)),
+  constraint person_conflict_handling_values
+    check (handling <@ array['avisar_antes','separar_no_evento']::text[])
 );
 
 -- guest_event / guest_invite: eventos e curadoria da lista
@@ -197,16 +287,28 @@ Considera "na lista" os status `convidar | convidado | confirmado`
 (`cogitado`, `recusou` e `vetado` ficam de fora). Só avalia conflitos com
 `status = 'ativo'`.
 
-| `scope` | condição | `level` |
+| `invite_policy` | condição | `level` |
 |---|---|---|
-| `nao_convidar` | subject e object ambos na lista | `block` |
-| `condicional` | subject na lista **e** `condition_person_id` na lista | `block` |
-| `convidar_avisar` | ambos na lista | `warn` |
-| `manter_distante` | ambos na lista | `info` |
+| `excluir_um` | o excluído **e** a outra ponta ambos na lista | `block` |
+| `nao_juntos` | ambos na lista | `block` |
+| `ok_com_ressalva` | ambos na lista **e** `avisar_antes` ∈ `handling` | `warn` |
+| `ok_com_ressalva` | ambos na lista **e** `separar_no_evento` ∈ `handling` | `info` |
+
+Duas consequências que valem explicitar:
+
+- `ok_com_ressalva` com `handling = '{}'` **não** gera violação. É um conflito
+  registrado que não exige ação — informação para a ficha da pessoa, não alerta.
+- `ok_com_ressalva` com os dois `handling` gera **duas** violações (um `warn` e um
+  `info`), o que é o comportamento desejado: são duas ações distintas, uma antes e
+  uma durante.
 
 A mensagem inclui os nomes e o `veto_owner`, para a tela deixar visível de quem é a
 decisão. O `reason` **não** entra na `Violation` — ele é exibido só na ficha do
 conflito, sob interação explícita.
+
+`checkGuestList()` é o **único** lugar do app que interpreta `invite_policy` e
+`handling` (§2.5). Componentes recebem `Violation[]` pronto e nunca fazem `switch`
+sobre a política.
 
 ## 5. UI
 
@@ -255,7 +357,7 @@ Decisão: as cinco tabelas novas entram num conjunto `PRESERVE_ID_TABLES`. Para 
 
 - `id` **não** é stripado;
 - as FKs intra-módulo (`from_person`, `to_person`, `subject_id`, `object_id`,
-  `condition_person_id`, `event_id`, `person_id`) **não** entram em
+  `excluded_person_id`, `event_id`, `person_id`) **não** entram em
   `FK_COLUMNS_TO_STRIP`;
 - o insert vira `.upsert(chunk, { onConflict: "id" })`, tornando o restore idempotente
   e sem violação de PK ao reimportar por cima.
@@ -291,9 +393,15 @@ páginas de 1000, mesmo com volume baixo hoje — foi exatamente esse o bug que 
 
 ## 8. Testes
 
-- `src/lib/people/conflicts.test.ts` — as 4 regras da tabela em §4, mais: conflito
-  `resolvido` ignorado, status `cogitado`/`recusou` fora da checagem, `condicional`
-  sem a pessoa-condição na lista não dispara, lista vazia retorna `[]`.
+- `src/lib/people/conflicts.test.ts` — as 4 regras da tabela em §4, mais:
+  - conflito com `status = 'resolvido'` é ignorado;
+  - `cogitado`, `recusou` e `vetado` ficam fora da checagem;
+  - `excluir_um` **não** dispara quando só o excluído está na lista (a outra ponta
+    fora ⇒ sem violação — é o caso "ela pode ir a eventos onde a outra não esteja");
+  - `ok_com_ressalva` com `handling = '{}'` não gera violação;
+  - `ok_com_ressalva` com os dois `handling` gera exatamente 2 violações;
+  - lista vazia retorna `[]`.
+
   Função pura, roda no env `node` — sem mocks.
 - `tests/schemas.test.ts` — schemas Zod das cinco entidades.
 
@@ -336,6 +444,16 @@ que é o único momento em que os erros de tipo aparecem.
 - Visualização de grafo
 - Importação de contatos do telefone/Google
 - Timeline de interações e lembretes de aniversário
+- **Dependência positiva** entre convites ("a tia só vem se a filha vier, por causa
+  da carona") — é logística, não conflito. Caberia como `depends_on_person_id` em
+  `guest_invite`, com uma regra de aviso no verificador. Candidato natural a uma
+  fatia posterior, se o caso realmente aparecer.
+- **Política de outro domínio** (grupos de mensagens, quem chamar para ajudar) — o
+  caminho é extrair `invite_policy`/`handling` para uma tabela de política, não
+  ampliar o enum atual (§2.5)
+- **Restrição sobre informação** ("fulano não pode saber que sicrano vem") — é sobre
+  quem sabe o quê, não sobre coexistência física. Nenhuma variação de `invite_policy`
+  resolve; exigiria outro modelo
 - Acesso multiusuário — a parceira **não** acessa a ferramenta; o `veto_owner` é
   anotação de quem decide, não permissão de sistema
 - Criptografia de `reason` em repouso (§6.4)
