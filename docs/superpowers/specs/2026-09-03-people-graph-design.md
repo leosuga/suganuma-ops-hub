@@ -364,7 +364,22 @@ Decisão: as cinco tabelas novas entram num conjunto `PRESERVE_ID_TABLES`. Para 
 
 Justificativa: são FKs **intra-módulo**, não cross-módulo, e o caso de uso real do
 import neste app single-user é restore do próprio backup — não migração entre
-usuários. `SelectiveImportDialog` reusa os mesmos exports e herda o comportamento.
+usuários.
+
+> **Correção (2026-09-04, descoberta na revisão da implementação).** A frase original
+> desta seção dizia que `SelectiveImportDialog` reusa os mesmos exports e herda o
+> comportamento. **Isso é falso.** O diálogo tem uma cópia própria da lógica de limpeza
+> (`SelectiveImportDialog.tsx`, dentro de `doImport`) e sempre usa `insert()`, nunca
+> `upsert`. Ele não ganha o comportamento de preservação automaticamente.
+>
+> Não há risco ativo: o diálogo só lista tabelas presentes em seu `TABLE_LABELS`, e as
+> cinco tabelas novas não estão lá — assim como `inbox_item` e `annual_event`, uma lacuna
+> que já existia. O efeito real é que **o import seletivo ignora silenciosamente** as
+> tabelas do módulo. O caminho "Importar tudo" (`importAllData`) está correto e é o que
+> se usa num restore de verdade.
+>
+> Sincronizar o diálogo é trabalho de escopo próprio — exige decidir junto o destino de
+> `inbox_item` e `annual_event` — e está em §11.
 
 `IMPORT_ORDER` parent-first: `person → guest_event → person_relation →
 person_conflict → guest_invite`. Version do export sobe para `0.4.0`.
@@ -457,3 +472,7 @@ que é o único momento em que os erros de tipo aparecem.
 - Acesso multiusuário — a parceira **não** acessa a ferramenta; o `veto_owner` é
   anotação de quem decide, não permissão de sistema
 - Criptografia de `reason` em repouso (§6.4)
+- **Sincronizar `SelectiveImportDialog` com `cleanRowsForImport`/`PRESERVE_ID_TABLES`** e
+  adicionar as tabelas faltantes ao seu `TABLE_LABELS` (as 5 do módulo, mais `inbox_item` e
+  `annual_event`, ausentes desde antes deste módulo). Hoje o import seletivo ignora essas
+  tabelas em silêncio — ver a correção em §7.1
