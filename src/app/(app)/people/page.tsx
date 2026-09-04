@@ -4,9 +4,9 @@ import { useState, useCallback, useMemo } from "react"
 import dynamic from "next/dynamic"
 import { useTitle } from "@/lib/useTitle"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
-import { useUndoToast } from "@/components/UndoToast"
 import {
   usePeople,
+  useRelations,
   useConflicts,
   useCreatePerson,
   useUpdatePerson,
@@ -24,11 +24,11 @@ const PersonFormDialog = dynamic(
 export default function PeoplePage() {
   useTitle("Pessoas · Suganuma Ops Hub")
   const { data: people = [], isLoading } = usePeople()
+  const { data: relations = [] } = useRelations()
   const { data: conflicts = [] } = useConflicts()
   const createPerson = useCreatePerson()
   const updatePerson = useUpdatePerson()
   const deletePerson = useDeletePerson()
-  const toast = useUndoToast()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<PersonRowType | null>(null)
@@ -70,26 +70,34 @@ export default function PeoplePage() {
     (id: string) => {
       const person = people.find((p) => p.id === id)
       if (!person) return
+
+      // Excluir uma pessoa apaga em cascata (migration 0040_people.sql) suas
+      // relações e conflitos — não há "desfazer" que reconstrua conflitos de
+      // memória. Confirmar com os números reais em vez de oferecer undo.
+      const relationCount = relations.filter(
+        (r) => r.from_person === id || r.to_person === id,
+      ).length
+      const conflictCount = conflicts.filter(
+        (c) => c.subject_id === id || c.object_id === id || c.excluded_person_id === id,
+      ).length
+
+      const parts: string[] = []
+      if (relationCount > 0) {
+        parts.push(relationCount === 1 ? "1 relação" : `${relationCount} relações`)
+      }
+      if (conflictCount > 0) {
+        parts.push(conflictCount === 1 ? "1 conflito" : `${conflictCount} conflitos`)
+      }
+
+      const impact = parts.length > 0 ? ` Isso também apaga ${parts.join(" e ")} registrado(s).` : ""
+      const confirmed = window.confirm(
+        `Apagar "${person.name}"?${impact} Não dá para desfazer.`,
+      )
+      if (!confirmed) return
+
       deletePerson.mutate(id)
-      toast.show({
-        label: `${person.name} removido`,
-        onUndo: () => {
-          createPerson.mutate({
-            name: person.name,
-            nickname: person.nickname,
-            side: person.side,
-            circle: person.circle,
-            household: person.household,
-            phone: person.phone,
-            email: person.email,
-            birthday: person.birthday,
-            notes: person.notes,
-            tags: person.tags,
-          })
-        },
-      })
     },
-    [people, deletePerson, createPerson, toast],
+    [people, relations, conflicts, deletePerson],
   )
 
   const handleSubmit = useCallback(
