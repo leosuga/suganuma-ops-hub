@@ -3348,7 +3348,7 @@ Adicionar `/people` ao grupo de navegação, seguindo a forma exata das entradas
 - [ ] **Step 5: Rodar a suíte completa**
 
 Run: `npm test`
-Expected: PASS. Contagem esperada: 94 testes node anteriores + 8 (schemas) + 13 (conflitos) + 7 (import) = **122 testes node**.
+Expected: PASS. Contagem esperada: **130 testes node** — baseline medida de 102 (o `AGENTS.md` diz 94; está desatualizado, a medição em 2026-09-04 deu 102) + 8 (schemas) + 13 (conflitos) + 7 (import).
 
 - [ ] **Step 6: Build com type check ativo**
 
