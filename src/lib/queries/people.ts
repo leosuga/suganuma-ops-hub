@@ -261,14 +261,14 @@ export const guestEventsOptions = queryOptions({
   queryFn: async (): Promise<GuestEventRow[]> => {
     const supabase = createClient()
     const ownerId = await currentUserId()
-    const { data, error } = await supabase
-      .from("guest_event")
-      .select("*")
-      .eq("owner_id", ownerId)
-      .order("event_date", { ascending: false, nullsFirst: false })
-      .range(0, PAGE - 1)
-    if (error) throw error
-    return (data ?? []) as GuestEventRow[]
+    return fetchAllPages<GuestEventRow>((from, to) =>
+      supabase
+        .from("guest_event")
+        .select("*")
+        .eq("owner_id", ownerId)
+        .order("event_date", { ascending: false, nullsFirst: false })
+        .range(from, to),
+    )
   },
 })
 
