@@ -55,6 +55,7 @@ const HUB_ITEMS = [
   { href: "/cockpit", label: "COCK", desc: "Cockpit" },
   { href: "/notes", label: "NOTES", desc: "Notas" },
   { href: "/projects", label: "PROJ", desc: "Projetos" },
+  { href: "/people", label: "PPL", desc: "Pessoas" },
   { href: "/calendar", label: "CAL", desc: "Calendário" },
   { href: "/review", label: "REV", desc: "Revisão" },
   { href: "/health", label: "HLTH", desc: "Saúde" },

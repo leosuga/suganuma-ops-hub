@@ -39,6 +39,7 @@ const NAV_COMMANDS = [
   { label: "Reports", href: "/reports", shortcut: "R" },
   { label: "Review", href: "/review", shortcut: "W" },
   { label: "Projects", href: "/projects", shortcut: "J" },
+  { label: "People", href: "/people", shortcut: "P" },
   { label: "Notes", href: "/notes", shortcut: "N" },
   { label: "Meal Planning", href: "/meals", shortcut: "M" },
   { label: "Habits Tracker", href: "/habits", shortcut: "B" },

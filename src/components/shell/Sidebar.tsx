@@ -90,6 +90,20 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: "/people",
+    label: "PPL",
+    icon: (
+      // Duas cabeças + ombros. Margem ≥1.5px de qualquer stroke à borda do
+      // viewBox 16x16 (regra do projeto — stroke que toca a borda é clipado).
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="5.5" cy="5.5" r="2.1" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M2.3 13.2a3.4 3.4 0 0 1 6.8 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        <circle cx="11.3" cy="6.6" r="1.7" stroke="currentColor" strokeWidth="1.2" />
+        <path d="M9.1 13.2a2.3 2.3 0 0 1 4.6 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/reports",
     label: "REPS",
     icon: (

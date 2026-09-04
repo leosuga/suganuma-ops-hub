@@ -19,6 +19,7 @@ const PAGE_LABELS: Record<string, string> = {
   "/cockpit": "DAILY COCKPIT",
   "/inbox": "INBOX",
   "/projects": "PROJECTS",
+  "/people": "PEOPLE HUB",
   "/reports": "REPORTS",
   "/review": "WEEKLY REVIEW",
 }
