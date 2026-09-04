@@ -8,3 +8,19 @@ export type { HabitTrackRow, HabitEntryRow } from "./habit"
 export type { BudgetRow } from "./budget"
 export type { AnnualEventRow, AnnualEventInsert, AnnualEventUpdate } from "./annual"
 export type { InboxItemRow, InboxItemInsert } from "./inbox"
+export type {
+  PersonRow,
+  PersonInsert,
+  PersonRelationRow,
+  PersonConflictRow,
+  GuestEventRow,
+  GuestInviteRow,
+  PersonSide,
+  PersonCircle,
+  RelationKind,
+  InvitePolicy,
+  ConflictHandling,
+  VetoOwner,
+  ConflictStatus,
+  InviteStatus,
+} from "./people"

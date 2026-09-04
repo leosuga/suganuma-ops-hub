@@ -5,6 +5,11 @@ import { healthLogSchema, pregnancySchema, appointmentSchema, protocolSchema, pr
 import { mealSchema, mealPlanSchema } from "@/lib/schemas/meal"
 import { noteSchema } from "@/lib/schemas/note"
 import { habitTrackSchema, habitEntrySchema } from "@/lib/schemas/habit"
+import {
+  personSchema,
+  personConflictSchema,
+  guestInviteSchema,
+} from "@/lib/schemas/people"
 
 
 describe("taskSchema", () => {
@@ -227,5 +232,75 @@ describe("habitEntrySchema", () => {
 
   it("requires habit_id", () => {
     expect(habitEntrySchema.safeParse({ done_on: "2026-05-06" }).success).toBe(false)
+  })
+})
+
+describe("people schemas", () => {
+  it("aceita uma pessoa mínima e aplica os defaults", () => {
+    const parsed = personSchema.parse({ name: "Tia Rosa" })
+    expect(parsed.side).toBe("outro")
+    expect(parsed.circle).toBe("outro")
+    expect(parsed.tags).toEqual([])
+  })
+
+  it("rejeita pessoa sem nome", () => {
+    expect(personSchema.safeParse({ name: "" }).success).toBe(false)
+  })
+
+  it("exige excluded_person_id quando invite_policy é excluir_um", () => {
+    const semExcluido = personConflictSchema.safeParse({
+      subject_id: "11111111-1111-1111-a111-111111111111",
+      object_id: "22222222-2222-2222-a222-222222222222",
+      invite_policy: "excluir_um",
+    })
+    expect(semExcluido.success).toBe(false)
+  })
+
+  it("aceita excluir_um com o excluído sendo uma das pontas", () => {
+    const ok = personConflictSchema.safeParse({
+      subject_id: "11111111-1111-1111-a111-111111111111",
+      object_id: "22222222-2222-2222-a222-222222222222",
+      invite_policy: "excluir_um",
+      excluded_person_id: "11111111-1111-1111-a111-111111111111",
+    })
+    expect(ok.success).toBe(true)
+  })
+
+  it("rejeita excluído que não é subject nem object", () => {
+    const forasteiro = personConflictSchema.safeParse({
+      subject_id: "11111111-1111-1111-a111-111111111111",
+      object_id: "22222222-2222-2222-a222-222222222222",
+      invite_policy: "excluir_um",
+      excluded_person_id: "33333333-3333-3333-a333-333333333333",
+    })
+    expect(forasteiro.success).toBe(false)
+  })
+
+  it("rejeita conflito de uma pessoa com ela mesma", () => {
+    const mesmo = personConflictSchema.safeParse({
+      subject_id: "11111111-1111-1111-a111-111111111111",
+      object_id: "11111111-1111-1111-a111-111111111111",
+      invite_policy: "nao_juntos",
+    })
+    expect(mesmo.success).toBe(false)
+  })
+
+  it("aceita handling combinado", () => {
+    const parsed = personConflictSchema.parse({
+      subject_id: "11111111-1111-1111-a111-111111111111",
+      object_id: "22222222-2222-2222-a222-222222222222",
+      invite_policy: "ok_com_ressalva",
+      handling: ["avisar_antes", "separar_no_evento"],
+    })
+    expect(parsed.handling).toHaveLength(2)
+  })
+
+  it("convite nasce como cogitado", () => {
+    const parsed = guestInviteSchema.parse({
+      event_id: "11111111-1111-1111-a111-111111111111",
+      person_id: "22222222-2222-2222-a222-222222222222",
+    })
+    expect(parsed.status).toBe("cogitado")
+    expect(parsed.plus_ones).toBe(0)
   })
 })
