@@ -3,15 +3,7 @@
 import { memo } from "react"
 import { cn } from "@/lib/utils"
 import type { InviteStatus, PersonRow } from "@/lib/types"
-
-const STATUSES: { value: InviteStatus; label: string }[] = [
-  { value: "cogitado", label: "?" },
-  { value: "convidar", label: "CONVIDAR" },
-  { value: "convidado", label: "CONVIDADO" },
-  { value: "confirmado", label: "CONFIRMOU" },
-  { value: "recusou", label: "RECUSOU" },
-  { value: "vetado", label: "VETADO" },
-]
+import { INVITE_STATUS_ORDER, INVITE_STATUS_LABEL } from "@/lib/people/labels"
 
 interface Props {
   person: PersonRow
@@ -43,8 +35,8 @@ export const InviteRow = memo(function InviteRow({
         aria-label={`Status de ${person.name}`}
         onChange={(e) => onChangeStatus(person.id, e.target.value as InviteStatus)}
       >
-        {STATUSES.map((s) => (
-          <option key={s.value} value={s.value}>{s.label}</option>
+        {INVITE_STATUS_ORDER.map((s) => (
+          <option key={s} value={s}>{INVITE_STATUS_LABEL[s]}</option>
         ))}
       </select>
     </div>

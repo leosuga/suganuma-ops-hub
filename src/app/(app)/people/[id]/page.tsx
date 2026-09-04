@@ -17,6 +17,7 @@ import {
 } from "@/lib/queries/people"
 import type { PersonConflictRow } from "@/lib/types"
 import type { PersonConflict, PersonRelation } from "@/lib/schemas/people"
+import { POLICY_LABEL, VETO_LABEL, KIND_LABEL, HANDLING_LABEL } from "@/lib/people/labels"
 
 const ConflictFormDialog = dynamic(
   () => import("@/components/people/ConflictFormDialog").then((m) => ({ default: m.ConflictFormDialog })),
@@ -27,23 +28,14 @@ const RelationFormDialog = dynamic(
   { ssr: false },
 )
 
-const POLICY_LABEL: Record<string, string> = {
-  excluir_um: "Excluir um",
-  nao_juntos: "Não juntos",
-  ok_com_ressalva: "Com ressalva",
-}
-
-const VETO_LABEL: Record<string, string> = {
-  eu: "decisão minha",
-  parceira: "decisão dela",
-  ambos: "decisão nossa",
-}
-
 export default function PersonDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { data: people = [], isLoading: peopleLoading } = usePeople()
-  const { data: relations = [] } = useRelations()
-  const { data: conflicts = [] } = useConflicts()
+  const { data: people = [], isLoading: peopleLoading, isError: peopleError } = usePeople()
+  const { data: relations = [], isError: relationsError } = useRelations()
+  const { data: conflicts = [], isError: conflictsError } = useConflicts()
+  // Sem isso, uma query falhando derruba `person` para null e a página
+  // renderiza "Pessoa não encontrada" — indistinguível de um id inválido.
+  const isError = peopleError || relationsError || conflictsError
   const createRelation = useCreateRelation()
   const deleteRelation = useDeleteRelation()
   const createConflict = useCreateConflict()
@@ -122,7 +114,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
 
   if (peopleLoading) {
     return (
-      <SectionErrorBoundary>
+      <SectionErrorBoundary label="PERSON DETAIL">
         <div className="p-3">
           <Link href="/people" className="font-mono text-[10px] text-on-surface/40 hover:text-accent">
             ← PESSOAS
@@ -133,9 +125,20 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
     )
   }
 
+  if (isError) {
+    return (
+      <SectionErrorBoundary label="PERSON DETAIL">
+        <div className="p-4">
+          <p className="font-mono text-[11px] text-danger">Erro ao carregar a pessoa.</p>
+          <Link href="/people" className="font-mono text-[11px] text-accent">← VOLTAR</Link>
+        </div>
+      </SectionErrorBoundary>
+    )
+  }
+
   if (!person) {
     return (
-      <SectionErrorBoundary>
+      <SectionErrorBoundary label="PERSON DETAIL">
         <div className="p-4">
           <p className="font-mono text-[11px] text-on-surface/40">Pessoa não encontrada.</p>
           <Link href="/people" className="font-mono text-[11px] text-accent">← VOLTAR</Link>
@@ -145,7 +148,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
   }
 
   return (
-    <SectionErrorBoundary>
+    <SectionErrorBoundary label="PERSON DETAIL">
       <div className="p-3">
         <Link href="/people" className="font-mono text-[10px] text-on-surface/40 hover:text-accent">
           ← PESSOAS
@@ -180,7 +183,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                 >
                   <span className="flex-1">
                     {nameOf(otherId)}
-                    <span className="ml-2 font-mono text-[10px] text-on-surface/40">{r.kind}</span>
+                    <span className="ml-2 font-mono text-[10px] text-on-surface/40">{KIND_LABEL[r.kind]}</span>
                   </span>
                   <button
                     type="button"
@@ -221,7 +224,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                     {nameOf(c.subject_id === id ? c.object_id : c.subject_id)}
                   </span>
                   <span className="rounded bg-on-surface/10 px-1.5 py-0.5 font-mono text-[10px] text-on-surface/60">
-                    {POLICY_LABEL[c.invite_policy] ?? c.invite_policy}
+                    {POLICY_LABEL[c.invite_policy]}
                   </span>
                   {c.status === "resolvido" ? (
                     <span className="font-mono text-[10px] text-on-surface/40">RESOLVIDO</span>
@@ -246,9 +249,11 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                 </div>
 
                 <div className="mt-1 font-mono text-[10px] text-on-surface/40">
-                  {VETO_LABEL[c.veto_owner] ?? c.veto_owner}
+                  {VETO_LABEL[c.veto_owner]}
                   {c.excluded_person_id ? ` · fica de fora: ${nameOf(c.excluded_person_id)}` : ""}
-                  {c.handling.length > 0 ? ` · ${c.handling.join(", ")}` : ""}
+                  {c.handling.length > 0
+                    ? ` · ${c.handling.map((h) => HANDLING_LABEL[h]).join(", ")}`
+                    : ""}
                 </div>
 
                 {c.reason ? (

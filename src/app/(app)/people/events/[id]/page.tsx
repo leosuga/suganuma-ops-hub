@@ -12,11 +12,15 @@ import type { InviteStatus } from "@/lib/types"
 
 export default function GuestEventPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: eventId } = use(params)
-  const { data: people = [] } = usePeople()
-  const { data: conflicts = [] } = useConflicts()
-  const { data: events = [], isLoading: eventsLoading } = useGuestEvents()
-  const { data: invites = [], isLoading } = useGuestInvites(eventId)
+  const { data: people = [], isError: peopleError } = usePeople()
+  const { data: conflicts = [], isError: conflictsError } = useConflicts()
+  const { data: events = [], isLoading: eventsLoading, isError: eventsError } = useGuestEvents()
+  const { data: invites = [], isLoading, isError: invitesError } = useGuestInvites(eventId)
   const upsertInvite = useUpsertInvite()
+  // `events` falhando derruba `event` para null e a página renderiza "Evento
+  // não encontrado" — indistinguível de um id inválido. As outras 3 queries
+  // degradam violações/status em silêncio (nenhuma some, mas fica errada).
+  const isError = peopleError || conflictsError || eventsError || invitesError
 
   const event = useMemo(() => events.find((e) => e.id === eventId) ?? null, [events, eventId])
   useTitle(event ? `${event.name} · Convidados` : "Evento · Suganuma Ops Hub")
@@ -83,7 +87,7 @@ export default function GuestEventPage({ params }: { params: Promise<{ id: strin
 
   if (eventsLoading) {
     return (
-      <SectionErrorBoundary>
+      <SectionErrorBoundary label="GUEST EVENT">
         <div className="p-3">
           <Link href="/people" className="font-mono text-[10px] text-on-surface/40 hover:text-accent">
             ← PESSOAS
@@ -94,9 +98,20 @@ export default function GuestEventPage({ params }: { params: Promise<{ id: strin
     )
   }
 
+  if (isError) {
+    return (
+      <SectionErrorBoundary label="GUEST EVENT">
+        <div className="p-4">
+          <p className="font-mono text-[11px] text-danger">Erro ao carregar o evento.</p>
+          <Link href="/people" className="font-mono text-[11px] text-accent">← VOLTAR</Link>
+        </div>
+      </SectionErrorBoundary>
+    )
+  }
+
   if (!event) {
     return (
-      <SectionErrorBoundary>
+      <SectionErrorBoundary label="GUEST EVENT">
         <div className="p-4">
           <p className="font-mono text-[11px] text-on-surface/40">Evento não encontrado.</p>
           <Link href="/people" className="font-mono text-[11px] text-accent">← VOLTAR</Link>
@@ -106,7 +121,7 @@ export default function GuestEventPage({ params }: { params: Promise<{ id: strin
   }
 
   return (
-    <SectionErrorBoundary>
+    <SectionErrorBoundary label="GUEST EVENT">
       <div className="p-3">
         <Link href="/people" className="font-mono text-[10px] text-on-surface/40 hover:text-accent">
           ← PESSOAS

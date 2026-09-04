@@ -171,6 +171,17 @@ export function PersonFormDialog({ open, onOpenChange, person, onSubmit }: Props
           </div>
 
           <div>
+            <label className={label} htmlFor="pf-email">E-MAIL</label>
+            <input
+              id="pf-email"
+              type="email"
+              className={field}
+              value={state.email}
+              onChange={(e) => dispatch({ type: "set", field: "email", value: e.target.value })}
+            />
+          </div>
+
+          <div>
             <label className={label} htmlFor="pf-house">GRUPO FAMILIAR</label>
             <input
               id="pf-house"

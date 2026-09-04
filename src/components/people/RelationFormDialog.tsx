@@ -5,16 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { personRelationSchema } from "@/lib/schemas/people"
 import type { PersonRelation } from "@/lib/schemas/people"
 import type { PersonRow, RelationKind } from "@/lib/types"
-
-const KIND_LABEL: Record<RelationKind, string> = {
-  conjuge: "é cônjuge de",
-  filho_de: "é filho(a) de",
-  pai_de: "é pai/mãe de",
-  irmao_de: "é irmão(ã) de",
-  amigo_de: "é amigo(a) de",
-  colega_de: "é colega de",
-  ex_de: "é ex de",
-}
+import { KIND_LABEL } from "@/lib/people/labels"
 
 interface Props {
   open: boolean

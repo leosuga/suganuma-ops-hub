@@ -3,17 +3,12 @@
 import { memo } from "react"
 import { cn } from "@/lib/utils"
 import type { Violation } from "@/lib/people/conflicts"
+import { VIOLATION_LEVEL_LABEL, VETO_LABEL } from "@/lib/people/labels"
 
 const LEVEL_STYLE: Record<Violation["level"], string> = {
   block: "border-danger/40 bg-danger/10 text-danger",
   warn: "border-amber/40 bg-amber/10 text-amber",
   info: "border-on-surface/20 bg-on-surface/5 text-on-surface/70",
-}
-
-const LEVEL_TAG: Record<Violation["level"], string> = {
-  block: "BLOQUEIO",
-  warn: "AVISAR",
-  info: "LOGÍSTICA",
 }
 
 export const ViolationPanel = memo(function ViolationPanel({
@@ -43,8 +38,15 @@ export const ViolationPanel = memo(function ViolationPanel({
           key={`${v.conflictId}-${v.level}-${i}`}
           className={cn("flex items-start gap-2 border px-2 py-1.5", LEVEL_STYLE[v.level])}
         >
-          <span className="shrink-0 font-mono text-[10px]">{LEVEL_TAG[v.level]}</span>
-          <span className="flex-1 text-[13px]">{v.message}</span>
+          <span className="shrink-0 font-mono text-[10px]">{VIOLATION_LEVEL_LABEL[v.level]}</span>
+          <span className="flex-1 text-[13px]">
+            {v.message}
+            {/* §4 do spec: a tela de curadoria precisa deixar visível de quem
+                é a decisão — antes só a ficha da pessoa mostrava isso. */}
+            <span className="ml-2 font-mono text-[10px] opacity-60">
+              ({VETO_LABEL[v.vetoOwner]})
+            </span>
+          </span>
         </div>
       ))}
     </div>

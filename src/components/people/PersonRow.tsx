@@ -4,22 +4,7 @@ import { memo } from "react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import type { PersonRow as PersonRowType } from "@/lib/types"
-
-const SIDE_LABEL: Record<string, string> = {
-  leo: "MEU",
-  parceira: "DELA",
-  comum: "COMUM",
-  outro: "—",
-}
-
-const CIRCLE_LABEL: Record<string, string> = {
-  familia_nuclear: "Família nuclear",
-  familia_extensa: "Família extensa",
-  amigos: "Amigos",
-  trabalho: "Trabalho",
-  vizinhos: "Vizinhos",
-  outro: "Outro",
-}
+import { SIDE_LABEL, CIRCLE_LABEL } from "@/lib/people/labels"
 
 interface Props {
   person: PersonRowType

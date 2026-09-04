@@ -42,6 +42,10 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
   const [importing, setImporting] = useState(false)
   const [imported, setImported] = useState(0)
   const [fileName, setFileName] = useState("")
+  // Tabelas com linhas no backup que este diálogo não sabe importar (módulo
+  // novo sem entrada em TABLE_LABELS, ex: person/*). Sem isso, a perda é
+  // silenciosa — o usuário nem sabe que faltou pedir.
+  const [ignoredTables, setIgnoredTables] = useState<string[]>([])
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -57,9 +61,13 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
           return
         }
         const info: TableInfo[] = []
+        const ignored: string[] = []
         for (const [name, rows] of Object.entries(json.tables)) {
-          if (Array.isArray(rows) && rows.length > 0 && TABLE_LABELS[name]) {
+          if (!Array.isArray(rows) || rows.length === 0) continue
+          if (TABLE_LABELS[name]) {
             info.push({ name, label: TABLE_LABELS[name], rows: rows.length })
+          } else {
+            ignored.push(name)
           }
         }
         // Parent-first order (matches importAllData) so child rows never
@@ -71,6 +79,7 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
         })
         setTables(info)
         setSelected(new Set(info.map((t) => t.name)))
+        setIgnoredTables(ignored.sort())
         setFileLoaded(true)
       } catch {
         alert("Erro ao parsear JSON")
@@ -168,6 +177,7 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
     setFileLoaded(false)
     setImported(0)
     setFileName("")
+    setIgnoredTables([])
     onOpenChange(false)
   }
 
@@ -207,6 +217,12 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
                   {selected.size === tables.length ? "DESMARCAR" : "MARCAR"} TUDO
                 </button>
               </div>
+
+              {ignoredTables.length > 0 && (
+                <p className="text-[9px] font-mono text-amber/80 leading-relaxed">
+                  Ignoradas nesta importação (sem suporte ainda): {ignoredTables.join(", ")}
+                </p>
+              )}
 
               <div className="space-y-1 max-h-64 overflow-auto">
                 {tables.map((t) => (
