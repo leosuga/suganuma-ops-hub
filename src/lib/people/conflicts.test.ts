@@ -108,6 +108,7 @@ describe("checkGuestList", () => {
     expect(v[0].level).toBe("block")
     expect(v[0].excludedId).toBe(BIA)
     expect(v[0].message).toContain("Bia")
+    expect(v[0].message).toContain("Ana")
   })
 
   it("excluir_um com excluded_person_id nulo bloqueia sem apontar 'não definido'", () => {
