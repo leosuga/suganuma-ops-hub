@@ -98,6 +98,46 @@ describe("checkGuestList", () => {
     expect(v).toEqual([])
   })
 
+  it("bloqueia excluir_um quando excluded_person_id é o object", () => {
+    const v = checkGuestList(
+      convites([[ANA, "convidar"], [BIA, "convidar"]]),
+      [conflito({ invite_policy: "excluir_um", excluded_person_id: BIA })],
+      people,
+    )
+    expect(v).toHaveLength(1)
+    expect(v[0].level).toBe("block")
+    expect(v[0].excludedId).toBe(BIA)
+    expect(v[0].message).toContain("Bia")
+  })
+
+  it("excluir_um com excluded_person_id nulo bloqueia sem apontar 'não definido'", () => {
+    const v = checkGuestList(
+      convites([[ANA, "convidar"], [BIA, "convidar"]]),
+      [conflito({ invite_policy: "excluir_um", excluded_person_id: null })],
+      people,
+    )
+    expect(v).toHaveLength(1)
+    expect(v[0].level).toBe("block")
+    expect(v[0].excludedId).toBeNull()
+    expect(v[0].message).not.toContain("não definido")
+    expect(v[0].message).toContain("Ana")
+    expect(v[0].message).toContain("Bia")
+  })
+
+  it("excluir_um com excluded_person_id fora do par subject/object trata como indefinido", () => {
+    const v = checkGuestList(
+      convites([[ANA, "convidar"], [BIA, "convidar"]]),
+      [conflito({ invite_policy: "excluir_um", excluded_person_id: CAI })],
+      people,
+    )
+    expect(v).toHaveLength(1)
+    expect(v[0].level).toBe("block")
+    expect(v[0].excludedId).toBeNull()
+    expect(v[0].message).not.toContain("não definido")
+    expect(v[0].message).toContain("Ana")
+    expect(v[0].message).toContain("Bia")
+  })
+
   it("ok_com_ressalva sem handling não gera violação", () => {
     const v = checkGuestList(
       convites([[ANA, "convidar"], [BIA, "convidar"]]),

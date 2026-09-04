@@ -68,11 +68,27 @@ export function checkGuestList(
 
     if (c.invite_policy === "excluir_um") {
       const excludedId = c.excluded_person_id
-      const excluded = excludedId ? nameOf(excludedId) : "(não definido)"
+      const isKnownSide = excludedId === c.subject_id || excludedId === c.object_id
+
+      if (!isKnownSide) {
+        // excluded_person_id ausente (null) ou apontando para alguém fora do
+        // par subject/object — o banco impede isso hoje, mas a função é pura
+        // e não pode depender silenciosamente dessa invariante. O conflito é
+        // real (block), só não sabemos qual dos dois excluir.
+        violations.push({
+          ...base,
+          level: "block",
+          excludedId: null,
+          message: `${subject} e ${object}: o conflito exige excluir um dos dois, mas não está registrado qual.`,
+        })
+        continue
+      }
+
+      const excluded = nameOf(excludedId)
       violations.push({
         ...base,
         level: "block",
-        excludedId: excludedId ?? null,
+        excludedId,
         message: `${excluded} não deve ser convidado quando ${
           excludedId === c.subject_id ? object : subject
         } está na lista.`,
