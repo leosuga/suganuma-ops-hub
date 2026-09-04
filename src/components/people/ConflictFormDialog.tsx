@@ -33,6 +33,17 @@ function reducer(state: FormState, action: Action): FormState {
       if (action.field === "invite_policy" && action.value !== "excluir_um") {
         next.excluded_person_id = ""
       }
+      // Se mudar subject_id ou object_id enquanto invite_policy é excluir_um,
+      // limpar excluded_person_id se ele não aponta mais para nenhuma das duas pontas.
+      if (
+        (action.field === "subject_id" || action.field === "object_id") &&
+        next.invite_policy === "excluir_um" &&
+        next.excluded_person_id &&
+        next.excluded_person_id !== next.subject_id &&
+        next.excluded_person_id !== next.object_id
+      ) {
+        next.excluded_person_id = ""
+      }
       return next
     }
     case "toggleHandling":
