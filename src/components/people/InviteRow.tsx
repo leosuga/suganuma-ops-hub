@@ -40,6 +40,7 @@ export const InviteRow = memo(function InviteRow({
       <select
         className="shrink-0 border border-on-surface/20 bg-surface px-1.5 py-1 font-mono text-[10px] text-on-surface"
         value={status}
+        aria-label={`Status de ${person.name}`}
         onChange={(e) => onChangeStatus(person.id, e.target.value as InviteStatus)}
       >
         {STATUSES.map((s) => (

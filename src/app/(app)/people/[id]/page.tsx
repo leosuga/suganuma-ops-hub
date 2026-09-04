@@ -41,7 +41,7 @@ const VETO_LABEL: Record<string, string> = {
 
 export default function PersonDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const { data: people = [] } = usePeople()
+  const { data: people = [], isLoading: peopleLoading } = usePeople()
   const { data: relations = [] } = useRelations()
   const { data: conflicts = [] } = useConflicts()
   const createRelation = useCreateRelation()
@@ -119,6 +119,19 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
     },
     [deleteConflict, nameOf],
   )
+
+  if (peopleLoading) {
+    return (
+      <SectionErrorBoundary>
+        <div className="p-3">
+          <Link href="/people" className="font-mono text-[10px] text-on-surface/40 hover:text-accent">
+            ← PESSOAS
+          </Link>
+          <div className="mt-3 h-32 animate-pulse bg-on-surface/5" />
+        </div>
+      </SectionErrorBoundary>
+    )
+  }
 
   if (!person) {
     return (

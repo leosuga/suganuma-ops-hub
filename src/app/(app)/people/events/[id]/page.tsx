@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useTitle } from "@/lib/useTitle"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { usePeople, useConflicts, useGuestEvents, useGuestInvites, useUpsertInvite } from "@/lib/queries/people"
-import { checkGuestList } from "@/lib/people/conflicts"
+import { checkGuestList, ON_LIST_STATUSES } from "@/lib/people/conflicts"
 import { ViolationPanel } from "@/components/people/ViolationPanel"
 import { InviteRow } from "@/components/people/InviteRow"
 import type { InviteStatus } from "@/lib/types"
@@ -14,7 +14,7 @@ export default function GuestEventPage({ params }: { params: Promise<{ id: strin
   const { id: eventId } = use(params)
   const { data: people = [] } = usePeople()
   const { data: conflicts = [] } = useConflicts()
-  const { data: events = [] } = useGuestEvents()
+  const { data: events = [], isLoading: eventsLoading } = useGuestEvents()
   const { data: invites = [], isLoading } = useGuestInvites(eventId)
   const upsertInvite = useUpsertInvite()
 
@@ -41,8 +41,16 @@ export default function GuestEventPage({ params }: { params: Promise<{ id: strin
     const ids = new Set<string>()
     for (const v of violations) {
       if (v.level !== "block") continue
-      ids.add(v.subjectId)
-      ids.add(v.objectId)
+      if (v.excludedId) {
+        // excluir_um: a decisão já foi tomada — só a pessoa excluída é o
+        // problema, a outra ponta do conflito está liberada.
+        ids.add(v.excludedId)
+      } else {
+        // nao_juntos (ou excluir_um sem excludedId conhecido): as duas
+        // pontas estão em conflito, o usuário escolhe qual sai.
+        ids.add(v.subjectId)
+        ids.add(v.objectId)
+      }
     }
     return ids
   }, [violations])
@@ -68,12 +76,23 @@ export default function GuestEventPage({ params }: { params: Promise<{ id: strin
   const counts = useMemo(() => {
     let naLista = 0
     for (const i of invites) {
-      if (i.status === "convidar" || i.status === "convidado" || i.status === "confirmado") {
-        naLista += 1
-      }
+      if (ON_LIST_STATUSES.has(i.status)) naLista += 1
     }
     return { naLista, total: people.length }
   }, [invites, people])
+
+  if (eventsLoading) {
+    return (
+      <SectionErrorBoundary>
+        <div className="p-3">
+          <Link href="/people" className="font-mono text-[10px] text-on-surface/40 hover:text-accent">
+            ← PESSOAS
+          </Link>
+          <div className="mt-3 h-32 animate-pulse bg-on-surface/5" />
+        </div>
+      </SectionErrorBoundary>
+    )
+  }
 
   if (!event) {
     return (
