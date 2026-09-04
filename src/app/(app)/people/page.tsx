@@ -2,12 +2,14 @@
 
 import { useState, useCallback, useMemo } from "react"
 import dynamic from "next/dynamic"
+import Link from "next/link"
 import { useTitle } from "@/lib/useTitle"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import {
   usePeople,
   useRelations,
   useConflicts,
+  useGuestEvents,
   useCreatePerson,
   useUpdatePerson,
   useDeletePerson,
@@ -26,6 +28,7 @@ export default function PeoplePage() {
   const { data: people = [], isLoading } = usePeople()
   const { data: relations = [] } = useRelations()
   const { data: conflicts = [] } = useConflicts()
+  const { data: events = [] } = useGuestEvents()
   const createPerson = useCreatePerson()
   const updatePerson = useUpdatePerson()
   const deletePerson = useDeletePerson()
@@ -140,6 +143,20 @@ export default function PeoplePage() {
             + PESSOA
           </button>
         </div>
+
+        {events.length > 0 ? (
+          <div className="mb-3 flex flex-wrap gap-2">
+            {events.map((e) => (
+              <Link
+                key={e.id}
+                href={`/people/events/${e.id}`}
+                className="border border-on-surface/20 px-2 py-1 font-mono text-[10px] text-on-surface/70 hover:border-accent hover:text-accent"
+              >
+                {e.name.toUpperCase()}
+              </Link>
+            ))}
+          </div>
+        ) : null}
 
         {isLoading ? <div className="h-32 animate-pulse bg-on-surface/5" /> : null}
 
