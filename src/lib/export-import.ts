@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/client"
 import { logger } from "@/lib/logger"
+import { cleanRowsForImport, PRESERVE_ID_TABLES } from "@/lib/import-clean"
 
-const TABLES = ["task", "project", "account", "transaction", "health_log", "pregnancy", "appointment", "protocol", "protocol_entry", "note", "meal", "meal_plan", "habit_track", "habit_entry", "budget", "annual_event", "inbox_item"] as const
+const TABLES = ["task", "project", "account", "transaction", "health_log", "pregnancy", "appointment", "protocol", "protocol_entry", "note", "meal", "meal_plan", "habit_track", "habit_entry", "budget", "annual_event", "inbox_item", "person", "person_relation", "person_conflict", "guest_event", "guest_invite"] as const
 
 // FK columns that reference other user-owned tables.
 // These are stripped on import to prevent dangling references when importing
@@ -38,6 +39,11 @@ const IMPORT_ORDER = [
   "habit_entry",
   "budget",
   "inbox_item",
+  "person",
+  "guest_event",
+  "person_relation",
+  "person_conflict",
+  "guest_invite",
 ] as const
 
 export { IMPORT_ORDER }
@@ -88,7 +94,7 @@ export async function exportAllData(): Promise<string> {
   }
 
   const exportData: ExportData = {
-    version: "0.3.0",
+    version: "0.4.0",
     exported_at: new Date().toISOString(),
     tables,
   }
@@ -119,22 +125,15 @@ export async function importAllData(json: string): Promise<number> {
 
     const fksToStrip = FK_COLUMNS_TO_STRIP[table] ?? []
 
-    const cleaned = rows.map((row) => {
-      // Strip auto-generated and timestamp columns
-      const { id, created_at, updated_at, ...rest } = row as Record<string, unknown>
-      // Strip cross-table FKs to prevent dangling references
-      for (const fk of fksToStrip) {
-        if (fk in rest) rest[fk] = null
-      }
-      // Overwrite owner_id with the current user
-      return { ...rest, owner_id: user.id }
-    })
+    const cleaned = cleanRowsForImport(table, rows as Record<string, unknown>[], user.id, fksToStrip)
 
     // Insert in chunks to stay under PostgREST body limits
     let inserted = 0
     for (let i = 0; i < cleaned.length; i += INSERT_CHUNK_SIZE) {
       const chunk = cleaned.slice(i, i + INSERT_CHUNK_SIZE)
-      const { error } = await supabase.from(table).insert(chunk)
+      const { error } = PRESERVE_ID_TABLES.has(table)
+        ? await supabase.from(table).upsert(chunk, { onConflict: "id" })
+        : await supabase.from(table).insert(chunk)
       if (error) {
         logger.warn("import", `erro na tabela ${table} (chunk ${Math.floor(i / INSERT_CHUNK_SIZE)})`, {
           error: error.message,
