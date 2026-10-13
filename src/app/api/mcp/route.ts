@@ -11,6 +11,7 @@ import {
   validateHostHeader,
   wwwAuthenticateHeader,
 } from "@/lib/mcp/auth"
+import { classifySessionRequest } from "@/lib/mcp/session"
 import { checkMcpRateLimit, cleanupStaleRateLimitBuckets } from "@/lib/mcp/rate-limit"
 import type { McpToolContext } from "@/lib/mcp/types"
 
@@ -147,8 +148,13 @@ async function handleMcpRequest(req: NextRequest): Promise<Response> {
   let transport: WebStandardStreamableHTTPServerTransport
 
   const existing = sessionId ? sessions.get(sessionId) : undefined
+  const decision = classifySessionRequest({
+    sessionId,
+    hasSession: !!existing,
+    isInitialize: !!body && isInitializeRequest(body),
+  })
 
-  if (existing) {
+  if (decision === "reuse" && existing) {
     // A sessão pertence a um dono; um token de outro dono nunca a reaproveita.
     if (existing.ctx.ownerId !== auth.ownerId) {
       return unauthorizedResponse(origin, "Sessão pertence a outro usuário")
@@ -156,7 +162,7 @@ async function handleMcpRequest(req: NextRequest): Promise<Response> {
     existing.ctx.token = auth.token
     existing.ctx.scopes = auth.scopes
     transport = existing.transport
-  } else if (!sessionId && body && isInitializeRequest(body)) {
+  } else if (decision === "init") {
     const newSessionId = randomUUID()
     const ctx: McpToolContext = {
       ownerId: auth.ownerId,
@@ -176,6 +182,19 @@ async function handleMcpRequest(req: NextRequest): Promise<Response> {
 
     const server = createMcpServer(ctx)
     await server.connect(transport)
+  } else if (decision === "not_found") {
+    // 404 (e não 400) é o que faz o cliente reabrir a sessão após um redeploy.
+    return new NextResponse(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        error: { code: -32001, message: "Session not found" },
+        id: null,
+      }),
+      {
+        status: 404,
+        headers: { "Content-Type": "application/json", ...corsHeaders(origin) },
+      }
+    )
   } else {
     return new NextResponse(
       JSON.stringify({
