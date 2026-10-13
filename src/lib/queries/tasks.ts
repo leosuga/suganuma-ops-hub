@@ -75,6 +75,30 @@ export function useCreateTask() {
   })
 }
 
+/** Insere várias tasks numa única chamada (ex.: cronograma do bebê, ~50 linhas). */
+export function useCreateTasksBulk() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (tasks: Array<Omit<Task, "id"> & { completed_at?: string }>) => {
+      if (tasks.length === 0) return [] as TaskRow[]
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+      const { data, error } = await supabase
+        .from("task")
+        .insert(tasks.map((t) => ({ ...t, owner_id: user.id })))
+        .select()
+      if (error) throw error
+      return (data ?? []) as TaskRow[]
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: taskKeys.all })
+    },
+  })
+}
+
 export function useUpdateTask() {
   const queryClient = useQueryClient()
   return useMutation({

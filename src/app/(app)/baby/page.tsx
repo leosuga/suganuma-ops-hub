@@ -11,6 +11,7 @@ import { ChildSetupForm } from "@/components/baby/ChildSetupForm"
 import { BabyStatusStrip } from "@/components/baby/BabyStatusStrip"
 import { QuickLogPanel } from "@/components/baby/QuickLogPanel"
 import { BabyTimeline } from "@/components/baby/BabyTimeline"
+import { CareTimeline } from "@/components/baby/CareTimeline"
 import { GrowthList } from "@/components/baby/GrowthList"
 import { WarningSignsPanel } from "@/components/baby/WarningSignsPanel"
 
@@ -44,6 +45,7 @@ export default function BabyPage() {
           <>
             <BabyStatusStrip summary={summary} />
             <QuickLogPanel childId={child.id} logs={logs} />
+            <CareTimeline child={child} todayStr={todayStr} />
             <BabyTimeline logs={logs} todayStr={todayStr} />
             <GrowthList child={child} growth={growth} />
             <WarningSignsPanel />
