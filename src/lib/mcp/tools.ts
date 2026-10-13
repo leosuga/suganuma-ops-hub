@@ -62,6 +62,24 @@ const healthBiometricsSchema = z.object({
   limit: z.number().int().min(1).max(500).optional().describe("Maximum logs to return (default 50)"),
 })
 
+const babyLogEventSchema = z.object({
+  kind: z.enum(["feed", "diaper", "sleep", "med", "growth", "temp", "note"]),
+  at: z.string().datetime().optional().describe("Quando aconteceu, em ISO UTC (ex: 2026-10-13T06:00:00Z). Omitir = agora"),
+  ended_at: z.string().datetime().optional().nullable().describe("Fim do sono. Omitir para sono em andamento"),
+  data: z
+    .record(z.string(), z.unknown())
+    .describe(
+      "Depende do kind. feed: {method:'breast'|'bottle', side:'L'|'R'|'both', ml, milk:'breast_milk'|'formula'}; diaper: {wet:boolean, dirty:boolean}; sleep: {}; med: {name, dose?}; growth: {weight_g?, length_cm?, head_cm?}; temp: {celsius}; note: {}",
+    ),
+  notes: z.string().optional().nullable(),
+})
+
+const babyListLogsSchema = z.object({
+  kind: z.enum(["feed", "diaper", "sleep", "med", "growth", "temp", "note"]).optional(),
+  since: z.string().datetime().optional().describe("ISO UTC; apenas registros a partir deste instante"),
+  limit: z.number().int().min(1).max(500).optional(),
+})
+
 const healthAppointmentsSchema = z.object({
   since: z.string().datetime().optional(),
   limit: z.number().int().min(1).max(200).optional(),
@@ -314,6 +332,45 @@ export function createTools(): McpToolDefinition[] {
         const result = await agentApi(ctx.token, "POST", "/api/agent/health/appointments", body)
         return formatResult(result)
       },
+    },
+
+    // Baby
+    {
+      name: "baby_summary",
+      description:
+        "Estado atual da bebê: idade, resumo das ultimas 24h (mamadas, ultima mamada e proximo lado, fraldas, sono, vitamina D) e proximos cuidados do cronograma (vacinas, consultas, documentos).",
+      inputSchema: z.object({}),
+      handler: async (_args, ctx) => {
+        const result = await agentApi(ctx.token, "GET", "/api/agent/baby")
+        return formatResult(result)
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "baby_log_event",
+      description:
+        "Registra um evento da bebê: mamada, fralda, sono, remedio, medida, temperatura ou nota. Use `at` para eventos passados (ex: 'mamou as 3h').",
+      inputSchema: babyLogEventSchema,
+      handler: async (args, ctx) => {
+        const body = babyLogEventSchema.parse(args)
+        const result = await agentApi(ctx.token, "POST", "/api/agent/baby/logs", body)
+        return formatResult(result)
+      },
+    },
+    {
+      name: "baby_list_logs",
+      description: "Lista registros da rotina da bebê (mais recentes primeiro), com filtro por tipo e data.",
+      inputSchema: babyListLogsSchema,
+      handler: async (args, ctx) => {
+        const { kind, since, limit } = babyListLogsSchema.parse(args)
+        const result = await agentApi(ctx.token, "GET", "/api/agent/baby/logs", undefined, {
+          kind,
+          since,
+          limit: limit?.toString(),
+        })
+        return formatResult(result)
+      },
+      annotations: { readOnlyHint: true },
     },
 
     // Notes
