@@ -29,6 +29,7 @@ const TABLE_QUERY_PREFIX: Record<string, string[]> = {
   habit_track: ["habits", "reports"],
   habit_entry: ["habits", "reports"],
   budget: ["budget"],
+  budget_category: ["budget"],
   annual_event: ["annual-event"],
   inbox_item: ["inbox"],
   person: ["people"],

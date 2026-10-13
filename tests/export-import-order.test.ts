@@ -21,6 +21,10 @@ describe("IMPORT_ORDER", () => {
     expect(order.indexOf("pregnancy")).toBeLessThan(order.indexOf("child"))
   })
 
+  it("inclui budget_category no restore", () => {
+    expect(IMPORT_ORDER as readonly string[]).toContain("budget_category")
+  })
+
   it("zera as FKs externas de child, mas mantém child_id de baby_log", () => {
     expect(FK_COLUMNS_TO_STRIP.child).toEqual(["project_id", "pregnancy_id"])
     expect(FK_COLUMNS_TO_STRIP.baby_log ?? []).not.toContain("child_id")

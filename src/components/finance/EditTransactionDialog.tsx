@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useUpdateTransaction } from "@/lib/queries/finance"
 import { cn } from "@/lib/utils"
+import { useCategorySuggestions } from "@/lib/queries/budget"
 import type { AccountRow, TransactionRow } from "@/lib/queries/finance"
 import type { TxnKind } from "@/lib/schemas/finance"
 
@@ -26,6 +27,7 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, account
   const [amount, setAmount] = useState("")
   const [description, setDescription] = useState("")
   const [category, setCategory] = useState("")
+  const categorySuggestions = useCategorySuggestions()
   const [accountId, setAccountId] = useState("")
   const [occurredOn, setOccurredOn] = useState("")
   const updateTxn = useUpdateTransaction()
@@ -98,7 +100,12 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, account
 
           <input type="text" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0,00" required autoFocus className={inputClass} />
           <input type="text" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Descrição" className={inputClass} />
-          <input type="text" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Categoria" className={inputClass} />
+          <input type="text" list="txn-category-suggestions-edit" value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Categoria" className={inputClass} />
+          <datalist id="txn-category-suggestions-edit">
+            {categorySuggestions.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
 
           {accounts.length > 0 && (
             <select value={accountId} onChange={(e) => setAccountId(e.target.value)} className={inputClass}>

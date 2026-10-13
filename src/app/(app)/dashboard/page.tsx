@@ -22,6 +22,7 @@ import { TaskKPIs } from "@/components/dashboard/TaskKPIs"
 import { EisenhowerMatrix } from "@/components/dashboard/EisenhowerMatrix"
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview"
 import { BudgetCard } from "@/components/dashboard/BudgetCard"
+import { CategoryBudgets } from "@/components/dashboard/CategoryBudgets"
 import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents"
 import { ContextNotesWidget } from "@/components/dashboard/ContextNotesWidget"
 
@@ -218,6 +219,7 @@ export default function DashboardPage() {
         </div>
 
         <BudgetCard income={income} expense={expense} />
+        <CategoryBudgets transactions={transactions} />
 
         <UpcomingEvents />
 
