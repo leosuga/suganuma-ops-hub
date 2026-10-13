@@ -90,6 +90,18 @@ const NAV_ITEMS = [
     ),
   },
   {
+    href: "/baby",
+    label: "BEBÊ",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="5.8" stroke="currentColor" strokeWidth="1.2" />
+        <circle cx="5.9" cy="7" r="0.6" fill="currentColor" />
+        <circle cx="10.1" cy="7" r="0.6" fill="currentColor" />
+        <path d="M6 10a2.5 2.5 0 0 0 4 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
     href: "/people",
     label: "PPL",
     icon: (

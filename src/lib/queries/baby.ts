@@ -123,7 +123,7 @@ export function useBabyGrowth(childId: string | undefined) {
 export function useCreateBabyLog() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (log: Omit<BabyLog, "id">) => {
+    mutationFn: async (log: BabyLog) => {
       const supabase = createClient()
       const ownerId = await currentUserId()
       const { data, error } = await supabase
