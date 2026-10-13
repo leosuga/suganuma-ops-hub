@@ -16,6 +16,9 @@ export const PRESERVE_ID_TABLES: ReadonlySet<string> = new Set([
   "person_conflict",
   "guest_event",
   "guest_invite",
+  // baby_log.child_id é FK intra-módulo, mesmo motivo do people.
+  "child",
+  "baby_log",
 ])
 
 export function cleanRowsForImport(

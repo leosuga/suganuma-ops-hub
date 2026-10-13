@@ -24,3 +24,4 @@ export type {
   ConflictStatus,
   InviteStatus,
 } from "./people"
+export type { ChildRow, BabyLogRow, BabyLogKind } from "./baby"

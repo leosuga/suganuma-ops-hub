@@ -73,6 +73,19 @@ describe("cleanRowsForImport", () => {
     }
   })
 
+  it("child e baby_log preservam id: baby_log.child_id é FK intra-módulo", () => {
+    expect(PRESERVE_ID_TABLES.has("child")).toBe(true)
+    expect(PRESERVE_ID_TABLES.has("baby_log")).toBe(true)
+    const out = cleanRowsForImport(
+      "baby_log",
+      [{ id: "l1", child_id: "c1", kind: "feed", created_at: "x" }],
+      OWNER,
+      [],
+    )
+    expect(out[0].id).toBe("l1")
+    expect(out[0].child_id).toBe("c1")
+  })
+
   it("tabelas antigas NÃO estão em PRESERVE_ID_TABLES", () => {
     expect(PRESERVE_ID_TABLES.has("task")).toBe(false)
     expect(PRESERVE_ID_TABLES.has("note")).toBe(false)

@@ -36,6 +36,8 @@ const TABLE_QUERY_PREFIX: Record<string, string[]> = {
   person_conflict: ["people"],
   guest_event: ["people"],
   guest_invite: ["people"],
+  child: ["baby", "health"],
+  baby_log: ["baby"],
 }
 
 // Tabelas sem coluna owner_id — o filtro `owner_id=eq.<uid>` do Realtime falha
