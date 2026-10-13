@@ -36,7 +36,7 @@ export function AddProtocolDialog({ open, onOpenChange }: AddProtocolDialogProps
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Ex: Ácido fólico, Vitamina D, Caminhada diária"
+            placeholder="Ex: Vitamina D (bebê), Ácido fólico, Caminhada diária"
             required
             autoFocus
             className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health transition-colors"

@@ -23,19 +23,29 @@ function str(v: unknown): string | undefined {
   return typeof v === "string" ? v : undefined
 }
 
-/** "7 dias", "1 mês e 3 dias", "2 meses". `todayStr` é a data (YYYY-MM-DD) de hoje em São Paulo. */
-export function ageLabel(birthAt: string, todayStr: string): string {
+/** Idade em meses de calendário completos + dias restantes. `todayStr` é a data de hoje em São Paulo. */
+function ageParts(birthAt: string, todayStr: string): { months: number; days: number } {
   const birth = saoPauloDate(birthAt)
-  const totalDays = diffDays(birth, todayStr)
-  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
-
   let months = 0
   while (months < 600 && diffDays(addMonthsStr(birth, months + 1), todayStr) >= 0) months++
+  const days = months === 0 ? diffDays(birth, todayStr) : diffDays(addMonthsStr(birth, months), todayStr)
+  return { months, days: Math.max(0, days) }
+}
 
-  if (months === 0) return plural(Math.max(0, totalDays), "dia", "dias")
-  const days = diffDays(addMonthsStr(birth, months), todayStr)
+/** "7 dias", "1 mês e 3 dias", "2 meses". */
+export function ageLabel(birthAt: string, todayStr: string): string {
+  const { months, days } = ageParts(birthAt, todayStr)
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`
+  if (months === 0) return plural(days, "dia", "dias")
   const m = plural(months, "mês", "meses")
   return days > 0 ? `${m} e ${plural(days, "dia", "dias")}` : m
+}
+
+/** Versão curta para cards: "7d", "1m 3d", "2m". */
+export function ageShort(birthAt: string, todayStr: string): string {
+  const { months, days } = ageParts(birthAt, todayStr)
+  if (months === 0) return `${days}d`
+  return days > 0 ? `${months}m ${days}d` : `${months}m`
 }
 
 /** Variação percentual do peso atual sobre o de nascimento. */

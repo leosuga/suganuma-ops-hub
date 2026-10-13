@@ -9,6 +9,7 @@ import type { InboxItemRow } from "@/lib/types"
 import { useAppointments } from "@/lib/queries/health"
 import { useUpcomingEvents } from "@/lib/queries/annual"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
+import { BabyCockpitWidget } from "@/components/baby/BabyCockpitWidget"
 import { today } from "@/lib/date"
 import { cn } from "@/lib/utils"
 
@@ -125,6 +126,8 @@ function CockpitPageInner() {
             ))}
           </div>
         )}
+
+        <BabyCockpitWidget />
 
         {!loading && (
         <>

@@ -9,7 +9,9 @@ import { usePregnancy, useCreateHealthLog } from "@/lib/queries/health"
 import { useNotes } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
 import { parseContextTags } from "@/lib/contexts"
-import { currentMonth } from "@/lib/date"
+import { currentMonth, today } from "@/lib/date"
+import { useChild } from "@/lib/queries/baby"
+import { ageShort } from "@/lib/baby/summary"
 import { fmtCurrency } from "@/lib/format"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { StatCard } from "@/components/dashboard/StatCard"
@@ -42,6 +44,7 @@ export default function DashboardPage() {
   const { data: tasks = [], isLoading: tasksLoading } = useTasks()
   const { data: transactions = [], isLoading: financeLoading } = useTransactions({ month: currentMonth() })
   const { data: pregnancy } = usePregnancy()
+  const { data: child } = useChild()
   const createHealthLog = useCreateHealthLog()
   const { data: notes = [] } = useNotes()
 
@@ -204,8 +207,12 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard label="Saldo mês" value={fmt(balance)} sub={financeLoading ? "..." : `${transactions.length} transações`} color={balance >= 0 ? "text-teal" : "text-danger"} />
           <StatCard label="Despesas" value={fmt(expense)} sub="mês atual" color={expense > 0 ? "text-danger" : "text-on-surface"} />
-          {pregnancy?.due_date && (
-            <StatCard label="Semana" value={weeksFromDueDate(pregnancy.due_date)} sub="de gestação" color="text-health" />
+          {child ? (
+            <StatCard label="Bebê" value={ageShort(child.birth_at, today())} sub={child.name} color="text-health" />
+          ) : (
+            pregnancy?.due_date && (
+              <StatCard label="Semana" value={weeksFromDueDate(pregnancy.due_date)} sub="de gestação" color="text-health" />
+            )
           )}
           <ProtocolsSummary />
         </div>

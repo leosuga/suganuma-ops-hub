@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { ageLabel, summarize24h, weightChangePct } from "@/lib/baby/summary"
+import { ageLabel, ageShort, summarize24h, weightChangePct } from "@/lib/baby/summary"
 
 // "agora" fixo: 2026-10-13 12:00 em São Paulo = 15:00Z
 const NOW = "2026-10-13T15:00:00Z"
@@ -17,6 +17,15 @@ describe("ageLabel", () => {
   it("omite os dias quando fecha o mês", () => {
     expect(ageLabel(birth, "2026-11-06")).toBe("1 mês")
     expect(ageLabel(birth, "2026-12-06")).toBe("2 meses")
+  })
+})
+
+describe("ageShort", () => {
+  const birth = "2026-10-06T14:00:00Z"
+  it("compacta para cards: dias, depois meses e dias", () => {
+    expect(ageShort(birth, "2026-10-13")).toBe("7d")
+    expect(ageShort(birth, "2026-11-09")).toBe("1m 3d")
+    expect(ageShort(birth, "2026-12-06")).toBe("2m")
   })
 })
 
