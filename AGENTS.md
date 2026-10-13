@@ -43,7 +43,8 @@ Cada módulo segue este pipeline:
 | Meals | `/meals` | 0008 | `meals.ts` | `meals/page.tsx` | 5 |
 | Habits | `/habits` | 0009 | `habits.ts` | `habits/page.tsx` | 8 |
 | Projects | `/projects` | 0010 | `projects.ts` | `projects/page.tsx` | — |
-| Budget | (dashboard) | 0016 | `budget.ts` | (BudgetCard no Dashboard) | — |
+| Budget | (dashboard) | 0016, 0042 | `budget.ts` | (BudgetCard e CategoryBudgets no Dashboard) | 8 |
+| Baby | `/baby` | 0041 | `baby.ts` | `baby/page.tsx` | 69 |
 | Reports | `/reports` | — | `reports.ts` | `reports/page.tsx` | — |
 | Settings | `/settings` | — | — | `settings/page.tsx` | — |
 | Shared | — | — | `parse-title.ts`, `contexts.ts` | — | 24 |
@@ -68,6 +69,13 @@ Schemas testados: `tests/schemas.test.ts` (38 testes Zod)
 - **Energy level** (`0034_task_energy_level.sql`): coluna `energy_level` (low/med/high). Badge no TaskRow: DEEP (high/purple), MED (med/neutral), QUICK (low/teal). EditTaskDialog tem seletor toggle
 - **Notas vinculadas**: tasks podem ter notas vinculadas (`linked_task_id` em note, FK com `on delete set null`). EditTaskDialog mostra lista de notas vinculadas
 - **Matriz de Eisenhower**: Dashboard exibe quadrantes (Urg+Imp / Imp+NãoUrg / Urg+NãoImp / NemUrgNemImp) filtrados por `important` e `priority`/`due_at`
+
+### Baby (2026-10-13, pós-parto)
+- **Rota `/baby`**: registro de 1 toque (mamada E/D, mamadeira ml, xixi/cocô, sono, vitamina D), resumo de 24h, timeline do dia (edita horário / exclui com desfazer), crescimento e painel "quando procurar ajuda". Widget compacto no Cockpit; card na Saúde e StatCard no Dashboard substituem o modo gravidez quando há `child`
+- **Lógica pura em `src/lib/baby/`** (testada em node): `dates.ts` (aritmética YYYY-MM-DD e fuso SP), `summary.ts` (`ageLabel`, `summarize24h`), `quick-log.ts` (payloads e formatação), `care-schedule.ts` (cronograma), `agent.ts` (`normalizeAgentLog`), `server.ts` (só rotas de agente)
+- **Cronograma = tasks comuns** num projeto "Bebê — nome" (`child.project_id`), com tags `bebe` + grupo (`triagem`, `consulta`, `vacina`, `documento`, `mae`, `compras`). Por isso aparece sozinho no Cockpit, Calendário, push e MCP. O seed (`CARE_ITEMS`) é ponto de partida: vacinas seguem o calendário particular SBIm 2026-27 e as versões do calendário divergem entre si — **revisar com o pediatra**
+- **Agente/MCP**: `GET /api/agent/baby`, `GET|POST /api/agent/baby/logs`, tools `baby_summary`, `baby_log_event`, `baby_list_logs`; `get_daily_cockpit` ganha o bloco `baby`. O `child_id` é SEMPRE o do dono do token (service role bypassa RLS)
+- **Armadilhas**: `Omit<>` em união discriminada (`BabyLog`) colapsa os tipos — receber `BabyLog` inteiro; `z.string().datetime()` exige `Z` (usar `toISOString()`); `datetime-local` é horário de SP, converter com `toLocalInput`/`fromLocalInput`
 
 ### Notes
 - **Converter nota em task**: botão `→TASK` no NoteRow (modo leitura). Cria task com título+conteúdo da nota e vincula automaticamente via `linked_task_id`
@@ -102,12 +110,12 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 
 ## Export/Import (2026-06-19, hardening 2026-08-29)
 - `exportAllData()` / `importAllData(json)` em `src/lib/export-import.ts`
-- Exporta **17 tabelas**: task, project, account, transaction, health_log, pregnancy, appointment, protocol, protocol_entry, note, meal, meal_plan, habit_track, habit_entry, budget, annual_event, **inbox_item**
+- Exporta **25 tabelas** (`TABLES` em `export-import.ts`): as 17 originais + módulo people (5) + **child, baby_log, budget_category**. `child` e `baby_log` preservam `id` (FK intra-módulo); `child.project_id` é zerado no restore (o id do projeto muda), então o botão "Gerar cronograma" reaparece — não gerar de novo se as tasks do bebê já existirem
 - **Export com paginação** (2026-08-29): `.range()` em páginas de 1000 — sem isso, self-hosted Supabase trunca tabelas >1000 rows **silenciosamente no único backup**
 - **Import em chunks de 500** (2026-08-29): insert completo estourava body limit do PostgREST em tabelas grandes; erro por chunk logado, chunk seguinte tenta
 - Import total: substitui `owner_id` pelo usuário atual, stripa `id`/`created_at`/`updated_at`, **stripa FKs cross-tabela** (`project_id`, `linked_task_id`, `account_id`, `meal_id`, `habit_id`, `protocol_id`, `pregnancy_id`, `series_id`) para evitar dangling references
 - Import em ordem parent-first (`IMPORT_ORDER` exportado — reutilizado pelo diálogo seletivo)
-- Export version: `0.3.0`
+- Export version: `0.4.0`
 - **Import seletivo** (`src/components/settings/SelectiveImportDialog.tsx`): dialog que lista tabelas do JSON com contagem de linhas, permite selecionar quais importar — **sincronizado com importAllData** (mesmo `IMPORT_ORDER` parent-first + `FK_COLUMNS_TO_STRIP` + chunking + try/finally que não trava o `importing`)
 - UI na página Settings com 3 botões: Exportar backup, Importar seletivo, Importar tudo
 
@@ -129,9 +137,9 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - Node.js v25.6.0 local, **v22-alpine em produção** — vitest 4.1.5 funciona mas pode ter instabilidades. Usar `--no-watch`.
 - **Build**: `SKIP_TSC=1` no Dockerfile (permanente). Build no VPS ~60s via SWC. Type checking via VSCode local, NÃO no deploy.
 - **Workflow**: 1 job único (sem typecheck paralelo). Job `typecheck` removido em 2026-05-20 — nunca completava (~70 arquivos TS strict).
-- BottomNav mobile máximo 5 itens (DASH, INBX, TASKS, FIN, HUB). HUB menu: COCK, NOTES, PROJ, CAL, REV, HLTH, SET
+- BottomNav mobile máximo 5 itens (DASH, **BEBÊ**, TASKS, FIN, HUB) — BEBÊ substituiu INBX em 2026-10-13 (nascimento). HUB menu: COCK, **INBX**, NOTES, PROJ, PPL, CAL, REV, HLTH, MEAL, HBT, REPS, SET
 - `due_at` é `string | null` no DB mas `string | undefined` no Zod schema — usar `undefined` nos mutations
-- **Realtime**: tabelas adicionadas à `supabase_realtime` publication: task, account, transaction, note, meal, meal_plan, habit_track, habit_entry, project, budget, appointment, health_log, pregnancy, protocol, protocol_entry, annual_event, **inbox_item**
+- **Realtime**: tabelas adicionadas à `supabase_realtime` publication: task, account, transaction, note, meal, meal_plan, habit_track, habit_entry, project, budget, appointment, health_log, pregnancy, protocol, protocol_entry, annual_event, **inbox_item**, **child, baby_log, budget_category**
 - **Realtime debounce**: invalidações são debounce por 300ms por prefixo (`pendingInvalidations` Map em `realtime.ts`). Múltiplas mudanças simultâneas (ex: 3 tabelas invalidando `calendar`) resultam em 1 refetch em vez de 3
 - **`TABLE_QUERY_PREFIX`** mapeia tabelas DB → prefixes de query key: `task→["tasks","calendar","reports"]`, `appointment→["health","calendar"]`, `meal_plan→["meals","calendar"]`, `transaction→["finance","reports"]`, `habit_entry→["habits","reports"]`, `inbox_item→["inbox"]`, etc. Tabelas podem invalidar múltiplos prefixes
 - **Tipos planos** (`src/lib/types/*.ts`): 9 arquivos (task, project, finance, health, note, meal, habit, budget, index). Substituem `database.types.ts` para type checking
@@ -143,9 +151,11 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - **Migration 0034**: `energy_level` em task (low/med/high) — filtro de energia disponível
 - **Migration 0035**: `oauth` — custom connector OAuth 2.1 (claude.ai)
 - **Migration 0036**: `note_attachments_private` — ajuste de storage para attachments
+- **Migration 0041**: `child` + `baby_log` — módulo Bebê (RLS por owner, realtime idempotente). **Aplicar no VPS antes do deploy**
+- **Migration 0042**: `budget_category` — meta mensal por categoria, unicidade por `category_key` normalizada. **Aplicar no VPS antes do deploy**
 - **Migration 0037**: `'raindrop'` no check de `inbox_item.source` — ponte Raindrop → Hub (aplicada no VPS via `docker exec` psql, ver lição 2026-08-27)
 - **`queryOptions` API TanStack v5**: Todas as queries exportam `queryOptions`. `staleTime` e `gcTime` configurados por query (ver seção Performance). `refetchOnWindowFocus: false` global
-- **`sw.js`**: versão `v16`. Estratégia: `_next/static` NetworkFirst, navegação NetworkOnly. Sem background sync (removido placeholder no-op)
+- **`sw.js`**: versão `v18` (o deploy lê a versão do próprio arquivo). Estratégia: `_next/static` NetworkFirst, navegação NetworkOnly. Sem background sync (removido placeholder no-op)
 - **Next.js 16 `next.config.ts`**: `reactCompiler: true` em root (não `experimental`). `typedRoutes` quebra build com BottomNav strings. `headers()` com `source: "/:path*"` funciona (sintaxe simples); `headers()` com regex `/icon-:size*` quebra Turbopack
 - **Security headers** (2026-06-19): HSTS, CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy configurados via `headers()` em `next.config.ts`
 - **Escaping de caracteres no write tool**: `\u00cd` e outros escapes Unicode podem aparecer em vez de caracteres acentuados ao usar o `write` tool. Sempre revisar arquivos escritos e corrigir acentos manualmente
