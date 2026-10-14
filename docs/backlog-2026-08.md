@@ -160,7 +160,7 @@ Com o React Compiler ativo, a exigência de memoização manual do AGENTS.md est
       `registration.pushManager.subscribe()` (a permissão precisa vir de gesto do
       usuário; hoje o `requestPermission()` roda no mount do AppShell, que os
       navegadores ignoram) → handlers no sw.js → cron no VPS enviando via `web-push`.
-- [ ] **Só existe aviso de atraso, não lembrete.** A query filtra `due_at < now`, então
+- [x] **Só existe aviso de atraso, não lembrete.** *(resolvido em 2026-10-13: o briefing avisa hoje/amanhã — `src/lib/push-briefing.ts`)* A query filtra `due_at < now`, então
       o usuário só descobre depois de perder o prazo. Adicionar janela "vence em breve"
       com dedup (`notified_at` na task) no mesmo cron.
 
@@ -170,7 +170,7 @@ Com o React Compiler ativo, a exigência de memoização manual do AGENTS.md est
       (passado); não há despesa fixa nem vencimento. Tabela `recurring_transaction`
       (descrição, valor, categoria, dia do mês, conta) + `due_on`/`paid` dá o widget
       "A VENCER" no dashboard e alimenta o push do item 5.
-- [ ] **Budget é um número único por mês.** As categorias já existem nas transactions —
+- [x] **Budget é um número único por mês.** *(resolvido em 2026-10-13: migration 0042 e `CategoryBudgets`)* As categorias já existem nas transactions —
       falta coluna `category` na tabela budget e a comparação meta × realizado.
 
 ## 7. Gravidez — alto valor, custo baixo ✅ resolvido em 2026-08-19

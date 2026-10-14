@@ -91,8 +91,10 @@ export function parseBloodPressureValue(value: unknown): BloodPressureValue | nu
 export function parseGlucoseValue(value: unknown): GlucoseValue | null {
   if (typeof value !== "object" || value === null) return null
   const obj = value as Record<string, unknown>
-  if (typeof obj.mgdl === "number") {
-    return { mgdl: obj.mgdl, fasting: typeof obj.fasting === "boolean" ? obj.fasting : undefined }
+  // O app grava `mg_dl`; `mgdl` é o formato legado.
+  const mgdl = typeof obj.mg_dl === "number" ? obj.mg_dl : obj.mgdl
+  if (typeof mgdl === "number") {
+    return { mgdl, fasting: typeof obj.fasting === "boolean" ? obj.fasting : undefined }
   }
   return null
 }

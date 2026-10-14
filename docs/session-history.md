@@ -4,6 +4,44 @@ Movido do CLAUDE.md para reduzir o contexto carregado em toda sessão. Consulte 
 
 # Session Learnings — Suganuma Ops Hub
 
+## 2026-10-13 — Pós-parto: módulo Bebê, push antecipado e orçamento por categoria
+
+### Contexto
+A filha nasceu em 06/10/2026. O app só tinha o modo gravidez (`PregnancyCard`, "Semana de
+gestação" no Dashboard, template de enxoval). Implementado em fatias com TDD, um commit por
+fatia no branch `claude/busy-cray-asieec`.
+
+### Entregue
+- **Bugs**: `/api/mcp` respondia 400 para sessão desconhecida (redeploy zera o Map em memória);
+  a spec manda 404 para o cliente reabrir a sessão — foi isso que impediu o Claude de ler o Hub
+  durante a análise. `parseGlucoseValue` lia `mgdl` mas o app grava `mg_dl`.
+- **Módulo Bebê** (migration 0041, `/baby`, MCP): registro de 1 toque, resumo de 24h, crescimento,
+  cronograma de ~50 itens gerado como tasks, widget no Cockpit, BEBÊ na BottomNav no lugar de INBX.
+- **Push**: briefing diário avisa vence hoje/amanhã (backlog item 5) e falha o job em erro de query.
+- **Orçamento por categoria** (migration 0042, backlog item 6).
+
+### Decisões que ficaram
+- **Cronograma como tasks comuns**, não tabela própria: herda Cockpit, Calendário, push, MCP e
+  recorrência sem código novo. Vacinas seguem o SBIm 2026-27, que diverge entre versões — o seed é
+  ponto de partida revisável, e o diálogo de geração mostra tudo antes de criar.
+- **Só o dono registra** (sem conta da mãe): compartilhamento por família exigiria household no RLS.
+- **Lógica fora dos componentes** (`src/lib/baby/`): os testes de DOM só rodam em Docker, então
+  tudo que dá para testar em node (datas, resumo, payloads, cronograma) é função pura.
+
+### Lições
+- **Sessão MCP desconhecida = 404, não 400** (`classifySessionRequest`).
+- **`Omit<>` em união discriminada colapsa** `kind`/`data`; receber o tipo inteiro.
+- **`z.string().datetime()` exige `Z`**: converter com `toISOString()`, nunca `-03:00`.
+- **Erro de query em job de briefing não pode virar "nada pendente"**: checar `.error` no `Promise.all`.
+- **Restore zera `child.project_id`** (FK externa): o botão de gerar cronograma reaparece.
+- O CLAUDE.md pede comparar `tsc` com baseline: nesta base o `tsc --noEmit` rodou limpo (0 erros).
+  Os 5 erros de eslint em cockpit/reports/review e os 2 do `CommandPalette` já existiam.
+
+### Pendente para o Leo
+Aplicar as migrations 0041 e 0042 no VPS (`docker exec -i supabase-db psql -U supabase_admin -d
+postgres`) ANTES do deploy; cadastrar a bebê em `/baby`; gerar e revisar o cronograma; confirmar
+as vacinas com o pediatra. Prazos legais: certidão até ~21/10, plano de saúde até ~05/11.
+
 ## 2026-08-27 — Raindrop → Hub Notes (ponte de curadoria, Variante C)
 
 ### Contexto

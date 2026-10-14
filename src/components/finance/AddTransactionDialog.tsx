@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useCreateTransaction } from "@/lib/queries/finance"
 import { cn } from "@/lib/utils"
+import { useCategorySuggestions } from "@/lib/queries/budget"
 import type { AccountRow } from "@/lib/queries/finance"
 import type { TxnKind } from "@/lib/schemas/finance"
 
@@ -31,6 +32,7 @@ export function AddTransactionDialog({
   const [amount, setAmount] = useState("")
   const [description, setDescription] = useState("")
   const [category, setCategory] = useState("")
+  const categorySuggestions = useCategorySuggestions()
   const [accountId, setAccountId] = useState<string>("")
   const [occurredOn, setOccurredOn] = useState(today())
   const createTxn = useCreateTransaction()
@@ -118,11 +120,17 @@ export function AddTransactionDialog({
           {/* Category */}
           <input
             type="text"
+            list="txn-category-suggestions"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             placeholder="Categoria (ex: alimentação, transporte)"
             className={inputClass}
           />
+          <datalist id="txn-category-suggestions">
+            {categorySuggestions.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
 
           {/* Account */}
           {accounts.length > 0 && (

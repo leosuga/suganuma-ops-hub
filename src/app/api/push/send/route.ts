@@ -3,6 +3,8 @@ import { verifyWebhookHmac, resolveWebhookOwnerId } from "@/lib/webhooks/hmac"
 import { sendPushToOwner, isWebPushConfigured } from "@/lib/web-push"
 import { createServiceClient } from "@/lib/supabase/service"
 import { logger } from "@/lib/logger"
+import { buildBriefing } from "@/lib/push-briefing"
+import { today as todayInSaoPaulo } from "@/lib/date"
 
 // POST /api/push/send
 //
@@ -10,7 +12,7 @@ import { logger } from "@/lib/logger"
 // Acionado por: GH Actions cron (matinal), MCP, ou curl manual. HMAC auth.
 //
 // Payload opcional: { "title": "...", "body": "..." } — default monta o
-// resumo automático: overdue tasks + consultas do dia.
+// resumo automático: o que vence hoje e amanhã, atrasadas e consultas do dia.
 
 
 export async function POST(req: NextRequest) {
@@ -36,39 +38,52 @@ export async function POST(req: NextRequest) {
   // Monta briefing automático se não veio payload custom
   if (!title || !pushBody) {
     const supabase = createServiceClient()
-    const nowIso = new Date().toISOString()
-    const todayEnd = new Date(Date.now() + 24 * 60 * 60_000).toISOString()
+    const now = Date.now()
+    const nowIso = new Date(now).toISOString()
+    const next24h = new Date(now + 24 * 60 * 60_000).toISOString()
+    // Limites de dia no fuso de São Paulo (UTC-3 fixo). O container roda em UTC,
+    // então "hoje" não pode vir de toISOString().
+    const startToday = new Date(`${todayInSaoPaulo()}T00:00:00-03:00`).getTime()
+    const dayIso = (offset: number) => new Date(startToday + offset * 24 * 60 * 60_000).toISOString()
 
-    const [overdueRes, apptRes] = await Promise.all([
-      supabase
-        .from("task")
-        .select("id")
-        .eq("owner_id", ownerId)
-        .in("status", ["todo", "doing"])
-        .lt("due_at", nowIso)
-        .limit(50),
+    const openTasks = () =>
+      supabase.from("task").select("title").eq("owner_id", ownerId).in("status", ["todo", "doing"])
+
+    const [overdueRes, todayRes, tomorrowRes, apptRes] = await Promise.all([
+      openTasks().lt("due_at", dayIso(0)).limit(50),
+      openTasks().gte("due_at", dayIso(0)).lt("due_at", dayIso(1)).order("due_at").limit(20),
+      openTasks().gte("due_at", dayIso(1)).lt("due_at", dayIso(2)).order("due_at").limit(20),
       supabase
         .from("appointment")
-        .select("id, starts_at")
+        .select("id")
         .eq("owner_id", ownerId)
         .gte("starts_at", nowIso)
-        .lt("starts_at", todayEnd)
+        .lt("starts_at", next24h)
         .limit(10),
     ])
 
-    const overdueCount = overdueRes.data?.length ?? 0
-    const apptCount = apptRes.data?.length ?? 0
+    // Erro de query não pode virar "nada pendente": o usuário ficaria sem o aviso
+    // (ex.: vacina do dia) sem saber. Falhar faz o job do GitHub Actions ficar vermelho.
+    const failed = [overdueRes, todayRes, tomorrowRes, apptRes].find((r) => r.error)
+    if (failed?.error) {
+      logger.error("push-send", "Falha ao montar o briefing", { error: failed.error.message })
+      return NextResponse.json({ error: "falha ao montar o briefing" }, { status: 500 })
+    }
 
-    if (overdueCount === 0 && apptCount === 0) {
+    const briefing = buildBriefing({
+      overdue: overdueRes.data?.length ?? 0,
+      dueToday: (todayRes.data ?? []).map((t) => t.title as string),
+      dueTomorrow: (tomorrowRes.data ?? []).map((t) => t.title as string),
+      appts: apptRes.data?.length ?? 0,
+    })
+
+    if (!briefing) {
       logger.info("push-send", "Nada a notificar", {})
       return NextResponse.json({ ok: true, sent: 0, skipped: "nada pendente" })
     }
 
-    title = "Ops Hub — Briefing"
-    const parts: string[] = []
-    if (overdueCount > 0) parts.push(`${overdueCount} task(s) atrasada(s)`)
-    if (apptCount > 0) parts.push(`${apptCount} consulta(s) nas próximas 24h`)
-    pushBody = parts.join(" · ")
+    title = briefing.title
+    pushBody = briefing.body
   }
 
   try {
@@ -76,7 +91,7 @@ export async function POST(req: NextRequest) {
       title,
       body: pushBody,
       tag: "daily-briefing",
-      url: "/dashboard",
+      url: "/cockpit",
     })
     logger.info("push-send", "Briefing enviado", { sent, removed })
     return NextResponse.json({ ok: true, sent, removed })

@@ -39,6 +39,12 @@ export default function manifest(): MetadataRoute.Manifest {
         icons: [{ src: "/icon-192.png", sizes: "192x192" }],
       },
       {
+        name: "Bebê",
+        short_name: "Bebê",
+        url: "/baby",
+        icons: [{ src: "/icon-192.png", sizes: "192x192" }],
+      },
+      {
         name: "Nova Task",
         short_name: "Task",
         url: "/tasks",

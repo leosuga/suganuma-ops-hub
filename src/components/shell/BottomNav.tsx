@@ -22,11 +22,14 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: "/inbox",
-    label: "INBX",
+    href: "/baby",
+    label: "BEBÊ",
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <path d="M3 8.5L5 3.5h8l2 5M3 8.5v5a1.2 1.2 0 0 0 1.2 1.2h9.6a1.2 1.2 0 0 0 1.2-1.2v-5M3 8.5h3.2l1 2h3.6l1-2H15" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.2" />
+        <circle cx="6.7" cy="8" r="0.7" fill="currentColor" />
+        <circle cx="11.3" cy="8" r="0.7" fill="currentColor" />
+        <path d="M6.8 11.2a2.8 2.8 0 0 0 4.4 0" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -53,6 +56,7 @@ const NAV_ITEMS = [
 
 const HUB_ITEMS = [
   { href: "/cockpit", label: "COCK", desc: "Cockpit" },
+  { href: "/inbox", label: "INBX", desc: "Inbox" },
   { href: "/notes", label: "NOTES", desc: "Notas" },
   { href: "/projects", label: "PROJ", desc: "Projetos" },
   { href: "/people", label: "PPL", desc: "Pessoas" },

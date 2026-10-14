@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/client"
 import { logger } from "@/lib/logger"
 import { cleanRowsForImport, PRESERVE_ID_TABLES } from "@/lib/import-clean"
 
-const TABLES = ["task", "project", "account", "transaction", "health_log", "pregnancy", "appointment", "protocol", "protocol_entry", "note", "meal", "meal_plan", "habit_track", "habit_entry", "budget", "annual_event", "inbox_item", "person", "person_relation", "person_conflict", "guest_event", "guest_invite"] as const
+const TABLES = ["task", "project", "account", "transaction", "health_log", "pregnancy", "appointment", "protocol", "protocol_entry", "note", "meal", "meal_plan", "habit_track", "habit_entry", "budget", "annual_event", "inbox_item", "person", "person_relation", "person_conflict", "guest_event", "guest_invite", "child", "baby_log", "budget_category"] as const
 
 // FK columns that reference other user-owned tables.
 // These are stripped on import to prevent dangling references when importing
@@ -15,6 +15,7 @@ export const FK_COLUMNS_TO_STRIP: Record<string, string[]> = {
   habit_entry: ["habit_id"],
   protocol_entry: ["protocol_id"],
   appointment: ["pregnancy_id"],
+  child: ["project_id", "pregnancy_id"],
   annual_event: ["series_id"],
 }
 
@@ -38,12 +39,15 @@ const IMPORT_ORDER = [
   "meal_plan",
   "habit_entry",
   "budget",
+  "budget_category",
   "inbox_item",
   "person",
   "guest_event",
   "person_relation",
   "person_conflict",
   "guest_invite",
+  "child",
+  "baby_log",
 ] as const
 
 export { IMPORT_ORDER }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { validateAgentToken, unauthorized, serverError } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
 import { today as todayInSaoPaulo } from "@/lib/date"
+import { buildBabySnapshot } from "@/lib/baby/server"
+import { logger } from "@/lib/logger"
 
 export async function GET(req: NextRequest) {
   let ownerId: string
@@ -44,6 +46,12 @@ export async function GET(req: NextRequest) {
 
   if (tasksResult.error) return serverError(tasksResult.error.message)
 
+  // A bebê é informação extra: uma falha aqui não pode derrubar o briefing inteiro.
+  const baby = await buildBabySnapshot(ownerId).catch((err) => {
+    logger.warn("agent-cockpit", "baby snapshot falhou", { error: err instanceof Error ? err.message : String(err) })
+    return null
+  })
+
   const tasks = tasksResult.data ?? []
   const urgentTasks = tasks.filter((t) => t.priority === "urgent" || (t.important && t.due_at && new Date(t.due_at) < new Date()))
   const overdueTasks = tasks.filter((t) => t.due_at && new Date(t.due_at) < new Date() && t.status !== "done")
@@ -60,5 +68,6 @@ export async function GET(req: NextRequest) {
     upcoming_appointments: appointmentsResult.data ?? [],
     upcoming_events: eventsResult.data ?? [],
     total_pending: tasks.length,
+    baby,
   })
 }

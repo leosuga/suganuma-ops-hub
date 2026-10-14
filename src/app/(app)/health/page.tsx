@@ -4,6 +4,8 @@ import { useState } from "react"
 import dynamic from "next/dynamic"
 import { useTitle } from "@/lib/useTitle"
 import { PregnancyCard } from "@/components/health/PregnancyCard"
+import { BabySummaryCard } from "@/components/baby/BabySummaryCard"
+import { useChild } from "@/lib/queries/baby"
 import { BiometricList } from "@/components/health/BiometricLog"
 import { AppointmentList } from "@/components/health/AppointmentList"
 import { ProtocolList } from "@/components/health/ProtocolList"
@@ -21,6 +23,7 @@ export default function HealthPage() {
   const [bioOpen, setBioOpen] = useState(false)
   const [apptOpen, setApptOpen] = useState(false)
   const [protocolOpen, setProtocolOpen] = useState(false)
+  const { data: child } = useChild()
 
   return (
     <SectionErrorBoundary label="HEALTH HUB">
@@ -32,7 +35,7 @@ export default function HealthPage() {
             HEALTH HUB
           </h1>
           <p className="text-[10px] font-mono text-on-surface/40 mt-0.5">
-            Saúde, gravidez e protocolos familiares
+            Saúde da família, bebê e protocolos
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -57,8 +60,8 @@ export default function HealthPage() {
         </div>
       </div>
 
-      {/* Pregnancy tracker */}
-      <PregnancyCard />
+      {/* Depois do nascimento o card da bebê substitui o acompanhamento da gravidez */}
+      {child ? <BabySummaryCard /> : <PregnancyCard />}
 
       {/* Protocols */}
       <ProtocolList />
