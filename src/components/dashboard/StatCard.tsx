@@ -11,14 +11,14 @@ export function StatCard({
 }) {
   return (
     <div className="border border-border bg-surface rounded-sm p-4 flex flex-col gap-1">
-      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
         {label}
       </span>
       <span className={`text-[28px] font-mono font-bold leading-none ${color}`}>
         {value}
       </span>
       {sub && (
-        <span className="text-[10px] font-mono text-on-surface/40">{sub}</span>
+        <span className="text-[10px] font-mono text-on-surface/60">{sub}</span>
       )}
     </div>
   )

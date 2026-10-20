@@ -13,7 +13,7 @@ export function GrowthList({ child, growth }: { child: ChildRow; growth: BabyLog
   return (
     <section className="border border-border bg-surface rounded-sm overflow-hidden">
       <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
           CRESCIMENTO
         </span>
       </div>
@@ -23,7 +23,7 @@ export function GrowthList({ child, growth }: { child: ChildRow; growth: BabyLog
           const pct = w !== null ? weightChangePct(child.birth_weight_g, w) : null
           return (
             <div key={g.id} className="flex items-center gap-3 min-h-[36px] px-4 text-[11px] font-mono">
-              <span className="w-11 flex-none text-on-surface/40">{fmtDate(g.started_at)}</span>
+              <span className="w-11 flex-none text-on-surface/60">{fmtDate(g.started_at)}</span>
               <span className="flex-1 text-on-surface">
                 {[
                   w !== null ? `${w} g` : null,
@@ -34,7 +34,7 @@ export function GrowthList({ child, growth }: { child: ChildRow; growth: BabyLog
                   .join(" · ")}
               </span>
               {pct !== null && (
-                <span className="text-on-surface/40">
+                <span className="text-on-surface/60">
                   {pct >= 0 ? "+" : ""}
                   {pct.toFixed(1).replace(".", ",")}% vs nasc.
                 </span>
@@ -42,7 +42,7 @@ export function GrowthList({ child, growth }: { child: ChildRow; growth: BabyLog
             </div>
           )
         })}
-        <div className="flex items-center gap-3 min-h-[36px] px-4 text-[11px] font-mono text-on-surface/40">
+        <div className="flex items-center gap-3 min-h-[36px] px-4 text-[11px] font-mono text-on-surface/60">
           <span className="w-11 flex-none">{fmtDate(child.birth_at)}</span>
           <span>
             Nascimento ·{" "}

@@ -34,20 +34,20 @@ export default function HealthPage() {
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-health uppercase">
             HEALTH HUB
           </h1>
-          <p className="text-[10px] font-mono text-on-surface/40 mt-0.5">
+          <p className="text-[10px] font-mono text-on-surface/60 mt-0.5">
             Saúde da família, bebê e protocolos
           </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setProtocolOpen(true)}
-            className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/40 hover:border-on-surface/40 hover:text-on-surface/70 rounded-sm transition-colors"
+            className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/60 hover:border-on-surface/40 hover:text-on-surface/70 rounded-sm transition-colors"
           >
             + PROTOCOLO
           </button>
           <button
             onClick={() => setApptOpen(true)}
-            className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/40 hover:border-on-surface/40 hover:text-on-surface/70 rounded-sm transition-colors"
+            className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/60 hover:border-on-surface/40 hover:text-on-surface/70 rounded-sm transition-colors"
           >
             + CONSULTA
           </button>
@@ -72,7 +72,7 @@ export default function HealthPage() {
       {/* Biometric log */}
       <section>
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             BIOMETRIA RECENTE
           </span>
         </div>

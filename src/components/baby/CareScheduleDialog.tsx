@@ -90,12 +90,12 @@ export function CareScheduleDialog({ child, open, onOpenChange }: CareScheduleDi
     <Dialog open={open} onOpenChange={(v) => onOpenChange(v)}>
       <DialogContent className="bg-surface border-border max-w-lg p-0 gap-0 max-h-[85vh] flex flex-col">
         <DialogHeader className="px-4 py-3 border-b border-border flex-none">
-          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             GERAR CRONOGRAMA · {included.length} ITENS
           </DialogTitle>
         </DialogHeader>
         <div className="overflow-y-auto flex-1">
-          <p className="px-4 py-3 text-[10px] font-mono text-on-surface/40 leading-snug">
+          <p className="px-4 py-3 text-[10px] font-mono text-on-surface/60 leading-snug">
             Ponto de partida a partir do nascimento. Desmarque &quot;incluir&quot; no que não se aplica e
             marque &quot;feito&quot; no que já foi resolvido. As vacinas seguem o calendário particular
             (SBIm); confirme doses e datas com o pediatra.
@@ -105,7 +105,7 @@ export function CareScheduleDialog({ child, open, onOpenChange }: CareScheduleDi
             return (
               <div key={group}>
                 <div className="h-8 px-4 flex items-center border-y border-border bg-bg">
-                  <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40">
+                  <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60">
                     {CARE_GROUP_LABEL[group]}
                   </span>
                 </div>
@@ -113,7 +113,7 @@ export function CareScheduleDialog({ child, open, onOpenChange }: CareScheduleDi
                   const off = skipped.has(it.key)
                   return (
                     <div key={it.key} className={cn("flex items-start gap-2 px-4 py-2", off && "opacity-40")}>
-                      <span className="text-[10px] font-mono text-on-surface/40 w-11 flex-none pt-0.5">
+                      <span className="text-[10px] font-mono text-on-surface/60 w-11 flex-none pt-0.5">
                         {fmt(it.dueDate)}
                       </span>
                       <span className="flex-1 text-[11px] font-mono text-on-surface leading-snug">{it.title}</span>
@@ -142,11 +142,11 @@ export function CareScheduleDialog({ child, open, onOpenChange }: CareScheduleDi
           })}
         </div>
         <div className="px-4 py-3 border-t border-border flex-none flex items-center justify-end gap-2">
-          {error && <p className="flex-1 text-[10px] font-mono text-danger">{error}</p>}
+          {error && <p role="alert" className="flex-1 text-[10px] font-mono text-danger">{error}</p>}
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="h-8 px-4 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70"
+            className="h-8 px-4 text-[10px] font-mono text-on-surface/60 hover:text-on-surface/70"
           >
             CANCELAR
           </button>

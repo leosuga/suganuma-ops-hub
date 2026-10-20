@@ -116,7 +116,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
     return (
       <SectionErrorBoundary label="PERSON DETAIL">
         <div className="p-3">
-          <Link href="/people" className="font-mono text-[10px] text-on-surface/40 hover:text-accent">
+          <Link href="/people" className="font-mono text-[10px] text-on-surface/60 hover:text-accent">
             ← PESSOAS
           </Link>
           <div className="mt-3 h-32 animate-pulse bg-on-surface/5" />
@@ -129,7 +129,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
     return (
       <SectionErrorBoundary label="PERSON DETAIL">
         <div className="p-4">
-          <p className="font-mono text-[11px] text-danger">Erro ao carregar a pessoa.</p>
+          <p role="alert" className="font-mono text-[11px] text-danger">Erro ao carregar a pessoa.</p>
           <Link href="/people" className="font-mono text-[11px] text-accent">← VOLTAR</Link>
         </div>
       </SectionErrorBoundary>
@@ -140,7 +140,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
     return (
       <SectionErrorBoundary label="PERSON DETAIL">
         <div className="p-4">
-          <p className="font-mono text-[11px] text-on-surface/40">Pessoa não encontrada.</p>
+          <p className="font-mono text-[11px] text-on-surface/60">Pessoa não encontrada.</p>
           <Link href="/people" className="font-mono text-[11px] text-accent">← VOLTAR</Link>
         </div>
       </SectionErrorBoundary>
@@ -150,12 +150,12 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
   return (
     <SectionErrorBoundary label="PERSON DETAIL">
       <div className="p-3">
-        <Link href="/people" className="font-mono text-[10px] text-on-surface/40 hover:text-accent">
+        <Link href="/people" className="font-mono text-[10px] text-on-surface/60 hover:text-accent">
           ← PESSOAS
         </Link>
 
         <h1 className="mt-2 text-lg text-on-surface">{person.name}</h1>
-        <p className="font-mono text-[11px] text-on-surface/40">
+        <p className="font-mono text-[11px] text-on-surface/60">
           {person.household ?? "sem grupo familiar"}
           {person.phone ? ` · ${person.phone}` : ""}
         </p>
@@ -172,7 +172,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
             </button>
           </div>
           {personRelations.length === 0 ? (
-            <p className="font-mono text-[11px] text-on-surface/40">Nenhuma relação.</p>
+            <p className="font-mono text-[11px] text-on-surface/60">Nenhuma relação.</p>
           ) : (
             personRelations.map((r) => {
               const otherId = r.from_person === id ? r.to_person : r.from_person
@@ -183,12 +183,12 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                 >
                   <span className="flex-1">
                     {nameOf(otherId)}
-                    <span className="ml-2 font-mono text-[10px] text-on-surface/40">{KIND_LABEL[r.kind]}</span>
+                    <span className="ml-2 font-mono text-[10px] text-on-surface/60">{KIND_LABEL[r.kind]}</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => handleDeleteRelation(r.id, otherId)}
-                    className="font-mono text-[10px] text-on-surface/40 hover:text-danger"
+                    className="font-mono text-[10px] text-on-surface/60 hover:text-danger"
                   >
                     DEL
                   </button>
@@ -214,7 +214,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
           </div>
 
           {personConflicts.length === 0 ? (
-            <p className="font-mono text-[11px] text-on-surface/40">Nenhum conflito registrado.</p>
+            <p className="font-mono text-[11px] text-on-surface/60">Nenhum conflito registrado.</p>
           ) : (
             personConflicts.map((c) => (
               <div key={c.id} className="border-b border-on-surface/10 py-2">
@@ -227,7 +227,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                     {POLICY_LABEL[c.invite_policy]}
                   </span>
                   {c.status === "resolvido" ? (
-                    <span className="font-mono text-[10px] text-on-surface/40">RESOLVIDO</span>
+                    <span className="font-mono text-[10px] text-on-surface/60">RESOLVIDO</span>
                   ) : null}
                   <button
                     type="button"
@@ -242,13 +242,13 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                   <button
                     type="button"
                     onClick={() => handleDeleteConflict(c)}
-                    className="font-mono text-[10px] text-on-surface/40 hover:text-danger"
+                    className="font-mono text-[10px] text-on-surface/60 hover:text-danger"
                   >
                     DEL
                   </button>
                 </div>
 
-                <div className="mt-1 font-mono text-[10px] text-on-surface/40">
+                <div className="mt-1 font-mono text-[10px] text-on-surface/60">
                   {VETO_LABEL[c.veto_owner]}
                   {c.excluded_person_id ? ` · fica de fora: ${nameOf(c.excluded_person_id)}` : ""}
                   {c.handling.length > 0
@@ -261,7 +261,7 @@ export default function PersonDetailPage({ params }: { params: Promise<{ id: str
                     <button
                       type="button"
                       onClick={() => toggleReason(c.id)}
-                      className="font-mono text-[10px] text-on-surface/40 hover:text-on-surface"
+                      className="font-mono text-[10px] text-on-surface/60 hover:text-on-surface"
                     >
                       {revealedReasons.has(c.id) ? "OCULTAR MOTIVO" : "VER MOTIVO"}
                     </button>

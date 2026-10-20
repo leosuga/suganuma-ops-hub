@@ -101,27 +101,27 @@ export default function CalendarPage() {
       <div className="h-full flex flex-col">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-none">
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-mono font-semibold tracking-[0.2em] text-on-surface/40 uppercase">CALENDAR</span>
+            <span className="text-[10px] font-mono font-semibold tracking-[0.2em] text-on-surface/60 uppercase">CALENDAR</span>
             <button onClick={goToday} className="text-[9px] font-mono text-teal hover:text-teal-hi tracking-wider transition-colors">HOJE</button>
-            <Link href="/calendar/year" className="text-[9px] font-mono text-on-surface/40 hover:text-teal/80 tracking-wider transition-colors border-l border-border pl-2 ml-1">
+            <Link href="/calendar/year" className="text-[9px] font-mono text-on-surface/60 hover:text-teal/80 tracking-wider transition-colors border-l border-border pl-2 ml-1">
               ANO →
             </Link>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={prevMonth} className="w-6 h-6 flex items-center justify-center text-on-surface/40 hover:text-on-surface/70 font-mono transition-colors">‹</button>
+            <button onClick={prevMonth} className="w-6 h-6 flex items-center justify-center text-on-surface/60 hover:text-on-surface/70 font-mono transition-colors">‹</button>
             <span className="text-[11px] font-mono text-on-surface/60 min-w-36 text-center">{MONTHS[month]} {year}</span>
-            <button onClick={nextMonth} className="w-6 h-6 flex items-center justify-center text-on-surface/40 hover:text-on-surface/70 font-mono transition-colors">›</button>
+            <button onClick={nextMonth} className="w-6 h-6 flex items-center justify-center text-on-surface/60 hover:text-on-surface/70 font-mono transition-colors">›</button>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/tasks" className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">TASKS</Link>
-            <Link href="/meals" className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">MEALS</Link>
+            <Link href="/tasks" className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors">TASKS</Link>
+            <Link href="/meals" className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors">MEALS</Link>
           </div>
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden">
           <div className="grid grid-cols-7 border-b border-border flex-none">
             {DAY_NAMES.map((d) => (
-              <div key={d} className="h-7 flex items-center justify-center text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase border-r border-border last:border-r-0">{d}</div>
+              <div key={d} className="h-7 flex items-center justify-center text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase border-r border-border last:border-r-0">{d}</div>
             ))}
           </div>
 
@@ -150,17 +150,17 @@ export default function CalendarPage() {
                       isSelected && "bg-teal/[0.06] ring-1 ring-teal/40"
                     )}
                   >
-                    <span className={cn("text-[10px] font-mono tabular-nums", isToday ? "text-teal font-bold" : "text-on-surface/40")}>{day}</span>
+                    <span className={cn("text-[10px] font-mono tabular-nums", isToday ? "text-teal font-bold" : "text-on-surface/60")}>{day}</span>
                     {entries && (
                       <div className="mt-0.5 space-y-0">
                         {entries.appts.slice(0, 3).map((a, j) => (
-                          <div key={j} className="flex items-center gap-1"><div className={dotClass("health")} /><span className="text-[8px] font-mono text-on-surface/50 truncate">{a.time} {a.title}</span></div>
+                          <div key={j} className="flex items-center gap-1"><div className={dotClass("health")} /><span className="text-[8px] font-mono text-on-surface/60 truncate">{a.time} {a.title}</span></div>
                         ))}
                         {entries.tasks.slice(0, 3).map((t, j) => (
-                          <div key={j} className="flex items-center gap-1"><div className={dotClass(t.priority === "urgent" ? "danger" : "teal")} /><span className={cn("text-[8px] font-mono truncate", t.priority === "urgent" ? "text-danger/70" : "text-on-surface/50")}>{t.title}</span></div>
+                          <div key={j} className="flex items-center gap-1"><div className={dotClass(t.priority === "urgent" ? "danger" : "teal")} /><span className={cn("text-[8px] font-mono truncate", t.priority === "urgent" ? "text-danger/70" : "text-on-surface/60")}>{t.title}</span></div>
                         ))}
                         {entries.meals.slice(0, 2).map((m, j) => (
-                          <div key={j} className="flex items-center gap-1"><div className={dotClass("amber")} /><span className="text-[8px] font-mono text-on-surface/50 truncate">{m}</span></div>
+                          <div key={j} className="flex items-center gap-1"><div className={dotClass("amber")} /><span className="text-[8px] font-mono text-on-surface/60 truncate">{m}</span></div>
                         ))}
                       </div>
                     )}

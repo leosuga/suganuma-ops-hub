@@ -226,7 +226,7 @@ export function PersonFormDialog({ open, onOpenChange, person, onSubmit }: Props
           </div>
 
           {state.error ? (
-            <p className="font-mono text-[11px] text-danger">{state.error}</p>
+            <p role="alert" className="font-mono text-[11px] text-danger">{state.error}</p>
           ) : null}
         </div>
 

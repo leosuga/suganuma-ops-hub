@@ -28,10 +28,10 @@ export const PersonRow = memo(function PersonRow({
         >
           {person.name}
           {person.nickname ? (
-            <span className="text-on-surface/40"> ({person.nickname})</span>
+            <span className="text-on-surface/60"> ({person.nickname})</span>
           ) : null}
         </Link>
-        <div className="truncate text-[11px] text-on-surface/40">
+        <div className="truncate text-[11px] text-on-surface/60">
           {CIRCLE_LABEL[person.circle] ?? person.circle}
           {person.household ? ` · ${person.household}` : ""}
         </div>
@@ -66,7 +66,7 @@ export const PersonRow = memo(function PersonRow({
       <button
         type="button"
         onClick={() => onDelete(person.id)}
-        className="shrink-0 px-2 py-1 font-mono text-[10px] text-on-surface/40 hover:text-danger"
+        className="shrink-0 px-2 py-1 font-mono text-[10px] text-on-surface/60 hover:text-danger"
       >
         DEL
       </button>

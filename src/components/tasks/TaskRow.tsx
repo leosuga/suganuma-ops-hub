@@ -10,14 +10,14 @@ import type { ProjectRow } from "@/lib/queries/projects"
 const PRIORITY_COLORS: Record<string, string> = {
   urgent: "text-danger border-danger/40 bg-danger/10",
   high: "text-amber border-amber/40 bg-amber/10",
-  med: "text-on-surface/40 border-border bg-transparent",
-  low: "text-on-surface/40 border-border/50 bg-transparent",
+  med: "text-on-surface/60 border-border bg-transparent",
+  low: "text-on-surface/60 border-border/50 bg-transparent",
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
   finance: "text-teal",
   logistics: "text-amber",
-  personal: "text-on-surface/50",
+  personal: "text-on-surface/60",
   health: "text-health",
 }
 
@@ -142,7 +142,7 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
         <span
           className={cn(
             "flex-1 text-[12px] font-mono truncate",
-            isDone ? "line-through text-on-surface/40" : "text-on-surface"
+            isDone ? "line-through text-on-surface/60" : "text-on-surface"
           )}
         >
           {project && (
@@ -159,7 +159,7 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
         <span
           className={cn(
             "flex-none text-[9px] font-mono font-semibold tracking-wider uppercase",
-            CATEGORY_COLORS[task.category] ?? "text-on-surface/40"
+            CATEGORY_COLORS[task.category] ?? "text-on-surface/60"
           )}
         >
           {task.category.slice(0, 3)}
@@ -167,7 +167,7 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
 
         {/* Delegated badge */}
         {task.delegated_to && (
-          <span className="flex-none text-[8px] font-mono text-on-surface/40 px-1 py-0.5 border border-on-surface/20 rounded-sm">
+          <span className="flex-none text-[8px] font-mono text-on-surface/60 px-1 py-0.5 border border-on-surface/20 rounded-sm">
             @{task.delegated_to}
           </span>
         )}
@@ -189,9 +189,9 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
         {/* Energy level badge */}
         {task.energy_level && (
           <span className={cn(
-            "flex-none text-[7px] font-mono px-1 py-0.5 border rounded-sm",
+            "flex-none text-[9px] font-mono px-1 py-0.5 border rounded-sm",
             task.energy_level === "high" && "text-purple-400 border-purple-400/30",
-            task.energy_level === "med" && "text-on-surface/40 border-border",
+            task.energy_level === "med" && "text-on-surface/60 border-border",
             task.energy_level === "low" && "text-teal/60 border-teal/30"
           )}>
             {task.energy_level === "high" ? "DEEP" : task.energy_level === "low" ? "QUICK" : "MED"}
@@ -200,7 +200,7 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
 
         {/* Tags */}
         {task.tags && task.tags.length > 0 && task.tags.map((tag) => (
-          <span key={tag} className="flex-none text-[7px] font-mono text-teal px-1 py-0.5 border border-teal/30 rounded-sm">
+          <span key={tag} className="flex-none text-[9px] font-mono text-teal px-1 py-0.5 border border-teal/30 rounded-sm">
             #{tag}
           </span>
         ))}
@@ -210,7 +210,7 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
           <span
             className={cn(
               "flex-none text-[10px] font-mono",
-              isOverdue ? "text-danger" : "text-on-surface/40"
+              isOverdue ? "text-danger" : "text-on-surface/60"
             )}
           >
             {dueText}
@@ -221,7 +221,7 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
         <span
           className={cn(
             "flex-none px-1.5 h-4 flex items-center rounded-[2px] border text-[8px] font-mono font-semibold tracking-wider uppercase",
-            PRIORITY_COLORS[task.priority] ?? "text-on-surface/40 border-border"
+            PRIORITY_COLORS[task.priority] ?? "text-on-surface/60 border-border"
           )}
         >
           {task.priority === "urgent" ? "URG" : task.priority.toUpperCase()}
@@ -230,7 +230,7 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
         {onCreateNote && (
           <button
             onClick={(e) => { e.stopPropagation(); onCreateNote(task) }}
-            className="flex-none w-7 h-7 -m-1 flex items-center justify-center text-on-surface/40 hover:text-teal transition-colors rounded-sm text-[11px]"
+            className="flex-none w-7 h-7 -m-1 flex items-center justify-center text-on-surface/60 hover:text-teal transition-colors rounded-sm text-[11px]"
             aria-label={`Criar nota para: ${task.title}`}
           >
             📝
@@ -240,7 +240,7 @@ export const TaskRow = memo(function TaskRow({ task, onToggle, onEdit, onDelete,
         {onEdit && (
           <button
             onClick={(e) => { e.stopPropagation(); onEdit(task) }}
-            className="flex-none w-7 h-7 -m-1 flex items-center justify-center text-on-surface/40 hover:text-teal transition-colors rounded-sm text-[11px]"
+            className="flex-none w-7 h-7 -m-1 flex items-center justify-center text-on-surface/60 hover:text-teal transition-colors rounded-sm text-[11px]"
             aria-label={`Editar task: ${task.title}`}
           >
             ✎

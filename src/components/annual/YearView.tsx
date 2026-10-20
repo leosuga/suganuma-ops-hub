@@ -255,21 +255,21 @@ export function YearView() {
           <div className="flex items-center border border-border/50 rounded-md overflow-hidden">
             <button
               onClick={() => setCalendarView("year")}
-              className={cn("px-2 py-1 text-[9px] font-mono transition-colors", calendarView === "year" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")}
+              className={cn("px-2 py-1 text-[9px] font-mono transition-colors", calendarView === "year" ? "bg-teal/20 text-teal" : "text-on-surface/60 hover:text-on-surface/60")}
               title="Ano"
             >
               Ano
             </button>
             <button
               onClick={() => setCalendarView("month")}
-              className={cn("px-2 py-1 text-[9px] font-mono transition-colors", calendarView === "month" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")}
+              className={cn("px-2 py-1 text-[9px] font-mono transition-colors", calendarView === "month" ? "bg-teal/20 text-teal" : "text-on-surface/60 hover:text-on-surface/60")}
               title="Mês"
             >
               Mês
             </button>
             <button
               onClick={() => setCalendarView("week")}
-              className={cn("px-2 py-1 text-[9px] font-mono transition-colors", calendarView === "week" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")}
+              className={cn("px-2 py-1 text-[9px] font-mono transition-colors", calendarView === "week" ? "bg-teal/20 text-teal" : "text-on-surface/60 hover:text-on-surface/60")}
               title="Semana"
             >
               Sem
@@ -278,14 +278,14 @@ export function YearView() {
           {calendarView === "week" && (
             <div className="flex items-center gap-1">
               <button onClick={() => setWeekOffset((w) => w - 1)} className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60">←</button>
-              <span className="text-[9px] font-mono text-on-surface/40">Semana</span>
+              <span className="text-[9px] font-mono text-on-surface/60">Semana</span>
               <button onClick={() => setWeekOffset((w) => w + 1)} className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60">→</button>
             </div>
           )}
           {calendarView === "month" && (
             <div className="flex items-center gap-1">
               <button onClick={() => setMonthViewMonth((m) => (m + 11) % 12)} className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60">←</button>
-              <span className="text-[9px] font-mono text-on-surface/40">Mês</span>
+              <span className="text-[9px] font-mono text-on-surface/60">Mês</span>
               <button onClick={() => setMonthViewMonth((m) => (m + 1) % 12)} className="px-1.5 py-0.5 text-[8px] font-mono bg-surface border border-border/40 rounded-sm text-on-surface/60">→</button>
             </div>
           )}
@@ -296,7 +296,7 @@ export function YearView() {
                 "px-2 py-1 text-[9px] font-mono border border-border/50 rounded-md transition-colors",
                 dualYear
                   ? "bg-teal/20 text-teal border-teal/30"
-                  : "text-on-surface/40 hover:text-on-surface/60"
+                  : "text-on-surface/60 hover:text-on-surface/60"
               )}
               title={dualYear ? "1 ano" : "2 anos"}
             >
@@ -307,14 +307,14 @@ export function YearView() {
             <div className="flex items-center border border-border/50 rounded-md overflow-hidden">
               <button
                 onClick={() => setViewMode("bars")}
-                className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "bars" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")}
+                className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "bars" ? "bg-teal/20 text-teal" : "text-on-surface/60 hover:text-on-surface/60")}
                 title="Barras"
               >
                 ▬
               </button>
               <button
                 onClick={() => setViewMode("dots")}
-                className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "dots" ? "bg-teal/20 text-teal" : "text-on-surface/40 hover:text-on-surface/60")}
+                className={cn("px-2 py-1 text-[9px] font-mono transition-colors", viewMode === "dots" ? "bg-teal/20 text-teal" : "text-on-surface/60 hover:text-on-surface/60")}
                 title="Pontos"
               >
                 ●
@@ -343,7 +343,7 @@ export function YearView() {
 
       <div className="hidden print:block text-center py-4">
         <h1 className="text-xl font-bold text-on-surface">Calendário {year}{dualYear ? ` - ${year + 1}` : ""}</h1>
-        <p className="text-xs text-on-surface/40 font-mono">Suganuma Ops Hub</p>
+        <p className="text-xs text-on-surface/60 font-mono">Suganuma Ops Hub</p>
       </div>
 
       <div ref={calendarRef} className="flex-1 overflow-auto relative print:overflow-visible">

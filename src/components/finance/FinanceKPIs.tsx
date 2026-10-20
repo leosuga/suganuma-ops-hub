@@ -18,7 +18,7 @@ function KPICard({
 }) {
   return (
     <div className="border border-border bg-surface rounded-sm p-4 flex flex-col gap-1">
-      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
         {label}
       </span>
       <span className={`text-[22px] font-mono font-bold leading-none ${color}`}>

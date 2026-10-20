@@ -74,14 +74,14 @@ export default function LoginPage() {
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
             SUGANUMA
           </h1>
-          <p className="text-[10px] font-mono text-on-surface/40 tracking-widest mt-1">
+          <p className="text-[10px] font-mono text-on-surface/60 tracking-widest mt-1">
             OPS HUB — COMMAND CENTER
           </p>
         </div>
 
         <div className="border border-border bg-surface rounded-sm">
           <div className="px-4 py-3 border-b border-border bg-bg">
-            <span className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               AUTENTICAÇÃO
             </span>
           </div>
@@ -93,7 +93,7 @@ export default function LoginPage() {
                   Se o link não abrir no mesmo navegador, use o código de 6 dígitos do e-mail:
                 </p>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+                  <label className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
                     Código do e-mail
                   </label>
                   <input
@@ -105,10 +105,10 @@ export default function LoginPage() {
                     onChange={e => setCode(e.target.value)}
                     placeholder="••••••"
                     autoFocus
-                    className="h-11 bg-bg border border-border rounded-sm px-3 text-[20px] font-mono tracking-[0.4em] text-center text-on-surface placeholder:text-on-surface/30 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+                    className="h-11 bg-bg border border-border rounded-sm px-3 text-[20px] font-mono tracking-[0.4em] text-center text-on-surface placeholder:text-on-surface/50 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
                   />
                 </div>
-                {error && <p className="text-[11px] font-mono text-danger">{error}</p>}
+                {error && <p role="alert" className="text-[11px] font-mono text-danger">{error}</p>}
                 <button
                   type="submit"
                   disabled={loading || code.trim().length < 6}
@@ -119,7 +119,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => { setStep("email"); setSent(false); setCode(""); }}
-                  className="text-[9px] font-mono text-on-surface/40 hover:text-teal tracking-wider transition-colors"
+                  className="text-[9px] font-mono text-on-surface/60 hover:text-teal tracking-wider transition-colors"
                 >
                   ← usar outro e-mail
                 </button>
@@ -131,7 +131,7 @@ export default function LoginPage() {
                   Link enviado para
                 </p>
                 <p className="text-[11px] font-mono text-teal">{email}</p>
-                <p className="text-[10px] font-mono text-on-surface/40 text-center">
+                <p className="text-[10px] font-mono text-on-surface/60 text-center">
                   Toque no link OU digite o código de 6 dígitos abaixo.
                 </p>
                 <button
@@ -145,7 +145,7 @@ export default function LoginPage() {
             ) : (
               <form onSubmit={handleSubmitEmail} className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1">
-                  <label className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+                  <label className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
                     Email
                   </label>
                   <input
@@ -155,12 +155,12 @@ export default function LoginPage() {
                     placeholder="seu@email.com"
                     required
                     autoFocus
-                    className="h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+                    className="h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
                   />
                 </div>
 
                 {error && (
-                  <p className="text-[11px] font-mono text-danger">{error}</p>
+                  <p role="alert" className="text-[11px] font-mono text-danger">{error}</p>
                 )}
 
                 <button
@@ -175,7 +175,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <p className="text-center text-[9px] font-mono text-on-surface/40 mt-4">
+        <p className="text-center text-[9px] font-mono text-on-surface/60 mt-4">
           ACESSO RESTRITO — SISTEMA PRIVADO
         </p>
       </div>

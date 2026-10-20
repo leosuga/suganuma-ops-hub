@@ -38,7 +38,7 @@ export function ConsentActions({ search }: { search: string }) {
 
   return (
     <div className="flex flex-col gap-2">
-      {error && <p className="text-[11px] font-mono text-danger">{error}</p>}
+      {error && <p role="alert" className="text-[11px] font-mono text-danger">{error}</p>}
       <div className="flex gap-2">
         <button
           type="button"

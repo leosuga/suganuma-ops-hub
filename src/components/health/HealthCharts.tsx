@@ -15,7 +15,7 @@ export default function HealthCharts() {
 
   return (
     <section className="space-y-3">
-      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
         TENDÊNCIAS
       </span>
       {hasWeight && <WeightChart logs={logs} kind="weight" />}

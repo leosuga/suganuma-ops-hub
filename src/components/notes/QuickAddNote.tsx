@@ -82,7 +82,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
           <button
             type="button"
             onClick={() => setShowForm(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-sm border border-border text-on-surface/40 hover:text-on-surface/60 hover:border-on-surface/30 transition-colors active:scale-95"
+            className="w-9 h-9 flex items-center justify-center rounded-sm border border-border text-on-surface/60 hover:text-on-surface/60 hover:border-on-surface/30 transition-colors active:scale-95"
             title="Nova nota"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -93,8 +93,8 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
           <div className="fixed inset-0 z-50 bg-black/60 flex items-end justify-center p-4">
             <div className="w-full max-w-md border border-border bg-surface rounded-sm shadow-2xl">
               <div className="h-8 px-3 flex items-center justify-between border-b border-border bg-bg">
-                <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOVA NOTA</span>
-                <button onClick={() => setShowForm(false)} className="text-[10px] font-mono text-on-surface/40 hover:text-on-surface/60">FECHAR</button>
+                <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">NOVA NOTA</span>
+                <button onClick={() => setShowForm(false)} className="text-[10px] font-mono text-on-surface/60 hover:text-on-surface/60">FECHAR</button>
               </div>
               <form onSubmit={handleSubmit} className="p-3 space-y-2">
                 <input
@@ -103,7 +103,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Título da nota..."
                   autoFocus
-                  className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+                  className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
                 />
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                   {(Object.keys(TEMPLATES) as TemplateKey[]).map((k) => (
@@ -118,7 +118,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
                         "flex-none h-6 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
                         template === k
                           ? "bg-teal/15 text-teal border border-teal/40"
-                          : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                          : "text-on-surface/60 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
                       )}
                     >
                       {TEMPLATES[k].label}
@@ -138,7 +138,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
                           "flex-none h-6 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
                           isActive
                             ? cfg.bg + " " + cfg.color + " border " + cfg.border
-                            : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                            : "text-on-surface/60 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
                         )}
                       >
                         {cfg.label}
@@ -176,7 +176,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
   return (
     <form onSubmit={handleSubmit} className="border border-border bg-surface rounded-sm overflow-hidden">
       <div className="h-8 px-4 flex items-center border-b border-border bg-bg justify-between">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
           NOVA NOTA RÁPIDA
         </span>
         <button
@@ -184,7 +184,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
           onClick={() => setShowTemplates(!showTemplates)}
           className={cn(
             "text-[9px] font-mono font-semibold tracking-wider rounded-sm px-2 h-5 transition-colors",
-            showTemplates ? "bg-teal/15 text-teal border border-teal/40" : "text-on-surface/40 hover:text-on-surface/50"
+            showTemplates ? "bg-teal/15 text-teal border border-teal/40" : "text-on-surface/60 hover:text-on-surface/60"
           )}
         >
           {showTemplates ? "FECHAR" : "TEMPLATE"}
@@ -205,7 +205,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
                 "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
                 template === k
                   ? "bg-teal/15 text-teal border border-teal/40"
-                  : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                  : "text-on-surface/60 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
               )}
             >
               {TEMPLATES[k].label}
@@ -217,7 +217,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
       {/* Context selector */}
       {showTemplates && (
         <div className="px-4 py-2 border-b border-border bg-bg flex flex-wrap gap-1.5">
-          <span className="w-full text-[8px] font-mono text-on-surface/40 uppercase tracking-wider mb-1">Contexto</span>
+          <span className="w-full text-[8px] font-mono text-on-surface/60 uppercase tracking-wider mb-1">Contexto</span>
           {(Object.keys(CONTEXT_CONFIG) as ContextKey[]).map((ctx) => {
             const cfg = CONTEXT_CONFIG[ctx]
             const isActive = selectedContext === ctx
@@ -230,7 +230,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
                   "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
                   isActive
                     ? cfg.bg + " " + cfg.color + " border " + cfg.border
-                    : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+                    : "text-on-surface/60 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
                 )}
               >
                 {cfg.label}
@@ -263,7 +263,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={template === "daily" ? `Nota do dia (${new Date().toLocaleDateString("pt-BR")})...` : "Título da nota..."}
-          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
         />
         <button
           type="submit"

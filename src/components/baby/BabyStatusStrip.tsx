@@ -9,7 +9,7 @@ const SIDE_LABEL = { L: "E", R: "D" } as const
 function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
     <div className="flex flex-col">
-      <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-widest">{label}</span>
+      <span className="text-[9px] font-mono text-on-surface/60 uppercase tracking-widest">{label}</span>
       <span className={cn("text-[13px] font-mono text-on-surface", tone)}>{value}</span>
     </div>
   )

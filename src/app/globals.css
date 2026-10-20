@@ -166,11 +166,13 @@
     --surface: #FFFFFF;
     --surface-hover: #E8EAEB;
     --on-surface: #1C2025;
-    --brand: #2A8B9B;
-    --brand-hi: #55D7ED;
-    --amber: #CC9020;
-    --danger: #D9534F;
-    --health: #2E8B57;
+    /* Tokens do light re-ajustados para >= 4.5:1 (WCAG AA) contra #F2F4F5
+       e #FFFFFF — as versões anteriores reprovavam (accent-hi ficava 1.7:1). */
+    --brand: #187989;
+    --brand-hi: #00798F;
+    --amber: #9E6200;
+    --danger: #C53F3B;
+    --health: #227F4B;
   }
 }
 

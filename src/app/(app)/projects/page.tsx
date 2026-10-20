@@ -128,7 +128,7 @@ export default function ProjectsPage() {
             <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
               PROJETOS
             </h1>
-            <p className="text-[10px] font-mono text-on-surface/40 mt-0.5">
+            <p className="text-[10px] font-mono text-on-surface/60 mt-0.5">
               {projects.length} projeto{projects.length !== 1 ? "s" : ""}
               {active.length > 0 && ` · ${active.length} ativo${active.length !== 1 ? "s" : ""}`}
             </p>
@@ -154,7 +154,7 @@ export default function ProjectsPage() {
 
         {!isLoading && projects.length === 0 && (
           <div className="border border-border bg-surface rounded-sm p-8 flex flex-col items-center justify-center gap-3">
-            <span className="text-[11px] font-mono text-on-surface/40">
+            <span className="text-[11px] font-mono text-on-surface/60">
               Nenhum projeto ainda
             </span>
             <button
@@ -184,7 +184,7 @@ export default function ProjectsPage() {
 
         {paused.length > 0 && (
           <div className="space-y-3">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               PAUSADOS
             </span>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -205,7 +205,7 @@ export default function ProjectsPage() {
 
         {done.length > 0 && (
           <div className="space-y-3">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               CONCLUÍDOS
             </span>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

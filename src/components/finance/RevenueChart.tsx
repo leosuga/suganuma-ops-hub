@@ -40,7 +40,7 @@ function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
     <div className="bg-surface border border-border rounded-sm px-3 py-2 text-[10px] font-mono">
-      <p className="text-on-surface/40 mb-1">Dia {label}</p>
+      <p className="text-on-surface/60 mb-1">Dia {label}</p>
       {payload.map((p: { name: string; value: number; color: string }) => (
         <p key={p.name} style={{ color: p.color }}>
           {p.name === "income" ? "Receita" : "Despesa"}:{" "}
@@ -63,7 +63,7 @@ export function RevenueChart({ transactions, isLoading }: RevenueChartProps) {
   if (data.length === 0) {
     return (
       <div className="border border-border bg-surface rounded-sm p-4 h-48 flex items-center justify-center">
-        <span className="text-[11px] font-mono text-on-surface/40">
+        <span className="text-[11px] font-mono text-on-surface/60">
           Sem dados para o período
         </span>
       </div>
@@ -72,7 +72,7 @@ export function RevenueChart({ transactions, isLoading }: RevenueChartProps) {
 
   return (
     <div className="border border-border bg-surface rounded-sm p-4">
-      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
+      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase block mb-3">
         FLUXO DO MÊS
       </span>
       <ResponsiveContainer width="100%" height={160}>

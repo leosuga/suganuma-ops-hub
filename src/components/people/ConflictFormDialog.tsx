@@ -271,13 +271,13 @@ export function ConflictFormDialog({
               value={state.reason}
               onChange={(e) => dispatch({ type: "set", field: "reason", value: e.target.value })}
             />
-            <p className="mt-1 font-mono text-[10px] text-on-surface/40">
+            <p className="mt-1 font-mono text-[10px] text-on-surface/60">
               Fica só aqui: não entra em busca, embedding nem em ferramenta de IA.
             </p>
           </div>
 
           {state.error ? (
-            <p className="font-mono text-[11px] text-danger">{state.error}</p>
+            <p role="alert" className="font-mono text-[11px] text-danger">{state.error}</p>
           ) : null}
         </div>
 

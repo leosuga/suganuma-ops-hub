@@ -52,13 +52,13 @@ export function BiometricLogDialog({ open, onOpenChange }: BiometricLogProps) {
     onOpenChange(false)
   }
 
-  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50 transition-colors"
+  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50 transition-colors"
 
   return (
     <Dialog open={open} onOpenChange={(v) => onOpenChange(v)}>
       <DialogContent className="bg-surface border-border max-w-sm p-0 gap-0">
         <DialogHeader className="px-4 py-3 border-b border-border">
-          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             REGISTRAR BIOMETRIA
           </DialogTitle>
         </DialogHeader>
@@ -73,7 +73,7 @@ export function BiometricLogDialog({ open, onOpenChange }: BiometricLogProps) {
                   "h-7 text-[8px] font-mono font-semibold tracking-wider rounded-sm border transition-colors",
                   kind === k.value
                     ? "border-health bg-health/10 text-health"
-                    : "border-border text-on-surface/40 hover:border-on-surface/40"
+                    : "border-border text-on-surface/60 hover:border-on-surface/40"
                 )}
               >
                 {k.label}
@@ -105,7 +105,7 @@ export function BiometricLogDialog({ open, onOpenChange }: BiometricLogProps) {
             </label>
           )}
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => onOpenChange(false)} className="h-8 px-4 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 transition-colors">
+            <button type="button" onClick={() => onOpenChange(false)} className="h-8 px-4 text-[10px] font-mono text-on-surface/60 hover:text-on-surface/70 transition-colors">
               CANCELAR
             </button>
             <button
@@ -132,7 +132,7 @@ export function BiometricList() {
   if (logs.length === 0) {
     return (
       <div className="border border-border bg-surface rounded-sm p-6 flex items-center justify-center">
-        <span className="text-[11px] font-mono text-on-surface/40">Nenhum registro ainda</span>
+        <span className="text-[11px] font-mono text-on-surface/60">Nenhum registro ainda</span>
       </div>
     )
   }
@@ -140,9 +140,9 @@ export function BiometricList() {
   return (
     <div className="border border-border bg-surface rounded-sm overflow-hidden">
       <div className="h-8 px-4 flex items-center gap-3 border-b border-border bg-bg">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase w-24">TIPO</span>
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase flex-1">VALOR</span>
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase w-24 text-right">DATA</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase w-24">TIPO</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase flex-1">VALOR</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase w-24 text-right">DATA</span>
       </div>
       <div className="divide-y divide-border">
         {logs.map((log) => {
@@ -150,13 +150,13 @@ export function BiometricList() {
           const dateStr = new Date(log.logged_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "2-digit" })
           return (
             <div key={log.id} className="flex items-center gap-3 h-10 px-4 hover:bg-surface-hover transition-colors">
-              <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-wider w-24">
+              <span className="text-[9px] font-mono text-on-surface/60 uppercase tracking-wider w-24">
                 {kind?.label ?? log.kind}
               </span>
               <span className="flex-1 text-[12px] font-mono text-health tabular-nums">
                 {formatValue(log.kind, parseHealthLogValue(log.value) ?? {})}
               </span>
-              <span className="text-[10px] font-mono text-on-surface/40 w-24 text-right">{dateStr}</span>
+              <span className="text-[10px] font-mono text-on-surface/60 w-24 text-right">{dateStr}</span>
             </div>
           )
         })}

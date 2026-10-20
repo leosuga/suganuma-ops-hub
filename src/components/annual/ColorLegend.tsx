@@ -60,7 +60,7 @@ export function ColorLegend({ activeColors, onToggleColor, onReset, onZoomIn, on
         >
           −
         </button>
-        <span className="text-[9px] font-mono text-on-surface/40 w-8 text-center">
+        <span className="text-[9px] font-mono text-on-surface/60 w-8 text-center">
           {dayWidth}px
         </span>
         <button

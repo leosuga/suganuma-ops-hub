@@ -84,29 +84,29 @@ export function HabitStats({ habits }: HabitStatsProps) {
     <div className="p-4 space-y-4">
       <div className="grid grid-cols-3 gap-3">
         <div className="border border-border bg-surface rounded-sm p-4">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase block">
             MELHOR STREAK
           </span>
           <span className="text-xl font-mono font-bold text-health block">{bestStreak}d</span>
           {bestStreakName && (
-            <span className="text-[10px] font-mono text-on-surface/40 block mt-1 truncate">{bestStreakName}</span>
+            <span className="text-[10px] font-mono text-on-surface/60 block mt-1 truncate">{bestStreakName}</span>
           )}
         </div>
 
         <div className="border border-border bg-surface rounded-sm p-4">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase block">
             CONSISTÊNCIA
           </span>
           <span className="text-xl font-mono font-bold text-teal block">{weekRate}%</span>
-          <span className="text-[10px] font-mono text-on-surface/40 block mt-1">desta semana</span>
+          <span className="text-[10px] font-mono text-on-surface/60 block mt-1">desta semana</span>
         </div>
 
         <div className="border border-border bg-surface rounded-sm p-4">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase block">
             ATIVOS
           </span>
           <span className="text-xl font-mono font-bold text-on-surface block">{active.length}</span>
-          <span className="text-[10px] font-mono text-on-surface/40 block mt-1">
+          <span className="text-[10px] font-mono text-on-surface/60 block mt-1">
             {habits.length - active.length} inativos
           </span>
         </div>
@@ -114,7 +114,7 @@ export function HabitStats({ habits }: HabitStatsProps) {
 
       {active.length > 0 && (
         <div className="border border-border bg-surface rounded-sm p-4 overflow-x-auto">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase block mb-3">
             VISÃO SEMANAL
           </span>
           <div className="min-w-max">
@@ -122,10 +122,10 @@ export function HabitStats({ habits }: HabitStatsProps) {
               className="grid gap-x-1"
               style={{ gridTemplateColumns: `100px repeat(${activeDays}, minmax(24px, 1fr))` }}
             >
-              <div className="text-[9px] font-mono text-on-surface/40" />
+              <div className="text-[9px] font-mono text-on-surface/60" />
               {weekDays.slice(0, activeDays).map((day) => (
                 <div key={day.toISOString()} className="text-center">
-                  <span className="text-[7px] font-mono text-on-surface/40 uppercase">
+                  <span className="text-[9px] font-mono text-on-surface/60 uppercase">
                     {DAY_NAMES[day.getDay() === 0 ? 6 : day.getDay() - 1]}
                   </span>
                 </div>
@@ -133,7 +133,7 @@ export function HabitStats({ habits }: HabitStatsProps) {
 
               {active.map((habit) => (
                 <div key={habit.id} className="contents">
-                  <div className="text-[10px] font-mono text-on-surface/50 flex items-center gap-1 py-1.5 truncate">
+                  <div className="text-[10px] font-mono text-on-surface/60 flex items-center gap-1 py-1.5 truncate">
                     <span className="text-[11px]">{"\u25CF"}</span>
                     <span className="truncate">{habit.name}</span>
                   </div>

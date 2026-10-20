@@ -127,7 +127,7 @@ export function UpcomingEvents() {
     <>
       <div className="border border-border bg-surface rounded-sm overflow-hidden">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             PRÓXIMOS EVENTOS
           </span>
           <div className="flex items-center gap-3">
@@ -141,7 +141,7 @@ export function UpcomingEvents() {
             )}
             <Link
               href="/calendar/year"
-              className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors"
+              className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors"
             >
               CALENDÁRIO →
             </Link>
@@ -174,7 +174,7 @@ export function UpcomingEvents() {
                     className="w-2 h-2 rounded-full flex-none"
                     style={{ backgroundColor: event.color }}
                   />
-                  <span className="text-[10px] font-mono text-on-surface/50 w-20 flex-none">
+                  <span className="text-[10px] font-mono text-on-surface/60 w-20 flex-none">
                     {dateStr}
                     {endStr}
                     <span className="text-teal">{timeStr}</span>
@@ -183,12 +183,12 @@ export function UpcomingEvents() {
                     {event.title}
                   </span>
                   {event.location && (
-                    <span className="text-[10px] font-mono text-on-surface/40 truncate max-w-[80px]">
+                    <span className="text-[10px] font-mono text-on-surface/60 truncate max-w-[80px]">
                       📍 {event.location}
                     </span>
                   )}
                   {event.project_name && (
-                    <span className="text-[10px] font-mono text-on-surface/40 truncate max-w-[80px]">
+                    <span className="text-[10px] font-mono text-on-surface/60 truncate max-w-[80px]">
                       {event.project_name}
                     </span>
                   )}
@@ -197,7 +197,7 @@ export function UpcomingEvents() {
             })
           ) : (
             <div className="px-4 py-6 text-center">
-              <p className="text-[11px] font-mono text-on-surface/40">
+              <p className="text-[11px] font-mono text-on-surface/60">
                 Nenhum evento nos próximos dias
               </p>
               <button

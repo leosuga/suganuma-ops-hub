@@ -68,7 +68,7 @@ export default function MealsPage() {
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
             MEAL PLANNING
           </h1>
-          <p className="text-[10px] font-mono text-on-surface/40 mt-0.5">
+          <p className="text-[10px] font-mono text-on-surface/60 mt-0.5">
             {meals.length} receita{meals.length !== 1 ? "s" : ""} · planejamento semanal
           </p>
         </div>
@@ -80,7 +80,7 @@ export default function MealsPage() {
               "h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border rounded-sm transition-colors",
               showNewMeal
                 ? "border-teal text-teal bg-teal/10"
-                : "border-border text-on-surface/40 hover:border-on-surface/40 hover:text-on-surface/70"
+                : "border-border text-on-surface/60 hover:border-on-surface/40 hover:text-on-surface/70"
             )}
           >
             {showNewMeal ? "FECHAR" : "+ NOVA RECEITA"}
@@ -95,13 +95,13 @@ export default function MealsPage() {
             <table className="w-full min-w-[600px]">
               <thead>
                 <tr className="border-b border-border bg-bg">
-                  <th className="h-8 px-2 text-left text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase w-16" />
+                  <th className="h-8 px-2 text-left text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase w-16" />
                   {weekDates.map((d, i) => {
                     const isToday = d.toDateString() === new Date().toDateString()
                     return (
                       <th key={i} className={cn(
                         "h-8 px-1 text-center text-[9px] font-mono font-semibold tracking-widest uppercase",
-                        isToday ? "text-teal" : "text-on-surface/40"
+                        isToday ? "text-teal" : "text-on-surface/60"
                       )}>
                         {DAY_LABELS[d.getDay()]}
                         <br />
@@ -114,7 +114,7 @@ export default function MealsPage() {
               <tbody className="divide-y divide-border">
                 {MEAL_TYPES.map((type) => (
                   <tr key={type.key}>
-                    <td className="h-10 px-2 text-[9px] font-mono font-semibold tracking-wider text-on-surface/40 uppercase border-r border-border">
+                    <td className="h-10 px-2 text-[9px] font-mono font-semibold tracking-wider text-on-surface/60 uppercase border-r border-border">
                       {type.label}
                     </td>
                     {weekDates.map((d, j) => {
@@ -154,7 +154,7 @@ export default function MealsPage() {
                             </select>
                           </div>
                           {meal && (
-                            <p className="text-[8px] font-mono text-on-surface/40 truncate mt-0.5">
+                            <p className="text-[8px] font-mono text-on-surface/60 truncate mt-0.5">
                               {meal.name.length > 15 ? meal.name.slice(0, 15) + "..." : meal.name}
                             </p>
                           )}
@@ -172,7 +172,7 @@ export default function MealsPage() {
         {meals.length > 0 && (
           <div className="border border-border bg-surface rounded-sm overflow-hidden">
             <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
                 RECEITAS
               </span>
             </div>

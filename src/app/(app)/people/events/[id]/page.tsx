@@ -89,7 +89,7 @@ export default function GuestEventPage({ params }: { params: Promise<{ id: strin
     return (
       <SectionErrorBoundary label="GUEST EVENT">
         <div className="p-3">
-          <Link href="/people" className="font-mono text-[10px] text-on-surface/40 hover:text-accent">
+          <Link href="/people" className="font-mono text-[10px] text-on-surface/60 hover:text-accent">
             ← PESSOAS
           </Link>
           <div className="mt-3 h-32 animate-pulse bg-on-surface/5" />
@@ -102,7 +102,7 @@ export default function GuestEventPage({ params }: { params: Promise<{ id: strin
     return (
       <SectionErrorBoundary label="GUEST EVENT">
         <div className="p-4">
-          <p className="font-mono text-[11px] text-danger">Erro ao carregar o evento.</p>
+          <p role="alert" className="font-mono text-[11px] text-danger">Erro ao carregar o evento.</p>
           <Link href="/people" className="font-mono text-[11px] text-accent">← VOLTAR</Link>
         </div>
       </SectionErrorBoundary>
@@ -113,7 +113,7 @@ export default function GuestEventPage({ params }: { params: Promise<{ id: strin
     return (
       <SectionErrorBoundary label="GUEST EVENT">
         <div className="p-4">
-          <p className="font-mono text-[11px] text-on-surface/40">Evento não encontrado.</p>
+          <p className="font-mono text-[11px] text-on-surface/60">Evento não encontrado.</p>
           <Link href="/people" className="font-mono text-[11px] text-accent">← VOLTAR</Link>
         </div>
       </SectionErrorBoundary>
@@ -123,12 +123,12 @@ export default function GuestEventPage({ params }: { params: Promise<{ id: strin
   return (
     <SectionErrorBoundary label="GUEST EVENT">
       <div className="p-3">
-        <Link href="/people" className="font-mono text-[10px] text-on-surface/40 hover:text-accent">
+        <Link href="/people" className="font-mono text-[10px] text-on-surface/60 hover:text-accent">
           ← PESSOAS
         </Link>
 
         <h1 className="mt-2 text-lg text-on-surface">{event.name}</h1>
-        <p className="font-mono text-[11px] text-on-surface/40">
+        <p className="font-mono text-[11px] text-on-surface/60">
           {counts.naLista} na lista · {counts.total} cadastradas
           {event.capacity ? ` · capacidade ${event.capacity}` : ""}
         </p>
@@ -142,7 +142,7 @@ export default function GuestEventPage({ params }: { params: Promise<{ id: strin
         {!isLoading
           ? grouped.map(([household, members]) => (
               <section key={household} className="mb-4">
-                <h2 className="mb-1 font-mono text-[10px] tracking-wider text-on-surface/50">
+                <h2 className="mb-1 font-mono text-[10px] tracking-wider text-on-surface/60">
                   {household.toUpperCase()}
                 </h2>
                 {members.map((p) => (

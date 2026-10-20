@@ -13,7 +13,7 @@ const NAV_ITEMS = [
     icon: (
       // Grid 18×18, conteúdo dentro de 1.5..16.5 — stroke nunca toca a borda
       // do viewBox (SVG clipa em overflow default; tocava = ícone cortado).
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
         <rect x="2" y="2" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
         <rect x="10.5" y="2" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
         <rect x="2" y="10.5" width="5.5" height="5.5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
@@ -25,7 +25,7 @@ const NAV_ITEMS = [
     href: "/baby",
     label: "BEBÊ",
     icon: (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
         <circle cx="9" cy="9" r="6.5" stroke="currentColor" strokeWidth="1.2" />
         <circle cx="6.7" cy="8" r="0.7" fill="currentColor" />
         <circle cx="11.3" cy="8" r="0.7" fill="currentColor" />
@@ -37,7 +37,7 @@ const NAV_ITEMS = [
     href: "/tasks",
     label: "TASKS",
     icon: (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M2.5 5h13M2.5 9h8M2.5 13h10" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
         <path d="M12.5 11.5l1.7 1.7 2.3-2.7" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -47,7 +47,7 @@ const NAV_ITEMS = [
     href: "/finance",
     label: "FIN",
     icon: (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
         <path d="M9 2v14M5.8 5h4.2a2.4 2.4 0 0 1 0 4.8H5.8m0 0h5a2.4 2.4 0 0 1 0 4.8H5.8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
       </svg>
     ),
@@ -98,7 +98,7 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
                   "flex flex-col items-center justify-center gap-1 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-md transition-colors",
                   active
                     ? "bg-teal/10 text-teal"
-                    : "text-on-surface/40 hover:text-on-surface/60"
+                    : "text-on-surface/60 hover:text-on-surface/60"
                 )}
               >
                 {item.icon}
@@ -116,10 +116,10 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
               "flex flex-col items-center justify-center gap-1 px-3 py-1.5 min-h-[44px] min-w-[44px] rounded-md transition-colors",
               hubActive
                 ? "bg-teal/10 text-teal"
-                : "text-on-surface/40 hover:text-on-surface/60"
+                : "text-on-surface/60 hover:text-on-surface/60"
             )}
           >
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" fill="none">
               <rect x="2" y="2" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
               <rect x="11" y="2" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
               <rect x="2" y="11" width="5" height="5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
@@ -138,10 +138,10 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
           <DialogPrimitive.Popup className="fixed left-2 right-2 z-50 bg-surface border border-border rounded-sm shadow-2xl overflow-hidden outline-none bottom-[calc(56px+max(env(safe-area-inset-bottom),8px)+8px)]">
             <div className="p-3 space-y-1">
               <div className="flex items-center justify-between px-1 pb-1.5 border-b border-border mb-1">
-                <DialogPrimitive.Title className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+                <DialogPrimitive.Title className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
                   HUB
                 </DialogPrimitive.Title>
-                <DialogPrimitive.Close className="text-[10px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors active:scale-95 p-2.5 -m-2.5">
+                <DialogPrimitive.Close className="text-[10px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors active:scale-95 p-2.5 -m-2.5">
                   FECHAR
                 </DialogPrimitive.Close>
               </div>
@@ -156,7 +156,7 @@ export function BottomNav({ hidden }: { hidden?: boolean }) {
                       aria-current={active ? "page" : undefined}
                       className={cn(
                         "flex flex-col items-center justify-center gap-1 p-3 md:p-2 min-h-[44px] rounded-md transition-colors active:scale-95",
-                        active ? "bg-teal/10 text-teal" : "text-on-surface/50 hover:bg-surface-hover hover:text-on-surface/70"
+                        active ? "bg-teal/10 text-teal" : "text-on-surface/60 hover:bg-surface-hover hover:text-on-surface/70"
                       )}
                     >
                       <span className="text-[12px] font-mono font-semibold">{item.label}</span>

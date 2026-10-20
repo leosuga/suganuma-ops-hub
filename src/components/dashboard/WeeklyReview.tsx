@@ -66,7 +66,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
   return (
     <div className="border border-border bg-surface rounded-sm">
       <div className="px-4 py-3 border-b border-border">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
           WEEKLY REVIEW
         </span>
       </div>
@@ -74,35 +74,35 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
       <div className="p-4 space-y-4">
         <div className="grid grid-cols-3 gap-3">
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[10px] font-mono text-on-surface/40 tracking-wider uppercase">
+            <span className="text-[10px] font-mono text-on-surface/60 tracking-wider uppercase">
               CONCLUÍDAS
             </span>
             <span className="text-2xl font-mono font-bold text-teal">
               {completedThisWeek}
             </span>
-            <span className="text-[9px] font-mono text-on-surface/40">
+            <span className="text-[9px] font-mono text-on-surface/60">
               esta semana
             </span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[10px] font-mono text-on-surface/40 tracking-wider uppercase">
+            <span className="text-[10px] font-mono text-on-surface/60 tracking-wider uppercase">
               CRIADAS
             </span>
             <span className="text-2xl font-mono font-bold text-on-surface">
               {createdThisWeek}
             </span>
-            <span className="text-[9px] font-mono text-on-surface/40">
+            <span className="text-[9px] font-mono text-on-surface/60">
               esta semana
             </span>
           </div>
           <div className="flex flex-col items-center gap-1">
-            <span className="text-[10px] font-mono text-on-surface/40 tracking-wider uppercase">
+            <span className="text-[10px] font-mono text-on-surface/60 tracking-wider uppercase">
               PENDENTES
             </span>
             <span className={`text-2xl font-mono font-bold ${pendingNow > 0 ? "text-amber" : "text-green-400"}`}>
               {pendingNow}
             </span>
-            <span className="text-[9px] font-mono text-on-surface/40">
+            <span className="text-[9px] font-mono text-on-surface/60">
               total atual
             </span>
           </div>
@@ -110,14 +110,14 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
 
         {activeHabits > 0 && (
           <div className="border-t border-border pt-4">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase block mb-3">
               HÁBITOS
             </span>
             <div className="grid gap-x-1" style={{ gridTemplateColumns: `90px repeat(${activeDays}, minmax(16px, 1fr))` }}>
-              <div className="text-[9px] font-mono text-on-surface/40" />
+              <div className="text-[9px] font-mono text-on-surface/60" />
               {weekDays.slice(0, activeDays).map((day) => (
                 <div key={day.toISOString()} className="text-center">
-                  <span className="text-[7px] font-mono text-on-surface/40 uppercase">
+                  <span className="text-[9px] font-mono text-on-surface/60 uppercase">
                     {DAY_NAMES[day.getDay() === 0 ? 6 : day.getDay() - 1]}
                   </span>
                 </div>
@@ -125,7 +125,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
 
               {habitTracks.map((habit) => (
                 <div key={habit.id} className="contents">
-                  <div className="text-[10px] font-mono text-on-surface/50 flex items-center gap-1 py-1.5 truncate">
+                  <div className="text-[10px] font-mono text-on-surface/60 flex items-center gap-1 py-1.5 truncate">
                     <span className="text-[11px]">{"\u25CF"}</span>
                   </div>
                   {weekDays.slice(0, activeDays).map((day) => {
@@ -150,7 +150,7 @@ export function WeeklyReview({ tasks }: WeeklyReviewProps) {
         )}
 
         {activeHabits === 0 && (
-          <div className="text-[10px] font-mono text-on-surface/40 text-center py-2">
+          <div className="text-[10px] font-mono text-on-surface/60 text-center py-2">
             Nenhum hábito ativo
           </div>
         )}

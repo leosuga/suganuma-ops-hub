@@ -69,7 +69,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
     <Dialog open={open} onOpenChange={(v) => onOpenChange(v)}>
       <DialogContent className="bg-surface border-border max-w-lg p-0 gap-0">
         <DialogHeader className="px-4 py-3 border-b border-border">
-          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             NOVA TASK
           </DialogTitle>
         </DialogHeader>
@@ -80,12 +80,12 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Título da task... (>projeto #finance !urgent ^tomorrow @Fulano +importante)"
             autoFocus
-            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
           />
 
           {/* Category selector */}
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Categoria
             </span>
             <div className="flex gap-1.5">
@@ -100,7 +100,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
                       "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
                       active
                         ? "bg-teal/15 text-teal border-teal/40"
-                        : "text-on-surface/40 border-border hover:border-on-surface/30"
+                        : "text-on-surface/60 border-border hover:border-on-surface/30"
                     )}
                   >
                     {opt.label}
@@ -112,7 +112,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
 
           {/* Priority selector */}
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Prioridade
             </span>
             <div className="flex gap-1.5">
@@ -127,7 +127,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
                       "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
                       active
                         ? "bg-teal/15 text-teal border-teal/40"
-                        : "text-on-surface/40 border-border hover:border-on-surface/30"
+                        : "text-on-surface/60 border-border hover:border-on-surface/30"
                     )}
                   >
                     {opt.label}
@@ -141,7 +141,7 @@ export function QuickAddDialog({ open, onOpenChange }: QuickAddDialogProps) {
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="h-8 px-3 font-mono text-[10px] tracking-wider text-on-surface/40 hover:text-on-surface/60 transition-colors"
+              className="h-8 px-3 font-mono text-[10px] tracking-wider text-on-surface/60 hover:text-on-surface/60 transition-colors"
             >
               CANCELAR
             </button>

@@ -202,13 +202,13 @@ export default function PeoplePage() {
         {isLoading ? <div className="h-32 animate-pulse bg-on-surface/5" /> : null}
 
         {!isLoading && isError ? (
-          <p className="py-8 text-center font-mono text-[11px] text-danger">
+          <p role="alert" className="py-8 text-center font-mono text-[11px] text-danger">
             Erro ao carregar pessoas.
           </p>
         ) : null}
 
         {!isLoading && !isError && visible.length === 0 ? (
-          <p className="py-8 text-center font-mono text-[11px] text-on-surface/40">
+          <p className="py-8 text-center font-mono text-[11px] text-on-surface/60">
             Nenhuma pessoa encontrada.
           </p>
         ) : null}

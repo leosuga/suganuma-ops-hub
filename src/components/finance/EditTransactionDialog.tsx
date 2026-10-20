@@ -62,13 +62,13 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, account
   }
 
   const inputClass =
-    "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+    "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
 
   return (
     <Dialog open={open} onOpenChange={(v) => onOpenChange(v)}>
       <DialogContent className="bg-surface border-border max-w-md p-0 gap-0">
         <DialogHeader className="px-4 py-3 border-b border-border">
-          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             EDITAR TRANSAÇÃO
           </DialogTitle>
         </DialogHeader>
@@ -89,8 +89,8 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, account
                         ? "border-danger bg-danger/10 text-danger"
                         : opt.value === "transfer"
                           ? "border-amber bg-amber/10 text-amber"
-                          : "border-border bg-surface text-on-surface/50"
-                    : "border-border text-on-surface/40 hover:border-on-surface/40"
+                          : "border-border bg-surface text-on-surface/60"
+                    : "border-border text-on-surface/60 hover:border-on-surface/40"
                 )}
               >
                 {opt.label}
@@ -117,7 +117,7 @@ export function EditTransactionDialog({ open, onOpenChange, transaction, account
           <input type="date" value={occurredOn} onChange={(e) => setOccurredOn(e.target.value)} required className={inputClass} />
 
           <div className="flex justify-end gap-2 pt-1">
-            <button type="button" onClick={() => onOpenChange(false)} className="h-8 px-4 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 transition-colors">
+            <button type="button" onClick={() => onOpenChange(false)} className="h-8 px-4 text-[10px] font-mono text-on-surface/60 hover:text-on-surface/70 transition-colors">
               CANCELAR
             </button>
             <button type="submit" disabled={updateTxn.isPending} className="h-8 px-4 border border-teal text-teal font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors">

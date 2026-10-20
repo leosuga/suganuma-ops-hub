@@ -298,7 +298,7 @@ export function MonthRow({
         className="flex-none flex items-center justify-end pr-1 border-r border-border/50 bg-surface/50 sticky left-0 z-20"
         style={{ width: LABEL_WIDTH }}
       >
-        <span className="text-[9px] font-mono font-semibold tracking-wider text-on-surface/50 uppercase">
+        <span className="text-[9px] font-mono font-semibold tracking-wider text-on-surface/60 uppercase">
           {monthLabel}
         </span>
       </div>
@@ -543,9 +543,9 @@ export function MonthRow({
                       return (
                         <>
                           {event.title}
-                          <span className="text-[7px] opacity-70 ml-0.5">{timeStr}</span>
+                          <span className="text-[9px] opacity-70 ml-0.5">{timeStr}</span>
                           {original?.recurrence && original.recurrence !== "none" && (
-                            <span className="ml-1 text-[6px] opacity-70">↻</span>
+                            <span className="ml-1 text-[9px] opacity-70">↻</span>
                           )}
                         </>
                       )
@@ -569,7 +569,7 @@ export function MonthRow({
                 <p className="text-[10px] font-semibold text-on-surface mb-0.5 truncate">
                   {hoveredEvent.title}
                 </p>
-                <p className="text-[9px] font-mono text-on-surface/50">
+                <p className="text-[9px] font-mono text-on-surface/60">
                   {hoveredEvent.start_date} → {hoveredEvent.end_date}
                 </p>
                 {hoveredEvent.recurrence && hoveredEvent.recurrence !== "none" && (

@@ -122,7 +122,7 @@ function CockpitPageInner() {
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
             COCKPIT
           </h1>
-          <p className="text-[10px] font-mono text-on-surface/40 mt-0.5 capitalize">{dateLabel}</p>
+          <p className="text-[10px] font-mono text-on-surface/60 mt-0.5 capitalize">{dateLabel}</p>
         </div>
 
         {loading && (
@@ -140,15 +140,15 @@ function CockpitPageInner() {
         {/* Inbox */}
         <div className="border border-border bg-surface rounded-sm overflow-hidden">
           <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               INBOX
             </span>
-            <Link href="/inbox" className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">
+            <Link href="/inbox" className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors">
               ABRIR →
             </Link>
           </div>
           {inboxItems.length === 0 ? (
-            <div className="px-4 py-4 text-[10px] font-mono text-on-surface/40">
+            <div className="px-4 py-4 text-[10px] font-mono text-on-surface/60">
               Inbox zero. Nada pendente de triagem.
             </div>
           ) : (
@@ -173,7 +173,7 @@ function CockpitPageInner() {
                     </button>
                     <button
                       onClick={() => archiveInboxItem.mutate(item.id)}
-                      className="h-8 px-2.5 bg-on-surface/5 border border-border text-on-surface/40 font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-on-surface/10 transition-colors"
+                      className="h-8 px-2.5 bg-on-surface/5 border border-border text-on-surface/60 font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-on-surface/10 transition-colors"
                     >
                       ARQ
                     </button>
@@ -181,9 +181,9 @@ function CockpitPageInner() {
                 </div>
               ))}
               {inboxItems.length > 3 && (
-                <div className="px-4 py-2 text-[9px] font-mono text-on-surface/40">
+                <div className="px-4 py-2 text-[9px] font-mono text-on-surface/60">
                   +{inboxItems.length - 3} mais em{" "}
-                  <Link href="/inbox" className="text-on-surface/40 hover:text-on-surface/60 transition-colors">
+                  <Link href="/inbox" className="text-on-surface/60 hover:text-on-surface/60 transition-colors">
                     /inbox
                   </Link>
                 </div>
@@ -201,7 +201,7 @@ function CockpitPageInner() {
               </span>
             </div>
             {urgent.length === 0 ? (
-              <div className="px-4 py-4 text-[10px] font-mono text-on-surface/40">Nenhuma urgente</div>
+              <div className="px-4 py-4 text-[10px] font-mono text-on-surface/60">Nenhuma urgente</div>
             ) : (
               <div className="divide-y divide-border">
                 {urgent.slice(0, 5).map((t) => (
@@ -219,7 +219,7 @@ function CockpitPageInner() {
                   </div>
                 ))}
                 {urgent.length > 5 && (
-                  <div className="px-4 py-2 text-[9px] font-mono text-on-surface/40">
+                  <div className="px-4 py-2 text-[9px] font-mono text-on-surface/60">
                     +{urgent.length - 5} mais em{" "}
                     <Link href="/tasks" className="hover:text-on-surface/60 transition-colors">
                       /tasks
@@ -237,7 +237,7 @@ function CockpitPageInner() {
               </span>
             </div>
             {overdue.length === 0 ? (
-              <div className="px-4 py-4 text-[10px] font-mono text-on-surface/40">Nenhuma atrasada</div>
+              <div className="px-4 py-4 text-[10px] font-mono text-on-surface/60">Nenhuma atrasada</div>
             ) : (
               <div className="divide-y divide-border">
                 {overdue.slice(0, 5).map((t) => (
@@ -253,7 +253,7 @@ function CockpitPageInner() {
                   </div>
                 ))}
                 {overdue.length > 5 && (
-                  <div className="px-4 py-2 text-[9px] font-mono text-on-surface/40">
+                  <div className="px-4 py-2 text-[9px] font-mono text-on-surface/60">
                     +{overdue.length - 5} mais em{" "}
                     <Link href="/tasks" className="hover:text-on-surface/60 transition-colors">
                       /tasks
@@ -273,7 +273,7 @@ function CockpitPageInner() {
             </span>
           </div>
           {quickWins.length === 0 ? (
-            <div className="px-4 py-4 text-[10px] font-mono text-on-surface/40">Nenhum quick win</div>
+            <div className="px-4 py-4 text-[10px] font-mono text-on-surface/60">Nenhum quick win</div>
           ) : (
             <div className="divide-y divide-border">
               {quickWins.slice(0, 5).map((t) => (
@@ -285,11 +285,11 @@ function CockpitPageInner() {
                   >
                     {t.title}
                   </Link>
-                  <span className="flex-none text-[8px] font-mono text-on-surface/40">{t.priority.toUpperCase()}</span>
+                  <span className="flex-none text-[8px] font-mono text-on-surface/60">{t.priority.toUpperCase()}</span>
                 </div>
               ))}
               {quickWins.length > 5 && (
-                <div className="px-4 py-2 text-[9px] font-mono text-on-surface/40">
+                <div className="px-4 py-2 text-[9px] font-mono text-on-surface/60">
                   +{quickWins.length - 5} mais em{" "}
                   <Link href="/tasks" className="hover:text-on-surface/60 transition-colors">
                     /tasks
@@ -309,7 +309,7 @@ function CockpitPageInner() {
               </span>
             </div>
             {upcomingAppts.length === 0 ? (
-              <div className="px-4 py-4 text-[10px] font-mono text-on-surface/40">Nenhuma consulta</div>
+              <div className="px-4 py-4 text-[10px] font-mono text-on-surface/60">Nenhuma consulta</div>
             ) : (
               <div className="divide-y divide-border">
                 {upcomingAppts.map((a) => (
@@ -324,12 +324,12 @@ function CockpitPageInner() {
 
           <div className="border border-border bg-surface rounded-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-border">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
                 EVENTOS
               </span>
             </div>
             {todayEvents.length === 0 ? (
-              <div className="px-4 py-4 text-[10px] font-mono text-on-surface/40">Nenhum evento hoje</div>
+              <div className="px-4 py-4 text-[10px] font-mono text-on-surface/60">Nenhum evento hoje</div>
             ) : (
               <div className="divide-y divide-border">
                 {todayEvents.map((e) => (
@@ -348,16 +348,16 @@ function CockpitPageInner() {
 
         {/* Summary strip */}
         <div className="flex items-center gap-4 px-4 py-2 border border-border bg-surface rounded-sm">
-          <span className="text-[8px] font-mono text-on-surface/40">
+          <span className="text-[8px] font-mono text-on-surface/60">
             {pending.length} pendentes
           </span>
-          <span className="text-[8px] font-mono text-on-surface/40">
+          <span className="text-[8px] font-mono text-on-surface/60">
             {urgent.length} urgentes
           </span>
-          <span className="text-[8px] font-mono text-on-surface/40">
+          <span className="text-[8px] font-mono text-on-surface/60">
             {overdue.length} atrasadas
           </span>
-          <span className="text-[8px] font-mono text-on-surface/40">
+          <span className="text-[8px] font-mono text-on-surface/60">
             {inboxItems.length} no inbox
           </span>
         </div>

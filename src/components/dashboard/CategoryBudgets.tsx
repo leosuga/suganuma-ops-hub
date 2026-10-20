@@ -13,7 +13,7 @@ interface TxnLike {
 }
 
 const inputClass =
-  "h-8 bg-bg border border-border rounded-sm px-2 text-[12px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+  "h-8 bg-bg border border-border rounded-sm px-2 text-[12px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
 
 function fmt(n: number) {
   return fmtCurrency(n, { maximumFractionDigits: 0 })
@@ -53,13 +53,13 @@ export function CategoryBudgets({ transactions }: { transactions: TxnLike[] }) {
   return (
     <div className="border border-border bg-surface rounded-sm p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
           ORÇAMENTO POR CATEGORIA
         </span>
         {!adding && (
           <button
             onClick={() => setAdding(true)}
-            className="text-[8px] font-mono text-on-surface/40 hover:text-teal tracking-wider transition-colors"
+            className="text-[8px] font-mono text-on-surface/60 hover:text-teal tracking-wider transition-colors"
           >
             + CATEGORIA
           </button>
@@ -67,7 +67,7 @@ export function CategoryBudgets({ transactions }: { transactions: TxnLike[] }) {
       </div>
 
       {rows.length === 0 && !adding && (
-        <p className="text-[10px] font-mono text-on-surface/40 text-center py-1">
+        <p className="text-[10px] font-mono text-on-surface/60 text-center py-1">
           Defina uma meta por categoria (ex.: Bebê, Mercado) para acompanhar o gasto do mês.
         </p>
       )}
@@ -82,7 +82,7 @@ export function CategoryBudgets({ transactions }: { transactions: TxnLike[] }) {
             <button
               onClick={() => startEdit(r.label, r.target)}
               aria-label={`Editar meta de ${r.label}`}
-              className="text-on-surface/40 hover:text-teal min-w-[24px]"
+              className="text-on-surface/60 hover:text-teal min-w-[24px]"
             >
               ✎
             </button>
@@ -92,7 +92,7 @@ export function CategoryBudgets({ transactions }: { transactions: TxnLike[] }) {
                 if (id) remove.mutate(id)
               }}
               aria-label={`Remover meta de ${r.label}`}
-              className="text-on-surface/40 hover:text-danger min-w-[24px]"
+              className="text-on-surface/60 hover:text-danger min-w-[24px]"
             >
               ×
             </button>
@@ -128,7 +128,7 @@ export function CategoryBudgets({ transactions }: { transactions: TxnLike[] }) {
             placeholder="Meta R$"
             className={cn(inputClass, "w-24")}
           />
-          <button type="button" onClick={() => { setAdding(false); setCategory(""); setTarget("") }} className="h-8 px-2 text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60">
+          <button type="button" onClick={() => { setAdding(false); setCategory(""); setTarget("") }} className="h-8 px-2 text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60">
             CANCELAR
           </button>
           <button type="submit" disabled={upsert.isPending} className="h-8 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30">

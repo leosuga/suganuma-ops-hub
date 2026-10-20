@@ -178,20 +178,20 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
     onOpenChange(false)
   }
 
-  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
 
   return (
     <Dialog open={open} onOpenChange={(v) => onOpenChange(v)}>
       <DialogContent className="bg-surface border-border max-w-lg p-0 gap-0">
         <DialogHeader className="px-4 py-3 border-b border-border">
-          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             EDITAR TASK
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="p-4 flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Título
             </span>
             <input
@@ -204,7 +204,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           </div>
 
           <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Notas
             </span>
             <textarea
@@ -212,13 +212,13 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               onChange={(e) => dispatch({ type: "field", key: "taskNotes", value: e.target.value })}
               placeholder="Notas, links, contexto..."
               rows={3}
-              className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors resize-none"
+              className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors resize-none"
             />
           </div>
 
           {linkedNotes.length > 0 && (
             <div className="flex flex-col gap-1.5">
-              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+              <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
                 Notas vinculadas
               </span>
               <div className="space-y-1">
@@ -236,7 +236,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           )}
 
           <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Data limite
             </span>
             <input
@@ -248,7 +248,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Categoria
             </span>
             <div className="flex gap-1.5 flex-wrap">
@@ -261,7 +261,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                     "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
                     state.category === opt.value
                       ? "bg-teal/15 text-teal border-teal/40"
-                      : "text-on-surface/40 border-border hover:border-on-surface/30"
+                      : "text-on-surface/60 border-border hover:border-on-surface/30"
                   )}
                 >
                   {opt.label}
@@ -271,7 +271,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Projeto
             </span>
             <select
@@ -289,7 +289,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Delegado para
             </span>
             <input
@@ -301,7 +301,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Importante
             </span>
             <label className="flex items-center gap-2 cursor-pointer">
@@ -311,14 +311,14 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 onChange={(e) => dispatch({ type: "field", key: "important", value: e.target.checked })}
                 className="w-3.5 h-3.5 rounded-[3px] border border-on-surface/30 bg-bg checked:bg-amber checked:border-amber focus:outline-none cursor-pointer"
               />
-              <span className="text-[11px] font-mono text-on-surface/50">
+              <span className="text-[11px] font-mono text-on-surface/60">
                 Marcar como importante (Eisenhower)
               </span>
             </label>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Recorrência
             </span>
             <div className="flex gap-1.5">
@@ -331,7 +331,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                     "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
                     state.recurrence === opt.value
                       ? "bg-teal/15 text-teal border-teal/40"
-                      : "text-on-surface/40 border-border hover:border-on-surface/30"
+                      : "text-on-surface/60 border-border hover:border-on-surface/30"
                   )}
                 >
                   {opt.label}
@@ -341,7 +341,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Tags
             </span>
             <input
@@ -353,7 +353,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Status
             </span>
             <div className="flex gap-1.5 flex-wrap">
@@ -366,7 +366,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                     "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
                     state.status === opt.value
                       ? "bg-teal/15 text-teal border-teal/40"
-                      : "text-on-surface/40 border-border hover:border-on-surface/30"
+                      : "text-on-surface/60 border-border hover:border-on-surface/30"
                   )}
                 >
                   {opt.label}
@@ -376,7 +376,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Prioridade
             </span>
             <div className="flex gap-1.5 flex-wrap">
@@ -389,7 +389,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                     "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
                     state.priority === opt.value
                       ? "bg-teal/15 text-teal border-teal/40"
-                      : "text-on-surface/40 border-border hover:border-on-surface/30"
+                      : "text-on-surface/60 border-border hover:border-on-surface/30"
                   )}
                 >
                   {opt.label}
@@ -399,7 +399,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
               Energia
             </span>
             <div className="flex gap-1.5 flex-wrap">
@@ -412,7 +412,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                     "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
                     state.energyLevel === opt.value
                       ? "bg-purple-400/15 text-purple-400 border-purple-400/40"
-                      : "text-on-surface/40 border-border hover:border-on-surface/30"
+                      : "text-on-surface/60 border-border hover:border-on-surface/30"
                   )}
                 >
                   {opt.label}
@@ -435,7 +435,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
                 <button
                   type="button"
                   onClick={() => dispatch({ type: "field", key: "confirmDelete", value: false })}
-                  className="h-7 px-3 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors"
+                  className="h-7 px-3 text-[10px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors"
                 >
                   NÃO
                 </button>
@@ -444,7 +444,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               <button
                 type="button"
                 onClick={() => dispatch({ type: "field", key: "confirmDelete", value: true })}
-                className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-danger transition-colors"
+                className="h-7 px-3 text-[9px] font-mono text-on-surface/60 hover:text-danger transition-colors"
               >
                 DELETAR TASK
               </button>
@@ -454,7 +454,7 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                className="h-8 px-3 font-mono text-[10px] tracking-wider text-on-surface/40 hover:text-on-surface/60 transition-colors"
+                className="h-8 px-3 font-mono text-[10px] tracking-wider text-on-surface/60 hover:text-on-surface/60 transition-colors"
               >
                 CANCELAR
               </button>

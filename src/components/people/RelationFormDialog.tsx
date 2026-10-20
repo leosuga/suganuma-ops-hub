@@ -93,7 +93,7 @@ export function RelationFormDialog({
             </select>
           </div>
 
-          {error ? <p className="font-mono text-[11px] text-danger">{error}</p> : null}
+          {error ? <p role="alert" className="font-mono text-[11px] text-danger">{error}</p> : null}
         </div>
 
         <div className="mt-4 flex justify-end gap-2">

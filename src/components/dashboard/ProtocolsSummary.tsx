@@ -22,13 +22,13 @@ export function ProtocolsSummary() {
 
   return (
     <div className="border border-border bg-surface rounded-sm p-4 flex flex-col gap-1">
-      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
         PROTOCOLOS
       </span>
       <span className={`text-[28px] font-mono font-bold leading-none ${doneCount === total ? "text-health" : "text-on-surface"}`}>
         {doneCount}/{total}
       </span>
-      <span className="text-[10px] font-mono text-on-surface/40">feitos hoje</span>
+      <span className="text-[10px] font-mono text-on-surface/60">feitos hoje</span>
     </div>
   )
 }

@@ -83,7 +83,7 @@ export function PregnancyCard() {
   const nextMilestone =
     currentWeek !== null ? MILESTONES.find((m) => m.week > currentWeek) ?? null : null
 
-  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50 transition-colors"
+  const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50 transition-colors"
 
   return (
     <div className="border border-border bg-surface rounded-sm overflow-hidden">
@@ -93,7 +93,7 @@ export function PregnancyCard() {
         </span>
         <button
           onClick={editing ? () => setEditing(false) : startEdit}
-          className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors"
+          className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors"
         >
           {editing ? "CANCELAR" : "EDITAR"}
         </button>
@@ -104,7 +104,7 @@ export function PregnancyCard() {
       ) : editing ? (
         <div className="p-4 flex flex-col gap-3">
           <div>
-            <label className="text-[9px] font-mono text-on-surface/40 uppercase tracking-widest block mb-1">
+            <label className="text-[9px] font-mono text-on-surface/60 uppercase tracking-widest block mb-1">
               Data prevista do parto
             </label>
             <input
@@ -115,7 +115,7 @@ export function PregnancyCard() {
             />
           </div>
           <div>
-            <label className="text-[9px] font-mono text-on-surface/40 uppercase tracking-widest block mb-1">
+            <label className="text-[9px] font-mono text-on-surface/60 uppercase tracking-widest block mb-1">
               Notas
             </label>
             <input
@@ -142,7 +142,7 @@ export function PregnancyCard() {
                 <span className={cn("text-[40px] font-mono font-bold leading-none", HEALTH_COLOR)}>
                   {currentWeek}
                 </span>
-                <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-widest mt-1">
+                <span className="text-[9px] font-mono text-on-surface/60 uppercase tracking-widest mt-1">
                   semanas
                 </span>
               </div>
@@ -163,11 +163,11 @@ export function PregnancyCard() {
                     : daysLeft === 0
                       ? "É hoje!"
                       : `${Math.abs(daysLeft)} dia${Math.abs(daysLeft) === 1 ? "" : "s"} após a DPP`}
-                  {trimester && <span className="text-on-surface/40"> · {trimester}º trimestre</span>}
+                  {trimester && <span className="text-on-surface/60"> · {trimester}º trimestre</span>}
                 </p>
               )}
               {pregnancy.notes && (
-                <p className="text-[11px] font-mono text-on-surface/40 mt-1 truncate">{pregnancy.notes}</p>
+                <p className="text-[11px] font-mono text-on-surface/60 mt-1 truncate">{pregnancy.notes}</p>
               )}
               {currentWeek !== null && (
                 <div className="mt-2 h-1.5 bg-bg rounded-full overflow-hidden w-full">
@@ -178,7 +178,7 @@ export function PregnancyCard() {
                 </div>
               )}
               {nextMilestone && (
-                <p className="text-[9px] font-mono text-on-surface/40 mt-1.5">
+                <p className="text-[9px] font-mono text-on-surface/60 mt-1.5">
                   Próximo marco: semana {nextMilestone.week} — {nextMilestone.label}
                 </p>
               )}
@@ -188,7 +188,7 @@ export function PregnancyCard() {
           {prenatalAppointments.length > 0 && (
             <div className="border-t border-border">
               <div className="h-8 px-4 flex items-center border-b border-border bg-bg">
-                <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+                <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
                   EXAMES PRÉ-NATAIS
                 </span>
               </div>
@@ -201,7 +201,7 @@ export function PregnancyCard() {
                       key={a.id}
                       className={cn("flex items-center gap-3 h-9 px-4", isPast && "opacity-40")}
                     >
-                      <span className="text-[10px] font-mono text-on-surface/40 w-14 flex-none">
+                      <span className="text-[10px] font-mono text-on-surface/60 w-14 flex-none">
                         {date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" })}
                       </span>
                       <span className="flex-1 text-[11px] font-mono text-on-surface truncate">{a.title}</span>

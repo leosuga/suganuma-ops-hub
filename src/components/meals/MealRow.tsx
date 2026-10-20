@@ -40,18 +40,18 @@ export function MealRow({ meal }: MealRowProps) {
     <div className="flex items-center gap-3 h-10 px-4 hover:bg-surface-hover transition-colors">
       <span className="flex-1 text-[12px] font-mono text-on-surface truncate">{meal.name}</span>
       {meal.tags && meal.tags.length > 0 && (
-        <span className="text-[9px] font-mono text-on-surface/40">{(meal.tags as string[]).join(", ")}</span>
+        <span className="text-[9px] font-mono text-on-surface/60">{(meal.tags as string[]).join(", ")}</span>
       )}
       {meal.prep_time && (
-        <span className="text-[10px] font-mono text-on-surface/40">{meal.prep_time}min</span>
+        <span className="text-[10px] font-mono text-on-surface/60">{meal.prep_time}min</span>
       )}
       {confirmDelete ? (
         <div className="flex items-center gap-1">
           <button onClick={handleDelete} className="text-[8px] font-mono text-danger tracking-wider">DEL</button>
-          <button onClick={() => setConfirmDelete(false)} className="text-on-surface/40 text-[14px]">×</button>
+          <button onClick={() => setConfirmDelete(false)} className="text-on-surface/60 text-[14px]">×</button>
         </div>
       ) : (
-        <button onClick={() => setConfirmDelete(true)} className="text-on-surface/40 hover:text-danger transition-colors">×</button>
+        <button onClick={() => setConfirmDelete(true)} className="text-on-surface/60 hover:text-danger transition-colors">×</button>
       )}
     </div>
   )

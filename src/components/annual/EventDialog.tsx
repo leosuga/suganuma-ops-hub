@@ -144,7 +144,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
 
           <div className="space-y-3 py-2">
             <div>
-              <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+              <label className="text-[9px] font-mono text-on-surface/60 uppercase tracking-wider">
                 Título
               </label>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} required autoFocus />
@@ -152,7 +152,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
 
             <div className="flex gap-2">
               <div className="flex-1">
-                <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+                <label className="text-[9px] font-mono text-on-surface/60 uppercase tracking-wider">
                   Início
                 </label>
                 <Input
@@ -168,7 +168,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                 />
               </div>
               <div className="flex-1">
-                <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+                <label className="text-[9px] font-mono text-on-surface/60 uppercase tracking-wider">
                   Fim
                 </label>
                 <Input
@@ -183,7 +183,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
             {/* Time inputs */}
             <div className="flex gap-2">
               <div className="flex-1">
-                <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+                <label className="text-[9px] font-mono text-on-surface/60 uppercase tracking-wider">
                   Hora Início
                 </label>
                 <Input
@@ -193,7 +193,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                 />
               </div>
               <div className="flex-1">
-                <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+                <label className="text-[9px] font-mono text-on-surface/60 uppercase tracking-wider">
                   Hora Fim
                 </label>
                 <Input
@@ -207,7 +207,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
             {/* Shift controls */}
             {isEditing && (
               <div className="flex items-center gap-1">
-                <span className="text-[9px] font-mono text-on-surface/40 mr-1">Shift:</span>
+                <span className="text-[9px] font-mono text-on-surface/60 mr-1">Shift:</span>
                 {[-7, -1, 1, 7].map((d) => (
                   <button
                     key={d}
@@ -218,7 +218,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                     {d > 0 ? `+${d}` : d}d
                   </button>
                 ))}
-                <span className="text-on-surface/40 mx-0.5">|</span>
+                <span className="text-on-surface/60 mx-0.5">|</span>
                 {[-1, 1].map((m) => (
                   <button
                     key={m}
@@ -233,7 +233,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
             )}
 
             <div>
-              <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+              <label className="text-[9px] font-mono text-on-surface/60 uppercase tracking-wider">
                 Cor
               </label>
               <div className="flex gap-2 flex-wrap mt-1">
@@ -254,7 +254,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
             </div>
 
             <div>
-              <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+              <label className="text-[9px] font-mono text-on-surface/60 uppercase tracking-wider">
                 Recorrência
               </label>
               <div className="flex gap-2 mt-1">
@@ -271,7 +271,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
                       "px-2 py-1 text-[9px] font-mono rounded-sm border transition-all",
                       recurrence === option.value
                         ? "border-teal text-teal bg-teal/10"
-                        : "border-border/40 text-on-surface/40 hover:text-on-surface/60"
+                        : "border-border/40 text-on-surface/60 hover:text-on-surface/60"
                     )}
                     onClick={() => setRecurrence(option.value)}
                   >
@@ -281,7 +281,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
               </div>
             </div>
             <div>
-              <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+              <label className="text-[9px] font-mono text-on-surface/60 uppercase tracking-wider">
                 Local
               </label>
               <Input
@@ -291,7 +291,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
               />
             </div>
             <div>
-              <label className="text-[9px] font-mono text-on-surface/50 uppercase tracking-wider">
+              <label className="text-[9px] font-mono text-on-surface/60 uppercase tracking-wider">
                 Projeto
               </label>
               <select

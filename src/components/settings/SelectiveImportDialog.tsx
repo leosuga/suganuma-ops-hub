@@ -185,7 +185,7 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="bg-surface border-border max-w-md p-0 gap-0">
         <DialogHeader className="px-4 py-3 border-b border-border">
-          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             IMPORTAR — SELETIVO
           </DialogTitle>
         </DialogHeader>
@@ -198,21 +198,21 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
                 type="file"
                 accept=".json"
                 onChange={handleFileSelect}
-                className="block w-full text-[11px] font-mono text-on-surface/50 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border file:border-border file:bg-bg file:text-[10px] file:font-mono file:text-teal file:cursor-pointer"
+                className="block w-full text-[11px] font-mono text-on-surface/60 file:mr-3 file:py-1.5 file:px-3 file:rounded-sm file:border file:border-border file:bg-bg file:text-[10px] file:font-mono file:text-teal file:cursor-pointer"
               />
-              <p className="text-[9px] font-mono text-on-surface/40 mt-2">
+              <p className="text-[9px] font-mono text-on-surface/60 mt-2">
                 Selecione um arquivo .json de backup do Ops Hub
               </p>
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-on-surface/50 truncate flex-1">
+                <span className="text-[10px] font-mono text-on-surface/60 truncate flex-1">
                   {fileName}
                 </span>
                 <button
                   onClick={toggleAll}
-                  className="text-[9px] font-mono text-on-surface/40 hover:text-teal transition-colors"
+                  className="text-[9px] font-mono text-on-surface/60 hover:text-teal transition-colors"
                 >
                   {selected.size === tables.length ? "DESMARCAR" : "MARCAR"} TUDO
                 </button>
@@ -244,7 +244,7 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
                     <span className="flex-1 text-[11px] font-mono text-on-surface/70">
                       {t.label}
                     </span>
-                    <span className="text-[9px] font-mono text-on-surface/40">
+                    <span className="text-[9px] font-mono text-on-surface/60">
                       {t.rows} linha{t.rows !== 1 ? "s" : ""}
                     </span>
                   </label>
@@ -262,7 +262,7 @@ export function SelectiveImportDialog({ open, onOpenChange }: SelectiveImportDia
               <div className="flex justify-end gap-2">
                 <button
                   onClick={handleClose}
-                  className="h-8 px-3 font-mono text-[10px] tracking-wider text-on-surface/40 hover:text-on-surface/60 transition-colors"
+                  className="h-8 px-3 font-mono text-[10px] tracking-wider text-on-surface/60 hover:text-on-surface/60 transition-colors"
                 >
                   FECHAR
                 </button>

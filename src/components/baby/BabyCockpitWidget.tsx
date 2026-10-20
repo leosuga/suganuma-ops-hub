@@ -23,7 +23,7 @@ export function BabyCockpitWidget() {
         <span className="text-[9px] font-mono font-semibold tracking-widest text-health uppercase">
           {child.name} · {ageShort(child.birth_at, today())}
         </span>
-        <Link href="/baby" className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/70">
+        <Link href="/baby" className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/70">
           ABRIR →
         </Link>
       </div>

@@ -11,7 +11,7 @@ interface TrendSectionProps {
 function TrendSection({ title, data, keys, colors, labels }: TrendSectionProps) {
   return (
     <div className="border border-border bg-surface rounded-sm p-4">
-      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
+      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase block mb-3">
         {title}
       </span>
       <div className="mb-4">
@@ -19,7 +19,7 @@ function TrendSection({ title, data, keys, colors, labels }: TrendSectionProps) 
       </div>
       <div className="flex gap-4 justify-center">
         {labels.map((label, i) => (
-          <span key={label} className="text-[9px] font-mono text-on-surface/40 flex items-center gap-1">
+          <span key={label} className="text-[9px] font-mono text-on-surface/60 flex items-center gap-1">
             <span className="inline-block w-2 h-2 rounded-sm" style={{ backgroundColor: colors[i] }} /> {label}
           </span>
         ))}

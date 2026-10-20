@@ -22,7 +22,7 @@ const paraColor: Record<string, string> = {
   projects: "text-teal border-teal/30",
   areas: "text-amber border-amber/30",
   resources: "text-teal/60 border-teal/20",
-  archive: "text-on-surface/40 border-on-surface/20",
+  archive: "text-on-surface/60 border-on-surface/20",
 }
 
 const paraLabel: Record<string, string> = {
@@ -158,24 +158,24 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           onKeyDown={(e) => { if (e.key === "Enter" && e.metaKey) handleSave() }}
           placeholder="Título"
           autoFocus
-          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono font-semibold text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono font-semibold text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
         />
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Escreva sua nota..."
           rows={6}
-          className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors resize-none"
+          className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors resize-none"
         />
         {note.tags && note.tags.length > 0 && (
           <div className="flex gap-1 flex-wrap">
             {note.tags.map((t) => (
-              <span key={t} className="text-[9px] font-mono text-on-surface/40 px-1.5 py-0.5 border border-border rounded-sm">{t}</span>
+              <span key={t} className="text-[9px] font-mono text-on-surface/60 px-1.5 py-0.5 border border-border rounded-sm">{t}</span>
             ))}
           </div>
         )}
         <div className="flex flex-col gap-1.5">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             Contexto
           </span>
           <div className="flex flex-wrap gap-1">
@@ -196,7 +196,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
                     "h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
                     isActive
                       ? cfg.bg + " " + cfg.color + " border " + cfg.border
-                      : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/50"
+                      : "text-on-surface/60 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
                   )}
                 >
                   {cfg.label}
@@ -206,7 +206,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           </div>
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             PARA
           </span>
           <select
@@ -222,7 +222,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             Vincular a task
           </span>
           <select
@@ -239,7 +239,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           </select>
         </div>
         <div className="flex flex-col gap-1.5">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             Vincular a projeto
           </span>
           <select
@@ -263,7 +263,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           editable
         />
         <div className="flex justify-end gap-2">
-          <button onClick={() => setEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">CANCELAR</button>
+          <button onClick={() => setEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors">CANCELAR</button>
           <button onClick={handleSave} disabled={updateNote.isPending || !title.trim()} className="h-7 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors">
             {updateNote.isPending ? "..." : "SALVAR"}
           </button>
@@ -298,7 +298,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           <div className="flex items-center gap-1.5 flex-wrap">
             <h3 className="text-[13px] font-mono font-semibold text-on-surface truncate">{note.title}</h3>
             {note.pinned && (
-              <span className="flex-none text-[7px] md:text-[8px] font-mono text-amber uppercase tracking-wider">PIN</span>
+              <span className="flex-none text-[9px] font-mono text-amber uppercase tracking-wider">PIN</span>
             )}
             {noteContexts.map((ctx) => {
               const cfg = CONTEXT_CONFIG[ctx]
@@ -307,7 +307,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
                 <span
                   key={ctx}
                   className={cn(
-                    "flex-none text-[6px] md:text-[7px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0",
+                    "flex-none text-[9px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0",
                     cfg.color, cfg.border, cfg.bg
                   )}
                 >
@@ -316,27 +316,27 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
               )
             })}
             {note.para && (
-              <span className={cn("flex-none text-[6px] md:text-[7px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0", paraColor[note.para])}>
+              <span className={cn("flex-none text-[9px] font-mono font-semibold uppercase tracking-wider border rounded-sm px-1 py-0", paraColor[note.para])}>
                 {paraLabel[note.para]}
               </span>
             )}
             {note.is_moc && (
-              <span className="flex-none text-[6px] md:text-[7px] font-mono font-semibold text-teal uppercase tracking-wider border border-teal/30 rounded-sm px-1 py-0">MOC</span>
+              <span className="flex-none text-[9px] font-mono font-semibold text-teal uppercase tracking-wider border border-teal/30 rounded-sm px-1 py-0">MOC</span>
             )}
             {note.para === "areas" && isReviewPending && (
-              <span className="flex-none text-[6px] md:text-[7px] font-mono font-semibold text-amber uppercase tracking-wider border border-amber/30 rounded-sm px-1 py-0" title="Revisão pendente">⚠ REV</span>
+              <span className="flex-none text-[9px] font-mono font-semibold text-amber uppercase tracking-wider border border-amber/30 rounded-sm px-1 py-0" title="Revisão pendente">⚠ REV</span>
             )}
             {metadataKeys.length > 0 && (
               <>
                 {metadataKeys.slice(0, 2).map((k) => (
-                  <span key={k} className="flex-none text-[6px] md:text-[7px] font-mono text-on-surface/40 border border-border rounded-sm px-1 py-0 hidden md:inline">{k}:{frontmatter.metadata[k]}</span>
+                  <span key={k} className="flex-none text-[9px] font-mono text-on-surface/60 border border-border rounded-sm px-1 py-0 hidden md:inline">{k}:{frontmatter.metadata[k]}</span>
                 ))}
               </>
             )}
           </div>
           {note.content && (
             <div className={cn(
-              "prose prose-invert max-w-none text-[11px] font-mono text-on-surface/40 mt-1",
+              "prose prose-invert max-w-none text-[11px] font-mono text-on-surface/60 mt-1",
               expanded ? "" : "line-clamp-2"
             )}>
               <ReactMarkdown>{markdownBody}</ReactMarkdown>
@@ -359,7 +359,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           {note.tags && note.tags.length > 0 && (
             <div className="flex gap-1 flex-wrap mt-1.5">
               {note.tags.map((t) => (
-                <span key={t} className="text-[8px] font-mono text-on-surface/40 px-1.5 py-0.5 border border-border rounded-sm">{t}</span>
+                <span key={t} className="text-[8px] font-mono text-on-surface/60 px-1.5 py-0.5 border border-border rounded-sm">{t}</span>
               ))}
             </div>
           )}
@@ -394,7 +394,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
                         >
                           {task.checked ? "✓" : ""}
                         </button>
-                        <span className={cn("text-[11px] font-mono", task.checked ? "text-on-surface/40 line-through" : "text-on-surface/60")}>
+                        <span className={cn("text-[11px] font-mono", task.checked ? "text-on-surface/60 line-through" : "text-on-surface/60")}>
                           {task.label}
                         </span>
                         {linked && (
@@ -408,7 +408,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
                               e.stopPropagation()
                               await handleCreateTaskFromInline(task.label)
                             }}
-                            className="text-[8px] font-mono text-on-surface/40 hover:text-teal transition-colors"
+                            className="text-[8px] font-mono text-on-surface/60 hover:text-teal transition-colors"
                           >
                             +task
                           </button>
@@ -426,7 +426,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
             <div className="mt-2">
               <button
                 onClick={(e) => { e.stopPropagation(); setShowBacklinks(!showBacklinks) }}
-                className="text-[9px] font-mono text-on-surface/40 hover:text-teal transition-colors"
+                className="text-[9px] font-mono text-on-surface/60 hover:text-teal transition-colors"
               >
                 🔗 {backlinks.length} {backlinks.length === 1 ? "backlink" : "backlinks"}
               </button>
@@ -437,7 +437,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
                       key={bl.id}
                       href={`/notes?search=${encodeURIComponent(bl.title)}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="block text-[11px] font-mono text-on-surface/50 hover:text-teal truncate"
+                      className="block text-[11px] font-mono text-on-surface/60 hover:text-teal truncate"
                     >
                       ← {bl.title}
                     </Link>
@@ -454,34 +454,34 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
               TASK ↗
             </Link>
           ) : (
-            <button onClick={(e) => { e.stopPropagation(); handleConvertToTask() }} disabled={createTask.isPending} className="flex-none text-[7px] font-mono text-on-surface/40 hover:text-teal border border-on-surface/20 hover:border-teal rounded-sm px-1 py-1 transition-colors active:scale-95" title="Converter em task">
+            <button onClick={(e) => { e.stopPropagation(); handleConvertToTask() }} disabled={createTask.isPending} className="flex-none text-[9px] font-mono text-on-surface/60 hover:text-teal border border-on-surface/20 hover:border-teal rounded-sm px-1 py-1 transition-colors active:scale-95" title="Converter em task" aria-label="Converter nota em task">
               →TASK
             </button>
           )}
-          <button onClick={handleToggleFavorited} className="w-10 h-10 md:w-5 md:h-5 flex items-center justify-center text-on-surface/40 hover:text-danger transition-colors text-[11px] active:scale-95" title={note.favorited ? "Desfavoritar" : "Favoritar"}>
+          <button onClick={handleToggleFavorited} className="w-10 h-10 md:w-5 md:h-5 flex items-center justify-center text-on-surface/60 hover:text-danger transition-colors text-[11px] active:scale-95" title={note.favorited ? "Desfavoritar" : "Favoritar"}>
             {note.favorited ? "♥" : "♡"}
           </button>
-          <button onClick={handleTogglePin} className="w-10 h-10 md:w-5 md:h-5 flex items-center justify-center text-on-surface/40 hover:text-amber transition-colors text-[11px] active:scale-95" title={note.pinned ? "Desafixar" : "Fixar"}>
+          <button onClick={handleTogglePin} className="w-10 h-10 md:w-5 md:h-5 flex items-center justify-center text-on-surface/60 hover:text-amber transition-colors text-[11px] active:scale-95" title={note.pinned ? "Desafixar" : "Fixar"}>
             {note.pinned ? "★" : "☆"}
           </button>
-          <button onClick={(e) => { e.stopPropagation(); setShowProjectLink(!showProjectLink) }} className={cn("flex-none text-[7px] font-mono border rounded-sm px-1 py-1 transition-colors active:scale-95", note.project_id ? "text-teal/60 border-teal/30 hover:text-teal" : "text-on-surface/40 hover:text-teal border-on-surface/20 hover:border-teal")} title={note.project_id ? "Trocar projeto" : "Vincular a projeto"}>
+          <button onClick={(e) => { e.stopPropagation(); setShowProjectLink(!showProjectLink) }} className={cn("flex-none text-[9px] font-mono border rounded-sm px-1 py-1 transition-colors active:scale-95", note.project_id ? "text-teal/60 border-teal/30 hover:text-teal" : "text-on-surface/60 hover:text-teal border-on-surface/20 hover:border-teal")} title={note.project_id ? "Trocar projeto" : "Vincular a projeto"} aria-label={note.project_id ? "Trocar projeto" : "Vincular a projeto"}>
             {note.project_id ? "PROJ ↗" : "+PROJ"}
           </button>
           {confirmDelete ? (
             <>
               <button onClick={() => { onDelete(note.id); setConfirmDelete(false) }} className="text-[8px] font-mono text-danger hover:opacity-70 tracking-wider active:scale-95">DEL</button>
-              <button onClick={() => setConfirmDelete(false)} className="text-on-surface/40 hover:text-on-surface/60 text-[14px] ml-1 active:scale-95">×</button>
+              <button onClick={() => setConfirmDelete(false)} className="text-on-surface/60 hover:text-on-surface/60 text-[14px] ml-1 active:scale-95">×</button>
             </>
           ) : (
-            <button onClick={() => setConfirmDelete(true)} className="w-10 h-10 md:w-5 md:h-5 flex items-center justify-center text-on-surface/40 hover:text-danger transition-colors active:scale-95">×</button>
+            <button onClick={() => setConfirmDelete(true)} className="w-10 h-10 md:w-5 md:h-5 flex items-center justify-center text-on-surface/60 hover:text-danger transition-colors active:scale-95">×</button>
           )}
         </div>
         {/* Mobile actions — minimal, large touch targets */}
         <div className="flex md:hidden items-center gap-0.5 flex-none">
-          <button onClick={handleToggleFavorited} className="w-10 h-10 flex items-center justify-center text-on-surface/40 hover:text-danger transition-colors text-[11px] active:scale-95">
+          <button onClick={handleToggleFavorited} className="w-10 h-10 flex items-center justify-center text-on-surface/60 hover:text-danger transition-colors text-[11px] active:scale-95">
             {note.favorited ? "♥" : "♡"}
           </button>
-          <button onClick={() => setConfirmDelete(true)} className="w-10 h-10 flex items-center justify-center text-on-surface/40 hover:text-danger transition-colors text-[10px] active:scale-95">×</button>
+          <button onClick={() => setConfirmDelete(true)} className="w-10 h-10 flex items-center justify-center text-on-surface/60 hover:text-danger transition-colors text-[10px] active:scale-95">×</button>
         </div>
       </div>
       {showProjectLink && (
@@ -503,7 +503,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           </select>
         </div>
       )}
-      <div className="text-[9px] font-mono text-on-surface/40 mt-2">{dateStr}</div>
+      <div className="text-[9px] font-mono text-on-surface/60 mt-2">{dateStr}</div>
     </div>
   )
 })

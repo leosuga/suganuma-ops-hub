@@ -26,7 +26,7 @@ const MOTHER_SIGNS = [
 function Group({ title, items }: { title: string; items: string[] }) {
   return (
     <div>
-      <p className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase mb-1.5">{title}</p>
+      <p className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase mb-1.5">{title}</p>
       <ul className="space-y-1">
         {items.map((s) => (
           <li key={s} className="text-[11px] font-mono text-on-surface/70 leading-snug">· {s}</li>
@@ -45,7 +45,7 @@ export function WarningSignsPanel() {
       <div className="px-4 pb-4 space-y-4">
         <Group title="Bebê" items={BABY_SIGNS} />
         <Group title="Mãe" items={MOTHER_SIGNS} />
-        <p className="text-[10px] font-mono text-on-surface/40 leading-snug">
+        <p className="text-[10px] font-mono text-on-surface/60 leading-snug">
           Orientação geral, não substitui o pediatra nem o obstetra. Em dúvida, ligue para o
           médico ou vá ao pronto-socorro. Emergência: SAMU 192.
         </p>

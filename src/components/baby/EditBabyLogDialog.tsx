@@ -7,7 +7,7 @@ import { formatLogLine, toLocalInput, fromLocalInput } from "@/lib/baby/quick-lo
 
 const inputClass =
   "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50 transition-colors"
-const labelClass = "text-[9px] font-mono text-on-surface/40 uppercase tracking-widest block mb-1"
+const labelClass = "text-[9px] font-mono text-on-surface/60 uppercase tracking-widest block mb-1"
 
 interface EditBabyLogDialogProps {
   log: BabyLogRow | null
@@ -21,7 +21,7 @@ export function EditBabyLogDialog({ log, onOpenChange }: EditBabyLogDialogProps)
     <Dialog open={!!log} onOpenChange={(v) => onOpenChange(v)}>
       <DialogContent className="bg-surface border-border max-w-sm p-0 gap-0">
         <DialogHeader className="px-4 py-3 border-b border-border">
-          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             EDITAR REGISTRO
           </DialogTitle>
         </DialogHeader>
@@ -101,9 +101,9 @@ function EditForm({ log, onClose }: { log: BabyLogRow; onClose: () => void }) {
         <label className={labelClass}>Notas</label>
         <input value={notes} onChange={(e) => setNotes(e.target.value)} className={inputClass} />
       </div>
-      {error && <p className="text-[11px] font-mono text-danger">{error}</p>}
+      {error && <p role="alert" className="text-[11px] font-mono text-danger">{error}</p>}
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={onClose} className="h-8 px-4 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70">CANCELAR</button>
+        <button type="button" onClick={onClose} className="h-8 px-4 text-[10px] font-mono text-on-surface/60 hover:text-on-surface/70">CANCELAR</button>
         <button type="submit" disabled={update.isPending} className="h-8 px-4 border border-health text-health font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-health/20 disabled:opacity-30">
           {update.isPending ? "SALVANDO..." : "SALVAR →"}
         </button>

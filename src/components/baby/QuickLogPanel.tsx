@@ -115,11 +115,11 @@ export function QuickLogPanel({ childId, logs, compact }: QuickLogPanelProps) {
       <button
         type="button"
         onClick={() => setMoreOpen(true)}
-        className="text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 min-h-[32px]"
+        className="text-[10px] font-mono text-on-surface/60 hover:text-on-surface/70 min-h-[32px]"
       >
         + remédio, temperatura, medida, nota…
       </button>
-      {create.isError && <p className="text-[11px] font-mono text-danger">Não foi possível registrar. Tente de novo.</p>}
+      {create.isError && <p role="alert" className="text-[11px] font-mono text-danger">Não foi possível registrar. Tente de novo.</p>}
       <MoreLogDialog open={moreOpen} onOpenChange={setMoreOpen} childId={childId} />
     </div>
   )

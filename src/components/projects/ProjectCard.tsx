@@ -25,7 +25,7 @@ export function ProjectCard({ project, progress, noteCount, onStatusChange, onDe
       ? "text-teal border-teal/30"
       : project.status === "paused"
         ? "text-amber border-amber/30"
-        : "text-on-surface/40 border-on-surface/20"
+        : "text-on-surface/60 border-on-surface/20"
 
   return (
     <div className="border border-border bg-surface rounded-sm p-4 flex flex-col gap-3 hover:border-teal/30 transition-colors">
@@ -42,7 +42,7 @@ export function ProjectCard({ project, progress, noteCount, onStatusChange, onDe
             {project.name}
           </Link>
           {project.description && (
-            <p className="text-[11px] font-mono text-on-surface/40 mt-0.5 line-clamp-2">
+            <p className="text-[11px] font-mono text-on-surface/60 mt-0.5 line-clamp-2">
               {project.description}
             </p>
           )}
@@ -56,14 +56,14 @@ export function ProjectCard({ project, progress, noteCount, onStatusChange, onDe
             style={{ width: `${progress.pct}%`, backgroundColor: project.color }}
           />
         </div>
-        <span className="text-[10px] font-mono text-on-surface/40 w-14 text-right tabular-nums">
+        <span className="text-[10px] font-mono text-on-surface/60 w-14 text-right tabular-nums">
           {progress.pct}%
         </span>
       </div>
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono text-on-surface/40">
+          <span className="text-[10px] font-mono text-on-surface/60">
             {progress.done}/{progress.total} tasks
           </span>
           {noteCount > 0 && (
@@ -90,13 +90,13 @@ export function ProjectCard({ project, progress, noteCount, onStatusChange, onDe
           <>
             <button
               onClick={() => onStatusChange(project.id, "paused")}
-              className="text-[8px] font-mono text-on-surface/40 hover:text-amber tracking-wider transition-colors"
+              className="text-[8px] font-mono text-on-surface/60 hover:text-amber tracking-wider transition-colors"
             >
               PAUSAR
             </button>
             <button
               onClick={() => onStatusChange(project.id, "done")}
-              className="text-[8px] font-mono text-on-surface/40 hover:text-teal tracking-wider transition-colors"
+              className="text-[8px] font-mono text-on-surface/60 hover:text-teal tracking-wider transition-colors"
             >
               CONCLUIR
             </button>
@@ -105,7 +105,7 @@ export function ProjectCard({ project, progress, noteCount, onStatusChange, onDe
         {project.status === "paused" && (
           <button
             onClick={() => onStatusChange(project.id, "active")}
-            className="text-[8px] font-mono text-on-surface/40 hover:text-teal tracking-wider transition-colors"
+            className="text-[8px] font-mono text-on-surface/60 hover:text-teal tracking-wider transition-colors"
           >
             REATIVAR
           </button>
@@ -113,7 +113,7 @@ export function ProjectCard({ project, progress, noteCount, onStatusChange, onDe
         {project.status === "done" && (
           <button
             onClick={() => onStatusChange(project.id, "active")}
-            className="text-[8px] font-mono text-on-surface/40 hover:text-teal tracking-wider transition-colors"
+            className="text-[8px] font-mono text-on-surface/60 hover:text-teal tracking-wider transition-colors"
           >
               REABRIR
           </button>
@@ -131,7 +131,7 @@ export function ProjectCard({ project, progress, noteCount, onStatusChange, onDe
             </button>
             <button
               onClick={() => setConfirmDelete(false)}
-              className="text-on-surface/40 hover:text-on-surface/60 text-[12px]"
+              className="text-on-surface/60 hover:text-on-surface/60 text-[12px]"
             >
               ×
             </button>
@@ -139,7 +139,7 @@ export function ProjectCard({ project, progress, noteCount, onStatusChange, onDe
         ) : (
           <button
             onClick={() => setConfirmDelete(true)}
-            className="text-[8px] font-mono text-on-surface/40 hover:text-danger tracking-wider transition-colors ml-auto"
+            className="text-[8px] font-mono text-on-surface/60 hover:text-danger tracking-wider transition-colors ml-auto"
           >
             DELETAR
           </button>

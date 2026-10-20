@@ -26,7 +26,7 @@ function Shell({ children }: { children: React.ReactNode }) {
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">SUGANUMA</h1>
-          <p className="text-[10px] font-mono text-on-surface/50 tracking-widest mt-1">OPS HUB — AUTORIZAÇÃO</p>
+          <p className="text-[10px] font-mono text-on-surface/60 tracking-widest mt-1">OPS HUB — AUTORIZAÇÃO</p>
         </div>
         <div className="border border-border bg-surface rounded-sm">{children}</div>
       </div>
@@ -44,7 +44,7 @@ function ErrorPanel({ message }: { message: string }) {
       </div>
       <div className="p-4">
         <p className="text-[12px] font-mono text-on-surface">{message}</p>
-        <p className="text-[10px] font-mono text-on-surface/50 mt-3">
+        <p className="text-[10px] font-mono text-on-surface/60 mt-3">
           Nada foi autorizado. Você pode fechar esta janela com segurança.
         </p>
       </div>
@@ -111,7 +111,7 @@ export default async function AuthorizePage({
           <p className="text-[13px] font-mono text-on-surface leading-relaxed">
             <span className="text-teal">{client.displayName}</span> está pedindo acesso à sua conta do Ops Hub.
           </p>
-          <p className="text-[10px] font-mono text-on-surface/50 mt-2">
+          <p className="text-[10px] font-mono text-on-surface/60 mt-2">
             Conectado como {user.email}
           </p>
         </div>
@@ -132,7 +132,7 @@ export default async function AuthorizePage({
           </ul>
         </div>
 
-        <p className="text-[10px] font-mono text-on-surface/50 leading-relaxed">
+        <p className="text-[10px] font-mono text-on-surface/60 leading-relaxed">
           Autorize apenas se você reconhece <span className="text-on-surface/80">{client.displayName}</span> como o
           destino pretendido. Você pode revogar o acesso a qualquer momento em Settings.
         </p>

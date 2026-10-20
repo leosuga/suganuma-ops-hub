@@ -16,7 +16,7 @@ export function BabySummaryCard() {
     <div className="border border-border bg-surface rounded-sm overflow-hidden">
       <div className="px-4 py-3 border-b border-border flex items-center justify-between">
         <span className="text-[9px] font-mono font-semibold tracking-widest uppercase text-health">BEBÊ</span>
-        <Link href="/baby" className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/70">
+        <Link href="/baby" className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/70">
           ABRIR →
         </Link>
       </div>

@@ -10,7 +10,7 @@ export function HabitHeatmap({ habits, heatmapDays, entrySet, buildEntryKey }: H
 
   return (
     <div className="border border-border bg-surface rounded-sm p-4 overflow-x-auto">
-      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase block mb-3">
+      <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase block mb-3">
         HÁBITOS – ÚLTIMOS {heatmapDays.length} DIAS
       </span>
       <div className="min-w-max">
@@ -18,14 +18,14 @@ export function HabitHeatmap({ habits, heatmapDays, entrySet, buildEntryKey }: H
           className="grid gap-x-1"
           style={{ gridTemplateColumns: `100px repeat(${heatmapDays.length}, minmax(20px, 1fr))` }}
         >
-          <div className="text-[9px] font-mono text-on-surface/40" />
+          <div className="text-[9px] font-mono text-on-surface/60" />
           {heatmapDays.map((day) => (
-            <div key={day.dateStr} className="text-center text-[8px] font-mono text-on-surface/40 pb-1">{day.label}</div>
+            <div key={day.dateStr} className="text-center text-[8px] font-mono text-on-surface/60 pb-1">{day.label}</div>
           ))}
 
           {habits.map((habit) => (
             <div key={habit.id} className="contents">
-              <div className="text-[10px] font-mono text-on-surface/50 flex items-center gap-1 py-1 truncate">
+              <div className="text-[10px] font-mono text-on-surface/60 flex items-center gap-1 py-1 truncate">
                 <span>{habit.emoji || "\u25CF"}</span>
                 <span className="truncate">{habit.name}</span>
               </div>

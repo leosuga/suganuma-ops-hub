@@ -16,7 +16,7 @@ const KINDS: { value: Kind; label: string }[] = [
 ]
 
 const inputClass =
-  "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50 transition-colors"
+  "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50 transition-colors"
 
 function num(v: string): number | undefined {
   const n = parseFloat(v.replace(",", "."))
@@ -70,7 +70,7 @@ export function MoreLogDialog({ open, onOpenChange, childId }: MoreLogDialogProp
     <Dialog open={open} onOpenChange={(v) => onOpenChange(v)}>
       <DialogContent className="bg-surface border-border max-w-sm p-0 gap-0">
         <DialogHeader className="px-4 py-3 border-b border-border">
-          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             REGISTRAR
           </DialogTitle>
         </DialogHeader>
@@ -83,7 +83,7 @@ export function MoreLogDialog({ open, onOpenChange, childId }: MoreLogDialogProp
                 onClick={() => { setKind(k.value); setF({}); setError("") }}
                 className={cn(
                   "min-h-[36px] text-[9px] font-mono font-semibold tracking-wider rounded-sm border transition-colors",
-                  kind === k.value ? "border-health bg-health/10 text-health" : "border-border text-on-surface/40",
+                  kind === k.value ? "border-health bg-health/10 text-health" : "border-border text-on-surface/60",
                 )}
               >
                 {k.label}
@@ -111,9 +111,9 @@ export function MoreLogDialog({ open, onOpenChange, childId }: MoreLogDialogProp
             <input className={inputClass} placeholder="Observação" value={f.notes ?? ""} onChange={(e) => set("notes", e.target.value)} autoFocus />
           )}
 
-          {error && <p className="text-[11px] font-mono text-danger">{error}</p>}
+          {error && <p role="alert" className="text-[11px] font-mono text-danger">{error}</p>}
           <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => onOpenChange(false)} className="h-8 px-4 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70">CANCELAR</button>
+            <button type="button" onClick={() => onOpenChange(false)} className="h-8 px-4 text-[10px] font-mono text-on-surface/60 hover:text-on-surface/70">CANCELAR</button>
             <button type="submit" disabled={create.isPending} className="h-8 px-4 border border-health text-health font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-health/20 disabled:opacity-30">
               {create.isPending ? "SALVANDO..." : "SALVAR →"}
             </button>

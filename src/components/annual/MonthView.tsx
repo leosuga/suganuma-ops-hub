@@ -65,7 +65,7 @@ export function MonthView({ year, month, events, onNewEvent, onEditEvent }: Mont
       <div className="grid grid-cols-7 border-b border-border/20">
         {DAYS_PT.map((day) => (
           <div key={day} className="text-center py-1.5">
-            <span className="text-[10px] font-mono font-semibold text-on-surface/50">{day}</span>
+            <span className="text-[10px] font-mono font-semibold text-on-surface/60">{day}</span>
           </div>
         ))}
       </div>
@@ -127,7 +127,7 @@ export function MonthView({ year, month, events, onNewEvent, onEditEvent }: Mont
                           </div>
                         ))}
                         {dayEvents.length > 3 && (
-                          <span className="text-[7px] font-mono text-on-surface/40 px-1">
+                          <span className="text-[9px] font-mono text-on-surface/60 px-1">
                             +{dayEvents.length - 3}
                           </span>
                         )}
@@ -144,7 +144,7 @@ export function MonthView({ year, month, events, onNewEvent, onEditEvent }: Mont
       {hoveredEvent && (
         <div className="fixed bottom-4 left-4 bg-surface border border-border/50 rounded-md shadow-lg px-3 py-2 z-50">
           <p className="text-[10px] font-semibold text-on-surface">{hoveredEvent.title}</p>
-          <p className="text-[9px] font-mono text-on-surface/50">{hoveredEvent.start_date} → {hoveredEvent.end_date}</p>
+          <p className="text-[9px] font-mono text-on-surface/60">{hoveredEvent.start_date} → {hoveredEvent.end_date}</p>
         </div>
       )}
     </div>

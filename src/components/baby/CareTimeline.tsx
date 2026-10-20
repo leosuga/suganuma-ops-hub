@@ -43,11 +43,11 @@ export function CareTimeline({ child, todayStr }: CareTimelineProps) {
   return (
     <section className="border border-border bg-surface rounded-sm overflow-hidden">
       <div className="h-8 px-4 flex items-center justify-between border-b border-border bg-bg">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
           CUIDADOS · {overdue.length > 0 ? `${overdue.length} ATRASADO(S)` : "PRÓXIMOS"}
         </span>
         {projectId && (
-          <Link href="/tasks" className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/70">
+          <Link href="/tasks" className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/70">
             VER TUDO →
           </Link>
         )}
@@ -70,7 +70,7 @@ export function CareTimeline({ child, todayStr }: CareTimelineProps) {
       ) : isLoading ? (
         <div className="p-4 h-16 animate-pulse" />
       ) : rows.length === 0 ? (
-        <p className="p-4 text-[11px] font-mono text-on-surface/40">Nada pendente no cronograma.</p>
+        <p className="p-4 text-[11px] font-mono text-on-surface/60">Nada pendente no cronograma.</p>
       ) : (
         <div className="divide-y divide-border">
           {rows.map((t) => {
@@ -84,7 +84,7 @@ export function CareTimeline({ child, todayStr }: CareTimelineProps) {
                   aria-label={`Concluir: ${t.title}`}
                   className="h-4 w-4 flex-none"
                 />
-                <span className={cn("text-[10px] font-mono w-11 flex-none", late ? "text-danger" : "text-on-surface/40")}>
+                <span className={cn("text-[10px] font-mono w-11 flex-none", late ? "text-danger" : "text-on-surface/60")}>
                   {fmt(saoPauloDate(t.due_at!))}
                 </span>
                 <span className="flex-1 text-[12px] font-mono text-on-surface leading-snug">{t.title}</span>

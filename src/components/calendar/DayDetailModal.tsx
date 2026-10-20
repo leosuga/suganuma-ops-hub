@@ -64,7 +64,7 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-surface border-border max-w-md p-0 gap-0">
         <DialogHeader className="px-4 py-3 border-b border-border">
-          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase capitalize">{label}</DialogTitle>
+          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase capitalize">{label}</DialogTitle>
         </DialogHeader>
         <div className="p-4 space-y-4">
           {dailyNote && !noteEditing && (
@@ -83,10 +83,10 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
                 onChange={(e) => setNoteInput(e.target.value)}
                 placeholder="Escreva a nota do dia..."
                 rows={4}
-                className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors resize-none"
+                className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors resize-none"
               />
               <div className="flex justify-end gap-2">
-                <button onClick={() => setNoteEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">CANCELAR</button>
+                <button onClick={() => setNoteEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors">CANCELAR</button>
                 <button onClick={handleDailyNoteSave} disabled={updateNote.isPending || createNote.isPending} className="h-7 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors">
                   {updateNote.isPending || createNote.isPending ? "..." : "SALVAR"}
                 </button>
@@ -95,7 +95,7 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
           )}
 
           {!dailyNote && !noteEditing && (
-            <button onClick={() => setNoteEditing(true)} className="text-[9px] font-mono text-on-surface/40 hover:text-amber transition-colors">
+            <button onClick={() => setNoteEditing(true)} className="text-[9px] font-mono text-on-surface/60 hover:text-amber transition-colors">
               + Criar nota do dia
             </button>
           )}
@@ -109,7 +109,7 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
                     <div key={i} className="flex items-center gap-2 text-[11px] font-mono text-on-surface/60">
                       <span className="text-health tabular-nums w-12">{a.time}</span>
                       <span>{a.title}</span>
-                      {a.kind && <span className="text-on-surface/40">{a.kind}</span>}
+                      {a.kind && <span className="text-on-surface/60">{a.kind}</span>}
                     </div>
                   ))}
                 </div>
@@ -135,7 +135,7 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
               )}
             </div>
           ) : (
-            <p className="text-[11px] font-mono text-on-surface/40">Nenhum evento neste dia</p>
+            <p className="text-[11px] font-mono text-on-surface/60">Nenhum evento neste dia</p>
           )}
 
           {!isPast && (
@@ -145,7 +145,7 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
                 value={taskInput}
                 onChange={(e) => setTaskInput(e.target.value)}
                 placeholder="Adicionar task para este dia..."
-                className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+                className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
               />
               <button type="submit" disabled={!taskInput.trim() || createTask.isPending} className="h-8 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors flex-none">
                 {createTask.isPending ? "..." : "+ ADD"}
@@ -154,10 +154,10 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
           )}
 
           <div className="flex gap-2">
-            <Link href="/tasks" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">TASKS →</Link>
-            <Link href="/health" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">HEALTH →</Link>
-            <Link href="/meals" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">MEALS →</Link>
-            <Link href="/notes" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">NOTES →</Link>
+            <Link href="/tasks" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors">TASKS →</Link>
+            <Link href="/health" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors">HEALTH →</Link>
+            <Link href="/meals" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors">MEALS →</Link>
+            <Link href="/notes" onClick={() => onOpenChange(false)} className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors">NOTES →</Link>
           </div>
         </div>
       </DialogContent>

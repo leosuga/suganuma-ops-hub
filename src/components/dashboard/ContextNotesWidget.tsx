@@ -33,10 +33,10 @@ export function ContextNotesWidget({ notes }: ContextNotesWidgetProps) {
   return (
     <div className="border border-border bg-surface rounded-sm overflow-hidden">
       <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
           NOTAS POR CONTEXTO
         </span>
-        <Link href="/notes" className="text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">
+        <Link href="/notes" className="text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors">
           VER TODAS →
         </Link>
       </div>

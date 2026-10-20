@@ -84,7 +84,7 @@ export function WeekView({ year, weekOffset, events, onEditEvent }: WeekViewProp
                 className="flex items-start justify-end pr-1 border-b border-border/10"
                 style={{ height: CELL_HEIGHT }}
               >
-                <span className="text-[8px] font-mono text-on-surface/40 -mt-1">
+                <span className="text-[8px] font-mono text-on-surface/60 -mt-1">
                   {String(h).padStart(2, "0")}:00
                 </span>
               </div>
@@ -158,7 +158,7 @@ export function WeekView({ year, weekOffset, events, onEditEvent }: WeekViewProp
                       >
                         {event.title}
                         {event.start_time && (
-                          <span className="text-[7px] opacity-70 ml-0.5">
+                          <span className="text-[9px] opacity-70 ml-0.5">
                             {event.start_time.slice(0, 5)}
                           </span>
                         )}
@@ -176,7 +176,7 @@ export function WeekView({ year, weekOffset, events, onEditEvent }: WeekViewProp
       {hoveredEvent && (
         <div className="fixed bottom-4 left-4 bg-surface border border-border/50 rounded-md shadow-lg px-3 py-2 z-50">
           <p className="text-[10px] font-semibold text-on-surface">{hoveredEvent.title}</p>
-          <p className="text-[9px] font-mono text-on-surface/50">
+          <p className="text-[9px] font-mono text-on-surface/60">
             {hoveredEvent.start_date} → {hoveredEvent.end_date}
           </p>
           {hoveredEvent.start_time && (

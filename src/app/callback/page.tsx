@@ -76,7 +76,7 @@ function CallbackInner() {
         <p className="text-[12px] font-mono text-on-surface">{status}</p>
         {error && (
           <div className="space-y-2">
-            <p className="text-[11px] font-mono text-danger">{error}</p>
+            <p role="alert" className="text-[11px] font-mono text-danger">{error}</p>
             <button
               onClick={() => router.push("/login")}
               className="text-[10px] font-mono text-teal hover:text-teal-hi transition-colors"

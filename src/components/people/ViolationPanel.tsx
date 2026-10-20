@@ -18,7 +18,7 @@ export const ViolationPanel = memo(function ViolationPanel({
 }) {
   if (violations.length === 0) {
     return (
-      <div className="mb-3 border border-on-surface/20 bg-on-surface/5 px-3 py-2 font-mono text-[11px] text-on-surface/50">
+      <div className="mb-3 border border-on-surface/20 bg-on-surface/5 px-3 py-2 font-mono text-[11px] text-on-surface/60">
         Nenhum conflito nesta lista.
       </div>
     )
@@ -29,7 +29,7 @@ export const ViolationPanel = memo(function ViolationPanel({
   return (
     <div className="mb-3 space-y-1">
       {blocks > 0 ? (
-        <p className="font-mono text-[11px] text-danger">
+        <p role="alert" className="font-mono text-[11px] text-danger">
           {blocks} bloqueio(s) — resolva antes de enviar os convites.
         </p>
       ) : null}

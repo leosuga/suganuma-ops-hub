@@ -120,7 +120,7 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
     <Dialog open={open} onOpenChange={(v) => { if (!v) handleClose() }}>
       <DialogContent className="bg-surface border-border max-w-2xl p-0 gap-0">
         <DialogHeader className="px-4 py-3 border-b border-border">
-          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <DialogTitle className="text-[10px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             IMPORTAR CSV
           </DialogTitle>
         </DialogHeader>
@@ -132,13 +132,13 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
                 className="border border-dashed border-border rounded-sm p-8 flex flex-col items-center gap-3 cursor-pointer hover:border-teal/50 transition-colors"
                 onClick={() => fileRef.current?.click()}
               >
-                <div className="w-8 h-8 rounded-sm border border-border flex items-center justify-center text-on-surface/40">
+                <div className="w-8 h-8 rounded-sm border border-border flex items-center justify-center text-on-surface/60">
                   ↑
                 </div>
-                <p className="text-[11px] font-mono text-on-surface/40">
+                <p className="text-[11px] font-mono text-on-surface/60">
                   Clique para selecionar um arquivo CSV
                 </p>
-                <p className="text-[9px] font-mono text-on-surface/40">
+                <p className="text-[9px] font-mono text-on-surface/60">
                   Suporte: Nubank, formato genérico (data, descrição, valor)
                 </p>
               </div>
@@ -161,7 +161,7 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
                 </span>
                 <button
                   onClick={() => { setStep("upload"); setRows([]) }}
-                  className="text-[10px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors"
+                  className="text-[10px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors"
                 >
                   trocar arquivo
                 </button>
@@ -170,7 +170,7 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
               <div className="border border-border rounded-sm overflow-hidden max-h-80 overflow-y-auto">
                 <div className="h-7 px-3 flex items-center gap-2 bg-bg border-b border-border">
                   {["TIPO", "DATA", "DESCRIÇÃO", "VALOR"].map((h) => (
-                    <span key={h} className="text-[8px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase first:w-8 last:w-20 last:text-right">
+                    <span key={h} className="text-[8px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase first:w-8 last:w-20 last:text-right">
                       {h}
                     </span>
                   ))}
@@ -183,7 +183,7 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
                     )}>
                       {r.kind === "income" ? "REC" : "DES"}
                     </span>
-                    <span className="text-[10px] font-mono text-on-surface/40 w-16">{r.occurred_on.slice(5).split("-").reverse().join("/")}</span>
+                    <span className="text-[10px] font-mono text-on-surface/60 w-16">{r.occurred_on.slice(5).split("-").reverse().join("/")}</span>
                     <span className="text-[11px] font-mono text-on-surface flex-1 truncate">{r.description}</span>
                     <span className="text-[11px] font-mono text-on-surface/60 w-20 text-right tabular-nums">
                       {r.amount.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
@@ -192,7 +192,7 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
                 ))}
                 {rows.length > 100 && (
                   <div className="h-9 px-3 flex items-center">
-                    <span className="text-[10px] font-mono text-on-surface/40">
+                    <span className="text-[10px] font-mono text-on-surface/60">
                       +{rows.length - 100} linhas não exibidas
                     </span>
                   </div>
@@ -203,7 +203,7 @@ export function CSVImportDialog({ open, onOpenChange, accountId }: CSVImportDial
                 <button
                   type="button"
                   onClick={handleClose}
-                  className="h-8 px-4 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 transition-colors"
+                  className="h-8 px-4 text-[10px] font-mono text-on-surface/60 hover:text-on-surface/70 transition-colors"
                 >
                   CANCELAR
                 </button>

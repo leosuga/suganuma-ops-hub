@@ -26,7 +26,7 @@ export function CategoryChips({ value, onChange, counts }: CategoryChipsProps) {
           "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
           value === null
             ? "bg-teal/15 text-teal border border-teal/40"
-            : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+            : "text-on-surface/60 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
         )}
       >
         ALL
@@ -45,7 +45,7 @@ export function CategoryChips({ value, onChange, counts }: CategoryChipsProps) {
             "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors",
             value === cat.value
               ? "bg-teal/15 text-teal border border-teal/40"
-              : "text-on-surface/40 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
+              : "text-on-surface/60 border border-border hover:border-on-surface/30 hover:text-on-surface/60"
           )}
         >
           {cat.label}

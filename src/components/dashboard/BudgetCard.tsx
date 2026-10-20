@@ -46,10 +46,10 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
           onChange={(e) => setTarget(e.target.value)}
           placeholder="Orçamento (R$)"
           autoFocus
-          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
         />
         <div className="flex gap-2 justify-end">
-          <button onClick={() => setEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">CANCELAR</button>
+          <button onClick={() => setEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/60 hover:text-on-surface/60 transition-colors">CANCELAR</button>
           <button onClick={handleSave} disabled={updateBudget.isPending} className="h-7 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors">
             {updateBudget.isPending ? "..." : "SALVAR"}
           </button>
@@ -61,12 +61,12 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
   return (
     <div className="border border-border bg-surface rounded-sm p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
           ORÇAMENTO MENSAL
         </span>
         <button
           onClick={() => setEditing(true)}
-          className="text-[8px] font-mono text-on-surface/40 hover:text-teal tracking-wider transition-colors"
+          className="text-[8px] font-mono text-on-surface/60 hover:text-teal tracking-wider transition-colors"
         >
           {budget ? "EDITAR" : "DEFINIR"}
         </button>
@@ -78,7 +78,7 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
             <span className={`text-2xl font-mono font-bold ${pct > 100 ? "text-danger" : pct > 80 ? "text-amber" : "text-teal"}`}>
               {pct}%
             </span>
-            <span className="text-[10px] font-mono text-on-surface/40 pb-1">
+            <span className="text-[10px] font-mono text-on-surface/60 pb-1">
               {fmt(expense)} / {fmt(budgetTarget)}
             </span>
           </div>
@@ -91,7 +91,7 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-mono text-on-surface/40">
+            <span className="text-[10px] font-mono text-on-surface/60">
               {remaining < 0 ? "Estouro:" : "Restante:"}
             </span>
             <span className={`text-[12px] font-mono font-semibold ${remaining < 0 ? "text-danger" : "text-teal"}`}>
@@ -100,7 +100,7 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
           </div>
         </>
       ) : (
-        <div className="text-[10px] font-mono text-on-surface/40 text-center py-2">
+        <div className="text-[10px] font-mono text-on-surface/60 text-center py-2">
           Sem orçamento definido para {month}
         </div>
       )}

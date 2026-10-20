@@ -160,7 +160,7 @@ export default function SettingsPage() {
         <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
           SETTINGS
         </h1>
-        <p className="text-[10px] font-mono text-on-surface/40 mt-0.5">
+        <p className="text-[10px] font-mono text-on-surface/60 mt-0.5">
           Configurações do sistema
         </p>
       </div>
@@ -168,7 +168,7 @@ export default function SettingsPage() {
       {/* Theme */}
       <div className="border border-border bg-surface rounded-sm">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">TEMA</span>
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">TEMA</span>
         </div>
         <div className="p-4 flex items-center gap-2">
           {ACCENTS.map((a) => (
@@ -179,7 +179,7 @@ export default function SettingsPage() {
                 "flex items-center gap-2 h-7 px-3 rounded-sm font-mono text-[9px] font-semibold tracking-wider border transition-colors",
                 accent === a.value
                   ? "border-teal bg-teal/10 text-teal"
-                  : "border-border text-on-surface/40 hover:border-on-surface/40"
+                  : "border-border text-on-surface/60 hover:border-on-surface/40"
               )}
             >
               <span className={cn("w-2.5 h-2.5 rounded-full", a.color)} />
@@ -192,10 +192,10 @@ export default function SettingsPage() {
       {/* Agent tokens */}
       <div className="border border-border bg-surface rounded-sm">
         <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">
             AGENT TOKENS
           </span>
-          <span className="text-[9px] font-mono text-on-surface/40">
+          <span className="text-[9px] font-mono text-on-surface/60">
             {active.length} ativo{active.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -206,7 +206,7 @@ export default function SettingsPage() {
             onChange={(e) => setTokenUi((s) => ({ ...s, newTokenName: e.target.value }))}
             onKeyDown={(e) => { if (e.key === "Enter") handleCreateToken() }}
             placeholder="Nome do token (ex: Claude Desktop)"
-            className="flex-1 h-7 px-2 text-[11px] font-mono bg-bg border border-border rounded-sm text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal/60 focus:ring-1 focus:ring-teal/50"
+            className="flex-1 h-7 px-2 text-[11px] font-mono bg-bg border border-border rounded-sm text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal/60 focus:ring-1 focus:ring-teal/50"
           />
           <button
             onClick={handleCreateToken}
@@ -225,16 +225,16 @@ export default function SettingsPage() {
               <code className="flex-1 text-[10px] font-mono text-on-surface bg-bg border border-border rounded-sm px-2 py-1.5 truncate select-all">
                 {tokenUi.createdToken}
               </code>
-              <button onClick={handleCopy} className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/50 hover:border-teal hover:text-teal rounded-sm transition-colors">
+              <button onClick={handleCopy} className="h-7 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/60 hover:border-teal hover:text-teal rounded-sm transition-colors">
                 {tokenUi.copied ? "✓ COPIADO" : "COPIAR"}
               </button>
-              <button onClick={() => setTokenUi((s) => ({ ...s, createdToken: null }))} className="h-7 w-7 flex items-center justify-center text-on-surface/40 hover:text-on-surface/60 transition-colors">×</button>
+              <button onClick={() => setTokenUi((s) => ({ ...s, createdToken: null }))} className="h-7 w-7 flex items-center justify-center text-on-surface/60 hover:text-on-surface/60 transition-colors">×</button>
             </div>
           </div>
         )}
         {active.length === 0 && !tokenUi.createdToken ? (
           <div className="px-4 py-6 text-center">
-            <span className="text-[11px] font-mono text-on-surface/40">Nenhum token ativo</span>
+            <span className="text-[11px] font-mono text-on-surface/60">Nenhum token ativo</span>
           </div>
         ) : (
           <div className="divide-y divide-border">
@@ -242,7 +242,7 @@ export default function SettingsPage() {
               <div key={t.id} className="flex items-center gap-3 px-4 py-2.5">
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] font-mono text-on-surface truncate">{t.name}</p>
-                  <p className="text-[9px] font-mono text-on-surface/40">
+                  <p className="text-[9px] font-mono text-on-surface/60">
                     Criado {fmtDate(t.created_at)}
                     {t.last_used_at ? ` · Usado ${fmtDate(t.last_used_at)}` : " · Nunca usado"}
                   </p>
@@ -256,7 +256,7 @@ export default function SettingsPage() {
         )}
         {revoked.length > 0 && (
           <div className="px-4 py-2.5 border-t border-border">
-            <p className="text-[9px] font-mono text-on-surface/40">
+            <p className="text-[9px] font-mono text-on-surface/60">
               {revoked.length} token{revoked.length !== 1 ? "s" : ""} revogado{revoked.length !== 1 ? "s" : ""}
             </p>
           </div>
@@ -266,7 +266,7 @@ export default function SettingsPage() {
       {/* Data export/import */}
       <div className="border border-border bg-surface rounded-sm">
         <div className="px-4 py-3 border-b border-border">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">DADOS</span>
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">DADOS</span>
         </div>
         <div className="p-4 flex items-center gap-3">
           <button onClick={handleExport} disabled={exporting} className="h-8 px-4 text-[9px] font-mono font-semibold tracking-wider border border-teal text-teal rounded-sm hover:bg-teal/10 disabled:opacity-30 transition-colors">
@@ -275,7 +275,7 @@ export default function SettingsPage() {
           <button onClick={() => setSelectImportOpen(true)} className="h-8 px-4 text-[9px] font-mono font-semibold tracking-wider border border-teal/40 text-teal rounded-sm hover:bg-teal/10 transition-colors">
             IMPORTAR SELETIVO ↑
           </button>
-          <button onClick={handleImport} disabled={importing} className="h-8 px-4 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/40 rounded-sm hover:border-on-surface/40 hover:text-on-surface/70 disabled:opacity-30 transition-colors">
+          <button onClick={handleImport} disabled={importing} className="h-8 px-4 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/60 rounded-sm hover:border-on-surface/40 hover:text-on-surface/70 disabled:opacity-30 transition-colors">
             {importing ? "IMPORTANDO..." : "IMPORTAR TUDO ↑"}
           </button>
         </div>
@@ -287,7 +287,7 @@ export default function SettingsPage() {
       {/* System info */}
       <div className="border border-border bg-surface rounded-sm">
         <div className="px-4 py-3 border-b border-border">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">SISTEMA</span>
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">SISTEMA</span>
         </div>
         <div className="divide-y divide-border">
           {[
@@ -297,7 +297,7 @@ export default function SettingsPage() {
             { label: "Deploy", value: "Oracle VPS + Coolify" },
           ].map(({ label, value }) => (
             <div key={label} className="px-4 py-2.5 flex items-center justify-between">
-              <span className="text-[10px] font-mono text-on-surface/40 uppercase tracking-wider">{label}</span>
+              <span className="text-[10px] font-mono text-on-surface/60 uppercase tracking-wider">{label}</span>
               <span className="text-[11px] font-mono text-on-surface/60">{value}</span>
             </div>
           ))}
@@ -307,7 +307,7 @@ export default function SettingsPage() {
       {/* Session */}
       <div className="border border-border bg-surface rounded-sm">
         <div className="px-4 py-3 border-b border-border">
-          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">SESSÃO</span>
+          <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">SESSÃO</span>
         </div>
         <div className="p-4">
           <button onClick={handleLogout} disabled={loading} className="w-full h-9 border border-danger/40 text-danger font-mono text-[10px] font-semibold tracking-widest rounded-sm hover:bg-danger/5 disabled:opacity-30 transition-colors">
@@ -316,7 +316,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <p className="text-center text-[9px] font-mono text-on-surface/40">
+      <p className="text-center text-[9px] font-mono text-on-surface/60">
         SUGANUMA OPS HUB — ACESSO RESTRITO
       </p>
 
@@ -353,17 +353,17 @@ function PushSection() {
   return (
     <div className="border border-border bg-surface rounded-sm">
       <div className="px-4 py-3 border-b border-border">
-        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">NOTIFICAÇÕES PUSH</span>
+        <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/60 uppercase">NOTIFICAÇÕES PUSH</span>
       </div>
       <div className="p-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <span className={cn(
             "block text-[11px] font-mono",
-            enabled ? "text-teal" : "text-on-surface/50"
+            enabled ? "text-teal" : "text-on-surface/60"
           )}>
             {statusLabel}
           </span>
-          <span className="block text-[9px] font-mono text-on-surface/40 mt-0.5">
+          <span className="block text-[9px] font-mono text-on-surface/60 mt-0.5">
             tasks atrasadas, consultas e eventos — mesmo com o app fechado
           </span>
         </div>
@@ -371,7 +371,7 @@ function PushSection() {
           <button
             onClick={() => void disable()}
             disabled={busy}
-            className="flex-none h-8 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/40 rounded-sm hover:border-on-surface/40 hover:text-on-surface/60 disabled:opacity-40 transition-colors"
+            className="flex-none h-8 px-3 text-[9px] font-mono font-semibold tracking-wider border border-border text-on-surface/60 rounded-sm hover:border-on-surface/40 hover:text-on-surface/60 disabled:opacity-40 transition-colors"
           >
             {busy ? "..." : "DESATIVAR"}
           </button>

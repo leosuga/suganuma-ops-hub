@@ -39,8 +39,8 @@ const TYPE_LABELS: Record<string, string> = {
 const PRIORITY_COLORS: Record<string, string> = {
   urgent: "text-danger border-danger/40 bg-danger/10",
   high: "text-amber border-amber/40 bg-amber/10",
-  med: "text-on-surface/40 border-border bg-transparent",
-  low: "text-on-surface/40 border-border/50 bg-transparent",
+  med: "text-on-surface/60 border-border bg-transparent",
+  low: "text-on-surface/60 border-border/50 bg-transparent",
 }
 
 function timeAgo(dateStr: string): string {
@@ -171,7 +171,7 @@ function InboxPageInner() {
         {/* Header */}
         <div className="px-4 py-3 border-b border-border flex items-center justify-between flex-none">
           <div className="flex items-center gap-3">
-            <span className="text-[10px] font-mono font-semibold tracking-[0.2em] text-on-surface/40 uppercase">
+            <span className="text-[10px] font-mono font-semibold tracking-[0.2em] text-on-surface/60 uppercase">
               INBOX
             </span>
             {counts.unprocessed > 0 && (
@@ -180,7 +180,7 @@ function InboxPageInner() {
           </div>
           {pendingWithoutAI > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-[8px] font-mono text-on-surface/40">
+              <span className="text-[8px] font-mono text-on-surface/60">
                 {pendingWithoutAI} sem triagem IA
               </span>
               <button
@@ -203,7 +203,7 @@ function InboxPageInner() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Jogue aqui qualquer pensamento, ideia ou lembrete..."
               autoFocus
-              className="flex-1 h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+              className="flex-1 h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
             />
             <button
               type="submit"
@@ -223,7 +223,7 @@ function InboxPageInner() {
               onClick={() => setFilter(f)}
               className={cn(
                 "text-[9px] font-mono font-semibold tracking-wider uppercase transition-colors",
-                filter === f ? "text-teal" : "text-on-surface/40 hover:text-on-surface/50"
+                filter === f ? "text-teal" : "text-on-surface/60 hover:text-on-surface/60"
               )}
             >
               {f === "unprocessed" ? "PENDENTES" : f === "archived" ? "ARQUIVADOS" : "TODOS"}
@@ -244,7 +244,7 @@ function InboxPageInner() {
 
           {!isLoading && items.length === 0 && (
             <div className="flex flex-col items-center justify-center h-32 gap-2 p-4">
-              <span className="text-[11px] font-mono text-on-surface/40">
+              <span className="text-[11px] font-mono text-on-surface/60">
                 {filter === "unprocessed" ? "Inbox zero. Capture acima." : "Nenhum item."}
               </span>
             </div>
@@ -273,12 +273,12 @@ function InboxPageInner() {
                           {item.content}
                         </p>
                         <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                          <span className="text-[8px] font-mono text-on-surface/40">{timeAgo(item.created_at)}</span>
-                          <span className="text-[7px] font-mono text-on-surface/40 border border-on-surface/10 rounded-sm px-1 py-0.5">
+                          <span className="text-[8px] font-mono text-on-surface/60">{timeAgo(item.created_at)}</span>
+                          <span className="text-[9px] font-mono text-on-surface/60 border border-on-surface/10 rounded-sm px-1 py-0.5">
                             {SOURCE_LABELS[item.source] ?? item.source.toUpperCase()}
                           </span>
                           {item.status === "triaged" && (
-                            <span className="text-[7px] font-mono text-teal">TRIAGED</span>
+                            <span className="text-[9px] font-mono text-teal">TRIAGED</span>
                           )}
                         </div>
                       </div>
@@ -288,34 +288,34 @@ function InboxPageInner() {
                     {ai && isUnprocessed && (
                       <div className="mt-2 pl-3 border-l-2 border-teal/30 space-y-1.5">
                         {ai.summary && (
-                          <p className="text-[10px] font-mono text-on-surface/50 italic">{ai.summary}</p>
+                          <p className="text-[10px] font-mono text-on-surface/60 italic">{ai.summary}</p>
                         )}
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {ai.suggested_type && (
-                            <span className="text-[7px] font-mono font-semibold text-teal border border-teal/30 rounded-sm px-1.5 py-0.5">
+                            <span className="text-[9px] font-mono font-semibold text-teal border border-teal/30 rounded-sm px-1.5 py-0.5">
                               {TYPE_LABELS[ai.suggested_type] ?? ai.suggested_type.toUpperCase()}
                             </span>
                           )}
                           {ai.suggested_priority && (
                             <span className={cn(
-                              "text-[7px] font-mono font-semibold tracking-wider uppercase border rounded-sm px-1.5 py-0.5",
+                              "text-[9px] font-mono font-semibold tracking-wider uppercase border rounded-sm px-1.5 py-0.5",
                               PRIORITY_COLORS[ai.suggested_priority] ?? PRIORITY_COLORS.med
                             )}>
                               {ai.suggested_priority.toUpperCase()}
                             </span>
                           )}
                           {ai.suggested_category && (
-                            <span className="text-[7px] font-mono text-on-surface/40 border border-on-surface/10 rounded-sm px-1.5 py-0.5">
+                            <span className="text-[9px] font-mono text-on-surface/60 border border-on-surface/10 rounded-sm px-1.5 py-0.5">
                               {ai.suggested_category.toUpperCase()}
                             </span>
                           )}
                           {ai.suggested_project_name && (
-                            <span className="text-[7px] font-mono text-teal/60">
+                            <span className="text-[9px] font-mono text-teal/60">
                               {ai.suggested_project_name}
                             </span>
                           )}
                           {ai.suggested_tags?.map((tag) => (
-                            <span key={tag} className="text-[7px] font-mono text-teal/60 border border-teal/20 rounded-sm px-1 py-0.5">
+                            <span key={tag} className="text-[9px] font-mono text-teal/60 border border-teal/20 rounded-sm px-1 py-0.5">
                               #{tag}
                             </span>
                           ))}
@@ -323,7 +323,7 @@ function InboxPageInner() {
                         {ai.action_items && ai.action_items.length > 0 && (
                           <div className="space-y-0.5">
                             {ai.action_items.map((action, i) => (
-                              <p key={i} className="text-[10px] font-mono text-on-surface/40">
+                              <p key={i} className="text-[10px] font-mono text-on-surface/60">
                                 {ai.action_items!.length > 1 ? `${i + 1}. ` : ""}
                                 {action}
                               </p>
@@ -332,7 +332,7 @@ function InboxPageInner() {
                         )}
                         {ai.duplicates && ai.duplicates.length > 0 && (
                           <div className="flex items-center gap-1">
-                            <span className="text-[7px] font-mono text-amber">
+                            <span className="text-[9px] font-mono text-amber">
                               Possível duplicata: {ai.duplicates.map((d) => d.title).join(", ")}
                             </span>
                           </div>
@@ -368,13 +368,13 @@ function InboxPageInner() {
                         )}
                         <button
                           onClick={() => handleArchive(item.id)}
-                          className="h-8 px-2.5 bg-on-surface/5 border border-border text-on-surface/40 font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-on-surface/10 transition-colors"
+                          className="h-8 px-2.5 bg-on-surface/5 border border-border text-on-surface/60 font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-on-surface/10 transition-colors"
                         >
                           ARQ
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="h-8 px-2.5 text-on-surface/40 hover:text-danger font-mono text-[10px] tracking-wider transition-colors"
+                          className="h-8 px-2.5 text-on-surface/60 hover:text-danger font-mono text-[10px] tracking-wider transition-colors"
                         >
                           DEL
                         </button>
@@ -385,7 +385,7 @@ function InboxPageInner() {
                       <div className="flex items-center gap-1.5 mt-2">
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="h-8 px-2.5 text-on-surface/40 hover:text-danger font-mono text-[10px] tracking-wider transition-colors"
+                          className="h-8 px-2.5 text-on-surface/60 hover:text-danger font-mono text-[10px] tracking-wider transition-colors"
                         >
                           DEL
                         </button>
@@ -401,11 +401,11 @@ function InboxPageInner() {
         {/* Keyboard hints */}
         {filter === "unprocessed" && unprocessed.length > 0 && (
           <div className="px-4 py-1.5 border-t border-border flex items-center gap-3 flex-none">
-            <span className="text-[7px] font-mono text-on-surface/40">J/K navegar</span>
-            <span className="text-[7px] font-mono text-on-surface/40">T task</span>
-            <span className="text-[7px] font-mono text-on-surface/40">N note</span>
-            <span className="text-[7px] font-mono text-on-surface/40">I triar IA</span>
-            <span className="text-[7px] font-mono text-on-surface/40">A arquivar</span>
+            <span className="text-[9px] font-mono text-on-surface/60">J/K navegar</span>
+            <span className="text-[9px] font-mono text-on-surface/60">T task</span>
+            <span className="text-[9px] font-mono text-on-surface/60">N note</span>
+            <span className="text-[9px] font-mono text-on-surface/60">I triar IA</span>
+            <span className="text-[9px] font-mono text-on-surface/60">A arquivar</span>
           </div>
         )}
       </div>
