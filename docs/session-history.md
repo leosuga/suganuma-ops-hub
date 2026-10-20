@@ -4,12 +4,13 @@ Movido do CLAUDE.md para reduzir o contexto carregado em toda sessão. Consulte 
 
 # Session Learnings — Suganuma Ops Hub
 
-## 2026-10-20 — Auditoria de UI/UX: cor, foco, atalhos e métricas honestas
+## 2026-10-20 — Auditoria de UI/UX: cor, foco, a11y, atalhos e captura em 1 toque
 
 ### Contexto
 O app estava em produção com **toda a identidade cromática morta**: screenshot de `ops.suganuma.com.br/login`
 mostrava o app inteiro em cinza (inclusive o CTA primário, cinza-sobre-cinza). A causa não era o
-Tailwind nem o shadcn: era a **cascata de camadas** do CSS.
+Tailwind nem o shadcn: era a **cascata de camadas** do CSS. A mesma sessão fechou o gap de
+produtividade no celular: capturar uma ideia exigia abrir o app.
 
 ### Entregue
 - **Cor**: tokens de marca renomeados para `--brand`/`--brand-hi` (sem colisão com o `--accent` do
@@ -29,6 +30,16 @@ Tailwind nem o shadcn: era a **cascata de camadas** do CSS.
   clicáveis. Filtro por tag do Tasks tinha estado+lógica **sem UI** — ganhou chips.
 - **Toque no celular**: botões de triagem do Inbox/Cockpit saíram de 24px/8px para 32px/10px.
 - `/` agora redireciona para `/dashboard` (igual ao `start_url` do manifest; antes caía em `/tasks`).
+- **Contraste**: secundários de `text-on-surface/40` (3.24:1) e `/50` → `/60` (5.76:1) em 554+ usos;
+  light mode re-ajustado para ≥4.5:1 (`accent-hi` era **1.7:1**, invisível). Piso tipográfico
+  6-7px → 9px (37 pontos estavam abaixo do próprio piso do projeto).
+- **Semântica**: `aria-current` + `nav` com `aria-label` na Sidebar, `aria-hidden` nos SVGs
+  decorativos, `role="alert"` nos erros de form, `aria-label` nos botões só de ícone.
+- **Web Share Target**: `share_target` no manifest → `POST /api/capture` grava direto no
+  `inbox_item` do dono. Compartilhar texto/link de qualquer app do iPhone para o Ops Hub é
+  captura em 1 toque, sem abrir o app. Banner de confirmação via `?captured=1`.
+- **Inbox em FIFO** (`created_at` ASC): o item mais antigo fica no topo, porque o Inbox é fila de
+  triagem — com DESC, o item mais antigo migrava para o fim e nunca era triado.
 
 ### Decisões que ficaram
 - **Não inflar tipografia**: a densidade 8-11px é identidade do projeto. O que se corrigiu foi
@@ -49,6 +60,8 @@ Tailwind nem o shadcn: era a **cascata de camadas** do CSS.
 - **Foco precisa de contraste contra a borda padrão**, não só "mudar de cor".
 - **Atalho anunciado e não implementado é bug de confiança**: o usuário aprende a errar.
 - **Rótulo de métrica errado é pior que métrica ausente**; e lista truncada com total no rodapé mente.
+- **Fila de triagem é FIFO**: DESC punia o item mais antigo, que migrava para o fim da lista.
+- **Share target usa `source='manual'`**: o check constraint de `inbox_item.source` não tem `share`.
 - `tsc --noEmit` rodou limpo (0 erros) nesta base — dá para usar local, apesar do build usar SKIP_TSC.
 
 ## 2026-10-13 — Pós-parto: módulo Bebê, push antecipado e orçamento por categoria

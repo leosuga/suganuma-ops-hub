@@ -29,6 +29,20 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "maskable",
       },
     ],
+    // Web Share Target (iOS 16.4+ / PWA instalada): compartilhar um texto,
+    // link ou nota de QUALQUER app para o Ops Hub cai em /api/capture, que
+    // joga direto no Inbox. É o caminho de captura mais curto que existe no
+    // celular — sem abrir o app.
+    share_target: {
+      action: "/api/capture",
+      method: "POST",
+      enctype: "application/x-www-form-urlencoded",
+      params: {
+        title: "title",
+        text: "text",
+        url: "url",
+      },
+    },
     // Long-press no ícone da PWA instalada — atalho direto pra captura,
     // sem passar pela navegação normal.
     shortcuts: [

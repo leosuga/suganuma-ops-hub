@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useCallback, useEffect, useRef } from "react"
+import { useState, useCallback, useEffect, useRef, Suspense } from "react"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { useTitle } from "@/lib/useTitle"
 import {
   useInbox,
@@ -165,6 +166,33 @@ function InboxPageInner() {
 
   const pendingWithoutAI = unprocessed.filter((i) => !i.ai_payload).length
 
+  // Confirmação de captura vinda do Share Target do iOS (?captured=1): o
+  // item entra na fila e o aviso some sozinho depois de 5s.
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const captured = searchParams.get("captured")
+  const [captureMsg, setCaptureMsg] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!captured) return
+    setCaptureMsg(
+      captured === "1"
+        ? "CAPTURADO ✓ — entrou na fila do Inbox"
+        : captured === "erro"
+          ? "Falha ao capturar o item"
+          : "Nada para capturar",
+    )
+    const t = setTimeout(() => {
+      setCaptureMsg(null)
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete("captured")
+      const qs = params.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    }, 5000)
+    return () => clearTimeout(t)
+  }, [captured, pathname, router, searchParams])
+
   return (
     <SectionErrorBoundary label="INBOX">
       <div className="h-full flex flex-col">
@@ -193,6 +221,15 @@ function InboxPageInner() {
             </div>
           )}
         </div>
+
+        {/* Confirmação de captura (Share Target do iOS) */}
+        {captureMsg && (
+          <div className="px-4 py-2 border-b border-border flex-none bg-teal/10">
+            <span className="text-[10px] font-mono font-semibold text-teal tracking-wider">
+              {captureMsg}
+            </span>
+          </div>
+        )}
 
         {/* Omni-Capture Bar */}
         <div className="px-4 py-3 border-b border-border flex-none">
@@ -230,6 +267,9 @@ function InboxPageInner() {
               {counts[f] > 0 && ` (${counts[f]})`}
             </button>
           ))}
+          <span className="ml-auto text-[9px] font-mono text-on-surface/60 hidden sm:inline">
+            FILA · mais antigo primeiro
+          </span>
         </div>
 
         {/* List */}
@@ -414,5 +454,9 @@ function InboxPageInner() {
 }
 
 export default function InboxPage() {
-  return <InboxPageInner />
+  return (
+    <Suspense fallback={<div className="h-32 animate-pulse" />}>
+      <InboxPageInner />
+    </Suspense>
+  )
 }

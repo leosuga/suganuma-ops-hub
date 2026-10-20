@@ -79,6 +79,13 @@ Schemas testados: `tests/schemas.test.ts` (38 testes Zod)
 - **Agente/MCP**: `GET /api/agent/baby`, `GET|POST /api/agent/baby/logs`, tools `baby_summary`, `baby_log_event`, `baby_list_logs`; `get_daily_cockpit` ganha o bloco `baby`. O `child_id` é SEMPRE o do dono do token (service role bypassa RLS)
 - **Armadilhas**: `Omit<>` em união discriminada (`BabyLog`) colapsa os tipos — receber `BabyLog` inteiro; `z.string().datetime()` exige `Z` (usar `toISOString()`); `datetime-local` é horário de SP, converter com `toLocalInput`/`fromLocalInput`
 
+### Captura (2026-10-20)
+- **Web Share Target** (`share_target` no `src/app/manifest.ts` → `POST /api/capture`): compartilhar texto/link de qualquer app do iPhone para o Ops Hub (PWA instalada) grava direto no `inbox_item` do dono. É o caminho de captura mais curto no celular (1 toque, sem abrir o app). Sem sessão → 303 para `/login`; corpo vazio → `?captured=empty`; erro de insert → `?captured=erro`; sucesso → `?captured=1` (banner de confirmação na tela do Inbox)
+- **`source` do item = `manual`**: o check constraint de `inbox_item.source` não aceita `share` (aceita manual/telegram/audio/email/webhook/mcp/raindrop)
+- **O SW não intercepta `/api/*`** (early return no `fetch` handler) — o POST do share target chega íntegro na rota
+- **Inbox em FIFO**: `created_at` ASC — o item mais antigo fica no topo, porque o Inbox é fila de *triagem* (o que chegou antes é o que espera mais). Antes era DESC, que punia o item mais antigo
+- Testes: `tests/capture-route.test.ts` (5 casos: sem sessão, gravar, title sem text, body vazio, erro de insert)
+
 ### Notes
 - **Converter nota em task**: botão `→TASK` no NoteRow (modo leitura). Cria task com título+conteúdo da nota e vincula automaticamente via `linked_task_id`
 

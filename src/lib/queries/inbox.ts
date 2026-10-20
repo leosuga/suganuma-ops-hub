@@ -33,7 +33,11 @@ export function inboxOptions(status: string = "unprocessed") {
       let q = supabase
         .from("inbox_item")
         .select("*")
-        .order("created_at", { ascending: false })
+        // FIFO: o item mais ANTIGO fica no topo. O Inbox é fila de triagem —
+        // o que chegou antes é o que está esperando mais tempo. (Era
+        // created_at desc, que punia o item mais antigo, que migrava para o
+        // fim da lista e nunca era triado.)
+        .order("created_at", { ascending: true })
         .limit(200)
 
       if (status !== "all") {
