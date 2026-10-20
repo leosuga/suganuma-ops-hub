@@ -206,7 +206,7 @@ export default function SettingsPage() {
             onChange={(e) => setTokenUi((s) => ({ ...s, newTokenName: e.target.value }))}
             onKeyDown={(e) => { if (e.key === "Enter") handleCreateToken() }}
             placeholder="Nome do token (ex: Claude Desktop)"
-            className="flex-1 h-7 px-2 text-[11px] font-mono bg-bg border border-border rounded-sm text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal/60"
+            className="flex-1 h-7 px-2 text-[11px] font-mono bg-bg border border-border rounded-sm text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal/60 focus:ring-1 focus:ring-teal/50"
           />
           <button
             onClick={handleCreateToken}

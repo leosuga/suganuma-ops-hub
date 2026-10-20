@@ -131,7 +131,7 @@ export default function MealsPage() {
                         )}>
                           <div className="flex items-center gap-1">
                             <select
-                              className="flex-1 h-7 bg-transparent border border-border/50 rounded-sm px-1.5 text-[10px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
+                              className="flex-1 h-7 bg-transparent border border-border/50 rounded-sm px-1.5 text-[10px] font-mono text-on-surface focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
                               value={mealId ?? ""}
                               onChange={async (e) => {
                                 if (showNewMeal) {

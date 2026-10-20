@@ -13,7 +13,7 @@ interface TxnLike {
 }
 
 const inputClass =
-  "h-8 bg-bg border border-border rounded-sm px-2 text-[12px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+  "h-8 bg-bg border border-border rounded-sm px-2 text-[12px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
 
 function fmt(n: number) {
   return fmtCurrency(n, { maximumFractionDigits: 0 })

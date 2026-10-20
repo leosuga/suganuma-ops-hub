@@ -20,7 +20,7 @@ export function AccountManager() {
   const [kind, setKind] = useState("")
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
-  const inputClass = "h-7 bg-bg border border-border rounded-sm px-2 text-[11px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+  const inputClass = "h-7 bg-bg border border-border rounded-sm px-2 text-[11px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
 
   function startAdd() {
     setName("")

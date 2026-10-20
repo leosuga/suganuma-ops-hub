@@ -105,7 +105,7 @@ export default function LoginPage() {
                     onChange={e => setCode(e.target.value)}
                     placeholder="••••••"
                     autoFocus
-                    className="h-11 bg-bg border border-border rounded-sm px-3 text-[20px] font-mono tracking-[0.4em] text-center text-on-surface placeholder:text-on-surface/30 focus:outline-none focus:border-teal transition-colors"
+                    className="h-11 bg-bg border border-border rounded-sm px-3 text-[20px] font-mono tracking-[0.4em] text-center text-on-surface placeholder:text-on-surface/30 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
                   />
                 </div>
                 {error && <p className="text-[11px] font-mono text-danger">{error}</p>}
@@ -155,7 +155,7 @@ export default function LoginPage() {
                     placeholder="seu@email.com"
                     required
                     autoFocus
-                    className="h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+                    className="h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
                   />
                 </div>
 

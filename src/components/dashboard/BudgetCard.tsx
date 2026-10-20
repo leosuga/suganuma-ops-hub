@@ -46,7 +46,7 @@ export function BudgetCard({ income, expense }: BudgetCardProps) {
           onChange={(e) => setTarget(e.target.value)}
           placeholder="Orçamento (R$)"
           autoFocus
-          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
         />
         <div className="flex gap-2 justify-end">
           <button onClick={() => setEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">CANCELAR</button>

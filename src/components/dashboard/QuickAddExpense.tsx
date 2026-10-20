@@ -44,14 +44,14 @@ export function QuickAddExpense() {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="R$ 0,00"
-          className="w-24 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors flex-none"
+          className="w-24 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors flex-none"
         />
         <input
           type="text"
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           placeholder="Descrição da despesa..."
-          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
         />
         <button
           type="submit"

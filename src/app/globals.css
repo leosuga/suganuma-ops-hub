@@ -24,12 +24,12 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
+  --color-ring: var(--brand);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
+  --color-accent: var(--brand);
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -51,10 +51,13 @@
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);
-  --color-accent: var(--accent);
-  --color-accent-hi: var(--accent-hi);
-  --color-teal: var(--accent);
-  --color-teal-hi: var(--accent-hi);
+  /* Tokens de marca: `--brand` (e não `--accent`) porque o shadcn declara
+     `--accent` em blocos NÃO-layerados (`:root`/`.dark`), que vencem qualquer
+     declaração em @layer. Nome próprio + sem colisão = teal sempre aplicado. */
+  --color-accent: var(--brand);
+  --color-accent-hi: var(--brand-hi);
+  --color-teal: var(--brand);
+  --color-teal-hi: var(--brand-hi);
   --color-amber: var(--amber);
   --color-danger: var(--danger);
   --color-health: var(--health);
@@ -149,8 +152,8 @@
     --surface: #121212;
     --surface-hover: #1A1A1A;
     --on-surface: #DEE3E5;
-    --accent: #55D7ED;
-    --accent-hi: #9EEFFF;
+    --brand: #55D7ED;
+    --brand-hi: #9EEFFF;
     --amber: #FFBB52;
     --danger: #FFB4AB;
     --health: #A8D8B0;
@@ -163,8 +166,8 @@
     --surface: #FFFFFF;
     --surface-hover: #E8EAEB;
     --on-surface: #1C2025;
-    --accent: #2A8B9B;
-    --accent-hi: #55D7ED;
+    --brand: #2A8B9B;
+    --brand-hi: #55D7ED;
     --amber: #CC9020;
     --danger: #D9534F;
     --health: #2E8B57;

@@ -13,7 +13,6 @@ import {
   CommandSeparator,
 } from "@/components/ui/command"
 import { taskKeys } from "@/lib/queries/tasks"
-import { financeKeys } from "@/lib/queries/finance"
 import { healthKeys } from "@/lib/queries/health"
 import { projectKeys } from "@/lib/queries/projects"
 import { noteKeys } from "@/lib/queries/notes"
@@ -27,24 +26,28 @@ import type { ProjectRow } from "@/lib/queries/projects"
 import type { NoteRow } from "@/lib/queries/notes"
 import type { AnnualEventRow } from "@/lib/types"
 
+// Atalhos de tecla única NÃO são usados aqui de propósito: a busca do cmdk
+// digita no mesmo input, então "D"/"T"... colidiria com digitar. A navegação
+// é por busca; os atalhos de triagem que existem de fato estão no Inbox
+// (j/k/t/n/a/i) e são listados na legenda do rodapé da palette.
 const NAV_COMMANDS = [
-  { label: "Dashboard", href: "/dashboard", shortcut: "D" },
-  { label: "Calendar", href: "/calendar", shortcut: "C" },
-  { label: "Year Calendar", href: "/calendar/year", shortcut: "Y" },
-  { label: "Cockpit", href: "/cockpit", shortcut: "O" },
-  { label: "Inbox", href: "/inbox", shortcut: "I" },
-  { label: "Task Engine", href: "/tasks", shortcut: "T" },
-  { label: "Finance Hub", href: "/finance", shortcut: "F" },
-  { label: "Health Hub", href: "/health", shortcut: "H" },
-  { label: "Reports", href: "/reports", shortcut: "R" },
-  { label: "Review", href: "/review", shortcut: "W" },
-  { label: "Projects", href: "/projects", shortcut: "J" },
-  { label: "People", href: "/people", shortcut: "P" },
-  { label: "Bebê", href: "/baby", shortcut: "E" },
-  { label: "Notes", href: "/notes", shortcut: "N" },
-  { label: "Meal Planning", href: "/meals", shortcut: "M" },
-  { label: "Habits Tracker", href: "/habits", shortcut: "B" },
-  { label: "Settings", href: "/settings", shortcut: "S" },
+  { label: "Dashboard", href: "/dashboard" },
+  { label: "Calendar", href: "/calendar" },
+  { label: "Year Calendar", href: "/calendar/year" },
+  { label: "Cockpit", href: "/cockpit" },
+  { label: "Inbox", href: "/inbox" },
+  { label: "Task Engine", href: "/tasks" },
+  { label: "Finance Hub", href: "/finance" },
+  { label: "Health Hub", href: "/health" },
+  { label: "Reports", href: "/reports" },
+  { label: "Review", href: "/review" },
+  { label: "Projects", href: "/projects" },
+  { label: "People", href: "/people" },
+  { label: "Bebê", href: "/baby" },
+  { label: "Notes", href: "/notes" },
+  { label: "Meal Planning", href: "/meals" },
+  { label: "Habits Tracker", href: "/habits" },
+  { label: "Settings", href: "/settings" },
 ]
 
 interface CommandPaletteProps {
@@ -58,7 +61,20 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
   const queryClient = useQueryClient()
 
   const tasks = queryClient.getQueryData<TaskRow[]>(taskKeys.all) ?? []
-  const transactions = queryClient.getQueryData<TransactionRow[]>(financeKeys.transactions()) ?? []
+  // Transações: TODAS as queries com prefixo ["finance","transactions"] — as
+  // páginas gravam com filtros (mês/kind), então ler só a chave sem filtros
+  // nunca encontrava nada e o grupo "Transações recentes" nunca aparecia.
+  const transactions = useMemo(() => {
+    const seen = new Map<string, TransactionRow>()
+    for (const [, data] of queryClient.getQueriesData<TransactionRow[]>({
+      queryKey: ["finance", "transactions"],
+    })) {
+      for (const t of data ?? []) seen.set(t.id, t)
+    }
+    return Array.from(seen.values()).sort((a, b) =>
+      (b.occurred_on ?? "").localeCompare(a.occurred_on ?? "")
+    )
+  }, [queryClient])
   const appointments = queryClient.getQueryData<AppointmentRow[]>(healthKeys.appointments) ?? []
   const projects = queryClient.getQueryData<ProjectRow[]>(projectKeys.all) ?? []
   const notes = queryClient.getQueryData<NoteRow[]>(noteKeys.all) ?? []
@@ -124,7 +140,6 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
           {NAV_COMMANDS.map((cmd) => (
             <CommandItem key={cmd.href} value={cmd.label} onSelect={() => navigate(cmd.href)}>
               <span className="flex-1 font-mono text-[12px]">{cmd.label}</span>
-              <kbd className="ml-auto text-[9px] font-mono text-muted-foreground">{cmd.shortcut}</kbd>
             </CommandItem>
           ))}
         </CommandGroup>
@@ -158,12 +173,10 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
           {onAddTask && (
             <CommandItem value="nova task" onSelect={() => { onOpenChange(false); onAddTask() }}>
               <span className="font-mono text-[12px]">+ Nova Task</span>
-              <kbd className="ml-auto text-[9px] font-mono text-muted-foreground">N</kbd>
             </CommandItem>
           )}
           <CommandItem value="capturar inbox" onSelect={() => navigate("/inbox")}>
             <span className="font-mono text-[12px]">+ Capturar no Inbox</span>
-            <kbd className="ml-auto text-[9px] font-mono text-muted-foreground">I</kbd>
           </CommandItem>
         </CommandGroup>
 
@@ -297,6 +310,12 @@ export function CommandPalette({ open, onOpenChange, onAddTask }: CommandPalette
           )
         })}
       </CommandList>
+      <div className="border-t border-border px-3 py-2 text-[9px] font-mono text-muted-foreground flex flex-wrap gap-x-3 gap-y-1">
+        <span>⌘K abre</span>
+        <span>↵ seleciona</span>
+        <span>Esc fecha</span>
+        <span>no Inbox: J/K move · T task · N nota · I triar · A arquivar</span>
+      </div>
     </CommandDialog>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, Suspense } from "react"
+import { useState, useCallback, useEffect, useMemo, Suspense } from "react"
 import dynamic from "next/dynamic"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -14,6 +14,7 @@ import { TaskRow } from "@/components/tasks/TaskRow"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { VirtualizedList } from "@/components/VirtualizedList"
 import { useUndoToast } from "@/components/UndoToast"
+import { cn } from "@/lib/utils"
 
 const EditTaskDialog = dynamic(() => import("@/components/tasks/EditTaskDialog").then(m => ({ default: m.EditTaskDialog })), {
   loading: () => <div className="fixed inset-0 z-50 bg-black/50 animate-pulse" />,
@@ -29,8 +30,14 @@ function TasksPageInner() {
   const [showDone, setShowDone] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<TaskRowType | null>(null)
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "")
   const [tagFilter, setTagFilter] = useState("")
+
+  // /tasks?search=… (ex.: link do Cockpit) precisa alimentar a busca.
+  const searchParam = searchParams.get("search")
+  useEffect(() => {
+    if (searchParam) setSearch(searchParam)
+  }, [searchParam])
 
   const { data: tasks = [], isLoading, isError } = useTasks()
   const { data: projects = [] } = useProjects()
@@ -82,6 +89,17 @@ function TasksPageInner() {
     },
     {} as Partial<Record<Category, number>>
   )
+
+  // Tags existentes (ctx/ fica de fora — é o eixo de contexto, não de tag).
+  const taskTags = useMemo(() => {
+    const set = new Set<string>()
+    for (const t of tasks) {
+      for (const tag of t.tags ?? []) {
+        if (!tag.startsWith("ctx/")) set.add(tag)
+      }
+    }
+    return Array.from(set).sort().slice(0, 12)
+  }, [tasks])
 
   const handleToggle = useCallback((id: string) => {
     const task = tasks.find((t) => t.id === id)
@@ -173,6 +191,27 @@ function TasksPageInner() {
       {/* Category filter */}
       <CategoryChips value={category} onChange={setCategory} counts={counts} />
 
+      {/* Tag filter — o filtro existia no estado mas não tinha UI */}
+      {taskTags.length > 0 && (
+        <div className="px-4 py-2 border-b border-border flex items-center gap-1.5 flex-wrap">
+          <span className="text-[9px] font-mono text-on-surface/40 uppercase tracking-wider">TAG:</span>
+          {taskTags.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => setTagFilter(tagFilter === tag ? "" : tag)}
+              className={cn(
+                "h-6 px-2 rounded-sm border font-mono text-[9px] tracking-wider transition-colors",
+                tagFilter === tag
+                  ? "border-teal/60 bg-teal/10 text-teal"
+                  : "border-border text-on-surface/40 hover:text-on-surface/60"
+              )}
+            >
+              #{tag}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Search bar */}
       <div className="px-4 py-2 border-b border-border">
         <input
@@ -180,7 +219,7 @@ function TasksPageInner() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar tasks..."
-          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
         />
       </div>
 

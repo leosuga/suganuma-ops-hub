@@ -83,7 +83,7 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
                 onChange={(e) => setNoteInput(e.target.value)}
                 placeholder="Escreva a nota do dia..."
                 rows={4}
-                className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors resize-none"
+                className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors resize-none"
               />
               <div className="flex justify-end gap-2">
                 <button onClick={() => setNoteEditing(false)} className="h-7 px-3 text-[9px] font-mono text-on-surface/40 hover:text-on-surface/60 transition-colors">CANCELAR</button>
@@ -145,7 +145,7 @@ export function DayDetailModal({ open, onOpenChange, date, label, entries }: Day
                 value={taskInput}
                 onChange={(e) => setTaskInput(e.target.value)}
                 placeholder="Adicionar task para este dia..."
-                className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+                className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
               />
               <button type="submit" disabled={!taskInput.trim() || createTask.isPending} className="h-8 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors flex-none">
                 {createTask.isPending ? "..." : "+ ADD"}

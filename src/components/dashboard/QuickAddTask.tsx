@@ -48,7 +48,7 @@ export function QuickAddTask() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Nova task rápida... (>projeto #finance !urgent ^tomorrow @Fulano +importante)"
-          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
         />
         <button
           type="submit"

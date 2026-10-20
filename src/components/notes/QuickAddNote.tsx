@@ -103,7 +103,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
                   onChange={(e) => setInput(e.target.value)}
                   placeholder="Título da nota..."
                   autoFocus
-                  className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+                  className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
                 />
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                   {(Object.keys(TEMPLATES) as TemplateKey[]).map((k) => (
@@ -263,7 +263,7 @@ export function QuickAddNote({ onCreated, compact }: { onCreated: () => void; co
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={template === "daily" ? `Nota do dia (${new Date().toLocaleDateString("pt-BR")})...` : "Título da nota..."}
-          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
         />
         <button
           type="submit"

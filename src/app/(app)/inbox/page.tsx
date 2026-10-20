@@ -186,7 +186,7 @@ function InboxPageInner() {
               <button
                 onClick={handleTriageAll}
                 disabled={triageAll.isPending}
-                className="h-6 px-2 bg-purple-400/10 border border-purple-400/40 text-purple-400 font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-purple-400/20 disabled:opacity-30 transition-colors"
+                className="h-8 px-2.5 bg-purple-400/10 border border-purple-400/40 text-purple-400 font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-purple-400/20 disabled:opacity-30 transition-colors"
               >
                 {triageAll.isPending ? "TRIANDO..." : "TRIAR TUDO"}
               </button>
@@ -203,7 +203,7 @@ function InboxPageInner() {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Jogue aqui qualquer pensamento, ideia ou lembrete..."
               autoFocus
-              className="flex-1 h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+              className="flex-1 h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
             />
             <button
               type="submit"
@@ -346,14 +346,14 @@ function InboxPageInner() {
                         <button
                           onClick={() => handleConvertToTask(item)}
                           disabled={converting === item.id}
-                          className="h-6 px-2 bg-teal/10 border border-teal/40 text-teal font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors"
+                          className="h-8 px-2.5 bg-teal/10 border border-teal/40 text-teal font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors"
                         >
                           {converting === item.id ? "..." : "TASK"}
                         </button>
                         <button
                           onClick={() => handleConvertToNote(item)}
                           disabled={converting === item.id}
-                          className="h-6 px-2 bg-amber/10 border border-amber/40 text-amber font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-amber/20 disabled:opacity-30 transition-colors"
+                          className="h-8 px-2.5 bg-amber/10 border border-amber/40 text-amber font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-amber/20 disabled:opacity-30 transition-colors"
                         >
                           {converting === item.id ? "..." : "NOTE"}
                         </button>
@@ -361,20 +361,20 @@ function InboxPageInner() {
                           <button
                             onClick={() => handleAITriage(item)}
                             disabled={triaging === item.id}
-                            className="h-6 px-2 bg-purple-400/10 border border-purple-400/40 text-purple-400 font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-purple-400/20 disabled:opacity-30 transition-colors"
+                            className="h-8 px-2.5 bg-purple-400/10 border border-purple-400/40 text-purple-400 font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-purple-400/20 disabled:opacity-30 transition-colors"
                           >
                             {triaging === item.id ? "..." : "IA"}
                           </button>
                         )}
                         <button
                           onClick={() => handleArchive(item.id)}
-                          className="h-6 px-2 bg-on-surface/5 border border-border text-on-surface/40 font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-on-surface/10 transition-colors"
+                          className="h-8 px-2.5 bg-on-surface/5 border border-border text-on-surface/40 font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-on-surface/10 transition-colors"
                         >
                           ARQ
                         </button>
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="h-6 px-2 text-on-surface/40 hover:text-danger font-mono text-[8px] tracking-wider transition-colors"
+                          className="h-8 px-2.5 text-on-surface/40 hover:text-danger font-mono text-[10px] tracking-wider transition-colors"
                         >
                           DEL
                         </button>
@@ -385,7 +385,7 @@ function InboxPageInner() {
                       <div className="flex items-center gap-1.5 mt-2">
                         <button
                           onClick={() => handleDelete(item.id)}
-                          className="h-6 px-2 text-on-surface/40 hover:text-danger font-mono text-[8px] tracking-wider transition-colors"
+                          className="h-8 px-2.5 text-on-surface/40 hover:text-danger font-mono text-[10px] tracking-wider transition-colors"
                         >
                           DEL
                         </button>

@@ -9,7 +9,7 @@ import { usePregnancy, useCreateHealthLog } from "@/lib/queries/health"
 import { useNotes } from "@/lib/queries/notes"
 import { useProjects } from "@/lib/queries/projects"
 import { parseContextTags } from "@/lib/contexts"
-import { currentMonth, today } from "@/lib/date"
+import { currentMonth, today, dateStr } from "@/lib/date"
 import { useChild } from "@/lib/queries/baby"
 import { ageShort } from "@/lib/baby/summary"
 import { fmtCurrency } from "@/lib/format"
@@ -71,7 +71,11 @@ export default function DashboardPage() {
     activeProjectsWithProgress,
   } = useMemo(() => {
     const pending = tasks.filter((t) => t.status === "todo" || t.status === "doing")
-    const done = tasks.filter((t) => t.status === "done")
+    // "Concluídas" = concluídas HOJE (completed_at de hoje). Antes contava
+    // todas as tasks concluídas de qualquer data, mas o card dizia "tasks hoje".
+    const done = tasks.filter(
+      (t) => t.status === "done" && t.completed_at && dateStr(new Date(t.completed_at)) === today()
+    )
     const urgent = pending.filter((t) => t.priority === "urgent")
     const now = new Date()
     const overdue = pending.filter((t) => t.due_at && new Date(t.due_at) < now)
@@ -183,7 +187,7 @@ export default function DashboardPage() {
               value={weightInput}
               onChange={(e) => setWeightInput(e.target.value)}
               placeholder="68.5 kg"
-              className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health transition-colors"
+              className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50 transition-colors"
             />
             <button
               type="submit"

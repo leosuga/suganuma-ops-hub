@@ -158,14 +158,14 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           onKeyDown={(e) => { if (e.key === "Enter" && e.metaKey) handleSave() }}
           placeholder="Título"
           autoFocus
-          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono font-semibold text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono font-semibold text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
         />
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Escreva sua nota..."
           rows={6}
-          className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors resize-none"
+          className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors resize-none"
         />
         {note.tags && note.tags.length > 0 && (
           <div className="flex gap-1 flex-wrap">
@@ -212,7 +212,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           <select
             value={note.para ?? ""}
             onChange={(e) => updateNote.mutateAsync({ id: note.id, para: e.target.value as NoteRowType["para"] || null })}
-            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
+            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
           >
             <option value="">Sem categoria</option>
             <option value="projects">Projetos</option>
@@ -228,7 +228,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           <select
             value={linkedTaskId}
             onChange={(e) => setLinkedTaskId(e.target.value)}
-            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
+            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
           >
             <option value="">Nenhuma</option>
             {tasks.filter(t => t.status !== "done" && t.status !== "archived").map((t) => (
@@ -245,7 +245,7 @@ export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, sel
           <select
             value={note.project_id ?? ""}
             onChange={(e) => updateNote.mutateAsync({ id: note.id, project_id: e.target.value || null })}
-            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
+            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
           >
             <option value="">Nenhum</option>
             {projects.map((p) => (

@@ -44,13 +44,19 @@ function NotesPageInner() {
   const [filterTag, setFilterTag] = useState<string | null>(null)
   const [filterPrefix, setFilterPrefix] = useState<string | null>(null)
   const [filterPara, setFilterPara] = useState<string | null>(null)
-  const [search, setSearch] = useState("")
+  const [search, setSearch] = useState(() => searchParams.get("search") ?? "")
   const [showSemanticSearch, setShowSemanticSearch] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkMode, setBulkMode] = useState(false)
   const updateNote = useUpdateNote()
 
   const filterContext = searchParams.get("ctx")
+  // Links externos (paleta, backlinks, widget de contexto) abrem /notes?search=…
+  // — a página só lia ?ctx=, então esses links não filtravam nada.
+  const searchParam = searchParams.get("search")
+  useEffect(() => {
+    if (searchParam) setSearch(searchParam)
+  }, [searchParam])
 
   function setFilterContext(ctx: string | null) {
     const params = new URLSearchParams(searchParams.toString())
@@ -119,7 +125,10 @@ function NotesPageInner() {
       if (filterPara && n.para !== filterPara) return false
       if (search.trim()) {
         const q = search.toLowerCase().trim()
-        if (!n.title.toLowerCase().includes(q) && !(n.content?.toLowerCase().includes(q))) return false
+        const inTitle = n.title.toLowerCase().includes(q)
+        const inContent = n.content?.toLowerCase().includes(q)
+        const inTags = n.tags?.some((t) => t.toLowerCase().includes(q))
+        if (!inTitle && !inContent && !inTags) return false
       }
       return true
     })
@@ -284,7 +293,7 @@ function NotesPageInner() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar notas..."
-            className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+            className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
           />
 
           {/* Context bar */}
@@ -595,7 +604,7 @@ function NotesPageInner() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar notas..."
-            className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+            className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
           />
         </div>
 

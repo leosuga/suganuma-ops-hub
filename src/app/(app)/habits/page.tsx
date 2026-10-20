@@ -70,7 +70,7 @@ export default function HabitsPage() {
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Nome do hábito..."
               autoFocus
-              className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+              className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
             />
             <button type="submit" disabled={!newName.trim() || createHabit.isPending} className="h-8 px-3 bg-teal/10 border border-teal text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors">
               {createHabit.isPending ? "..." : "ADD"}

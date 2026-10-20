@@ -39,7 +39,7 @@ export function AddProtocolDialog({ open, onOpenChange }: AddProtocolDialogProps
             placeholder="Ex: Vitamina D (bebê), Ácido fólico, Caminhada diária"
             required
             autoFocus
-            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health transition-colors"
+            className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50 transition-colors"
           />
           <div className="flex justify-end gap-2">
             <button type="button" onClick={() => onOpenChange(false)} className="h-8 px-4 text-[10px] font-mono text-on-surface/40 hover:text-on-surface/70 transition-colors">CANCELAR</button>
@@ -111,7 +111,7 @@ function ProtocolRow({ protocol }: { protocol: { id: string; name: string; activ
             onChange={(e) => setEditName(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditing(false) }}
             autoFocus
-            className="flex-1 h-7 bg-bg border border-border rounded-sm px-2 text-[12px] font-mono text-on-surface focus:outline-none focus:border-health transition-colors"
+            className="flex-1 h-7 bg-bg border border-border rounded-sm px-2 text-[12px] font-mono text-on-surface focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50 transition-colors"
           />
           <button onClick={handleSaveEdit} disabled={updateProtocol.isPending} className="text-[9px] font-mono text-health hover:opacity-70 tracking-wider">OK</button>
           <button onClick={() => setEditing(false)} className="text-on-surface/40 hover:text-on-surface/60 text-[14px]">×</button>

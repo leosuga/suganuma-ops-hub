@@ -297,7 +297,7 @@ export function EventDialog({ open, onOpenChange, initialEvent, initialDate, onS
               <select
                 value={projectId || ""}
                 onChange={(e) => setProjectId(e.target.value || null)}
-                className="mt-1 w-full bg-surface border border-border/50 rounded-sm px-2 py-1.5 text-[10px] font-mono text-on-surface focus:outline-none focus:border-teal/50"
+                className="mt-1 w-full bg-surface border border-border/50 rounded-sm px-2 py-1.5 text-[10px] font-mono text-on-surface focus:outline-none focus:border-teal/50 focus:ring-1 focus:ring-teal/50"
               >
                 <option value="">Nenhum</option>
                 {projects.map((p) => (

@@ -4,6 +4,53 @@ Movido do CLAUDE.md para reduzir o contexto carregado em toda sessão. Consulte 
 
 # Session Learnings — Suganuma Ops Hub
 
+## 2026-10-20 — Auditoria de UI/UX: cor, foco, atalhos e métricas honestas
+
+### Contexto
+O app estava em produção com **toda a identidade cromática morta**: screenshot de `ops.suganuma.com.br/login`
+mostrava o app inteiro em cinza (inclusive o CTA primário, cinza-sobre-cinza). A causa não era o
+Tailwind nem o shadcn: era a **cascata de camadas** do CSS.
+
+### Entregue
+- **Cor**: tokens de marca renomeados para `--brand`/`--brand-hi` (sem colisão com o `--accent` do
+  shadcn) e declarados no `@theme inline`; `theme.ts` passou a escrever `--brand`/`--brand-hi` — o
+  seletor de acento em Settings **era no-op** (escrevia `--color-accent`, que nada lia).
+- **Foco visível**: 46 inputs usavam `focus:outline-none focus:border-teal` → a borda de foco virava
+  `#262626`, **mais escura** que a borda padrão. Agora têm `focus:ring-1`.
+- **CommandPalette honesta**: as 19 teclas `<kbd>` exibidas **não tinham handler** (só Cmd+K e o
+  j/k/t/n/a/i do Inbox existiam). Foram removidas e entrou uma legenda com os atalhos reais.
+- **Grupo "Transações recentes"** (paleta) lia `financeKeys.transactions()` sem filtros — chave que
+  nenhuma query popula, então o grupo **nunca aparecia**. Agora lê todas as queries com prefixo.
+- **Métricas honestas**: "Concluídas" contava todo o histórico mas dizia "tasks hoje"; o rodapé do
+  Cockpit mostrava contagem truncada (`slice(0,5)`); "Quick Wins" pegava `priority med` (o default).
+  Agora: concluídas de hoje, contagem real, quick win = `energy_level low`.
+- **Links que não filtravam**: `/notes?search=` (gerado por 3 pontos) era ignorado pela página — a
+  busca agora lê o param e casa **tags** também. `/tasks?search=` idem, com títulos do Cockpit
+  clicáveis. Filtro por tag do Tasks tinha estado+lógica **sem UI** — ganhou chips.
+- **Toque no celular**: botões de triagem do Inbox/Cockpit saíram de 24px/8px para 32px/10px.
+- `/` agora redireciona para `/dashboard` (igual ao `start_url` do manifest; antes caía em `/tasks`).
+
+### Decisões que ficaram
+- **Não inflar tipografia**: a densidade 8-11px é identidade do projeto. O que se corrigiu foi
+  contraste e alvo de toque, não tamanho de fonte. (O contraste de `text-on-surface/40` = 3.2:1 no
+  dark / 2.4:1 no light segue abaixo de AA — pauta para a próxima leva.)
+- **Sem atalhos de tecla única na palette**: a busca do cmdk digita no mesmo input, então "D"/"T"
+  colidiria com digitar. Alternativas (chord no estilo Linear "G D") ficam para quando houver
+  espaço para Teach/descobrir.
+- **Filtro por prefixo no TanStack** (`getQueriesData`) para dados "de qualquer filtro" — a chave
+  exata sem filtros nunca era populada.
+
+### Lições
+- **Não-layerado vence layerado**: o shadcn declara `--accent` em `:root`/`.dark` fora de
+  `@layer base`; o teal do projeto vivia em `@layer base { html { --accent } }` → perdia sempre.
+  `@theme inline` **não emite** `--color-*`: as utilities inlineiam o valor (`var(--accent)`).
+- **Provar token de cor exige o CSS compilado + browser real**: `docker exec ... cat
+  .next/static/chunks/*.css` + `getComputedStyle` no Chrome. Ler o fonte não revela a cascata.
+- **Foco precisa de contraste contra a borda padrão**, não só "mudar de cor".
+- **Atalho anunciado e não implementado é bug de confiança**: o usuário aprende a errar.
+- **Rótulo de métrica errado é pior que métrica ausente**; e lista truncada com total no rodapé mente.
+- `tsc --noEmit` rodou limpo (0 erros) nesta base — dá para usar local, apesar do build usar SKIP_TSC.
+
 ## 2026-10-13 — Pós-parto: módulo Bebê, push antecipado e orçamento por categoria
 
 ### Contexto

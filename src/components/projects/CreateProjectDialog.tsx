@@ -151,14 +151,14 @@ export function CreateProjectDialog({
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Nome do projeto"
                     autoFocus
-                    className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors"
+                    className="w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
                   />
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Descri\u00e7\u00e3o (opcional)"
                     rows={2}
-                    className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal transition-colors resize-none"
+                    className="w-full bg-bg border border-border rounded-sm px-3 py-2 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors resize-none"
                   />
                   <div className="flex flex-col gap-1.5">
                     <span className="text-[9px] font-mono font-semibold tracking-widest text-on-surface/40 uppercase">

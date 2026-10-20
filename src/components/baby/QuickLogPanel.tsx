@@ -103,7 +103,7 @@ export function QuickLogPanel({ childId, logs, compact }: QuickLogPanelProps) {
               value={ml}
               onChange={(e) => setMl(e.target.value)}
               aria-label="Mililitros da mamadeira"
-              className="w-16 h-[44px] bg-bg border border-border rounded-sm px-2 text-[13px] font-mono text-on-surface text-center focus:outline-none focus:border-health"
+              className="w-16 h-[44px] bg-bg border border-border rounded-sm px-2 text-[13px] font-mono text-on-surface text-center focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50"
             />
             <div className="flex-1">
               <QuickBtn disabled={busy} onClick={bottle}>MAMADEIRA ml</QuickBtn>

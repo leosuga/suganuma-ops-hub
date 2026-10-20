@@ -24,7 +24,7 @@ export function TaskKPIs({ pending, done, urgent, overdue, isLoading }: TaskKPIs
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       <StatCard label="Pendentes" value={pending} sub="tasks abertas" color={pending > 10 ? "text-amber" : "text-on-surface"} />
-      <StatCard label="Concluídas" value={done} sub="tasks hoje" color="text-teal" />
+      <StatCard label="Concluídas" value={done} sub="hoje" color="text-teal" />
       <StatCard label="Urgentes" value={urgent} sub="requerem atenção" color={urgent > 0 ? "text-danger" : "text-on-surface"} />
       <StatCard label="Atrasadas" value={overdue} sub="fora do prazo" color={overdue > 0 ? "text-amber" : "text-on-surface"} />
     </div>

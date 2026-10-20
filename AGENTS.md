@@ -8,7 +8,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Next.js **16.2.6** | React **19.2.6** | Zod **4.3.6** | Tailwind **v4**
 - UI primitives: `@base-ui/react` (Dialog, Checkbox, Button) — **NÃO é Radix UI**
 - Tokens CSS: `--color-bg`, `--color-surface`, `--color-teal`, `--color-amber`, `--color-danger`, `--color-health`, `--color-on-surface` via `@theme inline` no globals.css
-- Tema customizável: `--color-accent` / `--color-accent-hi` (5 opções: teal, blue, green, purple, orange) via `src/lib/theme.ts`
+- **Token de marca = `--brand` / `--brand-hi`** (NUNCA `--accent`): o shadcn declara `--accent` em `:root`/`.dark` **fora de @layer** e, em CSS, não-layerado vence layerado → o teal do projeto era sobrescrito pelo cinza do shadcn e o app inteiro saía monocromático. `@theme inline` não emite `--color-*`: as utilities inlineiam o valor, então `theme.ts` escreve `--brand`/`--brand-hi` (inline style) e o seletor de acento funciona
+- Tema customizável: `--brand` / `--brand-hi` (5 opções: teal, blue, green, purple, orange) via `src/lib/theme.ts`
+- **Provar token ≠ ler código**: extrair `.next/static/chunks/*.css` do container e medir `getComputedStyle` no Chrome. O fonte mente; o CSS compilado não
 
 ## Regras de código
 - Sempre usar `cn()` de `@/lib/utils` para classes condicionais

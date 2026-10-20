@@ -60,7 +60,7 @@ export function HabitRow({ habit, weekDays }: HabitRowProps) {
           onChange={(e) => setEditName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") handleSaveEdit(); if (e.key === "Escape") setEditing(false) }}
           autoFocus
-          className="flex-1 h-7 bg-bg border border-border rounded-sm px-2 text-[12px] font-mono text-on-surface focus:outline-none focus:border-teal transition-colors"
+          className="flex-1 h-7 bg-bg border border-border rounded-sm px-2 text-[12px] font-mono text-on-surface focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
         />
         <button onClick={handleSaveEdit} disabled={updateHabit.isPending} className="text-[9px] font-mono text-teal tracking-wider">OK</button>
         <button onClick={() => setEditing(false)} className="text-on-surface/40 text-[14px]">×</button>

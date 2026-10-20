@@ -7,7 +7,7 @@ import { fromLocalInput } from "@/lib/baby/quick-log"
 import { cn } from "@/lib/utils"
 
 const inputClass =
-  "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health transition-colors"
+  "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/40 focus:outline-none focus:border-health focus:ring-1 focus:ring-health/50 transition-colors"
 const labelClass = "text-[9px] font-mono text-on-surface/40 uppercase tracking-widest block mb-1"
 
 function toPositive(v: string): number | null {

@@ -82,17 +82,23 @@ function CockpitPageInner() {
     () =>
       pending.filter(
         (t) => t.priority === "urgent" || (t.important && t.due_at && new Date(t.due_at) < now)
-      ).slice(0, 5),
+      ),
     [pending]
   )
 
   const overdue = useMemo(
-    () => pending.filter((t) => t.due_at && new Date(t.due_at) < now && t.status !== "done").slice(0, 5),
+    () => pending.filter((t) => t.due_at && new Date(t.due_at) < now && t.status !== "done"),
     [pending]
   )
 
+  // Quick win = energia baixa (`~low` no parser de título). Antes era
+  // priority low||med — e "med" é a prioridade DEFAULT, então a lista virava
+  // "todas as tasks medium" e não quick wins.
   const quickWins = useMemo(
-    () => pending.filter((t) => t.priority === "low" || t.priority === "med").slice(0, 5),
+    () =>
+      pending.filter(
+        (t) => t.energy_level === "low" || (t.priority === "low" && !t.energy_level)
+      ),
     [pending]
   )
 
@@ -154,20 +160,20 @@ function CockpitPageInner() {
                     <button
                       onClick={() => handleConvertToTask(item)}
                       disabled={converting === item.id}
-                      className="h-6 px-2 bg-teal/10 border border-teal/40 text-teal font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors"
+                      className="h-8 px-2.5 bg-teal/10 border border-teal/40 text-teal font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 disabled:opacity-30 transition-colors"
                     >
                       {converting === item.id ? "..." : "TASK"}
                     </button>
                     <button
                       onClick={() => handleConvertToNote(item)}
                       disabled={converting === item.id}
-                      className="h-6 px-2 bg-amber/10 border border-amber/40 text-amber font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-amber/20 disabled:opacity-30 transition-colors"
+                      className="h-8 px-2.5 bg-amber/10 border border-amber/40 text-amber font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-amber/20 disabled:opacity-30 transition-colors"
                     >
                       {converting === item.id ? "..." : "NOTE"}
                     </button>
                     <button
                       onClick={() => archiveInboxItem.mutate(item.id)}
-                      className="h-6 px-2 bg-on-surface/5 border border-border text-on-surface/40 font-mono text-[8px] font-semibold tracking-wider rounded-sm hover:bg-on-surface/10 transition-colors"
+                      className="h-8 px-2.5 bg-on-surface/5 border border-border text-on-surface/40 font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-on-surface/10 transition-colors"
                     >
                       ARQ
                     </button>
@@ -198,15 +204,28 @@ function CockpitPageInner() {
               <div className="px-4 py-4 text-[10px] font-mono text-on-surface/40">Nenhuma urgente</div>
             ) : (
               <div className="divide-y divide-border">
-                {urgent.map((t) => (
+                {urgent.slice(0, 5).map((t) => (
                   <div key={t.id} className="px-4 py-2.5 flex items-center gap-3">
                     <TaskCheckbox task={t} onToggle={toggleDone} />
-                    <span className="flex-1 text-[11px] font-mono text-on-surface truncate">{t.title}</span>
+                    <Link
+                      href={`/tasks?search=${encodeURIComponent(t.title)}`}
+                      className="flex-1 text-[11px] font-mono text-on-surface truncate hover:text-teal transition-colors"
+                    >
+                      {t.title}
+                    </Link>
                     {t.due_at && (
                       <span className="flex-none text-[9px] font-mono text-danger">{fmtDate(t.due_at)}</span>
                     )}
                   </div>
                 ))}
+                {urgent.length > 5 && (
+                  <div className="px-4 py-2 text-[9px] font-mono text-on-surface/40">
+                    +{urgent.length - 5} mais em{" "}
+                    <Link href="/tasks" className="hover:text-on-surface/60 transition-colors">
+                      /tasks
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -221,13 +240,26 @@ function CockpitPageInner() {
               <div className="px-4 py-4 text-[10px] font-mono text-on-surface/40">Nenhuma atrasada</div>
             ) : (
               <div className="divide-y divide-border">
-                {overdue.map((t) => (
+                {overdue.slice(0, 5).map((t) => (
                   <div key={t.id} className="px-4 py-2.5 flex items-center gap-3">
                     <TaskCheckbox task={t} onToggle={toggleDone} />
-                    <span className="flex-1 text-[11px] font-mono text-on-surface truncate">{t.title}</span>
+                    <Link
+                      href={`/tasks?search=${encodeURIComponent(t.title)}`}
+                      className="flex-1 text-[11px] font-mono text-on-surface truncate hover:text-teal transition-colors"
+                    >
+                      {t.title}
+                    </Link>
                     <span className="flex-none text-[9px] font-mono text-amber">{fmtDate(t.due_at!)}</span>
                   </div>
                 ))}
+                {overdue.length > 5 && (
+                  <div className="px-4 py-2 text-[9px] font-mono text-on-surface/40">
+                    +{overdue.length - 5} mais em{" "}
+                    <Link href="/tasks" className="hover:text-on-surface/60 transition-colors">
+                      /tasks
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -244,13 +276,26 @@ function CockpitPageInner() {
             <div className="px-4 py-4 text-[10px] font-mono text-on-surface/40">Nenhum quick win</div>
           ) : (
             <div className="divide-y divide-border">
-              {quickWins.map((t) => (
+              {quickWins.slice(0, 5).map((t) => (
                 <div key={t.id} className="px-4 py-2.5 flex items-center gap-3">
                   <TaskCheckbox task={t} onToggle={toggleDone} />
-                  <span className="flex-1 text-[11px] font-mono text-on-surface truncate">{t.title}</span>
+                  <Link
+                    href={`/tasks?search=${encodeURIComponent(t.title)}`}
+                    className="flex-1 text-[11px] font-mono text-on-surface truncate hover:text-teal transition-colors"
+                  >
+                    {t.title}
+                  </Link>
                   <span className="flex-none text-[8px] font-mono text-on-surface/40">{t.priority.toUpperCase()}</span>
                 </div>
               ))}
+              {quickWins.length > 5 && (
+                <div className="px-4 py-2 text-[9px] font-mono text-on-surface/40">
+                  +{quickWins.length - 5} mais em{" "}
+                  <Link href="/tasks" className="hover:text-on-surface/60 transition-colors">
+                    /tasks
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </div>

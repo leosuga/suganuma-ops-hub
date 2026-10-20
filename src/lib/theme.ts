@@ -23,8 +23,11 @@ export function setAccent(accent: Accent) {
   if (typeof window === "undefined") return
   localStorage.setItem(KEY, accent)
   const colors = ACCENTS[accent]
-  document.documentElement.style.setProperty("--color-accent", colors.main)
-  document.documentElement.style.setProperty("--color-accent-hi", colors.hi)
+  // `--brand` (e não `--color-accent`): o @theme inline faz as utilities
+  // lerem `var(--brand)` diretamente, então escrever `--color-accent` não
+  // mudava nada. Ver globals.css § tokens de marca.
+  document.documentElement.style.setProperty("--brand", colors.main)
+  document.documentElement.style.setProperty("--brand-hi", colors.hi)
 }
 
 export function useInitAccent() {
