@@ -7,6 +7,8 @@ export interface InboxItemRow {
   status: string
   created_at: string
   triaged_at: string | null
+  /** Data em que o item volta a aparecer na fila (adiado). null = na fila. */
+  snoozed_until: string | null
 }
 
 export interface InboxItemInsert {

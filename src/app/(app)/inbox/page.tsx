@@ -10,11 +10,13 @@ import {
   useDeleteInboxItem,
   useTriageWithAI,
   useTriageAllPending,
+  useSnoozeInboxItem,
   useConvertInboxToTask,
   useConvertInboxToNote,
   type InboxAiPayload,
 } from "@/lib/queries/inbox"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
+import { dateStr } from "@/lib/date"
 import { cn } from "@/lib/utils"
 import type { InboxItemRow } from "@/lib/types"
 
@@ -37,8 +39,15 @@ const TYPE_LABELS: Record<string, string> = {
   multiple: "MULTIPLO",
 }
 
-const PRIORITY_COLORS: Record<string, string> = {
-  urgent: "text-danger border-danger/40 bg-danger/10",
+// Opções de "adiar": quantos dias até o item voltar para a fila.
+const SNOOZE_OPTIONS = [
+  { days: 1, label: "AMANHÃ" },
+  { days: 3, label: "3 DIAS" },
+  { days: 7, label: "SEMANA" },
+  { days: 30, label: "MÊS" },
+]
+
+const PRIORITY_COLORS: Record<string, string> = {  urgent: "text-danger border-danger/40 bg-danger/10",
   high: "text-amber border-amber/40 bg-amber/10",
   med: "text-on-surface/60 border-border bg-transparent",
   low: "text-on-surface/60 border-border/50 bg-transparent",
@@ -62,6 +71,7 @@ function InboxPageInner() {
   const [converting, setConverting] = useState<string | null>(null)
   const [triaging, setTriaging] = useState<string | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [snoozeFor, setSnoozeFor] = useState<string | null>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
   const { data: items = [], isLoading } = useInbox(filter)
@@ -69,6 +79,14 @@ function InboxPageInner() {
   const archiveInboxItem = useArchiveInboxItem()
   const deleteInboxItem = useDeleteInboxItem()
   const triageWithAI = useTriageWithAI()
+  const snoozeInboxItem = useSnoozeInboxItem()
+
+  function handleSnooze(id: string, days: number) {
+    const d = new Date()
+    d.setDate(d.getDate() + days)
+    snoozeInboxItem.mutate({ id, until: dateStr(d) })
+    setSnoozeFor(null)
+  }
   const triageAll = useTriageAllPending()
   const convertToTask = useConvertInboxToTask()
   const convertToNote = useConvertInboxToNote()
@@ -382,7 +400,7 @@ function InboxPageInner() {
 
                     {/* Actions */}
                     {isUnprocessed && (
-                      <div className="flex items-center gap-1.5 mt-2">
+                      <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                         <button
                           onClick={() => handleConvertToTask(item)}
                           disabled={converting === item.id}
@@ -407,6 +425,12 @@ function InboxPageInner() {
                           </button>
                         )}
                         <button
+                          onClick={() => setSnoozeFor(snoozeFor === item.id ? null : item.id)}
+                          className="h-8 px-2.5 bg-on-surface/5 border border-border text-on-surface/60 font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-on-surface/10 transition-colors"
+                        >
+                          ADIAR
+                        </button>
+                        <button
                           onClick={() => handleArchive(item.id)}
                           className="h-8 px-2.5 bg-on-surface/5 border border-border text-on-surface/60 font-mono text-[10px] font-semibold tracking-wider rounded-sm hover:bg-on-surface/10 transition-colors"
                         >
@@ -417,6 +441,28 @@ function InboxPageInner() {
                           className="h-8 px-2.5 text-on-surface/60 hover:text-danger font-mono text-[10px] tracking-wider transition-colors"
                         >
                           DEL
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Adiar: o item sai da fila e volta na data escolhida */}
+                    {snoozeFor === item.id && (
+                      <div className="flex items-center gap-1.5 mt-2">
+                        {SNOOZE_OPTIONS.map((o) => (
+                          <button
+                            key={o.days}
+                            onClick={() => handleSnooze(item.id, o.days)}
+                            className="h-8 px-2.5 border border-teal/40 bg-teal/10 text-teal font-mono text-[9px] font-semibold tracking-wider rounded-sm hover:bg-teal/20 transition-colors"
+                          >
+                            {o.label}
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => setSnoozeFor(null)}
+                          aria-label="Cancelar"
+                          className="h-8 px-2 text-on-surface/60 hover:text-on-surface/60 font-mono text-[12px]"
+                        >
+                          ×
                         </button>
                       </div>
                     )}
