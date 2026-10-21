@@ -4,6 +4,14 @@ on:
   push:
     branches: [main]
 
+# Serializa os deploys: o script usa ~/ops-hub e o container no VPS, então dois
+# deploys simultâneos disputam o mesmo diretório e o mesmo container — o mais
+# velho pode terminar por último e deixar a produção no commit ANTIGO.
+# cancel-in-progress: false = o novo deploy ESPERA o atual terminar.
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
