@@ -91,8 +91,6 @@ export default function HabitsPage() {
           </form>
         )}
 
-        {!isLoading && <HabitStats habits={habits} />}
-
         <div className="flex-1 overflow-auto">
           {isLoading ? (
             <div className="p-4">
@@ -116,6 +114,12 @@ export default function HabitsPage() {
               </div>
               {active.map((h) => <HabitRow key={h.id} habit={h} weekDays={weekDays} entries={entriesByHabit.get(h.id) ?? []} />)}
               {inactive.map((h) => <HabitRow key={h.id} habit={h} weekDays={weekDays} entries={entriesByHabit.get(h.id) ?? []} />)}
+              {/* As métricas ficam DEPOIS da grade: marcar o dia é a ação
+                  diária; o resumo é consulta. Antes vinham antes e empurravam
+                  a grade para fora da dobra. */}
+              <div className="border-t border-border">
+                <HabitStats habits={habits} />
+              </div>
             </div>
           )}
         </div>

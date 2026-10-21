@@ -14,6 +14,7 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { VirtualizedList } from "@/components/VirtualizedList"
 import { useUndoToast } from "@/components/UndoToast"
 import { cn } from "@/lib/utils"
+import { sortTasks, type TaskSort } from "@/lib/task-sort"
 
 const EditTaskDialog = dynamic(() => import("@/components/tasks/EditTaskDialog").then(m => ({ default: m.EditTaskDialog })), {
   loading: () => <div className="fixed inset-0 z-50 bg-black/50 animate-pulse" />,
@@ -35,6 +36,7 @@ function TasksPageInner() {
   // ficam linkáveis e voltam no botão "voltar" do navegador.
   const category = (searchParams.get("cat") as Category | null) ?? null
   const tagFilter = searchParams.get("tag") ?? ""
+  const sort = searchParams.get("sort") ?? "due"
   const urlSearch = searchParams.get("search") ?? ""
   const [search, setSearch] = useState(urlSearch)
 
@@ -104,6 +106,13 @@ function TasksPageInner() {
     return true
   })
 
+  // Ordenação: "due" preserva a ordem do servidor (prazo, sem prazo no fim);
+  // as outras reordenam no cliente (regra pura em src/lib/task-sort.ts).
+  const sorted = useMemo(
+    () => sortTasks(filtered, (sort as TaskSort) ?? "due"),
+    [filtered, sort]
+  )
+
   const counts = tasks.reduce(
     (acc, t) => {
       if (t.status !== "done") {
@@ -154,7 +163,7 @@ function TasksPageInner() {
   }, [tasks, deleteTask, createTask, toast])
 
   const renderTaskRow = useCallback((index: number) => {
-    const task = filtered[index]
+    const task = sorted[index]
     return (
       <TaskRow
         key={task.id}
@@ -165,9 +174,9 @@ function TasksPageInner() {
         onCreateNote={handleCreateNote}
       />
     )
-  }, [filtered, handleToggle, handleDelete, handleCreateNote])
+  }, [sorted, handleToggle, handleDelete, handleCreateNote])
 
-  const useVirtual = filtered.length > 50
+  const useVirtual = sorted.length > 50
 
   return (
     <SectionErrorBoundary label="TASK ENGINE">
@@ -239,15 +248,26 @@ function TasksPageInner() {
         </div>
       )}
 
-      {/* Search bar */}
-      <div className="px-4 py-2 border-b border-border">
+      {/* Search + ordenação */}
+      <div className="px-4 py-2 border-b border-border flex items-center gap-2">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar tasks..."
-          className="w-full h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+          className="flex-1 h-8 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
         />
+        <select
+          value={sort}
+          onChange={(e) => updateParams({ sort: e.target.value === "due" ? null : e.target.value })}
+          aria-label="Ordenar tasks"
+          className="h-8 flex-none bg-bg border border-border rounded-sm px-2 text-[11px] font-mono text-on-surface focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
+        >
+          <option value="due">PRAZO</option>
+          <option value="priority">PRIORIDADE</option>
+          <option value="important">IMPORTANTE</option>
+          <option value="created">CRIAÇÃO</option>
+        </select>
       </div>
 
       {/* Task list */}
@@ -266,7 +286,7 @@ function TasksPageInner() {
           </div>
         )}
 
-        {!isLoading && !isError && filtered.length === 0 && (
+        {!isLoading && !isError && sorted.length === 0 && (
           <div className="flex flex-col items-center justify-center h-32 gap-2">
             <p className="text-[11px] font-mono text-on-surface/60">
               Nenhuma task encontrada
@@ -280,16 +300,16 @@ function TasksPageInner() {
           </div>
         )}
 
-        {!isLoading && filtered.length > 0 && (
+        {!isLoading && sorted.length > 0 && (
           useVirtual ? (
             <VirtualizedList
-              items={filtered}
+              items={sorted}
               rowHeight={40}
               renderRow={renderTaskRow}
             />
           ) : (
             <div className="overflow-auto h-full">
-              {filtered.map((task) => (
+              {sorted.map((task) => (
                 <TaskRow
                   key={task.id}
                   task={task}
