@@ -22,7 +22,10 @@ const notesOptions = queryOptions({
   staleTime: 60_000,
   queryFn: async (): Promise<NoteRow[]> => {
     const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    // getSession() lê a sessão do storage (sem round-trip HTTP) — getUser()
+    // fazia uma chamada de rede antes de CADA query de leitura.
+    const { data: { session } } = await supabase.auth.getSession()
+    const user = session?.user
     if (!user) throw new Error("Not authenticated")
     // O PostgREST do VPS tem PGRST_DB_MAX_ROWS=1000 — query sem paginação
     // retorna no MÁXIMO 1000 rows silenciosamente (2168 notas = ~1170 perdidas).
@@ -57,7 +60,10 @@ export function dailyNoteOptions(date: string) {
     enabled: !!date,
     queryFn: async (): Promise<NoteRow | null> => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      // getSession() lê a sessão do storage (sem round-trip HTTP) — getUser()
+      // fazia uma chamada de rede antes de CADA query de leitura.
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error("Not authenticated")
       const { data, error } = await supabase
         .from("note")

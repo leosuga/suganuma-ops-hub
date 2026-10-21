@@ -25,7 +25,10 @@ export function annualEventsOptions(year: number) {
     queryKey: annualEventKeys.year(year),
     queryFn: async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      // getSession() lê a sessão do storage (sem round-trip HTTP) — getUser()
+      // fazia uma chamada de rede antes de CADA query de leitura.
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error("Not authenticated")
 
         const { data, error } = await supabase
@@ -52,7 +55,10 @@ export function upcomingEventsOptions(limit: number = 10) {
     queryKey: [...annualEventKeys.all, "upcoming", limit],
     queryFn: async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      // getSession() lê a sessão do storage (sem round-trip HTTP) — getUser()
+      // fazia uma chamada de rede antes de CADA query de leitura.
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error("Not authenticated")
 
       const todayStr = new Date().toISOString().slice(0, 10)
@@ -82,7 +88,10 @@ export function useAnnualTasks(year: number) {
     queryKey: annualEventKeys.tasks(year),
     queryFn: async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      // getSession() lê a sessão do storage (sem round-trip HTTP) — getUser()
+      // fazia uma chamada de rede antes de CADA query de leitura.
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error("Not authenticated")
 
       const { data, error } = await supabase
@@ -107,7 +116,10 @@ export function useAnnualAppointments(year: number) {
     queryKey: annualEventKeys.appointments(year),
     queryFn: async () => {
       const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      // getSession() lê a sessão do storage (sem round-trip HTTP) — getUser()
+      // fazia uma chamada de rede antes de CADA query de leitura.
+      const { data: { session } } = await supabase.auth.getSession()
+      const user = session?.user
       if (!user) throw new Error("Not authenticated")
 
       const { data, error } = await supabase
