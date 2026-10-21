@@ -2,8 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo, Suspense } from "react"
 import dynamic from "next/dynamic"
-import { useSearchParams } from "next/navigation"
-import Link from "next/link"
+import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { useTitle } from "@/lib/useTitle"
 import { useTasks, useDeleteTask, useCreateTask, useToggleTaskDone } from "@/lib/queries/tasks"
 import { useCreateNote } from "@/lib/queries/notes"
@@ -26,18 +25,43 @@ type Category = "finance" | "logistics" | "personal" | "health"
 function TasksPageInner() {
   useTitle("Tasks · Suganuma Ops Hub")
   const searchParams = useSearchParams()
-  const [category, setCategory] = useState<Category | null>(null)
+  const router = useRouter()
+  const pathname = usePathname()
   const [showDone, setShowDone] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
   const [editingTask, setEditingTask] = useState<TaskRowType | null>(null)
-  const [search, setSearch] = useState(() => searchParams.get("search") ?? "")
-  const [tagFilter, setTagFilter] = useState("")
 
-  // /tasks?search=… (ex.: link do Cockpit) precisa alimentar a busca.
-  const searchParam = searchParams.get("search")
+  // Filtros na URL: ?project= ?cat= ?tag= ?search= — sobrevivem a reload,
+  // ficam linkáveis e voltam no botão "voltar" do navegador.
+  const category = (searchParams.get("cat") as Category | null) ?? null
+  const tagFilter = searchParams.get("tag") ?? ""
+  const urlSearch = searchParams.get("search") ?? ""
+  const [search, setSearch] = useState(urlSearch)
+
+  const updateParams = useCallback(
+    (patch: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString())
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === null || v === "") params.delete(k)
+        else params.set(k, v)
+      }
+      const qs = params.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    },
+    [searchParams, router, pathname]
+  )
+
+  // Link externo (ex.: Cockpit) muda a URL → a busca local acompanha.
   useEffect(() => {
-    if (searchParam) setSearch(searchParam)
-  }, [searchParam])
+    setSearch(urlSearch)
+  }, [urlSearch])
+
+  // Digitação → URL (debounce), para o filtro não se perder ao recarregar.
+  useEffect(() => {
+    if (search === urlSearch) return
+    const t = setTimeout(() => updateParams({ search: search || null }), 400)
+    return () => clearTimeout(t)
+  }, [search, urlSearch, updateParams])
 
   const { data: tasks = [], isLoading, isError } = useTasks()
   const { data: projects = [] } = useProjects()
@@ -182,14 +206,17 @@ function TasksPageInner() {
           <span className="text-[10px] font-mono font-semibold text-teal uppercase tracking-wider">
             {projectFilterName}
           </span>
-          <Link href="/tasks" className="text-[10px] font-mono text-on-surface/60 hover:text-danger transition-colors ml-auto">
+          <button
+            onClick={() => updateParams({ project: null })}
+            className="text-[10px] font-mono text-on-surface/60 hover:text-danger transition-colors ml-auto"
+          >
             × LIMPAR
-          </Link>
+          </button>
         </div>
       )}
 
       {/* Category filter */}
-      <CategoryChips value={category} onChange={setCategory} counts={counts} />
+      <CategoryChips value={category} onChange={(v) => updateParams({ cat: v })} counts={counts} />
 
       {/* Tag filter — o filtro existia no estado mas não tinha UI */}
       {taskTags.length > 0 && (
@@ -198,7 +225,7 @@ function TasksPageInner() {
           {taskTags.map((tag) => (
             <button
               key={tag}
-              onClick={() => setTagFilter(tagFilter === tag ? "" : tag)}
+              onClick={() => updateParams({ tag: tagFilter === tag ? null : tag })}
               className={cn(
                 "h-6 px-2 rounded-sm border font-mono text-[9px] tracking-wider transition-colors",
                 tagFilter === tag
