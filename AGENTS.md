@@ -97,6 +97,12 @@ Schemas testados: `tests/schemas.test.ts` (38 testes Zod)
 - **Aditar NÃO arquiva**: antes a fila só tinha duas saídas (fazer/descartar) e o que não era para hoje acabava arquivado — ou seja, perdido
 - Testes: `tests/capture-route.test.ts` (5 casos: sem sessão, gravar, title sem text, body vazio, erro de insert)
 
+### Contas a pagar (2026-10-21)
+- **O que VENCE**: a `transaction` só registra o passado (`occurred_on`). A despesa fixa mora em `recurring_transaction` (migration 0044: descrição, valor, categoria, conta, dia do vencimento) e o que já foi pago em `bill_payment` — **por período** ('YYYY-MM'): pagar outubro **não** marca novembro
+- **Projeção pura** (`src/lib/bills.ts`, testada): clamp do dia (dia 31 em fevereiro → 28/29, bissexto → 29), ordenação (não pagas por vencimento, pagas no fim) e resumo (total a pagar, vencidas, vencem já)
+- **UI**: card `CONTAS DO MÊS` no /finance (marcar paga com 1 toque, `+ DESPESA FIXA`) e widget `A VENCER` no Dashboard; o **push diário** avisa as contas que vencem hoje/amanhã
+- Realtime: `recurring_transaction` e `bill_payment` invalidam `['bills','finance']`
+
 ### Notes
 - **Converter nota em task**: botão `→TASK` no NoteRow (modo leitura). Cria task com título+conteúdo da nota e vincula automaticamente via `linked_task_id`
 - **Filtros na URL** (`?ctx= ?tag= ?prefix= ?para= ?search=`): sobrevivem a reload, ficam linkáveis e voltam no botão "voltar". `tag` e `prefix` são **mutuamente exclusivos** e vão num único update (dois updates em sequência usariam a mesma URL base e o segundo apagaria o primeiro)

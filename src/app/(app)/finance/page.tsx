@@ -5,6 +5,7 @@ import { useTitle } from "@/lib/useTitle"
 import dynamic from "next/dynamic"
 import { useAccounts, useTransactions, useDeleteTransaction, useCreateTransaction } from "@/lib/queries/finance"
 import { FinanceKPIs } from "@/components/finance/FinanceKPIs"
+import { BillsCard } from "@/components/finance/BillsCard"
 import { TransactionTable } from "@/components/finance/TransactionTable"
 import { AccountManager } from "@/components/finance/AccountManager"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
@@ -35,6 +36,7 @@ export default function FinancePage() {
   const toast = useUndoToast()
 
   const monthLabel = new Date(month + "-15").toLocaleDateString("pt-BR", { month: "long", year: "numeric" })
+  const [monthYear, monthNumber] = month.split("-").map(Number)
 
   function prevMonth() {
     const [y, m] = month.split("-").map(Number)
@@ -92,6 +94,7 @@ export default function FinancePage() {
       </div>
 
       <FinanceKPIs transactions={transactions} isLoading={isLoading} />
+      <BillsCard year={monthYear} month={monthNumber} />
       <RevenueChart transactions={transactions} isLoading={isLoading} />
 
       <div className="flex items-center gap-2">

@@ -7,6 +7,8 @@ export interface BriefingInput {
   dueTomorrow: string[]
   /** Consultas nas próximas 24 h. */
   appts: number
+  /** Contas fixas que vencem hoje ou amanhã e ainda não foram pagas. */
+  bills?: string[]
 }
 
 const MAX_TITLE = 40
@@ -30,6 +32,7 @@ export function buildBriefing(input: BriefingInput): { title: string; body: stri
   if (input.dueTomorrow.length > 0) parts.push(listed("Amanhã", input.dueTomorrow))
   if (input.overdue > 0) parts.push(`${input.overdue} ${input.overdue === 1 ? "atrasada" : "atrasadas"}`)
   if (input.appts > 0) parts.push(`${input.appts} ${input.appts === 1 ? "consulta" : "consultas"} nas próximas 24h`)
+  if (input.bills && input.bills.length > 0) parts.push(listed("Contas", input.bills))
   if (parts.length === 0) return null
   return { title: "Ops Hub — Briefing", body: parts.join(" · ").slice(0, MAX_BODY) }
 }

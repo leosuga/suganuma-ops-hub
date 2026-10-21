@@ -22,6 +22,7 @@ import { TaskKPIs } from "@/components/dashboard/TaskKPIs"
 import { EisenhowerMatrix } from "@/components/dashboard/EisenhowerMatrix"
 import { WeeklyReview } from "@/components/dashboard/WeeklyReview"
 import { BudgetCard } from "@/components/dashboard/BudgetCard"
+import { BillsCard } from "@/components/finance/BillsCard"
 import { CategoryBudgets } from "@/components/dashboard/CategoryBudgets"
 import { UpcomingEvents } from "@/components/dashboard/UpcomingEvents"
 import { ContextNotesWidget } from "@/components/dashboard/ContextNotesWidget"
@@ -59,6 +60,9 @@ export default function DashboardPage() {
   }, [])
 
   const { data: projects = [] } = useProjects({ enabled: deferredReady })
+
+  // Mês atual (para as contas fixas projetadas — "A VENCER").
+  const [dashYear, dashMonth] = currentMonth().split("-").map(Number)
 
   const [weightInput, setWeightInput] = useState("")
 
@@ -223,6 +227,7 @@ export default function DashboardPage() {
         </div>
 
         <BudgetCard income={income} expense={expense} />
+        <BillsCard summaryOnly year={dashYear} month={dashMonth} />
         <CategoryBudgets transactions={transactions} />
 
         <UpcomingEvents />
