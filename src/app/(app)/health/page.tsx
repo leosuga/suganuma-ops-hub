@@ -31,7 +31,7 @@ export default function HealthPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-health uppercase">
+          <h1 className="page-title text-health">
             HEALTH HUB
           </h1>
           <p className="text-[10px] font-mono text-on-surface/60 mt-0.5">

@@ -71,7 +71,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Logo / title */}
         <div className="mb-8 text-center">
-          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
+          <h1 className="page-title text-teal">
             SUGANUMA
           </h1>
           <p className="text-[10px] font-mono text-on-surface/60 tracking-widest mt-1">
