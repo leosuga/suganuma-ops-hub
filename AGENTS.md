@@ -67,10 +67,16 @@ Schemas testados: `tests/schemas.test.ts` (38 testes Zod)
   - `*diario|*semanal|*mensal` — recorrência (coluna `recurrence`)
   - `~low|med|high` — energia necessária (coluna `energy_level`). `~high` = deep work, `~low` = quick win
 - **Recorrência** (`0014_recurrence.sql`): ao concluir task com `recurrence`, o sistema auto-cria a próxima task (due_at = +1d/+7d/+1m). A nova task herda: título, categoria, prioridade, projeto, delegado, importante, tags
-- **Tags** (`0015_tags.sql`): coluna `tags text[]` na task. Exibidas como pills `#tag` no TaskRow. Filtro por tag na TasksPage
+- **Tags** (`0015_tags.sql`): coluna `tags text[]` na task. Exibidas como pills `#tag` no TaskRow. Filtro por tag na TasksPage (chips, e o filtro vive na URL)
+- **Filtros da TasksPage vivem na URL** (`?project= ?cat= ?tag= ?search=`): sobrevivem a reload, ficam linkáveis e voltam no botão "voltar". Busca é estado local com sync debounced (400ms) para a URL; os demais filtros escrevem na URL direto (`router.replace`)
 - **Energy level** (`0034_task_energy_level.sql`): coluna `energy_level` (low/med/high). Badge no TaskRow: DEEP (high/purple), MED (med/neutral), QUICK (low/teal). EditTaskDialog tem seletor toggle
 - **Notas vinculadas**: tasks podem ter notas vinculadas (`linked_task_id` em note, FK com `on delete set null`). EditTaskDialog mostra lista de notas vinculadas
 - **Matriz de Eisenhower**: Dashboard exibe quadrantes (Urg+Imp / Imp+NãoUrg / Urg+NãoImp / NemUrgNemImp) filtrados por `important` e `priority`/`due_at`
+
+### Cockpit (2026-10-20)
+- **FOCO** é a fila do dia: tasks pendentes ranqueadas por **tier** com **motivo visível** — `atrasado Nd` > `vence hoje` > `urgente` > `importante` > `quick win` (energia baixa). Substituiu os cards URGENTES/ATRASADAS/QUICK WINS, que mostravam a mesma task em 2-3 lugares sem ranking. Blocos: Bebê → FOCO → Inbox → Consultas/Eventos → resumo
+- **Motivo > cor**: o chip do motivo (danger/amber/teal) diz *por que* o item está na fila — contagem sozinha não ajuda a decidir
+- Itens do FOCO são clicáveis (`/tasks?search=<título>`) e a data de vencimento é comparada no fuso de São Paulo (`dateStr`)
 
 ### Baby (2026-10-13, pós-parto)
 - **Rota `/baby`**: registro de 1 toque (mamada E/D, mamadeira ml, xixi/cocô, sono, vitamina D), resumo de 24h, timeline do dia (edita horário / exclui com desfazer), crescimento e painel "quando procurar ajuda". Widget compacto no Cockpit; card na Saúde e StatCard no Dashboard substituem o modo gravidez quando há `child`
