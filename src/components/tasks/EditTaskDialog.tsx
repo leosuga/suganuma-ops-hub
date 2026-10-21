@@ -3,9 +3,10 @@
 import { useReducer, useEffect } from "react"
 import Link from "next/link"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useUpdateTask, useDeleteTask } from "@/lib/queries/tasks"
+import { useUpdateTask, useDeleteTask, useCreateTask } from "@/lib/queries/tasks"
 import { useProjects } from "@/lib/queries/projects"
 import { useNotes, useCreateNote } from "@/lib/queries/notes"
+import { useUndoToast } from "@/components/UndoToast"
 import type { TaskRow } from "@/lib/queries/tasks"
 import { cn } from "@/lib/utils"
 
@@ -98,6 +99,8 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
 
   const updateTask = useUpdateTask()
   const deleteTask = useDeleteTask()
+  const createTask = useCreateTask()
+  const toast = useUndoToast()
   const { data: projects = [] } = useProjects()
   const { data: notes = [] } = useNotes()
   const createNote = useCreateNote()
@@ -174,8 +177,34 @@ export function EditTaskDialog({ open, onOpenChange, task }: EditTaskDialogProps
 
   async function handleDelete() {
     if (!task) return
+    const snapshot = { ...task }
     await deleteTask.mutateAsync(task.id)
     onOpenChange(false)
+    // Delete dentro do diálogo não tinha desfazer (a página /tasks tem).
+    toast.show({
+      label: `"${snapshot.title.slice(0, 40)}" excluída`,
+      onUndo: () => {
+        createTask.mutate({
+          title: snapshot.title,
+          notes: snapshot.notes ?? undefined,
+          category: snapshot.category,
+          priority: snapshot.priority,
+          status: snapshot.status,
+          important: snapshot.important,
+          due_at: snapshot.due_at ?? undefined,
+          project_id: snapshot.project_id ?? undefined,
+          delegated_to: snapshot.delegated_to ?? undefined,
+          recurrence:
+            snapshot.recurrence === "daily" ||
+            snapshot.recurrence === "weekly" ||
+            snapshot.recurrence === "monthly"
+              ? snapshot.recurrence
+              : undefined,
+          energy_level: snapshot.energy_level ?? undefined,
+          tags: snapshot.tags ?? undefined,
+        })
+      },
+    })
   }
 
   const inputClass = "w-full h-9 bg-bg border border-border rounded-sm px-3 text-[13px] font-mono text-on-surface placeholder:text-on-surface/60 focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal/50 transition-colors"
