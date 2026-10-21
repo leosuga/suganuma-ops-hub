@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/r
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeTable } from "@/lib/realtime"
 import { triageInboxItem, triageAllPending } from "@/lib/actions/inbox-triage"
+import { today } from "@/lib/date"
 import { useCreateTask } from "@/lib/queries/tasks"
 import { useCreateNote } from "@/lib/queries/notes"
 import type { InboxItemRow } from "@/lib/types"
@@ -44,6 +45,12 @@ export function inboxOptions(status: string = "unprocessed") {
         q = q.eq("status", status)
       }
 
+      // Adiados (snoozed) não aparecem na fila até a data escolhida — é a
+      // decisão "adiar" da triagem (o item não é perdido, só some da fila).
+      if (status === "unprocessed") {
+        q = q.or(`snoozed_until.is.null,snoozed_until.lte.${today()}`)
+      }
+
       const { data, error } = await q
       if (error) throw error
       return (data ?? []) as InboxItemRow[]
@@ -56,8 +63,34 @@ export function useInbox(status: string = "unprocessed") {
   return useQuery(inboxOptions(status))
 }
 
-export function useCreateInboxItem() {
+/**
+ * Adia um item da fila (snooze): ele some da fila e volta na data escolhida.
+ * `until` = "YYYY-MM-DD"; null = volta para a fila agora.
+ */
+export function useSnoozeInboxItem() {
   const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, until }: { id: string; until: string | null }) => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+      const { error } = await supabase
+        .from("inbox_item")
+        .update({ snoozed_until: until })
+        .eq("id", id)
+        .eq("owner_id", user.id)
+      if (error) throw error
+      return { id, until }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: inboxKeys.all, exact: false })
+    },
+  })
+}
+
+export function useCreateInboxItem() {  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (input: { content: string; source?: string }) => {
       const supabase = createClient()

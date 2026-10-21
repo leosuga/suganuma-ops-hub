@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
       .select("id, content, source, created_at")
       .eq("owner_id", ownerId)
       .eq("status", "unprocessed")
+      .or(`snoozed_until.is.null,snoozed_until.lte.${todayInSaoPaulo()}`)
       .order("created_at", { ascending: false })
       .limit(10),
     supabase

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateAgentToken, unauthorized, badRequest, serverError, parseLimitParam } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
+import { today } from "@/lib/date"
 import { z } from "zod"
 
 const createSchema = z.object({
@@ -26,6 +27,10 @@ export async function GET(req: NextRequest) {
 
   if (status !== "all") {
     q = q.eq("status", status)
+  }
+  // Adiados não estão na fila até a data escolhida (mesma regra do app).
+  if (status === "unprocessed") {
+    q = q.or(`snoozed_until.is.null,snoozed_until.lte.${today()}`)
   }
 
   const { data, error } = await q
