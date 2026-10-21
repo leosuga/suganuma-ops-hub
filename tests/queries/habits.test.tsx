@@ -7,7 +7,7 @@ import { renderHook, waitFor } from "@testing-library/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import React from "react"
 
-import { useHabits, useCreateHabit, useUpdateHabit, useDeleteHabit, useHabitEntries, useLogHabitEntry, useDeleteHabitEntry } from "@/lib/queries/habits"
+import { useHabits, useCreateHabit, useUpdateHabit, useDeleteHabit, useAllHabitEntriesFull, useLogHabitEntry, useDeleteHabitEntry } from "@/lib/queries/habits"
 import { createClient } from "@/lib/supabase/client"
 
 const MockClient = createClient as any
@@ -77,18 +77,14 @@ describe("useDeleteHabit", () => {
   })
 })
 
-describe("useHabitEntries", () => {
-  it("fetches entries for a habit", async () => {
+// `useHabitEntries` (uma query POR HÁBITO) foi removido: o HabitRow recebe as
+// entries por prop, carregadas uma vez pelo pai. O hook que substituiu é este.
+describe("useAllHabitEntriesFull", () => {
+  it("fetches todas as entries de uma vez (1 query para N hábitos)", async () => {
     MockClient.mockReturnValue({ from: () => chain([entry]), auth: authMock() })
-    const { result } = renderHook(() => useHabitEntries("h-1"), { wrapper: Wrapper })
+    const { result } = renderHook(() => useAllHabitEntriesFull(), { wrapper: Wrapper })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data).toEqual([entry])
-  })
-
-  it("does not fetch without habitId", async () => {
-    MockClient.mockReturnValue({ from: () => chain([]), auth: authMock() })
-    const { result } = renderHook(() => useHabitEntries(), { wrapper: Wrapper })
-    expect(result.current.isPending).toBe(true)
   })
 })
 
