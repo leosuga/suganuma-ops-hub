@@ -18,6 +18,17 @@ describe("buildBriefing", () => {
     expect(buildBriefing({ ...none, dueTomorrow: ["Pediatra 1 mês"] })?.body).toBe("Amanhã: Pediatra 1 mês")
   })
 
+  it("aponta as contas fixas que vencem hoje/amanhã", () => {
+    expect(buildBriefing({ ...none, bills: ["Aluguel"] })?.body).toBe("Contas: Aluguel")
+    expect(buildBriefing({ ...none, bills: ["Aluguel", "Internet"] })?.body).toBe(
+      "Contas: Aluguel, Internet"
+    )
+  })
+
+  it("sem contas, o briefing não muda", () => {
+    expect(buildBriefing({ ...none, bills: [] })).toBeNull()
+  })
+
   it("concorda o plural de atrasadas e consultas", () => {
     expect(buildBriefing({ ...none, overdue: 1 })?.body).toBe("1 atrasada")
     expect(buildBriefing({ ...none, overdue: 3 })?.body).toBe("3 atrasadas")

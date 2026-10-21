@@ -4,6 +4,7 @@ import { sendPushToOwner, isWebPushConfigured } from "@/lib/web-push"
 import { createServiceClient } from "@/lib/supabase/service"
 import { logger } from "@/lib/logger"
 import { buildBriefing } from "@/lib/push-briefing"
+import { buildBills, type BillPayment, type RecurringBill } from "@/lib/bills"
 import { today as todayInSaoPaulo } from "@/lib/date"
 
 // POST /api/push/send
@@ -49,7 +50,7 @@ export async function POST(req: NextRequest) {
     const openTasks = () =>
       supabase.from("task").select("title").eq("owner_id", ownerId).in("status", ["todo", "doing"])
 
-    const [overdueRes, todayRes, tomorrowRes, apptRes] = await Promise.all([
+    const [overdueRes, todayRes, tomorrowRes, apptRes, recurringRes, paidRes] = await Promise.all([
       openTasks().lt("due_at", dayIso(0)).limit(50),
       openTasks().gte("due_at", dayIso(0)).lt("due_at", dayIso(1)).order("due_at").limit(20),
       openTasks().gte("due_at", dayIso(1)).lt("due_at", dayIso(2)).order("due_at").limit(20),
@@ -60,21 +61,43 @@ export async function POST(req: NextRequest) {
         .gte("starts_at", nowIso)
         .lt("starts_at", next24h)
         .limit(10),
+      // Contas fixas: as que vencem hoje/amanhã e ainda não foram pagas.
+      supabase
+        .from("recurring_transaction")
+        .select("id, description, amount, kind, category, account_id, day_of_month, active")
+        .eq("owner_id", ownerId)
+        .eq("active", true),
+      supabase
+        .from("bill_payment")
+        .select("recurring_id, period, paid_at")
+        .eq("owner_id", ownerId)
+        .eq("period", todayInSaoPaulo().slice(0, 7)),
     ])
 
     // Erro de query não pode virar "nada pendente": o usuário ficaria sem o aviso
     // (ex.: vacina do dia) sem saber. Falhar faz o job do GitHub Actions ficar vermelho.
-    const failed = [overdueRes, todayRes, tomorrowRes, apptRes].find((r) => r.error)
+    const failed = [overdueRes, todayRes, tomorrowRes, apptRes, recurringRes, paidRes].find((r) => r.error)
     if (failed?.error) {
       logger.error("push-send", "Falha ao montar o briefing", { error: failed.error.message })
       return NextResponse.json({ error: "falha ao montar o briefing" }, { status: 500 })
     }
+
+    const [billYear, billMonth] = todayInSaoPaulo().split("-").map(Number)
+    const bills = buildBills(
+      (recurringRes.data ?? []) as RecurringBill[],
+      (paidRes.data ?? []) as BillPayment[],
+      { year: billYear, month: billMonth, today: todayInSaoPaulo() },
+    )
+    const billsDue = bills
+      .filter((b) => !b.paid && b.kind === "expense" && b.days_until >= 0 && b.days_until <= 1)
+      .map((b) => b.description)
 
     const briefing = buildBriefing({
       overdue: overdueRes.data?.length ?? 0,
       dueToday: (todayRes.data ?? []).map((t) => t.title as string),
       dueTomorrow: (tomorrowRes.data ?? []).map((t) => t.title as string),
       appts: apptRes.data?.length ?? 0,
+      bills: billsDue,
     })
 
     if (!briefing) {
