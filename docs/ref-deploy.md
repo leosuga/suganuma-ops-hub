@@ -28,10 +28,11 @@ Movido do AGENTS.md para reduzir contexto carregado por sessão. Leia sob demand
 - user `nextjs` (gid 1001)
 - **HEALTHCHECK (2026-05-10)**: verifica `sw.js` via `node -e "http.get('http://127.0.0.1:3000/sw.js', ...)"` — start-period=40s para dar tempo do Next.js subir. Sem curl no Alpine minimal
 
-### next.config.ts — Next.js 16.2.6
-- ⚠️ A chave `eslint` **não existe** no tipo `NextConfig` do Next.js 16.2.6. Usá-la causa erro de type check no build (`Object literal may only specify known properties`). **NUNCA adicionar `eslint: { ignoreDuringBuilds: true }`**.
+### next.config.ts — Next.js 16.4.2
+- ⚠️ A chave `eslint` **não existe** no tipo `NextConfig` do Next.js 16.x. Usá-la causa erro de type check no build (`Object literal may only specify known properties`). **NUNCA adicionar `eslint: { ignoreDuringBuilds: true }`**.
 - `images: { unoptimized: true }` é necessário para standalone Docker (sem otimizador de imagem)
 - `typescript: { ignoreBuildErrors: false }` mantém o type check habilitado (padrão implícito, mas explícito é melhor)
+- **`middleware.ts` continua suportado no 16.4.2** (só o aviso "use proxy instead"); o output standalone traz `.next/server/middleware-manifest.json` — a proteção de auth segue no container
 
 ### tsconfig.json — regras críticas (2026-05-20)
 - **NÃO usar plugin `"next"`** — causa type checking pesado de páginas/rotas que trava no Actions runner

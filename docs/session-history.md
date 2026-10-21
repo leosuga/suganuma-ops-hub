@@ -62,6 +62,14 @@ produtividade no celular: capturar uma ideia exigia abrir o app.
 - **Rótulo de métrica errado é pior que métrica ausente**; e lista truncada com total no rodapé mente.
 - **Fila de triagem é FIFO**: DESC punia o item mais antigo, que migrava para o fim da lista.
 - **Share target usa `source='manual'`**: o check constraint de `inbox_item.source` não tem `share`.
+- **Upgrade de Next 16.2.6 → 16.4.2** fecha o único *critical* do audit (RCE/SSRF/cache
+  poisoning em Server Actions + disclosure de Server Function endpoints). `middleware.ts`
+  continua suportado no 16.4.2 (só o aviso de deprecat para `proxy`) e o standalone traz
+  `middleware-manifest.json` — a proteção de auth não regrediu.
+- **`next/font/google` baixa a fonte NO BUILD** → o build vira dependente de rede. No Mac
+  ele quebrava porque o `SSL_CERT_FILE` (CA da rede doméstica) derrubava o fetch do Google;
+  no CI/VPS passaria **por acaso**. Com a Inter no repo (`next/font/local`) o build é
+  hermético e ~1,4s mais rápido.
 - `tsc --noEmit` rodou limpo (0 erros) nesta base — dá para usar local, apesar do build usar SKIP_TSC.
 
 ## 2026-10-13 — Pós-parto: módulo Bebê, push antecipado e orçamento por categoria
