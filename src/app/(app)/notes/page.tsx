@@ -209,9 +209,32 @@ function NotesPageInner() {
   }, [selectedIds, notes, updateNote])
 
   const handleBulkDelete = useCallback(() => {
-    selectedIds.forEach((id) => deleteNote.mutate(id))
+    const doomed = notes.filter((n) => selectedIds.has(n.id))
+    if (doomed.length === 0) return
+    doomed.forEach((n) => deleteNote.mutate(n.id))
     setSelectedIds(new Set())
-  }, [selectedIds, deleteNote])
+    // Delete em lote sem desfazer = perda de dados sem volta (a nota some do
+    // banco). O undo recria as notas.
+    toast.show({
+      label: `${doomed.length} nota(s) excluída(s)`,
+      onUndo: () => {
+        doomed.forEach((n) =>
+          createNote.mutate({
+            title: n.title,
+            content: n.content,
+            tags: n.tags,
+            para: n.para,
+            pinned: n.pinned,
+            is_moc: n.is_moc,
+            project_id: n.project_id,
+            linked_task_id: n.linked_task_id,
+            daily_date: n.daily_date,
+            favorited: n.favorited,
+          })
+        )
+      },
+    })
+  }, [selectedIds, notes, deleteNote, createNote, toast])
 
   const handleBulkPara = useCallback((para: string) => {
     selectedIds.forEach((id) => {
