@@ -12,7 +12,7 @@ export default defineConfig({
     // rodam via `npm run test:docker` (vitest.dom.config.ts). Aqui só o node env.
     exclude: [
       "**/node_modules/**",
-      "tests/queries/*.test.tsx",
+      "**/*.test.tsx",
     ],
   },
   resolve: {

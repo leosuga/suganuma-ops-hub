@@ -30,3 +30,12 @@ jobs:
 
       - name: Test
         run: npx vitest run
+
+      # Suíte DOM (happy-dom): os testes de componente (*.test.tsx) só rodam
+      # com DOM — no Node v25 local travam. O Dockerfile.test já existe.
+      # Sem este step, uma remoção de hook (ex.: useHabitEntries) só é
+      # discovered depois, quando alguém roda a suíte DOM na mão.
+      - name: Test (DOM)
+        run: |
+          docker build -f Dockerfile.test -t ops-hub-test .
+          docker run --rm ops-hub-test
