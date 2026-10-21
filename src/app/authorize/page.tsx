@@ -25,7 +25,7 @@ function Shell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-bg flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">SUGANUMA</h1>
+          <h1 className="page-title text-teal">SUGANUMA</h1>
           <p className="text-[10px] font-mono text-on-surface/60 tracking-widest mt-1">OPS HUB — AUTORIZAÇÃO</p>
         </div>
         <div className="border border-border bg-surface rounded-sm">{children}</div>

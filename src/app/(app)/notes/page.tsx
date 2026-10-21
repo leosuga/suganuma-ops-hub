@@ -300,7 +300,7 @@ function NotesPageInner() {
           {/* Title + icon actions */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">NOTES</h1>
+              <h1 className="page-title text-teal">NOTES</h1>
               <p className="text-[10px] font-mono text-on-surface/60 mt-0.5">
                 {notes.length} nota{notes.length !== 1 ? "s" : ""} · {mocs.length} MOC{mocs.length !== 1 ? "s" : ""}
               </p>
@@ -500,7 +500,7 @@ function NotesPageInner() {
         {/* DESKTOP full layout */}
         <div className="hidden md:block space-y-3">
           <div>
-            <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">NOTES</h1>
+            <h1 className="page-title text-teal">NOTES</h1>
             <p className="text-[10px] font-mono text-on-surface/60 mt-0.5">
               {notes.length} nota{notes.length !== 1 ? "s" : ""} · {mocs.length} MOC{mocs.length !== 1 ? "s" : ""}
             </p>

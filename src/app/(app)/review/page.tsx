@@ -198,7 +198,7 @@ export default function ReviewPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
+            <h1 className="page-title text-teal">
               WEEKLY REVIEW
             </h1>
             <p className="text-[10px] font-mono text-on-surface/60 mt-0.5">{weekLabel}</p>
