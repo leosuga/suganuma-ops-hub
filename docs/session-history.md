@@ -40,6 +40,13 @@ produtividade no celular: capturar uma ideia exigia abrir o app.
   captura em 1 toque, sem abrir o app. Banner de confirmação via `?captured=1`.
 - **Inbox em FIFO** (`created_at` ASC): o item mais antigo fica no topo, porque o Inbox é fila de
   triagem — com DESC, o item mais antigo migrava para o fim e nunca era triado.
+- **Cockpit → FOCO**: os cards URGENTES/ATRASADAS/QUICK WINS viraram uma fila única, ranqueada
+  por tier e **com motivo visível** (`atrasado 3d`, `vence hoje`, `importante`, `quick win`).
+  Antes a mesma task aparecia em 2-3 cards ao mesmo tempo; agora o Cockpit responde "o que
+  fazer agora" em 5 blocos.
+- **Filtros de Tasks na URL** (`?cat= ?tag= ?project= ?search=`): sobrevivem a reload, ficam
+  linkáveis e voltam no "voltar". Antes categoria/tag/busca eram estado local e se perdiam a
+  cada navegação.
 
 ### Decisões que ficaram
 - **Não inflar tipografia**: a densidade 8-11px é identidade do projeto. O que se corrigiu foi
