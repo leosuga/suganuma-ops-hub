@@ -4,6 +4,8 @@ import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useTitle } from "@/lib/useTitle"
 import { useNotes, useUpdateNote } from "@/lib/queries/notes"
+import { useInbox } from "@/lib/queries/inbox"
+import { buildWeeklyChecklist } from "@/lib/weekly-review"
 import { useTasks } from "@/lib/queries/tasks"
 import { useTransactions } from "@/lib/queries/finance"
 import { useHealthLogs, useAppointments } from "@/lib/queries/health"
@@ -69,6 +71,7 @@ export default function ReviewPage() {
   })
   const { data: healthLogs = [], isLoading: healthLoading } = useHealthLogs()
   const { data: appointments = [], isLoading: apptLoading } = useAppointments()
+  const { data: inboxItems = [] } = useInbox("unprocessed")
   const updateNote = useUpdateNote()
   const [markingDone, setMarkingDone] = useState(false)
 
@@ -136,6 +139,20 @@ export default function ReviewPage() {
     return days > 30
   })
 
+  // Checklist do ritual: as 4 decisões da revisão semanal, com o estado.
+  // O resto da página é o RESUMO (o que aconteceu); isto é o que revisar agora.
+  const checklist = useMemo(() => {
+    const pending = tasks.filter((t) => t.status === "todo" || t.status === "doing")
+    const nowMs = Date.now()
+    return buildWeeklyChecklist({
+      inboxPending: inboxItems.length,
+      overdueTasks: pending.filter((t) => t.due_at && new Date(t.due_at).getTime() < nowMs).length,
+      staleAreas: staleAreas.length,
+      delegatedNoReturn: pending.filter((t) => t.delegated_to && !t.due_at).length,
+    })
+  }, [tasks, inboxItems, staleAreas])
+  const checklistOk = checklist.filter((c) => c.ok).length
+
   // Uncategorized notes
   const uncategorizedNotes = notes.filter((n) => parseContextTags(n.tags).length === 0)
 
@@ -195,6 +212,51 @@ export default function ReviewPage() {
               {markingDone ? "..." : "MARCAR REVISADO"}
             </button>
           )}
+        </div>
+
+        {/* Checklist do ritual — o que revisar agora */}
+        <div className="border border-border bg-surface rounded-sm overflow-hidden">
+          <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+            <span className="text-[9px] font-mono font-semibold tracking-widest text-teal uppercase">
+              CHECKLIST DA SEMANA
+            </span>
+            <span className="text-[9px] font-mono text-on-surface/60">
+              {checklistOk}/{checklist.length} OK
+            </span>
+          </div>
+          <div className="divide-y divide-border">
+            {checklist.map((item) => (
+              <div key={item.key} className="px-4 py-2.5 flex items-center gap-3">
+                <span
+                  className={cn(
+                    "flex-none w-3 h-3 rounded-sm border",
+                    item.ok ? "border-teal bg-teal/20" : "border-amber bg-amber/20"
+                  )}
+                  aria-hidden="true"
+                />
+                <span className="flex-1 text-[10px] font-mono text-on-surface/60 tracking-wider">
+                  {item.label}
+                </span>
+                {item.ok ? (
+                  <span className="flex-none text-[9px] font-mono text-teal">OK</span>
+                ) : (
+                  <>
+                    <span className="flex-none text-[9px] font-mono text-amber">
+                      {item.count} {item.hint}
+                    </span>
+                    {item.href && (
+                      <Link
+                        href={item.href}
+                        className="flex-none text-[9px] font-mono text-on-surface/60 hover:text-teal transition-colors"
+                      >
+                        IR →
+                      </Link>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Stats grid */}
