@@ -5,7 +5,10 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Suganuma Ops Hub",
     short_name: "Ops Hub",
     description: "Personal command center — tasks, finance, health",
-    start_url: "/dashboard",
+    // Entrada = Cockpit (decisão do backlog 2026-08: "Cockpit vira a entrada
+    // diária (ação), Dashboard fica com métricas"). O Dashboard continua
+    // acessível pelo link no header do Cockpit.
+    start_url: "/cockpit",
     display: "standalone",
     background_color: "#0A0A0A",
     theme_color: "#121212",
