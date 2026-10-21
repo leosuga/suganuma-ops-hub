@@ -143,6 +143,7 @@ Exemplo: `MockClient.mockReturnValue({ from: () => chain([data]), auth: authMock
 - UI na página Settings com 3 botões: Exportar backup, Importar seletivo, Importar tudo
 
 ## Dependências notáveis
+- **Risco aceito no audit**: sobram 9 vulnerabilidades *high* na cadeia `braces`/`micromatch`/`fast-glob` → `shadcn`/`ts-morph`/`eslint-config-next`. São **dev-only** (rodam na máquina de desenvolvimento, no lint/CLI do shadcn — não no container de produção). O `npm audit fix --force` resolveria **downgradando o shadcn para 1.0.0** (breaking) — não vale. Não "corrigir" sem decisão explícita.
 - `@base-ui/react` — Dialog, Checkbox, Button (NÃO Radix)
 - `@tanstack/react-query` + devtools
 - `@tanstack/react-virtual` — virtualização de listas (>50 itens)
