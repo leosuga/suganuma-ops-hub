@@ -10,6 +10,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 - Tokens CSS: `--color-bg`, `--color-surface`, `--color-teal`, `--color-amber`, `--color-danger`, `--color-health`, `--color-on-surface` via `@theme inline` no globals.css
 - **Token de marca = `--brand` / `--brand-hi`** (NUNCA `--accent`): o shadcn declara `--accent` em `:root`/`.dark` **fora de @layer** e, em CSS, não-layerado vence layerado → o teal do projeto era sobrescrito pelo cinza do shadcn e o app inteiro saía monocromático. `@theme inline` não emite `--color-*`: as utilities inlineiam o valor, então `theme.ts` escreve `--brand`/`--brand-hi` (inline style) e o seletor de acento funciona
 - Tema customizável: `--brand` / `--brand-hi` (5 opções: teal, blue, green, purple, orange) via `src/lib/theme.ts`
+- **Título de página = `.page-title`** (classe em `globals.css`, `@layer components`): 14px mono/uppercase/tracking .26em. Antes cada tela repetia `text-[11px] ... tracking-[0.3em]` — 11px era o mesmo tamanho do corpo, então o título de página não era o maior elemento da página. Usar a classe, não ad-hoc
 - **Provar token ≠ ler código**: extrair `.next/static/chunks/*.css` do container e medir `getComputedStyle` no Chrome. O fonte mente; o CSS compilado não
 
 ## Regras de código
