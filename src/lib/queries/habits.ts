@@ -82,28 +82,8 @@ export function useDeleteHabit() {
   })
 }
 
-export function habitEntriesOptions(habitId?: string) {
-  return queryOptions({
-    queryKey: habitKeys.entries(habitId),
-    enabled: !!habitId,
-    queryFn: async (): Promise<HabitEntryRow[]> => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from("habit_entry")
-        .select("*")
-        .eq("habit_id", habitId!)
-        .order("done_on", { ascending: false })
-        .limit(90)
-      if (error) throw error
-      return (data ?? []) as HabitEntryRow[]
-    },
-  })
-}
-
-export function useHabitEntries(habitId?: string) {
-  useRealtimeTable("habit_entry")
-  return useQuery(habitEntriesOptions(habitId))
-}
+/** (removido: useHabitEntries por hábito — o HabitRow recebe as entries por
+ *  prop, carregadas uma vez pelo pai. Era uma query por hábito.) */
 
 export function useAllHabitEntries(limit = 400) {
   useRealtimeTable("habit_entry")
@@ -114,6 +94,28 @@ export function useAllHabitEntries(limit = 400) {
       const { data, error } = await supabase
         .from("habit_entry")
         .select("habit_id, done_on")
+        .order("done_on", { ascending: false })
+        .limit(limit)
+      if (error) throw error
+      return (data ?? []) as HabitEntryRow[]
+    },
+  })
+}
+
+/**
+ * Todas as entries COM id (a row completa), para quem precisa deletar uma
+ * entrada específica. O HabitRow usava uma query por hábito (N queries com
+ * chaves distintas); o pai carrega uma vez e filtra por habit_id.
+ */
+export function useAllHabitEntriesFull(limit = 2000) {
+  useRealtimeTable("habit_entry")
+  return useQuery({
+    queryKey: ["habits", "entries", "all", "full", limit] as const,
+    queryFn: async (): Promise<HabitEntryRow[]> => {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from("habit_entry")
+        .select("*")
         .order("done_on", { ascending: false })
         .limit(limit)
       if (error) throw error

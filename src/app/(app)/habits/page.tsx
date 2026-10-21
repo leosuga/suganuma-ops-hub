@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useTitle } from "@/lib/useTitle"
-import { useHabits, useCreateHabit } from "@/lib/queries/habits"
+import { useHabits, useCreateHabit, useAllHabitEntriesFull } from "@/lib/queries/habits"
 import { cn } from "@/lib/utils"
 import { today, dateStr, addDays } from "@/lib/date"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
@@ -21,6 +21,18 @@ function getLast7Days() {
 export default function HabitsPage() {
   useTitle("Habits · Suganuma Ops Hub")
   const { data: habits = [], isLoading } = useHabits()
+  // Entries de TODOS os hábitos numa query só (o HabitRow usava uma query por
+  // hábito — N chaves distintas para a mesma informação).
+  const { data: allEntries = [] } = useAllHabitEntriesFull()
+  const entriesByHabit = useMemo(() => {
+    const map = new Map<string, typeof allEntries>()
+    for (const e of allEntries) {
+      const list = map.get(e.habit_id)
+      if (list) list.push(e)
+      else map.set(e.habit_id, [e])
+    }
+    return map
+  }, [allEntries])
   const createHabit = useCreateHabit()
   const [newName, setNewName] = useState("")
   const [adding, setAdding] = useState(false)
@@ -102,8 +114,8 @@ export default function HabitsPage() {
                 </div>
                 <div className="w-20 flex-none" />
               </div>
-              {active.map((h) => <HabitRow key={h.id} habit={h} weekDays={weekDays} />)}
-              {inactive.map((h) => <HabitRow key={h.id} habit={h} weekDays={weekDays} />)}
+              {active.map((h) => <HabitRow key={h.id} habit={h} weekDays={weekDays} entries={entriesByHabit.get(h.id) ?? []} />)}
+              {inactive.map((h) => <HabitRow key={h.id} habit={h} weekDays={weekDays} entries={entriesByHabit.get(h.id) ?? []} />)}
             </div>
           )}
         </div>
