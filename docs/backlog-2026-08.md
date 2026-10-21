@@ -163,9 +163,13 @@ Com o React Compiler ativo, a exigência de memoização manual do AGENTS.md est
 
 ## 6. Finanças — o que aposenta as bases do Notion
 
-- [ ] **Sem recorrência e sem contas a pagar.** `transaction` só tem `occurred_on`
-      (passado); não há despesa fixa nem vencimento. Tabela `recurring_transaction`
-      (descrição, valor, categoria, dia do mês, conta) + `due_on`/`paid` dá o widget      "A VENCER" no dashboard e alimenta o push do item 5.
+- [x] **Sem recorrência e sem contas a pagar.** *(resolvido em 2026-10-21: migration 0044 —
+      `recurring_transaction` (descrição, valor, categoria, conta, dia do vencimento) +
+      `bill_payment` (pago por período); card "CONTAS DO MÊS" no /finance, widget "A VENCER" no
+      Dashboard e o push diário avisando o que vence hoje/amanhã. A lógica de projeção — com
+      clamp do dia (31 em fevereiro → 28/29) — está em `src/lib/bills.ts`, testada.)* A
+      `transaction` continua só com o passado (`occurred_on`) — a despesa fixa é a nova
+      entidade, e o registro do que foi pago continua sendo a transaction normal.
 - [x] **Budget é um número único por mês.** *(resolvido em 2026-10-13: migration 0042 e `CategoryBudgets`)* As categorias já existem nas transactions —
       falta coluna `category` na tabela budget e a comparação meta × realizado.
 
