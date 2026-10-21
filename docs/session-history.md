@@ -30,6 +30,33 @@ Movido do CLAUDE.md para reduzir o contexto carregado em toda sessão. Consulte 
 - **Alvos de toque**: Finance 24→36px, Protocolos 20→32px (o glifo continua do mesmo tamanho, a
   densidade visual não muda).
 - **Bulk de notas em lote**: 1 embed no Ollama + 1 PUT no Qdrant, em vez de N+N.
+- **Contas a pagar / despesas fixas** (migration 0044, aplicada no VPS antes do deploy): o item 6 do
+  backlog — a `transaction` só registra o passado, faltava o que VENCE. `recurring_transaction`
+  (descrição, valor, categoria, conta, dia) + `bill_payment` (pago **por período** — pagar outubro
+  não marca novembro). Card `CONTAS DO MÊS` no /finance, widget `A VENCER` no Dashboard e o
+  **push diário** avisando o que vence hoje/amanhã. Projeção pura com clamp do dia
+  (`src/lib/bills.ts`, 13 testes: dia 31 em fevereiro → 28/29).
+- **Hierarquia de título de página** (classe `.page-title`, 14px nas 14 telas): o h1 tinha 11px —
+  o **mesmo tamanho do corpo** — então o título de página não era o maior elemento da página.
+  A regra "8-11px é SACRED" do AGENTS da raiz é do projeto Vite **legado**; no hub não existe
+  (conferido antes de mexer).
+- **Round-trip de auth eliminado nas leituras**: `auth.getUser()` fazia uma chamada HTTP ao
+  servidor de auth **antes de cada query**; trocado por `getSession()` (lê do storage) em 7
+  queryFns, **mantendo o filtro explícito por `owner_id`** (não passar a confiar na RLS sem
+  conferir `pg_policies`). As mutations mantêm `getUser()` — antes de escrever, validar o token
+  no servidor é o certo. Item aberto no backlog desde 2026-08, agora fechado.
+- **Risco aceito e documentado** no AGENTS.md: as 9 *high* restantes do audit são a cadeia
+  dev-only do shadcn (`--force` downgradaria o shadcn). Registrado para ninguém "consertar" errado.
+
+### Estado ao fim da sessão
+- `main` = produção; 21 PRs mergeados; **backlog de 2026-08 com 0 itens abertos**; 280 testes
+  (node + DOM, ambos no CI); `tsc --noEmit` limpo; 0 vulnerabilidades *critical*.
+- **Pendências deixadas para o Leo** (decisões de produto/infra, não bugs):
+  - OneDrive em `~/Documents` (optou por deixar como está) — custo: lentidão de arquivo no
+    workspace e `fileproviderd` consumindo CPU; o app não é afetado.
+  - Realtime: aplicar o **payload** via `setQueryData` em vez de invalidar listas inteiras
+    (hoje uma mudança recarrega as 2168 notas no celular) — otimização de risco médio.
+  - 44pt de alvo de toque (HIG) em todo o app — o resto ficou nos pontos de uso diário.
 
 ### Lições
 - **Suíte que só roda na mão é suíte que quebra em silêncio**: 2 testes quebrados passaram pelo
