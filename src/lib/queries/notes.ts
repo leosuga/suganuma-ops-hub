@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/react-query"
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeTable } from "@/lib/realtime"
-import { syncNoteEmbedding, deleteNoteEmbedding } from "@/lib/actions/semantic-search"
+import { syncNoteEmbedding, syncNoteEmbeddings, deleteNoteEmbedding, deleteNoteEmbeddings } from "@/lib/actions/semantic-search"
 import type { NoteRow, NoteInsert } from "@/lib/types/note"
 
 export type { NoteRow }
@@ -124,6 +124,62 @@ export function useUpdateNote() {
     onSettled: (data) => {
       queryClient.invalidateQueries({ queryKey: noteKeys.all })
       if (data?.id) syncNoteEmbedding(data.id).catch(() => null)
+    },
+  })
+}
+
+/**
+ * Atualização em LOTE: N updates no banco + UM sync de embedding para o lote
+ * inteiro. Antes, o bulk da UI (contexto/PARA de 30 notas) disparava N syncs —
+ * N embeddings no Ollama (CPU do VPS) e N PUTs no Qdrant.
+ */
+export function useBulkUpdateNotes() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (updates: Array<{ id: string; changes: Partial<NoteRow> }>) => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+      for (const u of updates) {
+        const { error } = await supabase
+          .from("note")
+          .update(u.changes)
+          .eq("id", u.id)
+          .eq("owner_id", user.id)
+        if (error) throw error
+      }
+      return updates.map((u) => u.id)
+    },
+    onSuccess: (ids) => {
+      queryClient.invalidateQueries({ queryKey: noteKeys.all })
+      if (ids.length > 0) syncNoteEmbeddings(ids).catch(() => null)
+    },
+  })
+}
+
+/** Exclusão em LOTE: 1 delete + 1 remoção de embeddings. */
+export function useBulkDeleteNotes() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+      const { error } = await supabase
+        .from("note")
+        .delete()
+        .in("id", ids)
+        .eq("owner_id", user.id)
+      if (error) throw error
+      return ids
+    },
+    onSuccess: (ids) => {
+      queryClient.invalidateQueries({ queryKey: noteKeys.all })
+      if (ids.length > 0) deleteNoteEmbeddings(ids).catch(() => null)
     },
   })
 }

@@ -4,6 +4,35 @@ Movido do CLAUDE.md para reduzir o contexto carregado em toda sessão. Consulte 
 
 # Session Learnings — Suganuma Ops Hub
 
+## 2026-10-21 (tarde/noite) — Operação: build visível, suíte DOM no CI, filtros e ordem
+
+### Entregue
+- **Build/commit no ar**: `GIT_SHA` e `NEXT_PUBLIC_BUILD` como build-arg (Dockerfile + deploy.yml);
+  `/api/health` devolve `build`; Settings > SISTEMA mostra a linha BUILD. Motivo: durante um deploy,
+  `~/ops-hub` já está no commit novo enquanto o container ainda é o antigo — foi assim que um deploy
+  antigo quase virou o estado final de produção.
+- **Suíte DOM no CI** (step `Test (DOM)` via `Dockerfile.test`): ela só rodava na mão. Resultado
+  imediato: a remoção de `useHabitEntries` (leva do N+1) tinha deixado **2 testes quebrados** e
+  **nada no CI acusava**. `vitest.config.ts` passou a excluir `**/*.test.tsx` (qualquer teste DOM).
+- **Filtros das Notas na URL** (`?ctx= ?tag= ?prefix= ?para= ?search=`) + **bug do `#geral`**
+  (o grupo das tags sem barra procurava `"#/"` e não encontrava nada). Regra extraída para
+  `src/lib/notes-filter.ts` (10 testes).
+- **Ordenação de tasks** (`?sort=`): prazo (padrão) / prioridade / importante / criação. Regra pura
+  (`src/lib/task-sort.ts`, 6 testes) — antes a lista ignorava prioridade, discordando do FOCO.
+- **Hábitos**: as métricas foram para o FIM da lista — marcar o dia é a ação diária, o resumo é consulta.
+- **Alvos de toque**: Finance 24→36px, Protocolos 20→32px (o glifo continua do mesmo tamanho, a
+  densidade visual não muda).
+- **Bulk de notas em lote**: 1 embed no Ollama + 1 PUT no Qdrant, em vez de N+N.
+
+### Lições
+- **Suíte que só roda na mão é suíte que quebra em silêncio**: 2 testes quebrados passaram pelo
+  gate do CI porque ele rodava só o ambiente node.
+- **`gh pr merge --delete-branch` mexe no repositório local** (checkout + apaga a branch): fazer o
+  commit ANTES, senão alterações em voo somem junto com a branch.
+- **Dois updates de URL em sequência usam a mesma base**: o segundo apaga o que o primeiro setou —
+  filtros mutuamente exclusivos vão num único update.
+- **Filtro por prefixo de tag**: o grupo `"#"` (tags sem barra) precisa de matcher próprio.
+
 ## 2026-10-20 — Auditoria de UI/UX: cor, foco, a11y, atalhos e captura em 1 toque
 
 ### Contexto

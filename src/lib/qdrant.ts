@@ -150,15 +150,49 @@ export async function upsertNoteVector(
   }
 }
 
-// Delete a note vector
-export async function deleteNoteVector(noteId: string): Promise<void> {
+// Upsert de VÁRIOS vetores em UMA requisição. O bulk da UI usava uma
+// chamada por nota (N PUTs) — o endpoint aceita o array inteiro.
+export async function upsertNoteVectors(
+  points: Array<{
+    id: string
+    ownerId: string
+    embedding: number[]
+    payload?: Record<string, unknown>
+  }>
+): Promise<void> {
+  if (points.length === 0) return
+  const { status } = await qdrantRequest("PUT", `/collections/${COLLECTION_NAME}/points`, {
+    points: points.map((p) => ({
+      id: p.id,
+      vector: p.embedding,
+      payload: {
+        owner_id: p.ownerId,
+        note_id: p.id,
+        ...(p.payload || {}),
+      },
+    })),
+  })
+
+  if (status !== 200) {
+    throw new Error(`Qdrant upsert failed: ${status}`)
+  }
+}
+
+// Delete de VÁRIOS vetores em UMA requisição
+export async function deleteNoteVectors(ids: string[]): Promise<void> {
+  if (ids.length === 0) return
   const { status } = await qdrantRequest("POST", `/collections/${COLLECTION_NAME}/points/delete`, {
-    points: [noteId],
+    points: ids,
   })
 
   if (status !== 200) {
     throw new Error(`Qdrant delete failed: ${status}`)
   }
+}
+
+// Delete a note vector (uma nota)
+export async function deleteNoteVector(noteId: string): Promise<void> {
+  await deleteNoteVectors([noteId])
 }
 
 // Semantic search filtered by owner_id

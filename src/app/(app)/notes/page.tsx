@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter, usePathname } from "next/navigation"
 import { useTitle } from "@/lib/useTitle"
-import { useNotes, useDeleteNote, useCreateNote, useUpdateNote } from "@/lib/queries/notes"
+import { useNotes, useDeleteNote, useCreateNote, useUpdateNote, useBulkUpdateNotes, useBulkDeleteNotes } from "@/lib/queries/notes"
 import { VirtualizedList } from "@/components/VirtualizedList"
 import { useTasks } from "@/lib/queries/tasks"
 import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
@@ -41,6 +41,8 @@ function NotesPageInner() {
   const backlinksMap = useMemo(() => buildBacklinksMap(notes), [notes])
   const deleteNote = useDeleteNote()
   const createNote = useCreateNote()
+  const bulkUpdate = useBulkUpdateNotes()
+  const bulkDelete = useBulkDeleteNotes()
   const toast = useUndoToast()
   const [showSemanticSearch, setShowSemanticSearch] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -228,19 +230,21 @@ function NotesPageInner() {
   )
 
   const handleBulkContext = useCallback((ctx: string) => {
-    selectedIds.forEach((id) => {
-      const note = notes.find((n) => n.id === id)
-      if (!note) return
-      const base = note.tags?.filter((t) => !t.startsWith("ctx/")) ?? []
-      updateNote.mutate({ id, tags: [...base, `ctx/${ctx}`] })
-    })
+    const updates = notes
+      .filter((n) => selectedIds.has(n.id))
+      .map((n) => {
+        const base = n.tags?.filter((t) => !t.startsWith("ctx/")) ?? []
+        return { id: n.id, changes: { tags: [...base, `ctx/${ctx}`] } }
+      })
+    if (updates.length === 0) return
+    bulkUpdate.mutate(updates)
     setSelectedIds(new Set())
-  }, [selectedIds, notes, updateNote])
+  }, [selectedIds, notes, bulkUpdate])
 
   const handleBulkDelete = useCallback(() => {
     const doomed = notes.filter((n) => selectedIds.has(n.id))
     if (doomed.length === 0) return
-    doomed.forEach((n) => deleteNote.mutate(n.id))
+    bulkDelete.mutate(doomed.map((n) => n.id))
     setSelectedIds(new Set())
     // Delete em lote sem desfazer = perda de dados sem volta (a nota some do
     // banco). O undo recria as notas.
@@ -263,14 +267,16 @@ function NotesPageInner() {
         )
       },
     })
-  }, [selectedIds, notes, deleteNote, createNote, toast])
+  }, [selectedIds, notes, bulkDelete, createNote, toast])
 
   const handleBulkPara = useCallback((para: string) => {
-    selectedIds.forEach((id) => {
-      updateNote.mutate({ id, para: para as NoteRowType["para"] })
-    })
+    const updates = notes
+      .filter((n) => selectedIds.has(n.id))
+      .map((n) => ({ id: n.id, changes: { para: para as NoteRowType["para"] } }))
+    if (updates.length === 0) return
+    bulkUpdate.mutate(updates)
     setSelectedIds(new Set())
-  }, [selectedIds, updateNote])
+  }, [selectedIds, notes, bulkUpdate])
 
   const paraLabel: Record<string, string> = {
     projects: "PROJ",

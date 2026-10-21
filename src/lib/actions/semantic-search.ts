@@ -1,7 +1,14 @@
 "use server"
 
-import { embedText } from "@/lib/ollama"
-import { ensureCollection, upsertNoteVector, deleteNoteVector, searchNotes } from "@/lib/qdrant"
+import { embedText, embedTexts } from "@/lib/ollama"
+import {
+  ensureCollection,
+  upsertNoteVector,
+  upsertNoteVectors,
+  deleteNoteVector,
+  deleteNoteVectors,
+  searchNotes,
+} from "@/lib/qdrant"
 import { createClient } from "@/lib/supabase/server"
 import { logger } from "@/lib/logger"
 
@@ -69,6 +76,84 @@ export async function syncNoteEmbeddingForOwner(note: {
     return await syncNoteEmbeddingCore(note)
   } catch (err) {
     logger.error("syncNoteEmbeddingForOwner", "Failed", { noteId: note.id, error: (err as Error).message })
+    return { ok: false, error: (err as Error).message }
+  }
+}
+
+/**
+ * Sync de VÁRIAS notas em lote: 1 query no banco + 1 chamada ao Ollama
+ * (`embedTexts` aceita array) + 1 requisição ao Qdrant.
+ *
+ * Antes, o bulk na UI (mudar contexto/PARA de 30 notas) disparava N updates
+ * e N syncs — ou seja, N embeddings no Ollama (CPU do VPS) e N PUTs no
+ * Qdrant. Agora é UMA de cada.
+ */
+export async function syncNoteEmbeddings(noteIds: string[]) {
+  try {
+    if (noteIds.length === 0) return { ok: true }
+
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) throw new Error("Not authenticated")
+
+    const { data: notes, error } = await supabase
+      .from("note")
+      .select("id, title, content, owner_id")
+      .in("id", noteIds)
+      .eq("owner_id", user.id)
+    if (error) throw error
+    if (!notes || notes.length === 0) return { ok: true }
+
+    const toEmbed: Array<{ id: string; title: string; content: string | null; owner_id: string; text: string }> = []
+    const toDelete: string[] = []
+    for (const n of notes) {
+      const text = `${n.title}\n\n${n.content || ""}`.trim()
+      if (text) toEmbed.push({ ...n, text })
+      else toDelete.push(n.id)
+    }
+
+    if (toDelete.length > 0) await deleteNoteVectors(toDelete)
+
+    if (toEmbed.length > 0) {
+      const embeddings = await embedTexts(toEmbed.map((n) => n.text))
+      await ensureCollection()
+      await upsertNoteVectors(
+        toEmbed.map((n, i) => ({
+          id: n.id,
+          ownerId: n.owner_id,
+          embedding: embeddings[i],
+          payload: {
+            title: n.title,
+            content_preview: (n.content || "").slice(0, 200),
+          },
+        })),
+      )
+    }
+
+    return { ok: true }
+  } catch (err) {
+    logger.error("syncNoteEmbeddings", "Failed", {
+      count: noteIds.length,
+      error: (err as Error).message,
+    })
+    return { ok: false, error: (err as Error).message }
+  }
+}
+
+/**
+ * Remove os embeddings de VÁRIAS notas em uma requisição só.
+ */
+export async function deleteNoteEmbeddings(noteIds: string[]) {
+  try {
+    await deleteNoteVectors(noteIds)
+    return { ok: true }
+  } catch (err) {
+    logger.error("deleteNoteEmbeddings", "Failed", {
+      count: noteIds.length,
+      error: (err as Error).message,
+    })
     return { ok: false, error: (err as Error).message }
   }
 }
