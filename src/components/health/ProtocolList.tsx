@@ -160,11 +160,11 @@ function ProtocolRow({ protocol }: { protocol: { id: string; name: string; activ
             </>
           ) : (
             <>
-              <button onClick={() => { setEditName(protocol.name); setEditing(true) }} className="w-5 h-5 flex items-center justify-center text-on-surface/60 hover:text-teal transition-colors text-[11px]" aria-label={`Editar protocolo: ${protocol.name}`}>✎</button>
-              <button onClick={handleToggleActive} className={cn("text-[8px] font-mono tracking-wider", protocol.active ? "text-on-surface/60 hover:text-on-surface/60" : "text-teal hover:text-teal-hi")} title={protocol.active ? "Desativar" : "Ativar"}>
+              <button onClick={() => { setEditName(protocol.name); setEditing(true) }} className="w-8 h-8 flex items-center justify-center text-on-surface/60 hover:text-teal transition-colors text-[11px]" aria-label={`Editar protocolo: ${protocol.name}`}>✎</button>
+              <button onClick={handleToggleActive} className={cn("w-8 h-8 flex items-center justify-center text-[10px] font-mono tracking-wider", protocol.active ? "text-on-surface/60 hover:text-on-surface/60" : "text-teal hover:text-teal-hi")} title={protocol.active ? "Desativar" : "Ativar"}>
                 {protocol.active ? "⊘" : "⊕"}
               </button>
-              <button onClick={() => setConfirmDelete(true)} className="w-5 h-5 flex items-center justify-center text-on-surface/60 hover:text-danger transition-colors">×</button>
+              <button onClick={() => setConfirmDelete(true)} aria-label={`Excluir protocolo: ${protocol.name}`} className="w-8 h-8 flex items-center justify-center text-on-surface/60 hover:text-danger transition-colors">×</button>
             </>
           )}
         </>
