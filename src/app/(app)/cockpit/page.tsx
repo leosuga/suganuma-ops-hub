@@ -111,11 +111,19 @@ function CockpitPageInner() {
     <SectionErrorBoundary label="COCKPIT">
       <div className="p-4 space-y-5 max-w-3xl mx-auto">
         {/* Header */}
-        <div>
-          <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
-            COCKPIT
-          </h1>
-          <p className="text-[10px] font-mono text-on-surface/60 mt-0.5 capitalize">{dateLabel}</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-[11px] font-mono font-semibold tracking-[0.3em] text-teal uppercase">
+              COCKPIT
+            </h1>
+            <p className="text-[10px] font-mono text-on-surface/60 mt-0.5 capitalize">{dateLabel}</p>
+          </div>
+          <Link
+            href="/dashboard"
+            className="text-[9px] font-mono text-on-surface/60 hover:text-teal transition-colors tracking-wider uppercase"
+          >
+            Dashboard →
+          </Link>
         </div>
 
         {loading && (
