@@ -8,6 +8,7 @@ import { VirtualizedList } from "@/components/VirtualizedList"
 import { useTasks } from "@/lib/queries/tasks"
 import { parseContextTags, CONTEXT_CONFIG } from "@/lib/contexts"
 import { buildBacklinksMap } from "@/lib/links"
+import { matchesNoteFilters } from "@/lib/notes-filter"
 import { cn } from "@/lib/utils"
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary"
 import { useUndoToast } from "@/components/UndoToast"
@@ -41,22 +42,54 @@ function NotesPageInner() {
   const deleteNote = useDeleteNote()
   const createNote = useCreateNote()
   const toast = useUndoToast()
-  const [filterTag, setFilterTag] = useState<string | null>(null)
-  const [filterPrefix, setFilterPrefix] = useState<string | null>(null)
-  const [filterPara, setFilterPara] = useState<string | null>(null)
-  const [search, setSearch] = useState(() => searchParams.get("search") ?? "")
   const [showSemanticSearch, setShowSemanticSearch] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkMode, setBulkMode] = useState(false)
   const updateNote = useUpdateNote()
 
+  // Filtros na URL: ?ctx= ?tag= ?prefix= ?para= ?search= — sobrevivem a
+  // reload, ficam linkáveis e voltam no botão "voltar" do navegador.
   const filterContext = searchParams.get("ctx")
-  // Links externos (paleta, backlinks, widget de contexto) abrem /notes?search=…
-  // — a página só lia ?ctx=, então esses links não filtravam nada.
-  const searchParam = searchParams.get("search")
+  const filterTag = searchParams.get("tag")
+  const filterPrefix = searchParams.get("prefix")
+  const filterPara = searchParams.get("para")
+  const urlSearch = searchParams.get("search") ?? ""
+  const [search, setSearch] = useState(urlSearch)
+
+  const updateParams = useCallback(
+    (patch: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString())
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === null || v === "") params.delete(k)
+        else params.set(k, v)
+      }
+      const qs = params.toString()
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
+    },
+    [searchParams, router, pathname]
+  )
+
+  // tag e prefix são mutuamente exclusivos (a UI alterna entre eles) — por
+  // isso vão juntos num único update: dois updates em sequência usariam a
+  // mesma URL base e o segundo apagaria o que o primeiro setou.
+  const applyTagFilter = useCallback(
+    (next: { tag: string | null; prefix: string | null }) => updateParams(next),
+    [updateParams]
+  )
+  const setFilterPara = useCallback((p: string | null) => updateParams({ para: p }), [updateParams])
+
+  // Link externo (paleta, backlinks, widget de contexto) muda a URL → a busca
+  // local acompanha.
   useEffect(() => {
-    if (searchParam) setSearch(searchParam)
-  }, [searchParam])
+    setSearch(urlSearch)
+  }, [urlSearch])
+
+  // Digitação → URL (debounce), para o filtro não se perder ao recarregar.
+  useEffect(() => {
+    if (search === urlSearch) return
+    const t = setTimeout(() => updateParams({ search: search || null }), 400)
+    return () => clearTimeout(t)
+  }, [search, urlSearch, updateParams])
 
   function setFilterContext(ctx: string | null) {
     const params = new URLSearchParams(searchParams.toString())
@@ -118,20 +151,16 @@ function NotesPageInner() {
   const [showFilters, setShowFilters] = useState(false)
 
   const filtered = useMemo(() => {
-    const f = notes.filter((n) => {
-      if (filterTag && (!n.tags || !n.tags.includes(filterTag))) return false
-      if (filterPrefix && (!n.tags || !n.tags.some((t) => t.startsWith(`${filterPrefix}/`)))) return false
-      if (filterContext && (!n.tags || !n.tags.some((t) => t === `ctx/${filterContext}`))) return false
-      if (filterPara && n.para !== filterPara) return false
-      if (search.trim()) {
-        const q = search.toLowerCase().trim()
-        const inTitle = n.title.toLowerCase().includes(q)
-        const inContent = n.content?.toLowerCase().includes(q)
-        const inTags = n.tags?.some((t) => t.toLowerCase().includes(q))
-        if (!inTitle && !inContent && !inTags) return false
-      }
-      return true
-    })
+    // Regra do filtro em src/lib/notes-filter.ts (pura, testada em node).
+    const f = notes.filter((n) =>
+      matchesNoteFilters(n, {
+        tag: filterTag,
+        prefix: filterPrefix,
+        ctx: filterContext,
+        para: filterPara,
+        search,
+      })
+    )
     // Ordem de exibição unificada (virtualização exige lista única):
     // MOCs → fixadas → demais (updated_at desc já vem do server).
     return [...f].sort((a, b) => {
@@ -406,7 +435,7 @@ function NotesPageInner() {
                 <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
                   <span className="text-[9px] font-mono text-on-surface/60 tracking-wider flex-none">TAGS</span>
                   <button
-                    onClick={() => { setFilterPrefix(null); setFilterTag(null) }}
+                    onClick={() => { applyTagFilter({ tag: null, prefix: null }) }}
                     className={cn(
                       "flex-none h-6 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
                       filterPrefix === null && filterTag === null
@@ -423,8 +452,7 @@ function NotesPageInner() {
                       <button
                         key={prefix}
                         onClick={() => {
-                          setFilterPrefix(isActive ? null : prefix)
-                          setFilterTag(null)
+                          applyTagFilter({ prefix: isActive ? null : prefix, tag: null })
                         }}
                         className={cn(
                           "flex-none h-6 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
@@ -443,7 +471,7 @@ function NotesPageInner() {
                     return (
                       <button
                         key={fullTag}
-                        onClick={() => setFilterTag(isActive ? null : fullTag)}
+                        onClick={() => applyTagFilter({ tag: isActive ? null : fullTag, prefix: null })}
                         className={cn(
                           "flex-none h-6 px-2 rounded-sm font-mono text-[8px] font-semibold tracking-widest transition-colors",
                           isActive
@@ -570,7 +598,7 @@ function NotesPageInner() {
           {tagPrefixes.length > 0 && (
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
               <button
-                onClick={() => { setFilterPrefix(null); setFilterTag(null) }}
+                onClick={() => { applyTagFilter({ tag: null, prefix: null }) }}
                 className={cn(
                   "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
                   filterPrefix === null && filterTag === null
@@ -587,8 +615,7 @@ function NotesPageInner() {
                   <button
                     key={prefix}
                     onClick={() => {
-                      setFilterPrefix(isActive ? null : prefix)
-                      setFilterTag(null)
+                      applyTagFilter({ prefix: isActive ? null : prefix, tag: null })
                     }}
                     className={cn(
                       "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
@@ -607,7 +634,7 @@ function NotesPageInner() {
                 return (
                   <button
                     key={fullTag}
-                    onClick={() => setFilterTag(isActive ? null : fullTag)}
+                    onClick={() => applyTagFilter({ tag: isActive ? null : fullTag, prefix: null })}
                     className={cn(
                       "flex-none h-6 px-2.5 rounded-sm font-mono text-[9px] font-semibold tracking-widest transition-colors active:scale-95",
                       isActive
