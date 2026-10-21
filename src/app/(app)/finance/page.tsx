@@ -86,9 +86,9 @@ export default function FinancePage() {
       </div>
 
       <div className="flex items-center gap-3">
-        <button onClick={prevMonth} className="w-6 h-6 flex items-center justify-center text-on-surface/60 hover:text-on-surface/70 font-mono transition-colors">‹</button>
+        <button onClick={prevMonth} aria-label="Mês anterior" className="w-9 h-9 flex items-center justify-center text-on-surface/60 hover:text-on-surface/70 font-mono transition-colors">‹</button>
         <span className="text-[11px] font-mono text-on-surface/60 capitalize min-w-30 text-center">{monthLabel}</span>
-        <button onClick={nextMonth} className="w-6 h-6 flex items-center justify-center text-on-surface/60 hover:text-on-surface/70 font-mono transition-colors">›</button>
+        <button onClick={nextMonth} aria-label="Próximo mês" className="w-9 h-9 flex items-center justify-center text-on-surface/60 hover:text-on-surface/70 font-mono transition-colors">›</button>
       </div>
 
       <FinanceKPIs transactions={transactions} isLoading={isLoading} />
