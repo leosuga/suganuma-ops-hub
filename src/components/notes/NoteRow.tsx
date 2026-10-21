@@ -5,7 +5,7 @@ import Link from "next/link"
 import dynamic from "next/dynamic"
 import { useUpdateNote } from "@/lib/queries/notes"
 import type { NoteRow as NoteRowType } from "@/lib/queries/notes"
-import { useCreateTask, useUpdateTask, useTasksByNote } from "@/lib/queries/tasks"
+import { useCreateTask, useUpdateTask } from "@/lib/queries/tasks"
 import type { TaskRow as TaskRowType } from "@/lib/queries/tasks"
 import { useProjects } from "@/lib/queries/projects"
 import { parseFrontmatter } from "@/lib/frontmatter"
@@ -45,7 +45,16 @@ interface NoteRowProps {
 
 export const NoteRow = memo(function NoteRow({ note, onDelete, backlinksMap, selected, onToggleSelect, bulkMode, tasks = [] }: NoteRowProps) {
   const updateNote = useUpdateNote()
-  const { data: linkedTasks = [] } = useTasksByNote(note.id)
+  // Tasks vinculadas à nota: derivadas da prop `tasks` (o parent já carrega
+  // todas) em vez de uma query POR NOTA — eram N queries com chaves distintas
+  // para a mesma informação, uma por linha visível da lista.
+  const linkedTasks = useMemo(
+    () =>
+      tasks
+        .filter((t) => t.linked_note_id === note.id && t.status !== "archived")
+        .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? "")),
+    [tasks, note.id]
+  )
   const { data: projects = [] } = useProjects()
   const createTask = useCreateTask()
   const updateTask = useUpdateTask()

@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { useHabitEntries, useLogHabitEntry, useDeleteHabitEntry, useUpdateHabit, useDeleteHabit, useCreateHabit } from "@/lib/queries/habits"
-import type { HabitTrackRow } from "@/lib/queries/habits"
+import { useLogHabitEntry, useDeleteHabitEntry, useUpdateHabit, useDeleteHabit, useCreateHabit } from "@/lib/queries/habits"
+import type { HabitTrackRow, HabitEntryRow } from "@/lib/queries/habits"
 import { cn } from "@/lib/utils"
 import { today } from "@/lib/date"
 import { useUndoToast } from "@/components/UndoToast"
@@ -10,10 +10,11 @@ import { useUndoToast } from "@/components/UndoToast"
 interface HabitRowProps {
   habit: HabitTrackRow
   weekDays: string[]
+  /** Entries do hábito (todas) — carregadas uma vez pelo pai. */
+  entries?: HabitEntryRow[]
 }
 
-export function HabitRow({ habit, weekDays }: HabitRowProps) {
-  const { data: entries = [] } = useHabitEntries(habit.id)
+export function HabitRow({ habit, weekDays, entries = [] }: HabitRowProps) {
   const logEntry = useLogHabitEntry()
   const deleteEntry = useDeleteHabitEntry()
   const updateHabit = useUpdateHabit()
