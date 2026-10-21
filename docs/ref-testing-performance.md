@@ -76,7 +76,7 @@ npm run test:docker
 ### CSS e fontes
 - **`--font-geist-mono`**: removido do `@theme inline` — Geist nunca foi importado, era variável morta
 - **`@tailwindcss/typography`**: JIT purga classes não usadas automaticamente. CSS code-split não traz ganho real
-- **`next/font/google`** com Inter: self-hosting automático, sem requisição externa — continua ótimo
+- **Inter auto-hospedada** (`src/app/fonts/`, `next/font/local`): `next/font/google` **baixa a fonte no build** — o build virava dependente de rede (e quebrava no Mac por causa do `SSL_CERT_FILE`). Com a fonte no repo, o build é hermético e ~1,4s mais rápido. `--font-sans` usa `var(--font-inter)` — o `next/font/local` gera o nome de família `inter` (minúsculo) e o CSS não deve depender de match case-insensitive
 
 ### Dependências
 - **`remark-gfm` removido** — zero imports no código, 94 pacotes a menos
