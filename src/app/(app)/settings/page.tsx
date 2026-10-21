@@ -295,6 +295,8 @@ export default function SettingsPage() {
             { label: "Autenticação", value: "Magic Link (OTP)" },
             { label: "Armazenamento", value: "Supabase Postgres" },
             { label: "Deploy", value: "Oracle VPS + Coolify" },
+            // Commit no ar (injetado no build) — "o que está rodando agora?"
+            { label: "Build", value: process.env.NEXT_PUBLIC_BUILD ?? "dev" },
           ].map(({ label, value }) => (
             <div key={label} className="px-4 py-2.5 flex items-center justify-between">
               <span className="text-[10px] font-mono text-on-surface/60 uppercase tracking-wider">{label}</span>
