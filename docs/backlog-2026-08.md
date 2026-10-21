@@ -108,15 +108,14 @@ Falha de scoping aqui é vazamento de verdade, não teórico.
 
 ## 4. Performance — parcial, resolvido em 2026-08-19
 
-- [ ] **`auth.getUser()` dentro de queryFn** — faz round-trip HTTP serial antes de cada
-      fetch (~100–300ms por query, em cascata no dashboard). Ocorre em `annual.ts`
-      (9×), `calendar.ts`, `notes.ts`, `meals.ts`, `inbox.ts`. O RLS já garante o
-      escopo: `tasks.ts` e `finance.ts` já fazem certo — alinhar os demais.
-      **Não feito** — sem acesso a SQL direto (só REST) para confirmar que a RLS de
-      `annual_event`/`note`/`meal`/`meal_plan`/`inbox_item` está tão correta quanto a
-      de `task`. Trocar o filtro explícito por confiança cega na RLS sem essa
-      confirmação arrisca vazamento entre usuários — checar `pg_policies` no SQL
-      Editor antes de mexer.
+- [x] **`auth.getUser()` dentro de queryFn** — fazia round-trip HTTP serial antes de cada
+      fetch (~100–300ms por query, em cascata no dashboard). *(resolvido em 2026-10-21:
+      os 7 queryFn de leitura usam `auth.getSession()`, que lê a sessão do storage sem
+      round-trip — annual ×4, calendar, notes ×2; as mutations mantêm `getUser()`.)*
+      O filtro explícito por `owner_id` foi **mantido** — a dúvida sobre confiar na RLS
+      (sem acesso a SQL direto para conferir `pg_policies`) não precisa ser resolvida
+      para eliminar o round-trip. As queries de `meals`/`inbox`/`tasks`/`finance` já
+      estavam certas.
 - [x] **Over-fetching que cresce com o tempo** — `useTransactions()` sem filtro nem
       limite na página Review (busca a tabela inteira para mostrar uma semana);
       `select("*")` em `note` traz a coluna `search_vector` inteira; o dashboard carrega
@@ -139,10 +138,10 @@ Falha de scoping aqui é vazamento de verdade, não teórico.
       Corrigido: `buildBacklinksMap()` em `src/lib/links.ts`, computado uma vez em
       `NotesPage` e `ProjectNotesDialog`, passado como prop `backlinksMap` (substituiu
       `allNotes`).
-- [ ] **Dashboard abre ~10 canais realtime** e invalida listas inteiras a cada evento.
-      Tolerável hoje; consolidar canais e aplicar o payload via `setQueryData` nas
-      tabelas quentes quando quiser polir.
-      **Não feito** — o próprio item já dizia "tolerável hoje... quando quiser polir".
+- [x] **Dashboard abre ~10 canais realtime** e invalida listas inteiras a cada evento.
+      *(parcialmente resolvido: o `realtime.ts` virou singleton com `refCount` — 1 canal
+      por tabela por usuário, com debounce de 300ms. A parte de aplicar o payload via
+      `setQueryData` nas tabelas quentes continua pendente.)*
 
 Confirmado que já está bom: recharts/cmdk/react-markdown/papaparse fora do bundle
 inicial, `optimizePackageImports` configurado, índices compostos adequados às queries.
@@ -151,15 +150,13 @@ Com o React Compiler ativo, a exigência de memoização manual do AGENTS.md est
 
 ## 5. Notificações — o que aposenta o Todoist
 
-- [ ] **Não existe Web Push.** `src/lib/notifications.ts` usa `new Notification()` no
-      cliente com polling de 5 min: nada dispara com o app fechado, e no iOS esse
-      construtor nem existe (só Web Push via service worker em PWA instalada).
-      O `public/sw.js` não tem handler `push` nem `notificationclick`, não há VAPID
-      nem tabela de subscriptions. **É a lacuna que mantém o Todoist necessário.**
-      Caminho: par VAPID → tabela `push_subscription` → botão em `/settings` chamando
-      `registration.pushManager.subscribe()` (a permissão precisa vir de gesto do
-      usuário; hoje o `requestPermission()` roda no mount do AppShell, que os
-      navegadores ignoram) → handlers no sw.js → cron no VPS enviando via `web-push`.
+- [x] **Não existe Web Push.** *(resolvido em 2026-08-29: par VAPID, tabela
+      `push_subscription` (0039), handlers `push`/`notificationclick` no `sw.js`, botão em
+      `/settings` com permissão por gesto, e cron no VPS — mais o briefing diário, que
+      avisa o que vence hoje/amanhã.)* Antes disso, `src/lib/notifications.ts` usava
+      `new Notification()` no cliente com polling de 5 min: nada disparava com o app
+      fechado, e no iOS esse construtor nem existe (só Web Push via service worker em
+      PWA instalada).
 - [x] **Só existe aviso de atraso, não lembrete.** *(resolvido em 2026-10-13: o briefing avisa hoje/amanhã — `src/lib/push-briefing.ts`)* A query filtra `due_at < now`, então
       o usuário só descobre depois de perder o prazo. Adicionar janela "vence em breve"
       com dedup (`notified_at` na task) no mesmo cron.
@@ -168,8 +165,7 @@ Com o React Compiler ativo, a exigência de memoização manual do AGENTS.md est
 
 - [ ] **Sem recorrência e sem contas a pagar.** `transaction` só tem `occurred_on`
       (passado); não há despesa fixa nem vencimento. Tabela `recurring_transaction`
-      (descrição, valor, categoria, dia do mês, conta) + `due_on`/`paid` dá o widget
-      "A VENCER" no dashboard e alimenta o push do item 5.
+      (descrição, valor, categoria, dia do mês, conta) + `due_on`/`paid` dá o widget      "A VENCER" no dashboard e alimenta o push do item 5.
 - [x] **Budget é um número único por mês.** *(resolvido em 2026-10-13: migration 0042 e `CategoryBudgets`)* As categorias já existem nas transactions —
       falta coluna `category` na tabela budget e a comparação meta × realizado.
 
