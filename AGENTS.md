@@ -70,6 +70,7 @@ Schemas testados: `tests/schemas.test.ts` (38 testes Zod)
 - **Tags** (`0015_tags.sql`): coluna `tags text[]` na task. Exibidas como pills `#tag` no TaskRow. Filtro por tag na TasksPage (chips, e o filtro vive na URL)
 - **Filtros da TasksPage vivem na URL** (`?project= ?cat= ?tag= ?search=?sort=`): sobrevivem a reload, ficam linkáveis e voltam no botão "voltar". Busca é estado local com sync debounced (400ms) para a URL; os demais filtros escrevem na URL direto (`router.replace`)
 - **Ordenação** (`?sort=`): `due` (padrão, preserva a ordem do servidor: prazo, sem prazo no fim), `priority`, `important`, `created`. A regra é pura e testada (`src/lib/task-sort.ts`)
+- **Revisão semanal** (`/review`): o card **CHECKLIST DA SEMANA** traz as 4 decisões do ritual com o estado (inbox zerado, sem atrasadas, áreas revisadas, delegadas com retorno) e um contador `2/4 OK` — o resto da página é o *resumo* da semana. A regra é pura (`src/lib/weekly-review.ts`)
 - **Energy level** (`0034_task_energy_level.sql`): coluna `energy_level` (low/med/high). Badge no TaskRow: DEEP (high/purple), MED (med/neutral), QUICK (low/teal). EditTaskDialog tem seletor toggle
 - **Notas vinculadas**: tasks podem ter notas vinculadas (`linked_task_id` em note, FK com `on delete set null`). EditTaskDialog mostra lista de notas vinculadas
 - **Matriz de Eisenhower**: Dashboard exibe quadrantes (Urg+Imp / Imp+NãoUrg / Urg+NãoImp / NemUrgNemImp) filtrados por `important` e `priority`/`due_at`
@@ -91,6 +92,8 @@ Schemas testados: `tests/schemas.test.ts` (38 testes Zod)
 - **`source` do item = `manual`**: o check constraint de `inbox_item.source` não aceita `share` (aceita manual/telegram/audio/email/webhook/mcp/raindrop)
 - **O SW não intercepta `/api/*`** (early return no `fetch` handler) — o POST do share target chega íntegro na rota
 - **Inbox em FIFO**: `created_at` ASC — o item mais antigo fica no topo, porque o Inbox é fila de *triagem* (o que chegou antes é o que espera mais). Antes era DESC, que punia o item mais antigo
+- **Adiar (snooze, migration 0043)**: coluna `snoozed_until` (date) — o item sai da fila e volta sozinho na data escolhida (AMANHÃ/3 DIAS/SEMANA/MÊS). A fila esconde os adiados (`or=snoozed_until.is.null,snoozed_until.lte.<hoje>`) e a aba TODOS mostra a etiqueta `ATÉ dd/mm`. Rotas de agente seguem a mesma regra
+- **Aditar NÃO arquiva**: antes a fila só tinha duas saídas (fazer/descartar) e o que não era para hoje acabava arquivado — ou seja, perdido
 - Testes: `tests/capture-route.test.ts` (5 casos: sem sessão, gravar, title sem text, body vazio, erro de insert)
 
 ### Notes

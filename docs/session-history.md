@@ -7,6 +7,13 @@ Movido do CLAUDE.md para reduzir o contexto carregado em toda sessão. Consulte 
 ## 2026-10-21 (tarde/noite) — Operação: build visível, suíte DOM no CI, filtros e ordem
 
 ### Entregue
+- **Adiar (snooze) no Inbox** — a decisão de triagem que faltava: a fila só tinha duas saídas
+  (fazer/descartar) e o que não era para hoje acabava **arquivado** (perdido). Migration 0043
+  (`snoozed_until`, aplicada no VPS **antes** do deploy), botão ADIAR (AMANHÃ/3 DIAS/SEMANA/MÊS),
+  a fila esconde os adiados e a aba TODOS mostra `ATÉ dd/mm`. Rotas de agente seguem a mesma regra.
+- **Checklist da revisão semanal** (`/review`): a página mostrava o *resumo* da semana, não o
+  *ritual*. Novo card com as 4 decisões (inbox zerado, sem atrasadas, áreas revisadas, delegadas
+  com retorno) + contador `2/4 OK`. Regra pura (`src/lib/weekly-review.ts`, 4 testes).
 - **Build/commit no ar**: `GIT_SHA` e `NEXT_PUBLIC_BUILD` como build-arg (Dockerfile + deploy.yml);
   `/api/health` devolve `build`; Settings > SISTEMA mostra a linha BUILD. Motivo: durante um deploy,
   `~/ops-hub` já está no commit novo enquanto o container ainda é o antigo — foi assim que um deploy

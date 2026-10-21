@@ -338,6 +338,11 @@ function InboxPageInner() {
                           {item.status === "triaged" && (
                             <span className="text-[9px] font-mono text-teal">TRIAGED</span>
                           )}
+                          {item.snoozed_until && (
+                            <span className="text-[9px] font-mono text-amber border border-amber/30 rounded-sm px-1 py-0.5">
+                              ATÉ {item.snoozed_until.slice(8, 10)}/{item.snoozed_until.slice(5, 7)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
