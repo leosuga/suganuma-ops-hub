@@ -1,9 +1,19 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import localFont from "next/font/local"
 import { ThemeProvider } from "next-themes"
 import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+// Inter auto-hospedada (subset latin, fonte variável 100-900).
+// Antes vinha do next/font/google, que BAIXA a fonte no build — ou seja,
+// o build dependia da rede e quebrava quando ela faltava (no Mac, por causa
+// do SSL_CERT_FILE apontando para o CA da rede doméstica).
+const inter = localFont({
+  src: "./fonts/Inter-latin-variable.woff2",
+  variable: "--font-inter",
+  display: "swap",
+  weight: "100 900",
+  fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
+})
 
 export const metadata: Metadata = {
   title: "Suganuma Ops Hub",
