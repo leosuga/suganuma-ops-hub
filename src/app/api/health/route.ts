@@ -55,6 +55,10 @@ export async function GET() {
       qdrant,
       ...(notesIndexed !== null ? { notesIndexed } : {}),
       version: process.env.npm_package_version ?? "0.1.0",
+      // Commit/build no ar — responde "o que está rodando agora?" sem
+      // precisar inferir pelo container (2026-10-21: o container estava no
+      // commit antigo enquanto o clone do VPS já era o novo).
+      build: process.env.GIT_SHA ?? null,
     })
   } catch {
     return NextResponse.json({ status: "error", db: "unreachable" }, { status: 503 })
