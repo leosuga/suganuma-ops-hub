@@ -20,6 +20,18 @@ export interface SearchResult {
 }
 
 /**
+ * Diagnóstico das duas pernas da busca. Aditivo ao contrato `{ ok, results }`:
+ * não é devolvido por nenhuma rota HTTP, existe para o log e para os testes
+ * distinguirem "não achou nada" de "a perna falhou em silêncio".
+ */
+export interface HybridSearchDebug {
+  /** A perna FTS (Postgres) respondeu sem erro. */
+  fts_ok: boolean
+  /** A perna vetorial (Ollama + Qdrant) respondeu sem erro. */
+  vector_ok: boolean
+}
+
+/**
  * Núcleo da busca híbrida, parametrizado por ownerId.
  *
  * Este módulo NÃO tem "use server" de propósito: em arquivo de server action
@@ -37,7 +49,14 @@ export async function hybridSearchCore(ownerId: string, query: string, limit: nu
   try {
     const supabase = createServiceClient()
 
-    if (!query.trim()) return { ok: true, results: [] as SearchResult[] }
+    // Query vazia: nada foi executado, então nenhuma perna falhou.
+    if (!query.trim()) {
+      return {
+        ok: true,
+        results: [] as SearchResult[],
+        debug: { fts_ok: true, vector_ok: true } satisfies HybridSearchDebug,
+      }
+    }
 
     const q = query.trim()
     const fetchLimit = Math.max(limit * 2, 20)
@@ -55,7 +74,11 @@ export async function hybridSearchCore(ownerId: string, query: string, limit: nu
         .from("note")
         .select("id, title, content, tags, para, is_moc, project_id, pinned, updated_at")
         .eq("owner_id", ownerId)
-        .textSearch("search_vector", q, { config: "portuguese" })
+        // type: "websearch" → websearch_to_tsquery. Sem o `type` o PostgREST usa
+        // o operador `fts`, que vira to_tsquery('portuguese', 'data drift') e
+        // ERRA na sintaxe (espaço nu não é operador): toda query de 2+ palavras
+        // perdia a perna FTS em silêncio, e a busca ficava só vetorial.
+        .textSearch("search_vector", q, { config: "portuguese", type: "websearch" })
         .limit(fetchLimit)
         .then(({ data, error }) => {
           if (error) throw error
@@ -63,18 +86,31 @@ export async function hybridSearchCore(ownerId: string, query: string, limit: nu
         }),
     ])
 
+    const debug: HybridSearchDebug = {
+      vector_ok: vectorOutcome.status === "fulfilled",
+      fts_ok: ftsOutcome.status === "fulfilled",
+    }
+
     let vectorResults: Array<{ id: string; score: number }> = []
     if (vectorOutcome.status === "fulfilled") {
       vectorResults = vectorOutcome.value
     } else {
-      logger.warn("hybridSearchCore", "Vector search failed (non-blocking)", { error: vectorOutcome.reason?.message })
+      logger.warn("hybridSearchCore", "Vector search failed (non-blocking)", {
+        query: q,
+        error: errorMessage(vectorOutcome.reason),
+      })
     }
 
     let ftsResults: Array<{ id: string; title: string; content: string | null; tags: string[] | null; para: string | null; is_moc: boolean | null; project_id: string | null; pinned: boolean | null; updated_at: string }> = []
     if (ftsOutcome.status === "fulfilled") {
       ftsResults = ftsOutcome.value
     } else {
-      logger.warn("hybridSearchCore", "FTS search failed (non-blocking)", { error: ftsOutcome.reason?.message })
+      // Com a query no log, uma falha de sintaxe do tsquery deixa de ser
+      // indistinguível de "não achou nada".
+      logger.warn("hybridSearchCore", "FTS search failed (non-blocking)", {
+        query: q,
+        error: errorMessage(ftsOutcome.reason),
+      })
     }
 
     // 3. RRF merge
@@ -102,7 +138,10 @@ export async function hybridSearchCore(ownerId: string, query: string, limit: nu
       }
     })
 
-    if (rrfScores.size === 0) return { ok: true, results: [] as SearchResult[] }
+    if (rrfScores.size === 0) {
+      logger.info("hybridSearchCore", "no hits from either leg", { query: q, ...debug })
+      return { ok: true, results: [] as SearchResult[], debug }
+    }
 
     // 4. Fetch full note data for vector-only results (FTS results already have it)
     const ftsIds = new Set(ftsResults.map((r) => r.id))
@@ -138,9 +177,36 @@ export async function hybridSearchCore(ownerId: string, query: string, limit: nu
       .sort((a, b) => b!.score - a!.score)
       .slice(0, limit) as SearchResult[]
 
-    return { ok: true, results }
+    logger.info("hybridSearchCore", "search done", {
+      query: q,
+      results: results.length,
+      ...debug,
+    })
+
+    return { ok: true, results, debug }
   } catch (err) {
     logger.error("hybridSearchCore", "Failed", { query, error: (err as Error).message })
-    return { ok: false, error: (err as Error).message, results: [] as SearchResult[] }
+    return {
+      ok: false,
+      error: (err as Error).message,
+      results: [] as SearchResult[],
+      debug: { fts_ok: false, vector_ok: false } satisfies HybridSearchDebug,
+    }
+  }
+}
+
+/** Mensagem de um `reason` de Promise.allSettled — pode ser qualquer coisa. */
+function errorMessage(reason: unknown): string {
+  if (reason instanceof Error) return reason.message
+  if (typeof reason === "string") return reason
+  // Erros do PostgREST não são `Error`: são objetos { message, details, code }.
+  if (reason && typeof reason === "object" && "message" in reason) {
+    const message = (reason as { message: unknown }).message
+    if (typeof message === "string") return message
+  }
+  try {
+    return JSON.stringify(reason)
+  } catch {
+    return String(reason)
   }
 }
