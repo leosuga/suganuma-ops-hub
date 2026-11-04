@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { validateAgentToken, unauthorized, badRequest, serverError } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
 import { createNoteWithEmbedding } from "@/lib/actions/notes"
+import { NOTE_COLUMNS } from "@/lib/db-columns"
 import { z } from "zod"
 
 const createSchema = z.object({
@@ -21,7 +22,10 @@ export async function GET(req: NextRequest) {
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from("note")
-    .select("*")
+    // Lista explícita, sem `search_vector` (tsvector da migration 0033 — payload
+    // inútil que ia direto para o cliente MCP). Coluna nova em `note` precisa
+    // ser adicionada em src/lib/db-columns.ts.
+    .select(NOTE_COLUMNS)
     .eq("owner_id", ownerId)
     .order("pinned", { ascending: false })
     .order("updated_at", { ascending: false })

@@ -7,6 +7,7 @@
 
 import { createServiceClient } from "@/lib/supabase/service"
 import { syncNoteEmbeddingForOwner } from "@/lib/actions/semantic-search"
+import { NOTE_COLUMNS } from "@/lib/db-columns"
 
 export interface CreateNoteInput {
   title: string
@@ -25,7 +26,7 @@ export async function createNoteWithEmbedding(ownerId: string, input: CreateNote
   const { data, error } = await supabase
     .from("note")
     .insert({ ...input, owner_id: ownerId })
-    .select("*")
+    .select(NOTE_COLUMNS)
     .single()
 
   if (error) throw new Error(error.message)
