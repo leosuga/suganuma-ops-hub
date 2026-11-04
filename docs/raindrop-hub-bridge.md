@@ -24,12 +24,14 @@ POST /api/integrations/raindrop-sync   (src/app/api/integrations/raindrop-sync/r
         │      `search=created:>YYYY-MM-DD` (cursor − 1 dia)
         ├─ 3. para cada item novo (created > cursor, oldest-first):
         │      a. dedup via `webhook_event` (source='raindrop', key = raindrop _id)
-        │      b. LLM classifica: `reference` (guardar/consultar) vs `actionable`
+        │      b. dedup por URL normalizada (`findExistingByUrl`) em note + inbox_item
+        │         — mesma URL com outro `_id` ou capturada via Share Target
+        │      c. LLM classifica: `reference` (guardar/consultar) vs `actionable`
         │         (ação concreta e próxima) — viés para REFERENCE
-        │      c. reference  → nota via createNoteWithEmbedding()
+        │      d. reference  → nota via createNoteWithEmbedding()
         │         (resumo PT + tags [`raindrop`, slug-collection, tags LLM], para: resources)
-        │      d. actionable → inbox_item (source='raindrop', content com prefixo [Collection])
-        │      e. mark() da idempotência
+        │      e. actionable → inbox_item (source='raindrop', content com prefixo [Collection])
+        │      f. mark() da idempotência
         └─ 4. cursor = max(created) processado (avança oldest-first, cap por run)
 ```
 
@@ -77,8 +79,26 @@ válida → fallback (reference, sem resumo). A resposta do endpoint inclui
 
 - **Cursor**: nota pinned com tag `raindrop-sync-state` (corpo = ISO timestamp do
   último `created` processado). Parsing defensivo: falha → null → refetch, dedup protege.
-- **Dedup**: tabela `webhook_event` (unique `(source, event_key)`) — reusa
-  `checkWebhookIdempotency("raindrop", raindrop_id)`. Rodar 2x não duplica nada.
+- **Dedup em duas camadas** (`src/lib/raindrop-dedupe.ts`):
+  1. **`raindrop_id`** — tabela `webhook_event` (unique `(source, event_key)`),
+     reusa `checkWebhookIdempotency("raindrop", raindrop_id)`. Pega replay do
+     MESMO bookmark: rodar 2x não duplica nada.
+  2. **URL normalizada** — antes de criar, `findExistingByUrl` procura a mesma
+     URL no `content` das notas do dono (`Fonte: <url>`) e dos itens de
+     `inbox_item`. Pega a mesma URL salva **duas vezes** no Raindrop (`_id`
+     diferente) ou capturada por outro caminho (Share Target → `source='manual'`),
+     que a camada 1 não cobre porque não é o mesmo evento.
+- **Como a comparação funciona**: `normalizeUrl` baixa o host, descarta `utm_*`/
+  `fbclid`/`gclid`/`msclkid`/`igshid`/`ref_src`, remove fragmento e barra final,
+  ordena os parâmetros restantes e **preserva a caixa do path** (vários sites são
+  case-sensitive). A busca no banco usa só `host + path` (`ilike`, case-insensitive)
+  porque é o que também aparece nas URLs cruas já gravadas; a decisão final é a
+  comparação das formas normalizadas — então `?id=1` e `?id=2` continuam sendo
+  páginas diferentes.
+- **Falha do dedupe não derruba o item**: erro de query é logado e o item é
+  criado normalmente. Melhor duplicar um link que perder um bookmark.
+- **Item pulado por URL não é contado como `failed`**: entra em `skipped` (e o
+  `mark()` da camada 1 roda, para o bookmark não ser re-avaliado em toda run).
 
 ## 5. Configuração
 
