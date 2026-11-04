@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateAgentToken, unauthorized, serverError, badRequest, validateUuidParam } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
+import { TASK_COLUMNS } from "@/lib/db-columns"
 
 // POST /api/agent/tasks/:id/complete
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -15,7 +16,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     .update({ status: "done", completed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("owner_id", ownerId)
-    .select("*")
+    // Lista explícita, sem `search_vector` (tsvector da migration 0033 — payload
+    // inútil que ia direto para o cliente MCP). Coluna nova em `task` precisa
+    // ser adicionada em src/lib/db-columns.ts.
+    .select(TASK_COLUMNS)
     .single()
 
   if (error) return serverError(error.message)

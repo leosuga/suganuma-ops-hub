@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, queryOptions } from "@tanstack/r
 import { createClient } from "@/lib/supabase/client"
 import { useRealtimeTable } from "@/lib/realtime"
 import { syncNoteEmbedding, syncNoteEmbeddings, deleteNoteEmbedding, deleteNoteEmbeddings } from "@/lib/actions/semantic-search"
+import { NOTE_COLUMNS } from "@/lib/db-columns"
 import type { NoteRow, NoteInsert } from "@/lib/types/note"
 
 export type { NoteRow }
@@ -10,12 +11,6 @@ export const noteKeys = {
   all: ["notes"] as const,
   daily: (date: string) => ["notes", "daily", date] as const,
 }
-
-// Colunas de NoteRow, explicitamente — sem search_vector (tsvector da busca
-// full-text, migration 0033). select("*") trazia esse campo em toda listagem,
-// crescendo com o conteúdo de cada nota sem nunca ser lido pela UI.
-const NOTE_COLUMNS =
-  "id, owner_id, title, content, tags, pinned, linked_task_id, para, daily_date, is_moc, last_review, project_id, favorited, attachments, created_at, updated_at"
 
 const notesOptions = queryOptions({
   queryKey: noteKeys.all,

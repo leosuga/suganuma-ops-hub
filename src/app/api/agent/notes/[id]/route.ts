@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { validateAgentToken, unauthorized, badRequest, serverError, validateUuidParam } from "@/lib/agent-auth"
 import { createServiceClient } from "@/lib/supabase/service"
+import { NOTE_COLUMNS } from "@/lib/db-columns"
 import { syncNoteEmbeddingForOwner, deleteNoteEmbedding } from "@/lib/actions/semantic-search"
 import { z } from "zod"
 
@@ -28,7 +29,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .update({ ...parsed.data, updated_at: new Date().toISOString() })
     .eq("id", id)
     .eq("owner_id", ownerId)
-    .select("*")
+    // Lista explícita, sem `search_vector` (tsvector da migration 0033 — payload
+    // inútil que ia direto para o cliente MCP). Coluna nova em `note` precisa
+    // ser adicionada em src/lib/db-columns.ts.
+    .select(NOTE_COLUMNS)
     .single()
 
   if (error) return serverError(error.message)
