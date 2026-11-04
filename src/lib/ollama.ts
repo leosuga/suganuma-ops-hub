@@ -22,7 +22,20 @@ const CHAT_MODEL = process.env.OLLAMA_CHAT_MODEL || "gpt-oss:20b"
 // never hang forever — a stuck request blocks the whole raindrop-sync run.
 const OLLAMA_TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS) || 120_000
 
-export async function embedTexts(inputs: string[]): Promise<number[][]> {
+// keep_alive mantém o modelo residente na RAM entre requests. Sem ele, o
+// PRIMEIRO embed depois de ociosidade paga o cold start (carregar o
+// nomic-embed-text) e qualquer busca estoura o timeout do cliente MCP —
+// não era a query longa, era o modelo frio (diagnóstico em
+// docs/handoff-notas.md, seção 3.1). O servidor aceita duração ("30m") ou
+// segundos; -1 = nunca descarrega.
+const embedKeepAlive = () => process.env.OLLAMA_EMBED_KEEP_ALIVE || "30m"
+
+/**
+ * `timeoutMs` opcional: a busca de notas passa um teto curto (ver
+ * SEARCH_EMBED_TIMEOUT_MS em hybrid-search-core), enquanto o raindrop-sync
+ * mantém o default de 120 s, onde lote longo é legítimo.
+ */
+export async function embedTexts(inputs: string[], timeoutMs: number = OLLAMA_TIMEOUT_MS): Promise<number[][]> {
   if (!inputs.length) return []
 
   const res = await fetchWithTimeout(
@@ -33,9 +46,10 @@ export async function embedTexts(inputs: string[]): Promise<number[][]> {
       body: JSON.stringify({
         model: EMBED_MODEL,
         input: inputs,
+        keep_alive: embedKeepAlive(),
       }),
     },
-    OLLAMA_TIMEOUT_MS,
+    timeoutMs,
   )
 
   if (!res.ok) {
@@ -47,8 +61,8 @@ export async function embedTexts(inputs: string[]): Promise<number[][]> {
   return data.embeddings
 }
 
-export async function embedText(input: string): Promise<number[]> {
-  const [embedding] = await embedTexts([input])
+export async function embedText(input: string, timeoutMs?: number): Promise<number[]> {
+  const [embedding] = await embedTexts([input], timeoutMs)
   return embedding
 }
 

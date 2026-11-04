@@ -5,6 +5,12 @@ import { logger } from "@/lib/logger"
 
 const RRF_K = 60
 
+// Teto próprio da perna vetorial. O timeout de 120 s do Ollama é para lote
+// (raindrop-sync); numa busca interativa, esperar mais que isso estoura o
+// teto de 30 s do cliente MCP (src/lib/mcp/api.ts) e o usuário recebe -32001
+// em vez de um resultado parcial. Estourou → segue só com FTS.
+const searchEmbedTimeoutMs = () => Number(process.env.SEARCH_EMBED_TIMEOUT_MS) || 8_000
+
 export interface SearchResult {
   id: string
   title: string
@@ -60,30 +66,52 @@ export async function hybridSearchCore(ownerId: string, query: string, limit: nu
 
     const q = query.trim()
     const fetchLimit = Math.max(limit * 2, 20)
+    const embedCapMs = searchEmbedTimeoutMs()
+
+    // Duração de cada perna — foi o que faltou para diagnosticar o cold start
+    // do Ollama em 04/11: sem número, "demorou" e "estourou" são a mesma coisa.
+    let vectorMs: number | null = null
+    let ftsMs: number | null = null
 
     // Vetorial (Qdrant) e FTS (Postgres) são independentes — rodar em paralelo
     // corta a latência combinada quase pela metade em vez de somar as duas.
     const [vectorOutcome, ftsOutcome] = await Promise.allSettled([
       (async () => {
-        const embedding = await embedText(q)
-        await ensureCollection()
-        const raw = await searchNotes(ownerId, embedding, fetchLimit, 0.5)
-        return raw.map((r) => ({ id: r.id, score: r.score }))
+        const startedAt = Date.now()
+        try {
+          // O teto vale só para o embed (é onde mora o cold start) e é passado
+          // ao Ollama também, para abortar o request em vez de deixá-lo pendurado.
+          const embedding = await withTimeout(
+            embedText(q, embedCapMs),
+            embedCapMs,
+            "embedding da busca",
+          )
+          await ensureCollection()
+          const raw = await searchNotes(ownerId, embedding, fetchLimit, 0.5)
+          return raw.map((r) => ({ id: r.id, score: r.score }))
+        } finally {
+          vectorMs = Date.now() - startedAt
+        }
       })(),
-      supabase
-        .from("note")
-        .select("id, title, content, tags, para, is_moc, project_id, pinned, updated_at")
-        .eq("owner_id", ownerId)
-        // type: "websearch" → websearch_to_tsquery. Sem o `type` o PostgREST usa
-        // o operador `fts`, que vira to_tsquery('portuguese', 'data drift') e
-        // ERRA na sintaxe (espaço nu não é operador): toda query de 2+ palavras
-        // perdia a perna FTS em silêncio, e a busca ficava só vetorial.
-        .textSearch("search_vector", q, { config: "portuguese", type: "websearch" })
-        .limit(fetchLimit)
-        .then(({ data, error }) => {
+      (async () => {
+        const startedAt = Date.now()
+        try {
+          const { data, error } = await supabase
+            .from("note")
+            .select("id, title, content, tags, para, is_moc, project_id, pinned, updated_at")
+            .eq("owner_id", ownerId)
+            // type: "websearch" → websearch_to_tsquery. Sem o `type` o PostgREST usa
+            // o operador `fts`, que vira to_tsquery('portuguese', 'data drift') e
+            // ERRA na sintaxe (espaço nu não é operador): toda query de 2+ palavras
+            // perdia a perna FTS em silêncio, e a busca ficava só vetorial.
+            .textSearch("search_vector", q, { config: "portuguese", type: "websearch" })
+            .limit(fetchLimit)
           if (error) throw error
           return data ?? []
-        }),
+        } finally {
+          ftsMs = Date.now() - startedAt
+        }
+      })(),
     ])
 
     const debug: HybridSearchDebug = {
@@ -98,6 +126,8 @@ export async function hybridSearchCore(ownerId: string, query: string, limit: nu
       logger.warn("hybridSearchCore", "Vector search failed (non-blocking)", {
         query: q,
         error: errorMessage(vectorOutcome.reason),
+        vector_ms: vectorMs,
+        cap_ms: embedCapMs,
       })
     }
 
@@ -110,6 +140,7 @@ export async function hybridSearchCore(ownerId: string, query: string, limit: nu
       logger.warn("hybridSearchCore", "FTS search failed (non-blocking)", {
         query: q,
         error: errorMessage(ftsOutcome.reason),
+        fts_ms: ftsMs,
       })
     }
 
@@ -180,6 +211,8 @@ export async function hybridSearchCore(ownerId: string, query: string, limit: nu
     logger.info("hybridSearchCore", "search done", {
       query: q,
       results: results.length,
+      vector_ms: vectorMs,
+      fts_ms: ftsMs,
       ...debug,
     })
 
@@ -209,4 +242,20 @@ function errorMessage(reason: unknown): string {
   } catch {
     return String(reason)
   }
+}
+
+/**
+ * Corrida contra um teto de tempo. Rede de segurança da perna vetorial: o
+ * `fetchWithTimeout` do Ollama aborta o request, mas a promessa pode ficar
+ * pendurada se o servidor travou no meio da resposta — e a busca não pode
+ * esperar por isso.
+ */
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} excedeu o teto de ${timeoutMs}ms`)), timeoutMs)
+    promise.then(
+      (value) => { clearTimeout(timer); resolve(value) },
+      (err) => { clearTimeout(timer); reject(err) },
+    )
+  })
 }

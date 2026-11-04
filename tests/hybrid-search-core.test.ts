@@ -4,7 +4,7 @@
 // PostgREST para `to_tsquery`, que ERRA com espaço nu — toda query de 2+
 // palavras perdia a perna FTS em silêncio e a busca virava só vetorial.
 // `type: "websearch"` (websearch_to_tsquery) aceita espaço, aspas e `-`.
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 
 vi.mock("@/lib/ollama", () => ({ embedText: vi.fn() }))
 vi.mock("@/lib/qdrant", () => ({
@@ -172,5 +172,86 @@ describe("hybridSearchCore", () => {
     expect(res.results).toEqual([])
     expect(textSearchCalls).toHaveLength(0)
     expect(mockEmbedText).not.toHaveBeenCalled()
+  })
+})
+
+// O teto da perna vetorial: a busca nunca pode ficar esperando o Ollama frio.
+// Com o modelo quente (keep_alive, ver tests/ollama-embed.test.ts) esse caminho
+// quase nunca dispara; quando dispara, é melhor um resultado só de FTS do que
+// estourar o timeout do cliente MCP (-32001).
+describe("hybridSearchCore — teto da perna vetorial", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.unstubAllEnvs()
+    mockEnsureCollection.mockResolvedValue(undefined)
+    mockSearchNotes.mockResolvedValue([])
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllEnvs()
+  })
+
+  it("embedding acima de SEARCH_EMBED_TIMEOUT_MS: responde só com FTS, no teto", async () => {
+    vi.useFakeTimers()
+    const { client } = mockClient({ fts: { data: [noteRow("n2")] } })
+    mockCreateServiceClient.mockReturnValue(client as never)
+    // Ollama pendurado: a promessa nunca resolve.
+    mockEmbedText.mockReturnValue(new Promise<number[]>(() => {}))
+
+    const pending = hybridSearchCore("owner-1", "data drift", 10)
+    let settled = false
+    void pending.then(() => { settled = true })
+
+    // Um milissegundo antes do teto, nada aconteceu ainda.
+    await vi.advanceTimersByTimeAsync(7_999)
+    expect(settled).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(1)
+    const res = await pending
+
+    expect(res.ok).toBe(true)
+    expect(res.debug).toEqual({ fts_ok: true, vector_ok: false })
+    expect(res.results.map((r) => r.id)).toEqual(["n2"])
+    expect(res.results[0].source).toBe("fts")
+    expect(mockSearchNotes).not.toHaveBeenCalled()
+    expect(mockWarn).toHaveBeenCalledWith(
+      "hybridSearchCore",
+      "Vector search failed (non-blocking)",
+      expect.objectContaining({ query: "data drift", cap_ms: 8_000 }),
+    )
+  })
+
+  it("respeita SEARCH_EMBED_TIMEOUT_MS customizado", async () => {
+    vi.useFakeTimers()
+    vi.stubEnv("SEARCH_EMBED_TIMEOUT_MS", "500")
+    const { client } = mockClient({ fts: { data: [noteRow("n2")] } })
+    mockCreateServiceClient.mockReturnValue(client as never)
+    mockEmbedText.mockReturnValue(new Promise<number[]>(() => {}))
+
+    const pending = hybridSearchCore("owner-1", "data drift", 10)
+    await vi.advanceTimersByTimeAsync(500)
+    const res = await pending
+
+    expect(res.debug).toEqual({ fts_ok: true, vector_ok: false })
+    expect(res.results.map((r) => r.id)).toEqual(["n2"])
+  })
+
+  it("modelo quente: nenhum teto é pago e a duração de cada perna vai para o log", async () => {
+    const { client } = mockClient({ fts: { data: [noteRow("n1")] } })
+    mockCreateServiceClient.mockReturnValue(client as never)
+    mockEmbedText.mockResolvedValue([0.1, 0.2, 0.3])
+    mockSearchNotes.mockResolvedValue([{ id: "n1", score: 0.9 }])
+
+    const res = await hybridSearchCore("owner-1", "data drift", 10)
+
+    expect(res.debug).toEqual({ fts_ok: true, vector_ok: true })
+    expect(mockEmbedText).toHaveBeenCalledWith("data drift", 8_000)
+    const infoCall = (logger.info as unknown as ReturnType<typeof vi.fn>).mock.calls.find(
+      ([, msg]) => msg === "search done",
+    )
+    expect(infoCall?.[2]).toEqual(
+      expect.objectContaining({ vector_ms: expect.any(Number), fts_ms: expect.any(Number) }),
+    )
   })
 })
