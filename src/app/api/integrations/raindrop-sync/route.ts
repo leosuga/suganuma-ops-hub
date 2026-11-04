@@ -6,12 +6,16 @@
 //
 // Auth: HMAC com RAINDROP_SYNC_SECRET (secret dedicado, não o WEBHOOK_SECRET).
 // owner_id: fixo via WEBHOOK_OWNER_ID (nunca do payload).
-// Idempotente: dedup por raindrop_id via checkWebhookIdempotency("raindrop", id).
+// Idempotente em duas camadas: `raindrop_id` via
+// checkWebhookIdempotency("raindrop", id) — replay do MESMO bookmark — e URL
+// normalizada via findExistingByUrl (lib/raindrop-dedupe), que pega a mesma URL
+// salva duas vezes ou vinda de outro caminho (Share Target).
 
 import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/service"
 import { verifyWebhookHmac, checkWebhookIdempotency, resolveWebhookOwnerId } from "@/lib/webhooks/hmac"
 import { createNoteWithEmbedding } from "@/lib/actions/notes"
+import { findExistingByUrl } from "@/lib/raindrop-dedupe"
 import { chatCompletion } from "@/lib/ollama"
 import { logger } from "@/lib/logger"
 import {
@@ -332,6 +336,21 @@ export async function POST(req: NextRequest) {
   for (let i = 0; i < candidates.length; i++) {
     const { item, idem, collectionTitle } = candidates[i]
     try {
+      // Segunda camada de idempotência: a mesma URL pode chegar com outro
+      // `_id` (bookmark salvo duas vezes) ou por outro caminho (Share Target,
+      // source='manual'). Não é bug do sync — é duplicata do usuário.
+      const duplicate = await findExistingByUrl(ownerId, item.link)
+      if (duplicate) {
+        skipped++
+        logger.info("raindrop-sync", "URL já existe — item pulado", {
+          id: item._id,
+          link: item.link,
+          where: duplicate,
+        })
+        await idem.mark?.()
+        continue
+      }
+
       const classification = classifications[i]
       if (classification.kind === "actionable") {
         await routeActionable(ownerId, item, collectionTitle)
